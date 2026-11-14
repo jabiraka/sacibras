@@ -209,4 +209,63 @@ SGS: dict[str, SerieSGS] = {
         "M",
         "14/11/2026",
     ),
+    # Dívida mobiliária federal, participação por indexador (Percentual, mensal, desde jan/2000).
+    # Conferidas no package_search do BCB em 14/11/2026. A família não traz o IPCA (NTN-B):
+    # as oito parcelas somam ~76 % em set/2026; o que falta para 100 % é o IPCA.
+    "DIVIDA_IDX_CAMBIO": SerieSGS(
+        4173,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - Câmbio",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "DIVIDA_IDX_TR": SerieSGS(
+        4174,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - TR",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "DIVIDA_IDX_IGPM": SerieSGS(
+        4175,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - IGP-M",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "DIVIDA_IDX_IGPDI": SerieSGS(
+        4176,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - IGP-DI",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "DIVIDA_IDX_SELIC": SerieSGS(
+        4177,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - Over/Selic",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "DIVIDA_IDX_PREFIXADO": SerieSGS(
+        4178,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - Prefixado",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "DIVIDA_IDX_TJLP": SerieSGS(
+        4179,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - TJLP",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "DIVIDA_IDX_OUTROS": SerieSGS(
+        4180,
+        "Dívida mobiliária - Participação por indexador - Posição em carteira - Outros",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
 }

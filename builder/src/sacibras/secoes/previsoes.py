@@ -1,7 +1,8 @@
-"""Previsões: o consenso do mercado (Focus), como ele mudou, e o FMI ao lado.
+"""Previsões: o consenso do mercado (Focus), o FMI, e as contas próprias ao lado deles.
 
-Nesta fase a página mostra só previsões de terceiros, cada uma com a fonte. Os modelos
-próprios (PIB agora, IPCA, dívida) entram na Fase 5, sempre ao lado destas.
+A regra da casa: previsão nunca sozinha. O "PIB agora" aparece com o Focus do mesmo
+trimestre e com o erro que o método teve fora da amostra; o Focus aparece com o quanto
+costuma errar nesta época do ano; o simulador da dívida parte das hipóteses do Focus.
 """
 
 from __future__ import annotations
@@ -9,7 +10,16 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from sacibras.fontes import bcb_focus, fmi
-from sacibras.schema import Grafico, LinhaTabela, Secao, Tabela
+from sacibras.modelos import acerto_focus, divida, pib_agora
+from sacibras.schema import (
+    Cartao,
+    Faixa,
+    Grafico,
+    LinhaTabela,
+    Secao,
+    SimuladorDivida,
+    Tabela,
+)
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -31,6 +41,58 @@ LINHAS: list[tuple[str, str | None, str, str, int]] = [
 
 def _anual(pontos: list[Ponto]) -> list[Ponto]:
     return [(date(d.year, 1, 1), v) for d, v in pontos]
+
+
+def _simulador(
+    ctx: Contexto, medianas: dict[str, dict[int, float]], edicao: date
+) -> SimuladorDivida | None:
+    """A linha de base da dívida bruta para os próximos oito anos, com as hipóteses do Focus."""
+    ano = ctx.hoje.year
+    focus_divida = medianas.get("Dívida bruta do governo geral", {})
+    necessarios = ("PIB Total", "IPCA", "Resultado primário")
+    if ano not in focus_divida or any(not medianas.get(n) for n in necessarios):
+        return None
+    dbgg = ctx.sgs("DBGG", anos=20)
+    juros_12m = ctx.sgs("NFSP_JUROS_12M", anos=20)
+    # O juro que a dívida paga hoje: os juros de 12 meses divididos pelo estoque.
+    implicito = juros_12m[-1][1] / dbgg[-1][1] * 100
+    anos = list(range(ano + 1, ano + 9))
+    # A parte da dívida atrelada à Selic acompanha a Selic que o Focus espera (a média do
+    # ano, pelo começo e pelo fim); o resto mantém o custo de hoje.
+    atrelada = ctx.sgs("DIVIDA_IDX_SELIC", anos=2)[-1][1] / 100
+    selic_fim = medianas.get("Selic", {})
+    selic_hoje = ctx.sgs("SELIC_META", anos=20)[-1][1]
+    juro: list[float] = []
+    anterior = selic_fim.get(ano, selic_hoje)
+    for a in anos:
+        fim = selic_fim.get(a, anterior)
+        juro.append(round(implicito + atrelada * ((anterior + fim) / 2 - selic_hoje), 2))
+        anterior = fim
+    return SimuladorDivida(
+        ano_inicial=ano,
+        divida_inicial=round(focus_divida[ano], 2),
+        anos=anos,
+        juro=juro,
+        crescimento=[round(v, 2) for v in divida.estender(medianas["PIB Total"], anos)],
+        inflacao=[round(v, 2) for v in divida.estender(medianas["IPCA"], anos)],
+        primario=[round(v, 2) for v in divida.estender(medianas["Resultado primário"], anos)],
+        focus_divida=[focus_divida.get(a) for a in anos],
+        realizado=[(date(d.year, 1, 1), round(v, 2)) for d, v in dbgg if d.month == 12][-10:],
+        fonte=(
+            f"Focus de {periodo(edicao, 'D')} (PIB, IPCA, Selic, resultado primário e dívida); "
+            f"{ctx.fonte_sgs('DBGG', 'NFSP_JUROS_12M', 'DIVIDA_IDX_SELIC')}; cálculo próprio"
+        ),
+        nota=(
+            "Conta: dívida do ano seguinte = dívida × (1 + juro) ÷ ((1 + crescimento) × "
+            "(1 + inflação)) − resultado primário. Parte da dívida que o Focus espera para o "
+            f"fim de {ano}. Juro: o que a dívida paga hoje (juros de 12 meses do setor público "
+            f"÷ dívida bruta = {br(implicito)} % ao ano); a parte atrelada à Selic "
+            f"({br(atrelada * 100, 0)} % dos títulos) acompanha a Selic esperada pelo Focus. "
+            "Crescimento, inflação e primário: medianas do Focus, com a última repetida nos "
+            "anos que o Focus não cobre. É conta de ordem de grandeza: não separa a dívida "
+            "atrelada ao câmbio nem o que entra na dívida sem passar pelo primário."
+        ),
+    )
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -103,11 +165,47 @@ def montar(ctx: Contexto) -> Secao:
     ipca12 = ctx.sgs("IPCA_12M", anos=14)
     ipca_ano = [(date(d.year, 1, 1), v) for d, v in ipca12 if d.month == 12]
 
+    # O histórico de acerto: quanto a mediana errou, nesta época do ano, desde 2010.
+    acertos: dict[tuple[str, int], acerto_focus.Acerto] = {}
+    realizados = {
+        "IPCA": {d.year: v for d, v in ipca_ano},
+        "PIB Total": {d.year: v for d, v in pib_real},
+    }
+    for indicador, real in realizados.items():
+        for horizonte in (0, 1):
+            try:
+                medido = acerto_focus.medir(indicador, real, ctx.hoje, horizonte)
+            except Exception as erro:
+                print(f"    acerto do Focus ({indicador}) ficou de fora: {str(erro)[:100]}")
+                medido = None
+            if medido:
+                acertos[(indicador, horizonte)] = medido
+
     def lado_a_lado(
         id: str, titulo: str, realizado: list[Ponto], focus: dict[int, float], codigo: str
     ) -> Grafico:
         ultimo = realizado[-1]
         do_fmi = weo.valores.get(("BRA", codigo), {})
+        indicador = "IPCA" if codigo == "PCPIEPCH" else "PIB Total"
+        banda = [(ultimo[0], ultimo[1], ultimo[1])]
+        for horizonte in (0, 1):
+            medido = acertos.get((indicador, horizonte))
+            alvo = ano + horizonte
+            if medido and alvo in focus and alvo > ultimo[0].year:
+                banda.append(
+                    (
+                        date(alvo, 1, 1),
+                        round(focus[alvo] - medido.erro_tipico, 2),
+                        round(focus[alvo] + medido.erro_tipico, 2),
+                    )
+                )
+        extra: dict[str, object] = {}
+        if len(banda) > 1:
+            extra["faixa"] = Faixa(nome="erro típico do Focus nesta época do ano", pontos=banda)
+            extra["nota"] = (
+                "A faixa é a mediana do Focus mais ou menos o erro médio que ela teve, desde "
+                "2010, quando medida nesta mesma época do ano."
+            )
         return grafico(
             id,
             titulo,
@@ -140,6 +238,7 @@ def montar(ctx: Contexto) -> Secao:
                 f"IBGE e Banco Central (realizado); Focus de {periodo(edicao, 'D')}; "
                 f"FMI, {edicao_fmi}"
             ),
+            **extra,
         )
 
     if "PIB Total" in medianas:
@@ -167,7 +266,90 @@ def montar(ctx: Contexto) -> Secao:
 
     _, pib_tri = bcb_focus.trimestrais_hoje("PIB Total")
     realizado_aa: list[Ponto] = ctx.memo.get("pib_aa", [])
-    if pib_tri and realizado_aa:
+    agora = None
+    try:
+        agora = pib_agora.estimar(realizado_aa, ctx.sgs("IBCBR", anos=24))
+    except Exception as erro:
+        print(f"    PIB agora ficou de fora: {str(erro)[:120]}")
+    cartoes: list[Cartao] = []
+    focus_tri = dict(pib_tri)
+    if agora and realizado_aa:
+        ultimo = realizado_aa[-1]
+        do_focus = focus_tri.get(agora.trimestre)
+        cartoes.append(
+            cartao(
+                "pib-agora",
+                f"PIB agora: {periodo(agora.trimestre, 'T')}",
+                [(agora.trimestre, agora.previsao)],
+                unidade="%",
+                periodicidade="T",
+                casas=1,
+                detalhe=(
+                    f"em um ano; erro típico de {br(agora.erro_tipico)} pp"
+                    + (f"; Focus: {br(do_focus, 2)} %" if do_focus is not None else "")
+                ),
+                fonte="Cálculo sobre IBGE (SIDRA 5932) e Banco Central (SGS 24363)",
+                procedencia="calculado",
+                secao="previsoes",
+            )
+        )
+        series_tri = [
+            serie("realizado", "PIB realizado", realizado_aa[-12:]),
+            serie(
+                "agora",
+                "PIB agora (estimativa própria)",
+                [ultimo, (agora.trimestre, agora.previsao)],
+                papel="previsao",
+            ),
+        ]
+        if pib_tri:
+            series_tri.insert(
+                1,
+                serie(
+                    "focus",
+                    "Focus (mediana)",
+                    [ultimo, *[p for p in pib_tri if p[0] > ultimo[0]]],
+                    papel="consenso",
+                ),
+            )
+        graficos.insert(
+            0,
+            grafico(
+                "pib-agora",
+                "PIB agora: o trimestre que ainda não saiu",
+                series_tri,
+                tipo="barras",
+                unidade="% contra o mesmo trimestre do ano anterior",
+                casas=2,
+                periodicidade="T",
+                faixa=Faixa(
+                    nome=f"erro típico do método (±{br(agora.erro_tipico)} pp)",
+                    pontos=[
+                        (ultimo[0], ultimo[1], ultimo[1]),
+                        (
+                            agora.trimestre,
+                            round(agora.previsao - agora.erro_tipico, 2),
+                            round(agora.previsao + agora.erro_tipico, 2),
+                        ),
+                    ],
+                ),
+                fonte=(
+                    "IBGE (SIDRA 5932); Banco Central (IBC-Br, SGS 24363; Focus, "
+                    "ExpectativasMercadoTrimestrais); cálculo próprio"
+                ),
+                nota=(
+                    "Método: reta que liga o crescimento do PIB ao do IBC-Br médio do trimestre "
+                    f"(os dois contra um ano antes), estimada em {agora.trimestres_na_amostra} "
+                    f"trimestres. Do {periodo(agora.trimestre, 'T')} já saíram "
+                    f"{agora.meses_disponiveis} de 3 meses do IBC-Br ("
+                    f"{br(agora.ibc_no_trimestre)} % em um ano). Erro típico: raiz do erro "
+                    f"quadrático médio fora da amostra nos últimos {agora.trimestres_no_teste} "
+                    "trimestres, com o IBC-Br do trimestre inteiro e os dados revisados de hoje "
+                    "— com menos meses, o erro real é maior."
+                ),
+            ),
+        )
+    elif pib_tri and realizado_aa:
         graficos.append(
             grafico(
                 "pib-trimestral-focus",
@@ -189,7 +371,62 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
 
-    cartoes = []
+    # Quanto o Focus costuma errar, em tabela.
+    tabelas = [tabela]
+    linhas_acerto = []
+    for (indicador, horizonte), medido in sorted(acertos.items()):
+        alvo = ano + horizonte
+        aposta = medianas.get(indicador, {}).get(alvo)
+        if aposta is None:
+            continue
+        nome = "IPCA" if indicador == "IPCA" else "PIB"
+        linhas_acerto.append(
+            LinhaTabela(
+                rotulo=f"{nome} de {alvo}",
+                valores=[
+                    aposta,
+                    medido.erro_tipico,
+                    aposta - medido.erro_tipico,
+                    aposta + medido.erro_tipico,
+                    medido.vies,
+                ],
+                unidade="%",
+                casas=2,
+            )
+        )
+    if linhas_acerto:
+        tabelas.append(
+            Tabela(
+                id="acerto-focus",
+                titulo="Quanto o Focus costuma errar",
+                subtitulo="A aposta de hoje e o erro que a mediana teve nesta época, desde 2010",
+                colunas=[
+                    "Aposta de hoje",
+                    "Erro típico (pp)",
+                    "Faixa: de",
+                    "Faixa: até",
+                    "Viés (pp)",
+                ],
+                linhas=linhas_acerto,
+                fonte=(
+                    "Cálculo sobre o Focus (edições antigas), o IPCA e o PIB (Banco Central e IBGE)"
+                ),
+                nota=(
+                    "Erro típico: média do erro absoluto entre a mediana do Focus em "
+                    f"{periodo(ctx.hoje, 'D')[:5]} de cada ano e o que aconteceu. Viés positivo: o "
+                    "mercado apostou acima do realizado, em média. O realizado é o dado revisado "
+                    "de hoje, não o da época."
+                ),
+            )
+        )
+
+    # O simulador da dívida: linha de base com as hipóteses do Focus.
+    simulador = None
+    try:
+        simulador = _simulador(ctx, medianas, edicao)
+    except Exception as erro:
+        print(f"    simulador da dívida ficou de fora: {str(erro)[:120]}")
+
     for indicador, rotulo, unidade, casas in [
         ("PIB Total", f"Focus: PIB de {ano}", "%", 2),
         ("IPCA", f"Focus: IPCA de {ano}", "%", 2),
@@ -220,16 +457,19 @@ def montar(ctx: Contexto) -> Secao:
     resumo = f"O Focus de {periodo(edicao, 'D')} espera"
     if pib_f is not None and ipca_f is not None:
         resumo += f" PIB de {br(pib_f, 2)} % e IPCA de {br(ipca_f, 2)} % em {ano}."
-    resumo += (
-        " Toda projeção aqui é de terceiros e leva a fonte: o consenso do mercado (Focus) e o "
-        "FMI. Os modelos próprios do sacibras ainda não estão no ar."
-    )
+    if agora:
+        resumo += (
+            f" A estimativa própria para o PIB do {periodo(agora.trimestre, 'T')} é de "
+            f"{br(agora.previsao)} % em um ano, com erro típico de {br(agora.erro_tipico)} ponto."
+        )
+    resumo += " Toda previsão aqui vem com o consenso ao lado, a faixa de erro e o método."
     return Secao(
         id="previsoes",
         titulo="Previsões",
         resumo=resumo,
         cartoes=cartoes,
         graficos=graficos,
-        tabelas=[tabela],
+        tabelas=tabelas,
+        simulador=simulador,
         gerado_em=ctx.agora(),
     )

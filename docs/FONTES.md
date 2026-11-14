@@ -20,6 +20,16 @@ Ainda **não testado de dentro do GitHub Actions**: o workflow `fontes-smoke.yml
 | Tesouro Direto (CSV do Tesouro Transparente) | taxa e preço diários de cada título desde 2004 | sim, ~15 s | não | 15 MB, `;` e decimal com vírgula. Conexão cai de vez em quando: o builder insiste. Licença ODbL. |
 | IPEADATA OData `ipeadata.gov.br/api/odata4/` | Ibovespa diário (`GM366_IBVSP366`) | sim (usar https) | `*` | Um dia de atraso em relação à B3. EMBI+ (`JPM366_EMBI366`) parou em 30/07/2024. Saldo do Novo Caged: `CAGED12_SALDONAJU12`. |
 
+Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
+
+| Fonte | O que dá | Observações |
+|-------|----------|-------------|
+| SICONFI, RGF Anexos 01 e 02 | pessoal/RCL, dívida líquida/RCL e RCL das 27 UFs | ~54 chamadas em série (cache de 24 h). O 3º quadrimestre de 2026 ainda vem vazio: vale o 2º. O DF é esfera `D` em `entes`, mas o RGF dele só responde com `co_esfera=E`. O Amapá informa os percentuais de limite em fração (0,49): os limites saem da razão entre os valores em reais e a RCL ajustada. O limite que o RGF traz **varia por estado** (pessoal: 49 % na maioria, 48,6 % em PA, BA e GO; dívida: 200 % na maioria, 90,2 % em RR): a tela mostra o mais comum e diz quem difere. |
+| IBGE SIDRA 4099 (nível UF) | desocupação trimestral por estado | A tabela 5938 (PIB por UF) para em 2023 e a 6579 não tem a população desse ano: PIB per capita ficou de fora. |
+| Tesouro Transparente, RTN (XLSX, aba 1.1) | receita líquida, despesa total, Previdência, pessoal e primário do Governo Central, mensais | O nome do arquivo muda todo mês: o builder o descobre pelo CKAN (`package_show`). As linhas são achadas pelo texto do rótulo. Sai com uns dois meses de atraso. |
+| BCB SGS 4173 a 4180 | dívida mobiliária federal por indexador | A família não tem o IPCA: "índices de preços" é o que falta para 100 % (confere com a fatia das NTN-B). |
+| BCB Focus, edições antigas | a mediana de qualquer data passada | Permite medir o erro do consenso sem banco: ~60 consultas, um mês de cache. |
+
 ## Testadas, ainda sem uso (próximas fases)
 
 | Fonte | O que dá | Responde de fora? | CORS | Observações |

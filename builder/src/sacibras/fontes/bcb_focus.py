@@ -16,7 +16,14 @@ from sacibras.rede import baixar_json
 BASE = "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/"
 
 
-def _consulta(recurso: str, filtro: str, *, topo: int = 5000, ordem: str = "Data desc") -> Any:
+def _consulta(
+    recurso: str,
+    filtro: str,
+    *,
+    topo: int = 5000,
+    ordem: str = "Data desc",
+    validade: float | None = None,
+) -> Any:
     # A Olinda não aceita "+" como espaço: a consulta vai montada à mão, com %20.
     consulta = "&".join(
         f"{chave}={quote(valor, safe='')}"
@@ -27,7 +34,7 @@ def _consulta(recurso: str, filtro: str, *, topo: int = 5000, ordem: str = "Data
             ("$format", "json"),
         )
     )
-    bruto = baixar_json(f"{BASE}{recurso}?{consulta}")
+    bruto = baixar_json(f"{BASE}{recurso}?{consulta}", validade=validade)
     return bruto["value"]
 
 
@@ -142,3 +149,20 @@ def trimestrais_hoje(indicador: str) -> tuple[date, list[tuple[date, float]]]:
         tri, ano = linha["DataReferencia"].split("/")
         pares.append((date(int(ano), 3 * int(tri) - 2, 1), float(linha["Mediana"])))
     return date.fromisoformat(ultima), sorted(pares)
+
+
+def mediana_em(
+    indicador: str, alvo: int, quando: date, *, detalhe: str | None = None
+) -> float | None:
+    """A mediana para o ano `alvo` na edição do Focus vigente em `quando` (a última das duas
+    semanas anteriores). Edição antiga não muda: fica um mês no cache."""
+    filtro = (
+        f"Indicador eq '{indicador}'{_detalhe(detalhe)} and baseCalculo eq 0 "
+        f"and DataReferencia eq '{alvo}' and Data ge '{(quando - timedelta(days=14)).isoformat()}' "
+        f"and Data le '{quando.isoformat()}'"
+    )
+    linhas = _consulta("ExpectativasMercadoAnuais", filtro, topo=20, validade=30 * 86400)
+    for linha in linhas:
+        if linha["Mediana"] is not None:
+            return float(linha["Mediana"])
+    return None

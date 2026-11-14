@@ -431,7 +431,11 @@ main {
   text-wrap: balance;
 }
 
-/* Dez assuntos em duas colunas: nenhum cartão sobra sozinho na última linha. */
+/* Assuntos em duas colunas; se a conta for ímpar, o último ocupa a linha inteira. */
+.assuntos li:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .assuntos {
   list-style: none;
   margin: 34px 0 0;
@@ -1186,6 +1190,132 @@ table.dados.larga thead th:first-child {
 .posicao b {
   color: var(--tinta);
   font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ estados: mapa em grade */
+
+.mapa-grade {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 14px;
+  max-width: 26rem;
+}
+
+.uf {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--verde) calc(var(--forca) * 100%), transparent);
+  border: 1px solid var(--borda);
+  font-size: 0.6875rem;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.uf b {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.uf span {
+  color: var(--tinta-2);
+  font-size: 0.625rem;
+}
+
+/* Sobre o verde forte, a tinta escura do fundo lê melhor nos dois temas. */
+:root:not([data-theme="light"]) .uf.forte,
+:root:not([data-theme="light"]) .uf.forte span {
+  color: #06130c;
+}
+
+:root[data-theme="light"] .uf.forte,
+:root[data-theme="light"] .uf.forte span {
+  color: #fff;
+}
+
+.uf.sem-dado {
+  border-style: dashed;
+  color: var(--tinta-3);
+}
+
+.mapa-escala {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  max-width: 16rem;
+  font-size: 0.75rem;
+  color: var(--tinta-2);
+}
+
+.mapa-escala i {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--borda);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--verde) 14%, transparent),
+    color-mix(in srgb, var(--verde) 86%, transparent)
+  );
+}
+
+.rank-limite {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1px dashed var(--amarelo);
+}
+
+/* ------------------------------------------------------------------ simulador */
+
+.simulador {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.controle {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) minmax(8rem, 1fr) 17rem;
+  align-items: center;
+  gap: 6px 16px;
+}
+
+.controle-rotulo small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+}
+
+.controle input[type="range"] {
+  width: 100%;
+  accent-color: var(--verde);
+}
+
+.controle-valor {
+  font-size: 0.8125rem;
+  color: var(--tinta-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.simulador .botao {
+  justify-self: start;
+  height: 34px;
+  padding: 0 14px;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 640px) {
+  .controle {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ------------------------------------------------------------------ vizinhos e rodapé */

@@ -101,6 +101,25 @@ class Tabela(Modelo):
     nota: str = ""
 
 
+class SimuladorDivida(Modelo):
+    """A linha de base da dinâmica da dívida; o navegador refaz a conta com os controles.
+
+    d₊₁ = d · (1 + juro) / ((1 + crescimento) · (1 + inflação)) − primário, tudo em %.
+    """
+
+    ano_inicial: int
+    divida_inicial: float
+    anos: list[int]
+    juro: list[float]
+    crescimento: list[float]
+    inflacao: list[float]
+    primario: list[float]
+    focus_divida: list[float | None]
+    realizado: list[tuple[date, float]]
+    fonte: str
+    nota: str
+
+
 class Secao(Modelo):
     id: str
     titulo: str
@@ -108,6 +127,7 @@ class Secao(Modelo):
     cartoes: list[Cartao] = Field(default_factory=list)
     graficos: list[Grafico] = Field(default_factory=list)
     tabelas: list[Tabela] = Field(default_factory=list)
+    simulador: SimuladorDivida | None = None
     gerado_em: datetime
 
 
@@ -145,6 +165,42 @@ class Mundo(Modelo):
     ano_corrente: int
     edicao: str
     """De qual edição vêm as projeções, ex. 'World Economic Outlook, outubro de 2026'."""
+    gerado_em: datetime
+
+
+# ------------------------------------------------------------------ estados
+
+
+class UF(Modelo):
+    sigla: str
+    nome: str
+    regiao: Literal["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"]
+
+
+class MetricaEstados(Modelo):
+    id: str
+    nome: str
+    descricao: str = ""
+    unidade: str
+    casas: int = 1
+    referencia: str
+    """O período do dado, escrito: "2º quadrimestre de 2026", "3º tri/2026", "2023"."""
+    maior_e_melhor: bool | None = None
+    fonte: str
+    valores: dict[str, float | None]
+    """{sigla da UF: valor}."""
+    brasil: float | None = None
+    """O número do país (ou a soma/média dos estados), quando a fonte o dá."""
+    limites: list[LinhaRef] = Field(default_factory=list)
+    """Linhas de referência que a própria fonte publica (ex.: o limite que consta do RGF)."""
+
+
+class Estados(Modelo):
+    id: Literal["estados"] = "estados"
+    titulo: str
+    resumo: str
+    ufs: list[UF]
+    metricas: list[MetricaEstados]
     gerado_em: datetime
 
 

@@ -9,9 +9,9 @@ Escrito em 13/11/2026. Referência: [econvitals.org](https://econvitals.org/) (E
 ## Estado em 14/11/2026
 
 No ar (no Docker local e no build do Actions, ainda sem deploy porque o trabalho está no
-branch): o builder, o site e dez seções com dados reais — **atividade, trabalho, inflação,
-juros e Copom, crédito, mercados, setor externo, contas públicas e dívida, Brasil no mundo,
-previsões** — mais o resumo de 12 cartões. O que cada fase já entregou está no §10; o que
+branch): o builder, o site e onze assuntos com dados reais — **atividade, trabalho, inflação,
+juros e Copom, crédito, mercados, setor externo, contas públicas e dívida, estados, Brasil no
+mundo, previsões** — com seis números na página inicial. O que cada fase já entregou está no §10; o que
 falta decidir, no §11. O resultado dos testes de conexão está em [FONTES.md](FONTES.md).
 
 ---
@@ -329,19 +329,26 @@ por componente, informalidade e participação (PNAD trimestral), chamada direta
 para o ponto mais recente.
 
 **Fase 2 — Contas públicas, dívida e impostos** 🟡: ✅ NFSP (primário, juros, nominal), DBGG e
-DLSP, com o Focus ao lado. ⬜ RTN (receitas e despesas do Governo Central), DPF por indexador,
-arrecadação, carga tributária, meta fiscal e banda (depende de ler a LC 200 e a LDO), linha do
-tempo da reforma.
+DLSP, com o Focus ao lado; receita e despesa do Governo Central e a composição da despesa
+(RTN, tabela 1.1); dívida mobiliária por indexador (SGS 4173 a 4180). ⬜ Arrecadação por
+tributo, carga tributária, meta fiscal e banda (depende de ler a LC 200 e a LDO), prazo e
+custo da dívida (o Tesouro não publica em dado aberto leve), linha do tempo da reforma.
 
-**Fase 3 — Estados** ⬜: SICONFI testado (campos em [FONTES.md](FONTES.md)); nada na tela.
+**Fase 3 — Estados** 🟡: ✅ mapa em grade e ranking das 27 UFs: desocupação (PNAD), despesa com
+pessoal e dívida sobre a RCL (RGF, com os limites que o próprio RGF publica), receita por
+habitante. ⬜ ICMS, resultado primário, despesa por função per capita, CAPAG, capitais, série
+de cada estado no tempo.
 
 **Fase 4 — Mercados** 🟡: ✅ Ibovespa (reais e dólares), dólar, euro, curva prefixada e de juro
 real, inflação implícita, IC-Br. Escrito e desligado (`SB_B3`): índices setoriais, futuros de
 DI, dólar, Ibovespa e agrícolas. ⬜ ETFs (COTAHIST), amplitude, moedas de emergentes.
 
-**Fase 5 — Previsões** 🟡: ✅ consenso do Focus (tabela, história das apostas, PIB trimestral)
-e FMI ao lado do realizado. ⬜ Modelos próprios (PIB agora, IPCA, desocupação), simulador da
-dívida, histórico de acerto com faixa de erro.
+**Fase 5 — Previsões** 🟡: ✅ consenso do Focus (tabela, história das apostas) e FMI ao lado do
+realizado; **histórico de acerto do Focus** (erro típico nesta época do ano, desde 2010) como
+faixa de erro; **PIB agora** (equação-ponte com o IBC-Br, erro medido fora da amostra, Focus
+do trimestre ao lado); **simulador da dívida** no navegador, com linha de base do Focus.
+⬜ IPCA e desocupação com modelo sazonal, "o que mudou desde a última leitura" (pede guardar
+a leitura anterior), PIB agora com indústria, varejo e serviços além do IBC-Br.
 
 **Brasil no mundo** (pedido de 14/11/2026, fora do plano original) ✅: 22 países e 5 agregados
 em 11 métricas — PIB, inflação, juro básico, juro real, desemprego, dívida, primário, nominal,

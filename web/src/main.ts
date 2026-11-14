@@ -6,23 +6,15 @@
 import "@fontsource-variable/geist";
 import "./estilo.css";
 import { comUnidade, data, dataHora, numero, periodo } from "./formato";
+import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
-import type { Cartao, Mundo, Painel, Secao, Tabela } from "./tipos";
+import { el, guardar } from "./pecas";
+import { montarSimulador } from "./simulador";
+import type { Cartao, Estados, Mundo, Painel, Secao, Tabela } from "./tipos";
 
 const NUMEROS_A_VISTA = 4;
 const GRAFICOS_A_VISTA = 2;
-
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  classe = "",
-  texto = "",
-): HTMLElementTagNameMap[K] {
-  const e = document.createElement(tag);
-  if (classe) e.className = classe;
-  if (texto) e.textContent = texto;
-  return e;
-}
 
 const lidos = new Map<string, Promise<unknown>>();
 
@@ -107,25 +99,6 @@ function montarCartao(c: Cartao): HTMLElement {
   return no;
 }
 
-/** Uma tabela guardada: só o título aparece; o conteúdo abre no clique. */
-function guardar(titulo: string, subtitulo: string, conteudo: () => HTMLElement[]): HTMLElement {
-  const caixa = el("details", "vidro guardado");
-  const cabeca = el("summary");
-  const nome = el("span", "", titulo);
-  if (subtitulo) nome.append(el("small", "", subtitulo));
-  cabeca.append(nome, el("span", "seta", "→"));
-  const dentro = el("div", "conteudo");
-  let montado = false;
-  caixa.addEventListener("toggle", () => {
-    if (caixa.open && !montado) {
-      dentro.append(...conteudo());
-      montado = true;
-    }
-  });
-  caixa.append(cabeca, dentro);
-  return caixa;
-}
-
 function montarTabela(t: Tabela): HTMLElement {
   return guardar(t.titulo, t.subtitulo, () => {
     const rolavel = el("div", "tabela-rolavel");
@@ -192,6 +165,16 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
         }),
       );
     }
+  }
+  const simulador = s.simulador;
+  if (simulador) {
+    alvo.append(
+      guardar(
+        "Simule a dívida pública",
+        "Mexa no juro, no crescimento e no resultado primário e veja para onde ela vai",
+        () => montarSimulador(simulador),
+      ),
+    );
   }
   for (const t of s.tabelas) alvo.append(montarTabela(t));
 }
@@ -281,6 +264,10 @@ function vistaAssunto(painel: Painel, id: string, conteudo: HTMLElement): void {
   } else if (id === "mundo") {
     void ler<Mundo>(item.arquivo)
       .then((m) => corpo.append(el("p", "secao-resumo", m.resumo), montarMundo(m)))
+      .catch((erro) => corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`)));
+  } else if (id === "estados") {
+    void ler<Estados>(item.arquivo)
+      .then((e) => corpo.append(el("p", "secao-resumo", e.resumo), montarEstados(e)))
       .catch((erro) => corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`)));
   } else {
     void ler<Secao>(item.arquivo)

@@ -19,6 +19,7 @@ from sacibras.schema import Cartao, EstadoFonte, ItemSecao, Painel, Secao
 from sacibras.secoes import (
     atividade,
     credito,
+    estados,
     externo,
     fiscal,
     inflacao,
@@ -40,6 +41,7 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("mercados", "Mercados", mercados.montar),
     ("externo", "Setor externo", externo.montar),
     ("fiscal", "Contas públicas e dívida", fiscal.montar),
+    ("estados", "Estados", estados.montar),
     ("mundo", "Brasil no mundo", mundo.montar),
     ("previsoes", "Previsões", previsoes.montar),
 ]
@@ -64,7 +66,8 @@ FONTES = {
     "credito": "Banco Central (crédito)",
     "mercados": "IPEADATA e Banco Central (bolsa e câmbio)",
     "externo": "Banco Central (setor externo)",
-    "fiscal": "Banco Central (estatísticas fiscais)",
+    "fiscal": "Banco Central (estatísticas fiscais) e Tesouro Nacional (RTN)",
+    "estados": "Tesouro Nacional (SICONFI) e IBGE (PNAD Contínua)",
     "mundo": "FMI (WEO) e BIS",
     "previsoes": "Banco Central (Focus)",
 }
@@ -96,6 +99,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                         ok=True,
                     )
                 )
+                fontes.append(EstadoFonte(fonte=FONTES[id], ok=True))
                 for c in antigo.get("cartoes", []):
                     cartoes[c["id"]] = Cartao.model_validate(c)
             continue

@@ -58,6 +58,20 @@ export interface Tabela {
   nota: string;
 }
 
+export interface SimuladorDivida {
+  ano_inicial: number;
+  divida_inicial: number;
+  anos: number[];
+  juro: number[];
+  crescimento: number[];
+  inflacao: number[];
+  primario: number[];
+  focus_divida: (number | null)[];
+  realizado: [string, number][];
+  fonte: string;
+  nota: string;
+}
+
 export interface Secao {
   id: string;
   titulo: string;
@@ -65,6 +79,7 @@ export interface Secao {
   cartoes: Cartao[];
   graficos: Grafico[];
   tabelas: Tabela[];
+  simulador: SimuladorDivida | null;
   gerado_em: string;
 }
 
@@ -95,6 +110,35 @@ export interface Mundo {
   metricas: MetricaMundo[];
   ano_corrente: number;
   edicao: string;
+  gerado_em: string;
+}
+
+export interface UF {
+  sigla: string;
+  nome: string;
+  regiao: "Norte" | "Nordeste" | "Centro-Oeste" | "Sudeste" | "Sul";
+}
+
+export interface MetricaEstados {
+  id: string;
+  nome: string;
+  descricao: string;
+  unidade: string;
+  casas: number;
+  referencia: string;
+  maior_e_melhor: boolean | null;
+  fonte: string;
+  valores: Record<string, number | null>;
+  brasil: number | null;
+  limites: { valor: number; rotulo: string }[];
+}
+
+export interface Estados {
+  id: "estados";
+  titulo: string;
+  resumo: string;
+  ufs: UF[];
+  metricas: MetricaEstados[];
   gerado_em: string;
 }
 
