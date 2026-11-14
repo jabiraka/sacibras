@@ -39,3 +39,20 @@ def test_secao_vira_json_com_datas_iso() -> None:
     secao = Secao(id="s", titulo="S", graficos=[g], gerado_em=datetime(2026, 11, 14, tzinfo=UTC))
     texto = secao.model_dump_json()
     assert '"pontos":[["2026-10-01",1.23]]' in texto
+
+
+def test_manchete_e_a_primeira_frase_do_resumo() -> None:
+    from sacibras.construir import manchete
+
+    # Vírgula decimal, "nº" e parênteses não cortam a frase; ponto e ponto e vírgula, sim.
+    resumo = (
+        "A Selic está em 13,75 % ao ano desde 17/09/2026 (reunião nº 282 do Copom, em "
+        "04/11/2026). Descontada a inflação, o juro real é de 8,4 % ao ano."
+    )
+    assert manchete(resumo) == (
+        "A Selic está em 13,75 % ao ano desde 17/09/2026 (reunião nº 282 do Copom, em 04/11/2026)."
+    )
+    assert manchete("O PIB cresceu 0,5 %; em quatro trimestres acumula 1,9 %.") == (
+        "O PIB cresceu 0,5 %."
+    )
+    assert manchete("") == ""

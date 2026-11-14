@@ -3,59 +3,52 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>sacibras — a economia brasileira em uma página</title>
+    <title>sacibras — a economia brasileira em poucos números</title>
     <meta
       name="description"
-      content="PIB, emprego, inflação, juros, mercados, contas públicas e o Brasil comparado com o mundo, em gráficos com fonte oficial e data."
+      content="PIB, inflação, juros, emprego, dólar e dívida do Brasil em uma tela, com fonte oficial e data. O resto abre no clique."
     />
-    <meta name="theme-color" content="#00562a" />
+    <meta name="theme-color" content="#070a08" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <script>
-      // Antes do primeiro quadro, para o tema escolhido não piscar.
+      // Antes do primeiro quadro, para o tema escolhido não piscar. O padrão é o escuro.
       try {
-        const t = localStorage.getItem("tema");
-        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+        if (localStorage.getItem("tema") === "light") document.documentElement.dataset.theme = "light";
       } catch {}
     </script>
   </head>
   <body>
+    <div class="luz" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="pontos" aria-hidden="true"></div>
     <header class="topo">
-      <div class="miolo">
-        <div>
-          <a class="marca" href="./" aria-label="sacibras, início">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <polygon points="24,3 45,24 24,45 3,24" fill="#ffd400" />
-              <circle cx="24" cy="24" r="10.5" fill="#0b2a6f" />
-              <polyline
-                points="15.5,27.5 20.5,24 24.5,26 32.5,19.5"
-                fill="none"
-                stroke="#fff"
-                stroke-width="2.3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <h1>saci<span>bras</span></h1>
-          </a>
-          <p class="lema">A economia brasileira em uma página: o número, a data e a fonte.</p>
-        </div>
-        <div class="topo-lado">
-          <span id="atualizado">Carregando…</span>
-          <button type="button" id="tema" aria-label="Trocar entre tema claro e escuro">Tema</button>
-        </div>
-      </div>
+      <a class="marca" href="#" aria-label="sacibras, início">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <polygon points="24,3 45,24 24,45 3,24" fill="#ffd400" />
+          <circle cx="24" cy="24" r="10.5" fill="#0b2a6f" />
+          <polyline
+            points="15.5,27.5 20.5,24 24.5,26 32.5,19.5"
+            fill="none"
+            stroke="#fff"
+            stroke-width="2.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        sacibras
+      </a>
+      <a class="elo some-no-celular" href="#assuntos">Assuntos</a>
+      <a class="elo" href="#mundo">Brasil no mundo</a>
+      <button type="button" id="tema" aria-label="Trocar entre tema escuro e claro">Tema</button>
     </header>
-    <nav class="nav" aria-label="Seções"><div class="miolo" id="nav"></div></nav>
     <main class="miolo" id="conteudo"></main>
     <footer class="rodape">
       <div class="miolo">
-        <h2>Fontes desta rodada</h2>
+        <span>Fontes desta rodada</span>
         <ul id="fontes"></ul>
         <p>
-          Cada gráfico cita o órgão e a série. Os números são lidos das fontes oficiais por um
-          programa de código aberto e publicados sem banco de dados no meio; consenso de mercado
-          é a mediana do Focus (Banco Central) e as projeções internacionais são do FMI. Nada
-          aqui é recomendação de investimento.
+          Os números são lidos das fontes oficiais por um programa de código aberto, sem banco de
+          dados no meio. Consenso de mercado é a mediana do Focus (Banco Central); projeções
+          internacionais são do FMI. Nada aqui é recomendação de investimento.
         </p>
       </div>
     </footer>

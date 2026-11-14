@@ -100,6 +100,6 @@ export interface Mundo {
 
 export interface Painel {
   gerado_em: string;
-  secoes: { id: string; titulo: string; arquivo: string; ok: boolean; erro: string }[];
+  secoes: { id: string; titulo: string; arquivo: string; resumo: string; ok: boolean; erro: string }[];
   fontes: { fonte: string; ok: boolean; detalhe: string }[];
 }

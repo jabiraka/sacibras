@@ -23,6 +23,16 @@ as fases estão em [docs/PLANO.md](docs/PLANO.md) — leia antes de começar.
 
 ## Tela
 
+- **Página inicial enxuta, o resto abre no clique** (Caio, 14/11/2026: *"muitas métricas na
+  página inicial… deixar só as informações essenciais no início e deixar o usuário ir clicando
+  pra abrir"*). Na entrada: seis números (`RESUMO` em `construir.py`) e um cartão por assunto,
+  com a manchete dele. Dentro do assunto: quatro números e o primeiro gráfico; o resto fica
+  atrás de "Mais números", "Mais gráficos" e das tabelas guardadas. Coisa nova entra guardada,
+  não na entrada.
+- **O desenho segue o do finjabs** (Caio, 14/11/2026): fundo escuro, cartões de vidro,
+  cabeçalho em pílula, Geist, título grande com a segunda metade apagada. O que é só daqui:
+  as luzes de fundo verde, amarela e azul e o losango da marca. Tema claro existe, mas o
+  padrão é o escuro.
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - Cada número com data de referência.

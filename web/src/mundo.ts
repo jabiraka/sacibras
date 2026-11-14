@@ -85,15 +85,17 @@ export function montarMundo(m: Mundo): HTMLElement {
   ladoLinha.append(escolha, caixaGrafico);
   grade.append(painelRanking, ladoLinha);
 
-  // ---------------------------------------------------------------- tabela
-  const cartaoTabela = el("div", "tabela-cartao");
-  cartaoTabela.style.marginTop = "14px";
-  const tituloTabela = el("h3");
-  const subTabela = el("p", "sub");
+  // ---------------------------------------------------------------- tabela (guardada)
+  const cartaoTabela = el("details", "vidro guardado");
+  const cabecaTabela = el("summary");
+  const tituloTabela = el("span");
+  const subTabela = el("small");
+  cabecaTabela.append(tituloTabela, el("span", "seta", "→"));
   const rolavel = el("div", "tabela-rolavel");
-  rolavel.style.maxHeight = "none";
   const peTabela = el("footer", "grafico-pe");
-  cartaoTabela.append(tituloTabela, subTabela, rolavel, peTabela);
+  const dentroTabela = el("div", "conteudo");
+  dentroTabela.append(rolavel, peTabela);
+  cartaoTabela.append(cabecaTabela, dentroTabela);
   let ordem: { id: string; sentido: 1 | -1 } | null = null;
 
   raiz.append(fichas, sobre, grade, cartaoTabela);
@@ -246,9 +248,12 @@ export function montarMundo(m: Mundo): HTMLElement {
   }
 
   function pintarTabela(): void {
-    tituloTabela.textContent = `Todas as métricas em ${ano}`;
     subTabela.textContent =
       "Toque no nome da coluna para ordenar. Em itálico, projeção do FMI para o ano.";
+    tituloTabela.replaceChildren(
+      document.createTextNode(`Todas as métricas em ${ano}, país a país`),
+      subTabela,
+    );
     const tabela = el("table", "dados larga");
     const cab = tabela.createTHead().insertRow();
     cab.append(el("th", "", "País"));

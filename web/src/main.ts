@@ -1,8 +1,17 @@
+// A página tem duas vistas, trocadas pelo # do endereço:
+//   início      → o essencial: seis números e a lista de assuntos;
+//   um assunto  → os números dele, os dois primeiros gráficos, e o resto atrás de um clique.
+// Decisão do Caio (14/11/2026): pouca coisa na entrada, e a pessoa abre o que quiser.
+
+import "@fontsource-variable/geist";
 import "./estilo.css";
 import { comUnidade, data, dataHora, numero, periodo } from "./formato";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
 import type { Cartao, Mundo, Painel, Secao, Tabela } from "./tipos";
+
+const NUMEROS_A_VISTA = 4;
+const GRAFICOS_A_VISTA = 2;
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -15,13 +24,33 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return e;
 }
 
-async function ler<T>(arquivo: string): Promise<T> {
-  const resposta = await fetch(`data/${arquivo}`, { cache: "no-cache" });
-  if (!resposta.ok) throw new Error(`${arquivo}: HTTP ${resposta.status}`);
-  return (await resposta.json()) as T;
+const lidos = new Map<string, Promise<unknown>>();
+
+function ler<T>(arquivo: string): Promise<T> {
+  let pedido = lidos.get(arquivo);
+  if (!pedido) {
+    pedido = fetch(`data/${arquivo}`, { cache: "no-cache" }).then((r) => {
+      if (!r.ok) throw new Error(`${arquivo}: HTTP ${r.status}`);
+      return r.json();
+    });
+    lidos.set(arquivo, pedido);
+  }
+  return pedido as Promise<T>;
 }
 
-const NOME_PROCEDENCIA = { oficial: "oficial", mercado: "mercado", calculado: "calculado" } as const;
+/** O número grande e a unidade pequena: "13,75" + "% a.a.", "R$" + "5,65". */
+function valorComUnidade(c: Cartao, alvo: HTMLElement): void {
+  const texto = comUnidade(c.valor, c.unidade, c.casas);
+  const n = numero(c.valor, c.casas);
+  const [antes, depois] = texto.split(n);
+  if (antes === undefined || depois === undefined) {
+    alvo.textContent = texto;
+    return;
+  }
+  if (antes.trim()) alvo.append(el("small", "", antes.trim()), document.createTextNode(" "));
+  alvo.append(document.createTextNode(n));
+  if (depois.trim()) alvo.append(el("small", "", depois.trim()));
+}
 
 function miniatura(pontos: [string, number][]): SVGSVGElement {
   const ns = "http://www.w3.org/2000/svg";
@@ -43,19 +72,17 @@ function miniatura(pontos: [string, number][]): SVGSVGElement {
   linha.setAttribute("d", d.join(""));
   linha.setAttribute("fill", "none");
   linha.setAttribute("stroke", "var(--eixo)");
-  linha.setAttribute("stroke-width", "1.6");
+  linha.setAttribute("stroke-width", "1.5");
   linha.setAttribute("vector-effect", "non-scaling-stroke");
   linha.setAttribute("stroke-linejoin", "round");
-  const ultimo = pontos[pontos.length - 1];
   svg.append(linha);
+  const ultimo = pontos[pontos.length - 1];
   if (ultimo) {
     // O ponto de hoje na cor da casa; o passado, discreto.
     const ponta = document.createElementNS(ns, "path");
-    const cx = px(xs[xs.length - 1] ?? 0);
-    const cy = py(ultimo[1]);
-    ponta.setAttribute("d", `M${cx.toFixed(1)},${cy.toFixed(1)}h0.01`);
+    ponta.setAttribute("d", `M${px(xs[xs.length - 1] ?? 0).toFixed(1)},${py(ultimo[1]).toFixed(1)}h0.01`);
     ponta.setAttribute("stroke", "var(--verde)");
-    ponta.setAttribute("stroke-width", "7");
+    ponta.setAttribute("stroke-width", "6");
     ponta.setAttribute("stroke-linecap", "round");
     ponta.setAttribute("vector-effect", "non-scaling-stroke");
     svg.append(ponta);
@@ -63,91 +90,241 @@ function miniatura(pontos: [string, number][]): SVGSVGElement {
   return svg;
 }
 
-function montarCartao(c: Cartao, comLink: boolean): HTMLElement {
-  const no = comLink && c.secao ? el("a", "cartao") : el("div", "cartao");
-  if (no instanceof HTMLAnchorElement) no.href = `#${c.secao}`;
+function montarCartao(c: Cartao): HTMLElement {
+  const no = el("div", "cartao");
   no.append(el("span", "cartao-rotulo", c.rotulo));
   const valor = el("span", "cartao-valor");
-  const texto = comUnidade(c.valor, c.unidade, c.casas);
-  // O número grande e a unidade pequena: "13,75" + "% a.a.", "R$" + "5,42".
-  const n = numero(c.valor, c.casas);
-  const [antes, depois] = texto.split(n);
-  if (antes?.trim()) valor.append(el("small", "", antes.trim()), document.createTextNode(" "));
-  valor.append(document.createTextNode(n));
-  if (depois?.trim()) valor.append(el("small", "", depois.trim()));
-  if (antes === undefined || depois === undefined) valor.textContent = texto;
-  no.append(valor);
-  no.append(el("span", "cartao-detalhe", c.detalhe));
+  valorComUnidade(c, valor);
+  no.append(valor, el("span", "cartao-detalhe", c.detalhe));
   if (c.mini.length > 1) no.append(miniatura(c.mini));
   const pe = el("span", "cartao-pe");
   pe.append(el("span", "", periodo(c.referencia, c.periodicidade)));
   const proc = el("span", `procedencia ${c.procedencia}`);
-  proc.append(el("i"), document.createTextNode(NOME_PROCEDENCIA[c.procedencia]));
-  proc.title = c.fonte;
+  proc.append(el("i"), document.createTextNode(c.procedencia));
   pe.append(proc);
   no.append(pe);
   no.title = `Fonte: ${c.fonte}`;
   return no;
 }
 
+/** Uma tabela guardada: só o título aparece; o conteúdo abre no clique. */
+function guardar(titulo: string, subtitulo: string, conteudo: () => HTMLElement[]): HTMLElement {
+  const caixa = el("details", "vidro guardado");
+  const cabeca = el("summary");
+  const nome = el("span", "", titulo);
+  if (subtitulo) nome.append(el("small", "", subtitulo));
+  cabeca.append(nome, el("span", "seta", "→"));
+  const dentro = el("div", "conteudo");
+  let montado = false;
+  caixa.addEventListener("toggle", () => {
+    if (caixa.open && !montado) {
+      dentro.append(...conteudo());
+      montado = true;
+    }
+  });
+  caixa.append(cabeca, dentro);
+  return caixa;
+}
+
 function montarTabela(t: Tabela): HTMLElement {
-  const cartao = el("div", "tabela-cartao inteira");
-  cartao.append(el("h3", "", t.titulo));
-  if (t.subtitulo) cartao.append(el("p", "sub", t.subtitulo));
-  const rolavel = el("div", "tabela-rolavel");
-  rolavel.style.maxHeight = "none";
-  const tabela = el("table", "dados");
-  const cab = tabela.createTHead().insertRow();
-  cab.append(el("th", "", ""));
-  for (const c of t.colunas) cab.append(el("th", "", c));
-  const corpo = tabela.createTBody();
-  for (const l of t.linhas) {
-    const tr = corpo.insertRow();
-    const th = el("th", "", l.rotulo);
-    th.append(el("span", "sub", ` ${l.unidade}`));
-    if (l.fonte) th.title = l.fonte;
-    tr.append(th);
-    for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
-  }
-  rolavel.append(tabela);
-  cartao.append(rolavel);
-  const pe = el("footer", "grafico-pe");
-  pe.append(el("span", "fonte", `Fonte: ${t.fonte}`));
-  cartao.append(pe);
-  if (t.nota) cartao.append(el("p", "nota", t.nota));
-  return cartao;
+  return guardar(t.titulo, t.subtitulo, () => {
+    const rolavel = el("div", "tabela-rolavel");
+    const tabela = el("table", "dados");
+    const cab = tabela.createTHead().insertRow();
+    cab.append(el("th", "", ""));
+    for (const c of t.colunas) cab.append(el("th", "", c));
+    const corpo = tabela.createTBody();
+    for (const l of t.linhas) {
+      const tr = corpo.insertRow();
+      const th = el("th", "", l.rotulo);
+      if (l.unidade) th.append(el("span", "sub", ` ${l.unidade}`));
+      tr.append(th);
+      for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
+    }
+    rolavel.append(tabela);
+    const pe = el("footer", "grafico-pe");
+    pe.append(el("span", "fonte", `Fonte: ${t.fonte}`));
+    const partes: HTMLElement[] = [rolavel, pe];
+    if (t.nota) partes.push(el("p", "nota", t.nota));
+    return partes;
+  });
+}
+
+/** O botão que revela o que ficou guardado, e some. */
+function botaoDeAbrir(rotulo: string, quantos: number, abrir: () => void): HTMLElement {
+  const caixa = el("div", "abrir");
+  const botao = el("button", "", rotulo);
+  botao.type = "button";
+  botao.append(el("span", "", `+${quantos}`));
+  botao.addEventListener("click", () => {
+    abrir();
+    caixa.remove();
+  });
+  caixa.append(botao);
+  return caixa;
 }
 
 function montarSecao(s: Secao, alvo: HTMLElement): void {
-  if (s.resumo) alvo.append(el("p", "secao-resumo", s.resumo));
   if (s.cartoes.length) {
     const grade = el("div", "cartoes");
-    for (const c of s.cartoes) grade.append(montarCartao(c, s.id === "resumo"));
+    s.cartoes.slice(0, NUMEROS_A_VISTA).forEach((c) => grade.append(montarCartao(c)));
     alvo.append(grade);
+    const resto = s.cartoes.slice(NUMEROS_A_VISTA);
+    if (resto.length) {
+      alvo.append(
+        botaoDeAbrir("Mais números", resto.length, () => {
+          resto.forEach((c) => grade.append(montarCartao(c)));
+        }),
+      );
+    }
   }
-  if (s.graficos.length || s.tabelas.length) {
+  if (s.graficos.length) {
     const grade = el("div", "graficos");
-    for (const g of s.graficos) grade.append(montarGrafico(g));
-    for (const t of s.tabelas) grade.append(montarTabela(t));
+    // Um gráfico de largura inteira já enche a tela: abre só ele.
+    const aVista = s.graficos[0]?.largura === "inteira" ? 1 : GRAFICOS_A_VISTA;
+    s.graficos.slice(0, aVista).forEach((g) => grade.append(montarGrafico(g)));
     alvo.append(grade);
+    const resto = s.graficos.slice(aVista);
+    if (resto.length) {
+      alvo.append(
+        botaoDeAbrir("Mais gráficos", resto.length, () => {
+          resto.forEach((g) => grade.append(montarGrafico(g)));
+        }),
+      );
+    }
   }
+  for (const t of s.tabelas) alvo.append(montarTabela(t));
 }
+
+// ------------------------------------------------------------------ vistas
+
+function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
+  const assuntos = painel.secoes.filter((s) => s.id !== "resumo");
+
+  const heroi = el("section", "heroi");
+  const selo = el("span", "selo entra");
+  selo.append(el("i", "bolinha"), document.createTextNode(`Atualizado em ${dataHora(painel.gerado_em)}`));
+  const titulo = el("h1", "entra");
+  titulo.style.setProperty("--i", "1");
+  titulo.append(
+    document.createTextNode("A economia brasileira "),
+    el("span", "apagado", "em seis números."),
+  );
+  const lema = el(
+    "p",
+    "lema entra",
+    "Cada número com a data e a fonte oficial. O resto está guardado por assunto: abra o que interessa.",
+  );
+  lema.style.setProperty("--i", "2");
+  heroi.append(selo, titulo, lema);
+
+  const essenciais = el("section", "essenciais entra");
+  essenciais.style.setProperty("--i", "3");
+  essenciais.setAttribute("aria-label", "Os seis números");
+  void ler<Secao>("resumo.json")
+    .then((resumo) => {
+      for (const c of resumo.cartoes) {
+        const item = el("a", "essencial");
+        item.href = `#${c.secao}`;
+        item.title = `${c.detalhe ? `${c.detalhe}. ` : ""}Fonte: ${c.fonte}`;
+        const valor = el("strong");
+        valorComUnidade(c, valor);
+        item.append(
+          valor,
+          el("span", "rotulo", c.rotulo),
+          el("span", "quando", periodo(c.referencia, c.periodicidade)),
+        );
+        essenciais.append(item);
+      }
+    })
+    .catch(() => essenciais.remove());
+
+  const bloco = el("section", "bloco");
+  bloco.id = "assuntos";
+  bloco.append(el("p", "sobretitulo", "Assuntos"));
+  const h2 = el("h2");
+  h2.append(document.createTextNode("Abra o que interessa. "), el("span", "apagado", "Toque num."));
+  bloco.append(h2);
+  const lista = el("ul", "assuntos");
+  for (const s of assuntos) {
+    const li = el("li");
+    const a = el("a", "vidro assunto");
+    a.href = `#${s.id}`;
+    const nome = el("span", "assunto-titulo", s.titulo);
+    nome.append(el("span", "seta", "→"));
+    a.append(nome);
+    a.append(
+      el("span", "assunto-resumo", s.ok ? s.resumo : "Não pôde ser atualizado nesta rodada."),
+    );
+    li.append(a);
+    lista.append(li);
+  }
+  bloco.append(lista);
+  conteudo.replaceChildren(heroi, essenciais, bloco);
+}
+
+function vistaAssunto(painel: Painel, id: string, conteudo: HTMLElement): void {
+  const assuntos = painel.secoes.filter((s) => s.id !== "resumo");
+  const indice = assuntos.findIndex((s) => s.id === id);
+  const item = assuntos[indice];
+  if (!item) return;
+
+  const secao = el("section", "secao");
+  const voltar = el("a", "voltar", "← Início");
+  voltar.href = "#";
+  secao.append(voltar, el("p", "sobretitulo", "Assunto"), el("h2", "", item.titulo));
+  const corpo = el("div");
+  secao.append(corpo);
+
+  if (!item.ok) {
+    corpo.append(el("p", "aviso", "Este assunto não pôde ser atualizado nesta rodada."));
+  } else if (id === "mundo") {
+    void ler<Mundo>(item.arquivo)
+      .then((m) => corpo.append(el("p", "secao-resumo", m.resumo), montarMundo(m)))
+      .catch((erro) => corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`)));
+  } else {
+    void ler<Secao>(item.arquivo)
+      .then((s) => {
+        if (s.resumo) corpo.append(el("p", "secao-resumo", s.resumo));
+        montarSecao(s, corpo);
+      })
+      .catch((erro) => corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`)));
+  }
+
+  const vizinhos = el("nav", "vizinhos");
+  vizinhos.setAttribute("aria-label", "Outros assuntos");
+  const anterior = assuntos[indice - 1];
+  const proximo = assuntos[indice + 1];
+  if (anterior) {
+    const a = el("a", "vidro vizinho");
+    a.href = `#${anterior.id}`;
+    a.append(el("small", "", "← Anterior"), el("span", "", anterior.titulo));
+    vizinhos.append(a);
+  }
+  if (proximo) {
+    const a = el("a", "vidro vizinho proximo");
+    a.href = `#${proximo.id}`;
+    a.append(el("small", "", "Próximo →"), el("span", "", proximo.titulo));
+    vizinhos.append(a);
+  }
+  secao.append(vizinhos);
+  conteudo.replaceChildren(secao);
+}
+
+// ------------------------------------------------------------------ tema e partida
 
 function tema(): void {
   const botao = document.getElementById("tema");
   if (!botao) return;
-  const escuroAgora = (): boolean => {
-    const fixo = document.documentElement.dataset.theme;
-    if (fixo) return fixo === "dark";
-    return matchMedia("(prefers-color-scheme: dark)").matches;
-  };
+  const claro = (): boolean => document.documentElement.dataset.theme === "light";
   const rotular = (): void => {
-    botao.textContent = escuroAgora() ? "Tema claro" : "Tema escuro";
+    botao.textContent = claro() ? "Tema escuro" : "Tema claro";
   };
   rotular();
   botao.addEventListener("click", () => {
-    const novo = escuroAgora() ? "light" : "dark";
-    document.documentElement.dataset.theme = novo;
+    const novo = claro() ? "dark" : "light";
+    if (novo === "light") document.documentElement.dataset.theme = "light";
+    else delete document.documentElement.dataset.theme;
     try {
       localStorage.setItem("tema", novo);
     } catch {
@@ -156,40 +333,15 @@ function tema(): void {
     rotular();
     document.dispatchEvent(new Event("tema"));
   });
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-    rotular();
-    document.dispatchEvent(new Event("tema"));
-  });
-}
-
-function vigiarNav(nav: HTMLElement): void {
-  const links = new Map<string, HTMLAnchorElement>();
-  nav.querySelectorAll("a").forEach((a) => links.set(a.hash.slice(1), a));
-  const visiveis = new Set<string>();
-  const observador = new IntersectionObserver(
-    (entradas) => {
-      for (const e of entradas) {
-        if (e.isIntersecting) visiveis.add(e.target.id);
-        else visiveis.delete(e.target.id);
-      }
-      const atual = [...links.keys()].find((id) => visiveis.has(id));
-      links.forEach((a, id) => a.setAttribute("aria-current", String(id === atual)));
-    },
-    { rootMargin: "-80px 0px -55% 0px" },
-  );
-  document.querySelectorAll("section.secao").forEach((s) => observador.observe(s));
 }
 
 async function iniciar(): Promise<void> {
   tema();
   const conteudo = document.getElementById("conteudo") as HTMLElement;
-  const nav = document.getElementById("nav") as HTMLElement;
-  const atualizado = document.getElementById("atualizado") as HTMLElement;
   let painel: Painel;
   try {
     painel = await ler<Painel>("painel.json");
   } catch (erro) {
-    atualizado.textContent = "Sem dados";
     conteudo.append(
       el(
         "p",
@@ -199,37 +351,6 @@ async function iniciar(): Promise<void> {
     );
     return;
   }
-  atualizado.textContent = `Atualizado em ${dataHora(painel.gerado_em)}`;
-
-  const tarefas: Promise<void>[] = [];
-  for (const item of painel.secoes) {
-    const link = el("a", "", item.titulo);
-    link.href = `#${item.id}`;
-    nav.append(link);
-    const secao = el("section", "secao");
-    secao.id = item.id;
-    secao.append(el("h2", "secao-titulo", item.titulo));
-    conteudo.append(secao);
-    if (!item.ok) {
-      secao.append(el("p", "aviso", "Esta seção não pôde ser atualizada nesta rodada."));
-      continue;
-    }
-    tarefas.push(
-      (async () => {
-        try {
-          if (item.id === "mundo") {
-            const m = await ler<Mundo>(item.arquivo);
-            secao.append(el("p", "secao-resumo", m.resumo), montarMundo(m));
-          } else {
-            montarSecao(await ler<Secao>(item.arquivo), secao);
-          }
-        } catch (erro) {
-          secao.append(el("p", "aviso", `Não foi possível carregar esta seção (${String(erro)}).`));
-        }
-      })(),
-    );
-  }
-  vigiarNav(nav);
 
   const fontes = document.getElementById("fontes") as HTMLElement;
   for (const f of painel.fontes) {
@@ -237,8 +358,22 @@ async function iniciar(): Promise<void> {
     if (f.detalhe) li.title = f.detalhe;
     fontes.append(li);
   }
-  await Promise.all(tarefas);
-  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+
+  let vistaAtual = "";
+  const desenhar = (): void => {
+    const alvo = location.hash.slice(1);
+    const assunto = painel.secoes.some((s) => s.id === alvo && s.id !== "resumo") ? alvo : "";
+    if (assunto !== vistaAtual || !conteudo.firstChild) {
+      vistaAtual = assunto;
+      if (assunto) vistaAssunto(painel, assunto, conteudo);
+      else vistaInicio(painel, conteudo);
+      window.scrollTo(0, 0);
+    }
+    // "#assuntos" é uma âncora dentro do início, não um assunto.
+    if (!assunto && alvo) document.getElementById(alvo)?.scrollIntoView();
+  };
+  window.addEventListener("hashchange", desenhar);
+  desenhar();
 }
 
 void iniciar();

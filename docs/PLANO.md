@@ -273,6 +273,10 @@ Repositório público: Actions e Pages são gratuitos.
 
 - **Builder:** Python 3.12, `uv`, `httpx`, `pandas`, `statsmodels`, `pydantic` (schema dos
   JSONs), `pytest`, `ruff`, `mypy`. CLI: `sacibras build [--secao X]`, `sacibras fontes-smoke`.
+- **Desenho** (Caio, 14/11/2026): parecido com o do finjabs — escuro, vidro, cabeçalho em
+  pílula, Geist — com as luzes da bandeira ao fundo. A entrada mostra só seis números e os
+  assuntos; cada assunto abre na própria vista (`#inflacao`), com o resto atrás de um clique.
+  Substitui a "uma página, nesta ordem" do §5 e os 12 cartões do §5.0.
 - **Site:** Vite + TypeScript, sem framework; **Observable Plot** para os gráficos,
   `d3-geo` + `topojson-client` para o mapa; CSS próprio com tokens, tema claro e escuro;
   PT-BR. Exportar gráfico em PNG e link para a seção.

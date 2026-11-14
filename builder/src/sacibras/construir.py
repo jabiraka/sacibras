@@ -7,6 +7,7 @@ rodada anterior, se existir na pasta de saída, continua valendo.
 from __future__ import annotations
 
 import json
+import re
 import traceback
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -43,21 +44,17 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("previsoes", "Previsões", previsoes.montar),
 ]
 
-# Os doze cartões do topo, na ordem; cada um nasce na seção que o explica.
-RESUMO = [
-    "pib-tt",
-    "desocupacao",
-    "ipca-12m",
-    "nucleos-12m",
-    "selic-meta",
-    "juro-real-ex-ante",
-    "inclinacao",
-    "ibovespa",
-    "dolar",
-    "dbgg",
-    "primario",
-    "transacoes-correntes",
-]
+# Os seis números da página inicial, na ordem; cada um nasce no assunto que o explica.
+# Decisão do Caio (14/11/2026): só o essencial na entrada, o resto abre no clique.
+RESUMO = ["pib-4t", "ipca-12m", "selic-meta", "desocupacao", "dolar", "dbgg"]
+
+
+def manchete(texto: str) -> str:
+    """A primeira frase do resumo de um assunto: o que cabe no cartão da página inicial."""
+    corte = re.search(r"[.;](\s|$)", texto)
+    frase = texto[: corte.start()] if corte else texto
+    return frase.strip() + "." if frase.strip() else ""
+
 
 FONTES = {
     "atividade": "IBGE (SIDRA)",
@@ -89,8 +86,16 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
         arquivo = f"{id}.json"
         if so and id not in so:
             if (saida / arquivo).exists():
-                itens.append(ItemSecao(id=id, titulo=titulo, arquivo=arquivo, ok=True))
                 antigo = json.loads((saida / arquivo).read_text(encoding="utf-8"))
+                itens.append(
+                    ItemSecao(
+                        id=id,
+                        titulo=titulo,
+                        arquivo=arquivo,
+                        resumo=manchete(antigo.get("resumo", "")),
+                        ok=True,
+                    )
+                )
                 for c in antigo.get("cartoes", []):
                     cartoes[c["id"]] = Cartao.model_validate(c)
             continue
@@ -99,7 +104,15 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
             _gravar(saida, arquivo, secao)
             if isinstance(secao, Secao):
                 cartoes.update({c.id: c for c in secao.cartoes})
-            itens.append(ItemSecao(id=id, titulo=titulo, arquivo=arquivo, ok=True))
+            itens.append(
+                ItemSecao(
+                    id=id,
+                    titulo=titulo,
+                    arquivo=arquivo,
+                    resumo=manchete(getattr(secao, "resumo", "")),
+                    ok=True,
+                )
+            )
             fontes.append(EstadoFonte(fonte=FONTES[id], ok=True))
             print(f"  ok    {id}")
         except Exception as erro:
@@ -115,7 +128,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
     resumo = Secao(
         id="resumo",
         titulo="Resumo",
-        resumo="Os números que resumem o momento. Toque num cartão para ver a seção dele.",
+        resumo="Os seis números da página inicial.",
         cartoes=[cartoes[c] for c in RESUMO if c in cartoes],
         gerado_em=agora,
     )

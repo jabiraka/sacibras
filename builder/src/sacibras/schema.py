@@ -161,6 +161,8 @@ class ItemSecao(Modelo):
     id: str
     titulo: str
     arquivo: str
+    resumo: str = ""
+    """A manchete do assunto, para o cartão da página inicial (que não baixa a seção)."""
     ok: bool
     erro: str = ""
 
