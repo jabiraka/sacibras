@@ -132,6 +132,48 @@ LEITURAS: list[Leitura] = [
         "SPE, Boletim Impulso Estrutural do Gasto: conferir se saiu a nota metodológica com o "
         "multiplicador de receita. A cada seis meses.",
     ),
+    # ------------------------------------------------------------- impostos
+    Leitura(
+        "Reforma do consumo, ano a ano (EC 132 e LC 214)",
+        "leis.REFORMA_DO_CONSUMO",
+        date(2026, 11, 14),
+        date(2026, 12, 15),
+        "Lida no Senado, na publicação original. Reler no Planalto (texto compilado da EC "
+        "132/2023, arts. 124 a 133 do ADCT, e da LC 214/2025, arts. 343 a 349) para ver se "
+        "norma posterior mexeu. Depois, uma vez por ano.",
+        do_pc=True,
+    ),
+    Leitura(
+        "Receita prevista para o ano (LOA e avaliação bimestral)",
+        "relatorios.RECEITA_PREVISTA",
+        date(2026, 11, 14),
+        date(2026, 11, 24),
+        "O mesmo relatório bimestral de leis.AVALIACOES_2026 (Tabela 1, receita administrada "
+        "e RGPS). A cada bimestre; em janeiro, trocar o ano e a LOA.",
+    ),
+    Leitura(
+        "Dívida ativa da União: estoque",
+        "relatorios.DIVIDA_ATIVA_ESTOQUE",
+        date(2026, 11, 14),
+        date(2027, 4, 30),
+        "Anexo de Riscos Fiscais do PLDO (gov.br/planejamento, orçamentos anuais), enviado "
+        "até 15 de abril. Uma vez por ano.",
+    ),
+    Leitura(
+        "Dívida ativa da União: recuperado no ano",
+        "relatorios.DIVIDA_ATIVA_RECUPERADO",
+        date(2026, 11, 14),
+        date(2027, 3, 31),
+        "PGFN em Números (gov.br/pgfn, institucional), que sai em março. Uma vez por ano.",
+    ),
+    Leitura(
+        "Imposto em % da renda por décimo (Ipea)",
+        "relatorios.INCIDENCIA_POR_DECIMO",
+        date(2026, 11, 14),
+        date(2027, 11, 14),
+        "Repositório do Ipea: ver se há Texto para Discussão novo dos mesmos autores com a "
+        "POF seguinte. Uma vez por ano.",
+    ),
 ]
 
 
