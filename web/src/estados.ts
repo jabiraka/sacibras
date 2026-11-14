@@ -59,8 +59,133 @@ function cores(): { claro: string; escuro: string; semDado: string; tinta: strin
   };
 }
 
+// ------------------------------------------------------------------ janela do PIB
+//
+// O crescimento do PIB vem com a série anual (o índice de volume das Contas Regionais e, no
+// ano seguinte ao último do IBGE, a prévia pelo IBC-R). A pessoa escolhe de que ano a que
+// ano (Caio, 14/11/2026: "não deixe a janela de 10 anos por padrão, deixe a pessoa escolher a
+// janela"); a janela vale para o mapa, o ranking e a tabela, e fica ao trocar de parte.
+
+interface Janela {
+  de: number;
+  ate: number;
+}
+let janela: Janela | null = null;
+
+function anosDe(m: MetricaEstados): number[] {
+  return Object.keys(m.anuais?.BR ?? {})
+    .map(Number)
+    .sort((a, b) => a - b);
+}
+
+/** Padrão: o último ano do IBGE sobre o anterior. */
+function janelaPadrao(m: MetricaEstados): Janela {
+  const anos = anosDe(m);
+  const oficiais = anos.filter((a) => !m.ano_previsto || a < m.ano_previsto);
+  const ate = oficiais[oficiais.length - 1] ?? anos[anos.length - 1] ?? 0;
+  return { de: ate - 1, ate };
+}
+
+function janelaDe(m: MetricaEstados): Janela {
+  const anos = anosDe(m);
+  if (janela && anos.includes(janela.de) && anos.includes(janela.ate) && janela.de < janela.ate) {
+    return janela;
+  }
+  return janelaPadrao(m);
+}
+
+/** A métrica do PIB recalculada na janela escolhida; as outras passam como vieram. */
+function naJanela(m: MetricaEstados, todas: MetricaEstados[]): MetricaEstados {
+  if (!m.anuais || anosDe(m).length < 2) return m;
+  const series = m.anuais;
+  const { de, ate } = janelaDe(m);
+  const anos = ate - de;
+  const cresc = (serie?: Record<string, number>): number | null => {
+    const a = serie?.[String(de)];
+    const b = serie?.[String(ate)];
+    return a && b ? ((b / a) ** (1 / anos) - 1) * 100 : null;
+  };
+  const valores: Record<string, number | null> = {};
+  for (const sigla of Object.keys(m.valores)) valores[sigla] = cresc(series[sigla]);
+  const comPrevia = !!m.ano_previsto && ate >= m.ano_previsto;
+  const previa = comPrevia ? todas.find((x) => x.id === "ibcr_ano") : undefined;
+  const periodo = anos === 1 ? `em ${ate} sobre ${de}` : `por ano, em média, de ${de} a ${ate}`;
+  let descricao = `Quanto a economia do estado cresceu ${periodo}, sem o efeito dos preços.`;
+  descricao += comPrevia
+    ? ` ${m.ano_previsto} ainda não tem número do IBGE: entra a prévia nossa pelo IBC-R do Banco Central (o do estado ou, para quem não tem, o da região), que é previsão e erra.`
+    : " É o número oficial do IBGE (Contas Regionais), que sai com quase dois anos de atraso.";
+  if (anos === 1 && !comPrevia && m.ano_previsto) {
+    descricao += ` Para um sinal mais novo, escolha ${m.ano_previsto} (prévia) em "até".`;
+  }
+  const sozinha = anos === 1 && previa !== undefined;
+  return {
+    ...m,
+    nome: anos === 1 ? "Crescimento do PIB" : "Crescimento médio do PIB",
+    descricao,
+    unidade: anos === 1 ? "%" : "% ao ano",
+    referencia: (anos === 1 ? String(ate) : `${de}–${ate}`) + (comPrevia ? " (prévia)" : ""),
+    fonte: previa ? `${m.fonte}; prévia: ${previa.fonte}` : m.fonte,
+    valores,
+    brasil: cresc(series.BR),
+    // Só a prévia de um ano tem faixa de erro medida; numa janela longa, ela se dilui.
+    intervalos: sozinha ? previa.intervalos : undefined,
+    estimados: previa?.estimados,
+    como_ler: sozinha
+      ? previa.como_ler
+      : previa
+        ? "Ponto vazado: estado sem IBC-R, que no último ano cresce como a região."
+        : "",
+  };
+}
+
+/** As listas "Crescimento de" e "até"; somem quando a métrica não tem série. */
+function controlesDaJanela(
+  prefixo: string,
+  aoMudar: () => void,
+): { caixa: HTMLElement; pintar: (m: MetricaEstados | undefined) => void } {
+  const caixa = el("div", "janela-pib");
+  let atual: MetricaEstados | undefined;
+  const de = listaSuspensa(`${prefixo}-de`, "Crescimento de", [], "", (v) => {
+    if (!atual) return;
+    const novo = Number(v);
+    janela = { de: novo, ate: Math.max(janelaDe(atual).ate, novo + 1) };
+    aoMudar();
+  });
+  const ate = listaSuspensa(`${prefixo}-ate`, "até", [], "", (v) => {
+    if (!atual) return;
+    const novo = Number(v);
+    janela = { de: Math.min(janelaDe(atual).de, novo - 1), ate: novo };
+    aoMudar();
+  });
+  caixa.append(de.caixa, ate.caixa);
+  function pintar(m: MetricaEstados | undefined): void {
+    atual = m;
+    const anos = m ? anosDe(m) : [];
+    caixa.hidden = !m || anos.length < 2;
+    if (!m || anos.length < 2) return;
+    const j = janelaDe(m);
+    const rotulo = (a: number): string =>
+      m.ano_previsto && a >= m.ano_previsto ? `${a} (prévia)` : String(a);
+    de.trocar(
+      anos.slice(0, -1).map((a) => ({ valor: String(a), rotulo: String(a) })),
+      String(j.de),
+    );
+    ate.trocar(
+      anos.slice(1).map((a) => ({ valor: String(a), rotulo: rotulo(a) })),
+      String(j.ate),
+    );
+  }
+  return { caixa, pintar };
+}
+
+// ------------------------------------------------------------------ mapa
+
 function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<string, string>): void {
-  const largura = Math.max(260, Math.floor(alvo.clientWidth));
+  let largura = Math.max(260, Math.floor(alvo.clientWidth));
+  // Em tela cheia, o mapa cabe também na altura.
+  if (alvo.closest(".mapa-cheio")) {
+    largura = Math.max(260, Math.min(largura, Math.floor(alvo.clientHeight / 0.98)));
+  }
   const estreito = largura < 400;
   const c = cores();
   const valores = Object.values(metrica.valores).filter((v): v is number => v !== null);
@@ -137,7 +262,8 @@ function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<str
 export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLElement {
   const raiz = el("div", "estados");
   const nomes = new Map(e.ufs.map((u) => [u.sigla, u.nome]));
-  let metrica = e.metricas[0] as MetricaEstados;
+  let escolhida = e.metricas[0] as MetricaEstados;
+  let metrica = naJanela(escolhida, e.metricas);
   // O estado tocado no ranking ou no gráfico de duas métricas fica destacado nos dois.
   let destaque = "";
   const opcoes = e.metricas.map((m) => ({ valor: m.id, rotulo: m.nome, grupo: m.grupo || undefined }));
@@ -160,11 +286,13 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   // Visão geral (o mapa sozinho, menor) ou a parte "mapa" (mapa e ranking lado a lado).
   const comRanking = parte === "mapa";
   const barra = el("div", "barra-controles");
+  const janelaMapa = controlesDaJanela("estados-janela", () => pintar());
   barra.append(
-    listaSuspensa("estados-metrica", "Métrica", opcoes, metrica.id, (id) => {
-      metrica = e.metricas.find((m) => m.id === id) ?? metrica;
+    listaSuspensa("estados-metrica", "Métrica", opcoes, escolhida.id, (id) => {
+      escolhida = e.metricas.find((m) => m.id === id) ?? escolhida;
       pintar();
     }).caixa,
+    janelaMapa.caixa,
   );
   const sobre = el("p", "secao-resumo");
   const grade = el("div", comRanking ? "mundo-grade" : "estados-so-mapa");
@@ -174,7 +302,32 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   const tela = el("div", "mapa");
   const escala = el("div", "mapa-escala");
   const peMapa = el("footer", "grafico-pe");
-  painelMapa.append(tituloMapa, subMapa, tela, escala, peMapa);
+  // Tela cheia (Caio, 14/11/2026: "o mapa também pode aumentar, se ela quiser ver só o mapa,
+  // pode deixar cobrindo a tela"): o painel cobre a tela; Esc ou o botão fecham.
+  const ampliar = el("button", "mapa-ampliar", "Tela cheia");
+  ampliar.type = "button";
+  ampliar.setAttribute("aria-pressed", "false");
+  const topoMapa = el("div", "mapa-topo");
+  const titulos = el("div");
+  titulos.append(tituloMapa, subMapa);
+  topoMapa.append(titulos, ampliar);
+  const fecharComEsc = (ev: KeyboardEvent): void => {
+    if (ev.key === "Escape") alternarTelaCheia(false);
+  };
+  function alternarTelaCheia(ligar: boolean): void {
+    painelMapa.classList.toggle("mapa-cheio", ligar);
+    document.documentElement.classList.toggle("sem-rolagem", ligar);
+    ampliar.textContent = ligar ? "Fechar ✕" : "Tela cheia";
+    ampliar.setAttribute("aria-pressed", String(ligar));
+    if (ligar) document.addEventListener("keydown", fecharComEsc);
+    else document.removeEventListener("keydown", fecharComEsc);
+  }
+  ampliar.addEventListener("click", () =>
+    alternarTelaCheia(!painelMapa.classList.contains("mapa-cheio")),
+  );
+  // Ao trocar de tela, a rolagem volta.
+  window.addEventListener("hashchange", () => alternarTelaCheia(false), { once: true });
+  painelMapa.append(topoMapa, tela, escala, peMapa);
   grade.append(painelMapa);
 
   const ranking = el("div", "ranking-pontos");
@@ -259,6 +412,8 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   }
 
   function pintar(): void {
+    metrica = naJanela(escolhida, e.metricas);
+    janelaMapa.pintar(escolhida);
     sobre.textContent = metrica.descricao;
     tituloMapa.textContent = metrica.nome;
     // O texto mudou: o glossário marca de novo (o "?" do título, o sublinhado da descrição).
@@ -426,18 +581,132 @@ function montarParteFicha(e: Estados, ufInicial: string): HTMLElement {
   return painel;
 }
 
-/** Todas as métricas lado a lado, agrupadas por região. */
+// ------------------------------------------------------------------ tabela completa
+
+const CHAVE_COLUNAS = "sacibras.estados.colunas";
+
+/** As colunas guardadas no navegador (conveniência; sem ele, vale o padrão). */
+function colunasGuardadas(): string[] | null {
+  try {
+    const bruto = localStorage.getItem(CHAVE_COLUNAS);
+    const lido: unknown = bruto ? JSON.parse(bruto) : null;
+    return Array.isArray(lido) ? lido.filter((x): x is string => typeof x === "string") : null;
+  } catch {
+    return null;
+  }
+}
+
+function guardarColunas(ids: string[]): void {
+  try {
+    localStorage.setItem(CHAVE_COLUNAS, JSON.stringify(ids));
+  } catch {
+    /* sem armazenamento: só não lembra */
+  }
+}
+
+/** As métricas lado a lado, agrupadas por região. A pessoa escolhe as colunas (Caio,
+ * 14/11/2026: "deixe parâmetros na tabela pra ela escolher oq quer ver"); abre com a
+ * primeira métrica de cada assunto. As fontes ficam dobradas embaixo. */
 function tabelaCompleta(e: Estados): HTMLElement {
-  const caixa = el("div", "painel-mundo");
+  const caixa = el("div", "painel-mundo tabela-estados");
+  const ids = new Set(e.metricas.map((m) => m.id));
+  const padrao = e.metricas
+    .filter((m, i) => i === 0 || m.grupo !== e.metricas[i - 1]?.grupo)
+    .map((m) => m.id);
+  const guardadas = colunasGuardadas()?.filter((id) => ids.has(id));
+  const visiveis = new Set(guardadas?.length ? guardadas : padrao);
+
+  // Escolha das colunas: caixas de marcar por assunto, dentro de "Escolher colunas".
+  const escolha = el("details", "colunas-escolha");
+  const resumo = el("summary");
+  const marcas = el("div", "colunas-grupos");
+  escolha.append(resumo, marcas);
+  const grupos = new Map<string, MetricaEstados[]>();
+  for (const m of e.metricas) {
+    const g = m.grupo ?? "";
+    grupos.set(g, [...(grupos.get(g) ?? []), m]);
+  }
+  const caixasDeMarcar: HTMLInputElement[] = [];
+  for (const [grupo, ms] of grupos) {
+    const bloco = el("fieldset", "colunas-grupo");
+    bloco.append(el("legend", "", grupo || "Outras"));
+    for (const m of ms) {
+      const rotulo = el("label", "coluna-marca");
+      const marca = el("input");
+      marca.type = "checkbox";
+      marca.value = m.id;
+      marca.checked = visiveis.has(m.id);
+      marca.addEventListener("change", () => {
+        if (marca.checked) visiveis.add(m.id);
+        else visiveis.delete(m.id);
+        guardarColunas([...visiveis]);
+        pintar();
+      });
+      caixasDeMarcar.push(marca);
+      rotulo.append(marca, document.createTextNode(` ${m.nome}`));
+      bloco.append(rotulo);
+    }
+    marcas.append(bloco);
+  }
+  const atalhos = el("div", "colunas-atalhos");
+  const atalho = (texto: string, quais: () => string[]): HTMLButtonElement => {
+    const b = el("button", "botao-texto", texto);
+    b.type = "button";
+    b.addEventListener("click", () => {
+      visiveis.clear();
+      for (const id of quais()) visiveis.add(id);
+      for (const c of caixasDeMarcar) c.checked = visiveis.has(c.value);
+      guardarColunas([...visiveis]);
+      pintar();
+    });
+    return b;
+  };
+  atalhos.append(
+    atalho("Todas", () => [...ids]),
+    atalho("Só o essencial", () => padrao),
+    atalho("Nenhuma", () => []),
+  );
+  marcas.append(atalhos);
+
+  const barra = el("div", "barra-controles");
+  const janelaTabela = controlesDaJanela("tabela-janela", () => pintar());
+  barra.append(escolha, janelaTabela.caixa);
+
   const rolavel = el("div", "tabela-rolavel");
+  const fontes = el("details", "fontes-dobradas");
+  caixa.append(barra, rolavel, fontes);
+
+  function pintar(): void {
+    const ms = e.metricas.filter((m) => visiveis.has(m.id)).map((m) => naJanela(m, e.metricas));
+    resumo.textContent = `Escolher colunas (${ms.length} de ${e.metricas.length})`;
+    janelaTabela.pintar(e.metricas.find((m) => visiveis.has(m.id) && m.anuais));
+    if (!ms.length) {
+      rolavel.replaceChildren(el("p", "vazio", "Nenhuma coluna escolhida."));
+      fontes.replaceChildren();
+      fontes.hidden = true;
+      return;
+    }
+    rolavel.replaceChildren(montarTabela(e, ms));
+    remarcar(rolavel);
+    const lista = [...new Set(ms.map((m) => m.fonte))];
+    const ul = el("ul");
+    for (const f of lista) ul.append(el("li", "", f));
+    fontes.hidden = false;
+    fontes.replaceChildren(el("summary", "", `Fontes (${lista.length})`), ul);
+  }
+  pintar();
+  return caixa;
+}
+
+function montarTabela(e: Estados, metricas: MetricaEstados[]): HTMLTableElement {
   const tabela = el("table", "dados larga");
   const cabeca = tabela.createTHead();
   // Uma linha com o assunto de cada bloco de colunas (Economia, Trabalho e renda…).
-  if (e.metricas.some((m) => m.grupo)) {
+  if (metricas.some((m) => m.grupo)) {
     const grupos = cabeca.insertRow();
     grupos.className = "grupos";
     grupos.append(el("th"));
-    for (const m of e.metricas) {
+    for (const m of metricas) {
       const ultimo = grupos.lastElementChild as HTMLTableCellElement;
       if (grupos.cells.length > 1 && ultimo.dataset.grupo === (m.grupo ?? "")) {
         ultimo.colSpan += 1;
@@ -451,9 +720,9 @@ function tabelaCompleta(e: Estados): HTMLElement {
   }
   const cab = cabeca.insertRow();
   cab.append(el("th", "", "Estado"));
-  for (const m of e.metricas) {
+  for (const m of metricas) {
     const th = el("th", "", m.nome);
-    th.append(el("span", "sub", ` ${m.unidade}`));
+    th.append(el("span", "sub", ` ${m.unidade} · ${m.referencia}`));
     th.title = `${m.unidade} · ${m.referencia}`;
     cab.append(th);
   }
@@ -462,21 +731,35 @@ function tabelaCompleta(e: Estados): HTMLElement {
     const tr = corpo.insertRow();
     tr.className = "grupo";
     const th = el("th", "", regiao);
-    th.colSpan = e.metricas.length + 1;
+    th.colSpan = metricas.length + 1;
     tr.append(th);
     for (const u of e.ufs.filter((x) => x.regiao === regiao)) {
       const linha = corpo.insertRow();
       const nome = el("th", "", u.nome);
       protegerNomeDeEstado(nome, u.nome);
       linha.append(nome);
-      for (const m of e.metricas) {
+      for (const m of metricas) {
         const v = m.valores[u.sigla] ?? null;
-        linha.append(el("td", "", v === null ? "–" : numero(v, m.casas)));
+        const td = el("td", "", v === null ? "–" : numero(v, m.casas));
+        if (v !== null && m.estimados?.includes(u.sigla)) {
+          td.title = "estimado pela região";
+          td.append(el("sup", "", "*"));
+        }
+        linha.append(td);
       }
     }
   }
-  rolavel.append(tabela);
-  const fontes = [...new Set(e.metricas.map((m) => m.fonte))].join("; ");
-  caixa.append(rolavel, el("p", "fonte", `Fontes: ${fontes}.`));
-  return caixa;
+  const brasil = corpo.insertRow();
+  brasil.className = "brasil";
+  brasil.append(el("th", "", "Brasil"));
+  for (const m of metricas) {
+    brasil.append(el("td", "", m.brasil === null ? "–" : numero(m.brasil, m.casas)));
+  }
+  if (metricas.some((m) => m.estimados?.length)) {
+    const nota = tabela.createTFoot().insertRow();
+    const td = el("td", "nota-tabela", "* Estimado pela região (estado sem IBC-R).");
+    td.colSpan = metricas.length + 1;
+    nota.append(td);
+  }
+  return tabela;
 }

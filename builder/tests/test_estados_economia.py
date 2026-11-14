@@ -60,14 +60,16 @@ def test_pib_por_uf_cresce_pelo_volume_e_divide_pela_populacao_do_mesmo_ano(
     m = {x.id: x for x in estados_economia.pib(UFS)}
     assert set(m) == {
         "pib_crescimento",
-        "pib_crescimento_10_anos",
         "pib_per_capita",
         "pib_participacao",
     }
     assert m["pib_crescimento"].valores["PB"] == pytest.approx(6.5)
     assert m["pib_crescimento"].valores["SP"] == pytest.approx(2.0)
-    assert m["pib_crescimento_10_anos"].referencia == "2014–2024"
-    assert m["pib_crescimento_10_anos"].brasil == pytest.approx(2.0)
+    # A série vai junto, para a tela escolher a janela.
+    assert m["pib_crescimento"].anuais["PB"][2024] / m["pib_crescimento"].anuais["PB"][
+        2023
+    ] == pytest.approx(1.065)
+    assert set(m["pib_crescimento"].anuais["BR"]) == set(range(2010, 2025))
     # R$ milhões × 1e6 ÷ pessoas
     assert m["pib_per_capita"].valores["AC"] == pytest.approx(1000.0)
     assert m["pib_per_capita"].brasil == pytest.approx(1000.0)
@@ -189,3 +191,26 @@ def test_metricas_saem_na_ordem_dos_grupos(monkeypatch: pytest.MonkeyPatch) -> N
     assert e.metricas[0].id == "pib_crescimento"
     assert [m.grupo for m in e.metricas][-1] == "Trabalho e renda"
     assert e.resumo.startswith("Em 2024, o PIB cresceu de")
+
+
+def test_previa_entra_na_serie_do_pib_so_no_ano_seguinte(monkeypatch: pytest.MonkeyPatch) -> None:
+    _contas_regionais(monkeypatch)
+    pib = next(x for x in estados_economia.pib(UFS) if x.id == "pib_crescimento")
+    previa = pib.model_copy(
+        update={
+            "id": "ibcr_ano",
+            "referencia": "2025",
+            "valores": {"PB": 3.0, "SP": None},
+            "brasil": 2.5,
+            "anuais": {},
+        }
+    )
+    estados_economia.encadear_previa(pib, previa)
+    assert pib.ano_previsto == 2025
+    assert pib.anuais["PB"][2025] == pytest.approx(pib.anuais["PB"][2024] * 1.03, rel=1e-5)
+    assert pib.anuais["BR"][2025] == pytest.approx(pib.anuais["BR"][2024] * 1.025, rel=1e-5)
+    assert 2025 not in pib.anuais["SP"]
+    # Prévia de outro ano não se encadeia.
+    outro = next(x for x in estados_economia.pib(UFS) if x.id == "pib_crescimento")
+    estados_economia.encadear_previa(outro, previa.model_copy(update={"referencia": "2026"}))
+    assert outro.ano_previsto is None

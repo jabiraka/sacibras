@@ -315,6 +315,10 @@ export interface MetricaEstados {
   estimados?: string[];
   /** A faixa de erro em palavras. */
   como_ler?: string;
+  /** Só no crescimento do PIB: {sigla ou "BR": {ano: índice de volume}}, para escolher a janela. */
+  anuais?: Record<string, Record<string, number>>;
+  /** O primeiro ano de `anuais` que é prévia (IBC-R), não número do IBGE. */
+  ano_previsto?: number | null;
 }
 
 export interface BlocoDeConta {

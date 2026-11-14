@@ -50,8 +50,8 @@ def _por_nome(ufs: UFs) -> dict[str, str]:
 
 
 def pib(ufs: UFs) -> list[MetricaEstados]:
-    """Crescimento no último ano, crescimento médio em dez anos, PIB por habitante e peso no
-    PIB do Brasil, todos do mesmo ano das Contas Regionais."""
+    """Crescimento do PIB (o último ano; a série vai junto, para a tela escolher a janela),
+    PIB por habitante e peso no PIB do Brasil, todos do mesmo ano das Contas Regionais."""
     edicao, corrente, volume = ibge_contas_regionais.pib()
     por_nome = _por_nome(ufs)
     falta = [n for n in por_nome if n not in corrente or n not in volume]
@@ -83,30 +83,13 @@ def pib(ufs: UFs) -> list[MetricaEstados]:
             valores={s: cresc(n, ano - 1, ano) for n, s in por_nome.items()},
             brasil=cresc("Brasil", ano - 1, ano),
             grupo=ECONOMIA,
+            anuais={
+                ("BR" if n == "Brasil" else por_nome[n]): {a: round(x, 6) for a, x in v.items()}
+                for n, v in volume.items()
+                if n == "Brasil" or n in por_nome
+            },
         )
     ]
-    inicio = ano - 10
-    if inicio in volume["Brasil"]:
-        metricas.append(
-            MetricaEstados(
-                id="pib_crescimento_10_anos",
-                nome="Crescimento do PIB em 10 anos",
-                descricao=(
-                    f"Crescimento médio por ano de {inicio} a {ano}, sem o efeito dos preços. "
-                    "Pega a recessão de 2015–16 e a pandemia: mostra quem cresce de forma "
-                    "duradoura, não um ano bom."
-                ),
-                unidade="% ao ano",
-                casas=1,
-                referencia=f"{inicio}–{ano}",
-                maior_e_melhor=True,
-                fonte=f"{fonte}, tabela 3 (volume do PIB)",
-                valores={s: cresc(n, inicio, ano) for n, s in por_nome.items()},
-                brasil=cresc("Brasil", inicio, ano),
-                grupo=ECONOMIA,
-            )
-        )
-
     populacao = ibge_projecao.grupos()
     per_capita: dict[str, float | None] = {}
     for nome, sigla in por_nome.items():
@@ -612,6 +595,23 @@ def credito(
             grupo=CREDITO,
         ),
     ]
+
+
+def encadear_previa(pib: MetricaEstados, previa: MetricaEstados) -> None:
+    """Põe o ano da prévia (IBC-R) na série do PIB, quando é o ano seguinte ao último do IBGE:
+    assim a janela escolhida na tela pode ir até ele, marcada como previsão."""
+    if not pib.anuais or not previa.referencia.isdigit():
+        return
+    ano = int(previa.referencia)
+    if ano != max(pib.anuais.get("BR", {0: 0.0})) + 1:
+        return
+    pares = [*previa.valores.items(), ("BR", previa.brasil)]
+    for sigla, cresc in pares:
+        serie = pib.anuais.get(sigla)
+        if cresc is None or not serie or ano - 1 not in serie:
+            continue
+        serie[ano] = round(serie[ano - 1] * (1 + cresc / 100), 6)
+    pib.ano_previsto = ano
 
 
 def frase_pib(m: MetricaEstados) -> str:

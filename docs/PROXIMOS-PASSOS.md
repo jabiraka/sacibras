@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (valor nunca em branco: fonte que falha fica com o dado do dia anterior; antes, no mesmo dia, Setor externo por setor, Pobreza e Estados com PIB).
+Última atualização: 14/11/2026 (Estados: tabela completa com escolha de colunas, janela do PIB escolhida pela pessoa com 2025 pela prévia, mapa em tela cheia).
 
 ---
 
@@ -26,6 +26,28 @@ em branco os valores"*.
 - Falta ver no Actions a primeira rodada agendada com o passo novo.
 - A tela ainda não marca a peça mantida (a data de referência dela já diz de quando é). Se o
   Caio quiser um selo "dado anterior", o campo `mantidos` já está no `painel.json`.
+
+## Estados: tabela, janela do PIB e mapa em tela cheia (14/11/2026, no PC)
+
+Pedido do Caio: *"arrume a tabela dos Estados. tá muito pequena e uma fontes gigante, deixe a
+fonte minimizada"*, *"deixe parâmetros na tabela pra ela escolher oq quer ver"*, *"No pib, não
+deixe a janela de 10 anos por padrão, deixe a pessoa escolher a janela"*, *"Tem como estimar o
+crescimento do PIB por estado para 2025?"* e *"o mapa também pode aumentar [...] cobrindo a
+tela"*.
+
+- **Tabela completa** (`estados.ts`, `tabelaCompleta`): usa a altura da tela; "Escolher
+  colunas" com caixas de marcar por assunto (abre com a primeira métrica de cada um; "Todas",
+  "Só o essencial", "Nenhuma"; lembrada no navegador); linha do Brasil; fontes dobradas em
+  "Fontes (N)", em letra miúda, só das colunas escolhidas.
+- **Janela do PIB**: saiu a métrica "Crescimento do PIB em 10 anos". O `pib_crescimento` leva
+  a série (`MetricaEstados.anuais`, índice de volume por UF desde 2010) e a tela calcula de
+  qualquer ano a qualquer ano ("Crescimento de … até …", no mapa e na tabela; padrão: o último
+  ano do IBGE). **2025** entra encadeando a prévia do IBC-R (`estados_economia.encadear_previa`,
+  `ano_previsto`), marcada "(prévia)", com a faixa de erro quando a janela é só 2025 e o
+  asterisco nos estados estimados pela região.
+- **Mapa em tela cheia**: botão "Tela cheia" no painel do mapa (Esc fecha), cabe na altura.
+- Conferido a 1280 e a 390 px. O mypy acusa `construir.py:191` (`alertas`), da outra sessão
+  que mexia no mesmo diretório (`anterior.py`), não deste trabalho.
 
 ## Estados: PIB e mais treze métricas (14/11/2026, branch `ccr-b41d9ce1-hd022f`)
 

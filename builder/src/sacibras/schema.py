@@ -493,6 +493,12 @@ class MetricaEstados(Modelo):
     """UFs cujo valor é estimativa por regra nossa (a tela marca o ponto e diz no mapa)."""
     como_ler: str = ""
     """A faixa de erro em palavras de todo dia, quando há `intervalos`."""
+    anuais: dict[str, dict[int, float]] = Field(default_factory=dict)
+    """Só no crescimento do PIB: {sigla ou "BR": {ano: índice de volume}}. A tela calcula o
+    crescimento na janela que a pessoa escolhe (Caio, 14/11/2026: "deixe a pessoa escolher a
+    janela")."""
+    ano_previsto: int | None = None
+    """O primeiro ano de `anuais` que é prévia nossa (o IBC-R encadeado), não número do IBGE."""
 
 
 class Fatia(Modelo):

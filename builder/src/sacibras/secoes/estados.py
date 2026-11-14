@@ -694,6 +694,10 @@ def _economia(ctx: Contexto) -> list[MetricaEstados]:
             saida += passo()
         except Exception as erro:  # uma fonte fora do ar não derruba a seção
             print(f"  aviso: {nome} indisponível: {str(erro)[:160]}")
+    pib = next((m for m in saida if m.id == "pib_crescimento"), None)
+    previa_ano = next((m for m in saida if m.id == "ibcr_ano"), None)
+    if pib and previa_ano:
+        estados_economia.encadear_previa(pib, previa_ano)
     return saida
 
 
