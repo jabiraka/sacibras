@@ -35,7 +35,9 @@ CATEGORIAS: list[Categoria] = [
         titulo="Mercados e exterior",
         secoes=["mercados", "externo", "mundo"],
     ),
-    Categoria(id="contas-publicas", titulo="Contas públicas", secoes=["fiscal", "estados"]),
+    Categoria(
+        id="contas-publicas", titulo="Contas públicas", secoes=["fiscal", "impostos", "estados"]
+    ),
     Categoria(id="adiante", titulo="O que vem pela frente", secoes=["previsoes", "riscos"]),
 ]
 
@@ -313,6 +315,46 @@ PARTES: dict[str, list[Parte]] = {
             "Quanto o Governo Central arrecada e gasta, e com o quê.",
             cartoes=["despesa-gc", "previdencia-rgps"],
             graficos=["receita-despesa", "despesa-composicao"],
+        ),
+    ],
+    "impostos": [
+        Parte(
+            "arrecadacao",
+            "Arrecadação federal",
+            "Quanto a Receita arrecada mês a mês e de quais tributos, descontada a inflação.",
+            cartoes=["arrecadacao-12m", "arrecadacao-real", "arrecadacao-pib"],
+            graficos=["arrecadacao-12m", "arrecadacao-tributos"],
+            tabelas=["arrecadacao-tributos"],
+        ),
+        Parte(
+            "carga",
+            "Carga tributária",
+            "Quanto do PIB vai para impostos, quem arrecada e como o Brasil se compara.",
+            cartoes=["carga-tributaria"],
+            graficos=["carga-tributaria", "carga-esferas"],
+        ),
+        Parte(
+            "composicao",
+            "Sobre o que se cobra",
+            "Consumo, renda, salários e patrimônio: o Brasil ao lado de outros países.",
+            cartoes=["carga-consumo"],
+            graficos=["carga-composicao"],
+            tabelas=["carga-paises"],
+        ),
+        Parte(
+            "crescimento",
+            "Impostos e crescimento",
+            "A carga contra o crescimento, país a país, e o que os estudos oficiais estimam.",
+            graficos=["carga-crescimento"],
+            tabelas=["impostos-estudos"],
+        ),
+        Parte(
+            "gasto-tributario",
+            "Gasto tributário",
+            "O que a União deixa de arrecadar com isenções e regimes especiais.",
+            cartoes=["gasto-tributario"],
+            graficos=["gasto-tributario"],
+            tabelas=["gasto-tributario"],
         ),
     ],
     "previsoes": [

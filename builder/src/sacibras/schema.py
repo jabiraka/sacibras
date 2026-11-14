@@ -77,6 +77,29 @@ class Piramide(Modelo):
     """Do ano em diante é projeção da fonte."""
 
 
+class EixoDispersao(Modelo):
+    nome: str
+    unidade: str
+    casas: int = 1
+
+
+class PontoDispersao(Modelo):
+    chave: str
+    """ISO3 do país (ou sigla da UF)."""
+    nome: str
+    x: float
+    y: float
+
+
+class Dispersao(Modelo):
+    """Um ponto por país: uma métrica em cada eixo. O Brasil (BRA) sai em destaque."""
+
+    eixo_x: EixoDispersao
+    eixo_y: EixoDispersao
+    pontos: list[PontoDispersao]
+    correlacao: float | None = None
+
+
 class Grafico(Modelo):
     id: str
     titulo: str
@@ -97,6 +120,8 @@ class Grafico(Modelo):
     largura: Literal["meia", "inteira"] = "meia"
     piramide: Piramide | None = None
     """Com ela, o site desenha a pirâmide etária no lugar das séries."""
+    dispersao: Dispersao | None = None
+    """Com ela, o site desenha um ponto por país no lugar das séries."""
 
 
 class Meta(Modelo):

@@ -17,6 +17,7 @@ import { ligarGlossario } from "./glossario";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
+import { montarDispersao } from "./dispersao";
 import { montarPiramide } from "./piramide";
 import { montarRetornos } from "./retornos";
 import { el, guardar } from "./pecas";
@@ -164,6 +165,7 @@ function botaoDeAbrir(rotulo: string, quantos: number, abrir: () => void): HTMLE
 /** O gráfico, ou a peça própria quando o gráfico tem uma (o comparador de retornos). */
 function montarPeca(g: Grafico): HTMLElement {
   if (g.piramide) return montarPiramide(g, g.piramide);
+  if (g.dispersao) return montarDispersao(g, g.dispersao);
   return g.id === "retornos-em-reais" ? montarRetornos(g) : montarGrafico(g);
 }
 

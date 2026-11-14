@@ -38,6 +38,15 @@ export interface Grafico {
   nota: string;
   largura: "meia" | "inteira";
   piramide?: Piramide | null;
+  dispersao?: Dispersao | null;
+}
+
+/** Um ponto por país: uma métrica em cada eixo (`chave` é o ISO3; o Brasil é BRA). */
+export interface Dispersao {
+  eixo_x: { nome: string; unidade: string; casas: number };
+  eixo_y: { nome: string; unidade: string; casas: number };
+  pontos: { chave: string; nome: string; x: number; y: number }[];
+  correlacao: number | null;
 }
 
 /** Pessoas por sexo e grupo de idade (mil), um ano por linha de `homens`/`mulheres`. */

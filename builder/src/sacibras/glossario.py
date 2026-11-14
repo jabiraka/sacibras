@@ -626,6 +626,74 @@ TERMOS: list[Termo] = [
         "orçamento para ser pagas.",
         ("precatórios", "precatório"),
     ),
+    # ---------------------------------------------------------------- impostos
+    Termo(
+        "carga-tributaria",
+        "Carga tributária",
+        "Quanto do PIB o governo inteiro (União, estados, municípios e previdência) arrecada "
+        "em impostos e contribuições num ano.",
+        ("carga tributária",),
+        "#impostos/carga",
+    ),
+    Termo(
+        "gasto-tributario",
+        "Gasto tributário",
+        "O que o governo deixa de arrecadar por isenção, desconto ou regime especial de "
+        "imposto (Simples Nacional, Zona Franca de Manaus, deduções do Imposto de Renda). "
+        "Funciona como um gasto, só que sem passar pelo orçamento.",
+        ("gasto tributário", "gastos tributários"),
+        "#impostos/gasto-tributario",
+    ),
+    Termo(
+        "multiplicador",
+        "Multiplicador",
+        "Quanto o PIB muda para cada real a mais ou a menos de gasto ou de imposto. Um "
+        "multiplicador de 0,5 num corte de imposto quer dizer R$ 0,50 a mais de PIB para cada "
+        "R$ 1 a menos de imposto.",
+        ("multiplicador", "multiplicadores"),
+        "#impostos/crescimento",
+    ),
+    Termo(
+        "simples-nacional",
+        "Simples Nacional",
+        "O regime de imposto das empresas pequenas: uma guia só, com alíquota menor que a das "
+        "regras gerais. É o maior gasto tributário da União.",
+        ("Simples Nacional",),
+    ),
+    Termo(
+        "cofins",
+        "Cofins e PIS",
+        "Contribuições federais cobradas sobre o faturamento das empresas, que pagam a "
+        "seguridade social e o seguro-desemprego.",
+        ("Cofins", "PIS/Pasep"),
+    ),
+    Termo(
+        "csll",
+        "CSLL",
+        "Contribuição Social sobre o Lucro Líquido: um segundo imposto sobre o lucro das "
+        "empresas, ao lado do Imposto de Renda.",
+        ("CSLL",),
+    ),
+    Termo(
+        "ipi",
+        "IPI",
+        "Imposto sobre Produtos Industrializados: federal, cobrado de fábricas e importadores.",
+        ("IPI",),
+    ),
+    Termo(
+        "iof",
+        "IOF",
+        "Imposto sobre Operações Financeiras: federal, cobrado em crédito, câmbio, seguro e "
+        "algumas aplicações.",
+        ("IOF",),
+    ),
+    Termo(
+        "correlacao",
+        "Correlação",
+        "Mede de -1 a 1 o quanto duas coisas andam juntas. Perto de zero, não andam; andar "
+        "junto não quer dizer que uma cause a outra.",
+        ("correlação",),
+    ),
     # ---------------------------------------------------------------- estados
     Termo(
         "icms",

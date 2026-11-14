@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (décima sessão do dia: glossário, painel de alerta explicado, Brasil no mundo, barras de erro).
+Última atualização: 14/11/2026 (11ª sessão do dia: o assunto Impostos).
 
 ---
 
@@ -17,7 +17,7 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   buscado pelo navegador, o IPCA contra a meta, a busca) e onze assuntos — atividade,
   trabalho, inflação, juros e Copom, crédito, mercados, setor externo, contas públicas e
   dívida, estados (com a ficha de cada um), Brasil no mundo, previsões; e, desde 14/11,
-  demografia e riscos (treze ao todo).
+  demografia e riscos; e Impostos, na 11ª sessão (catorze ao todo).
 - Feito na última sessão:
   - Do Econvitals ([PROPOSTAS](PROPOSTAS.md), tabela com o par brasileiro de cada métrica):
     juro e inflação implícita por prazo e a implícita de 5 a 10 anos à frente; o prefixado
@@ -43,6 +43,29 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
+
+## 11ª sessão (14/11/2026, na nuvem, branch `ccr-d0c7a2f5-n0uby2`): Impostos
+
+- **Pedido do Caio**: *"estou sentindo falta de alguma sessão sobre impostos, ou impacto de
+  impostos no crescimento"*. Para o crescimento, ele escolheu as quatro peças oferecidas.
+- **Assunto novo "Impostos"** (`secoes/impostos.py`), em Contas públicas, entre Contas públicas
+  e Estados, com cinco partes:
+  - **Arrecadação federal**: o CSV da Receita por UF e tributo (`fontes/receita_arrecadacao.py`),
+    soma de 12 meses a preços de hoje (IPCA), crescimento real, % do PIB e a tabela por tributo.
+    Desde 2013 (antes, o arquivo não traz a previdência por estado; 2001–2002 têm números
+    ambíguos).
+  - **Carga tributária** e **sobre o que se cobra**: OCDE, Global Revenue Statistics
+    (`fontes/ocde_receita.py`): Brasil × média da OCDE × América Latina, quem arrecada, a
+    composição por base e a tabela com 12 países.
+  - **Impostos e crescimento**: gráfico de pontos novo (`Grafico.dispersao`,
+    `web/src/dispersao.ts`, o mesmo desenho de Brasil no mundo) com a carga média e o
+    crescimento médio do PIB por habitante (FMI) em dez anos, a correlação dita em palavras e
+    o aviso de que andar junto não é causa; e a tabela dos estudos oficiais lidos
+    (`relatorios.EFEITOS_DE_IMPOSTO`: FMI WP 16/79, Ipea TD 1377, Ipea Carta 60, Prêmio
+    Tesouro 2024), cada um com o trecho original e a página.
+  - **Gasto tributário**: o DGT da Receita, bases efetivas (`fontes/receita_gastos.py`), 2014 a
+    2023 juntando quatro edições, e os maiores itens do último ano.
+- Glossário (+9 termos), sinônimos da busca, teste de fumaça das três fontes novas.
 
 ## Décima sessão (14/11/2026, na nuvem, branch `ccr-3122c6b7-8l15l1`)
 
@@ -144,7 +167,13 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 3. **Estados no tempo.** A ficha é uma foto. Faltam a série de cada estado contra o Brasil, a
    nota CAPAG, a previdência do estado (RREO Anexo 04). Cuidado com o custo: cada período a
    mais são 54 chamadas ao SICONFI; usar só o 3º quadrimestre de cada ano.
-4. **Arrecadação federal por tributo** (RTN aba 1.1 ou o CSV da Receita) e **carga tributária**.
+4. **O que falta de Impostos** (lista no [PROPOSTAS](PROPOSTAS.md)): a linha do tempo da
+   reforma do consumo (CBS/IBS de 2026 a 2033) depende de **ler a EC 132/2023 e a LC 214/2025
+   no Planalto, do PC** (a nuvem não alcança); a carga como métrica em Brasil no mundo (a OCDE
+   já está lida); arrecadação federal e ICMS na ficha do estado; o PLOA ao lado do gasto
+   tributário. **Reler** o DGT quando sair a edição 2024 (prevista para 2027) e o
+   multiplicador de receita da SPE, se a nota metodológica do Boletim Impulso Estrutural do
+   Gasto for publicada.
 5. **Previsões próprias que faltam:** IPCA e desocupação com modelo sazonal; "o que mudou desde a
    última leitura" no PIB agora; PIB agora com indústria, varejo e serviços além do IBC-Br.
    Sempre ao lado do Focus, com barra de erro e o método numa frase.
@@ -171,6 +200,11 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - A projeção da população é a do IBGE, sem faixa de erro (o IBGE não publica). O PIB por
   ocupado é por pessoa, não por hora; de 2020 a 2022 a pandemia distorce a decomposição (dito
   na tela). O déficit do INSS é só o Regime Geral (sem servidores e militares).
+- Impostos: a carga é a da OCDE (33,7 % do PIB em 2024), não a da Receita (outro método); a
+  arrecadação soma as UFs do CSV da Receita, que fica perto do total oficial mas não igual; o
+  gasto tributário é só o federal e sai com dois anos de atraso. O gráfico carga ×
+  crescimento não mede efeito de imposto: o efeito está só nos estudos lidos, e nenhum é do
+  BC, do Tesouro ou da SPE (não publicaram multiplicador de receita).
 - No celular, as tabelas de quatro colunas rolam de lado com a primeira coluna parada (é a
   regra do CSS para toda tabela do site).
 - O calendário mostra só o dia da divulgação: a API traz a hora sem dizer o fuso. Se a API do
