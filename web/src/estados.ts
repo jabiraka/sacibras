@@ -75,7 +75,13 @@ function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<str
   const titulo = (d: UFNoMapa): string => {
     const v = valorDe(d);
     const nome = nomes.get(d.properties.uf) ?? d.properties.uf;
-    return `${nome}\n${v === null ? "sem dado" : `${numero(v, metrica.casas)} ${metrica.unidade}`}`;
+    if (v === null) return `${nome}\nsem dado`;
+    const f = metrica.intervalos?.[d.properties.uf];
+    return (
+      `${nome}\n${numero(v, metrica.casas)} ${metrica.unidade}` +
+      (f ? `\nfaixa de erro: de ${numero(f[0], metrica.casas)} a ${numero(f[1], metrica.casas)}` : "") +
+      (metrica.estimados?.includes(d.properties.uf) ? "\nestimado pela região" : "")
+    );
   };
 
   // Rótulo só onde cabe: no celular, só os estados grandes; o resto aparece ao tocar.
@@ -134,7 +140,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   let metrica = e.metricas[0] as MetricaEstados;
   // O estado tocado no ranking ou no gráfico de duas métricas fica destacado nos dois.
   let destaque = "";
-  const opcoes = e.metricas.map((m) => ({ valor: m.id, rotulo: m.nome }));
+  const opcoes = e.metricas.map((m) => ({ valor: m.id, rotulo: m.nome, grupo: m.grupo || undefined }));
   const corDestaque = (): string =>
     getComputedStyle(document.documentElement).getPropertyValue("--serie-2").trim();
 
@@ -197,8 +203,14 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
       .map((u) => ({ u, v: metrica.valores[u.sigla] ?? null }))
       .filter((x): x is { u: (typeof e.ufs)[number]; v: number } => x.v !== null)
       .sort((a, b) => b.v - a.v);
+    const faixas = metrica.intervalos ?? {};
+    const estimados = new Set(metrica.estimados ?? []);
     const regua = reguaDe(
-      [...linhas.map((x) => x.v), ...(metrica.brasil === null ? [] : [metrica.brasil])],
+      [
+        ...linhas.map((x) => x.v),
+        ...Object.values(faixas).flat(),
+        ...(metrica.brasil === null ? [] : [metrica.brasil]),
+      ],
       metrica.limites,
     );
     const itens: LinhaDoRanking[] = linhas.map((x, i) => ({
@@ -208,6 +220,8 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
       marca: "comum",
       posicao: i + 1,
       cor: x.u.sigla === destaque ? corDestaque() : undefined,
+      faixa: faixas[x.u.sigla],
+      estimado: estimados.has(x.u.sigla),
     }));
     if (metrica.brasil !== null) {
       itens.push({ chave: "BR", nome: "Brasil", valor: metrica.brasil, marca: "brasil", posicao: null });
@@ -235,6 +249,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
         ),
       );
     }
+    if (metrica.como_ler) posicao.append(document.createTextNode(metrica.como_ler));
     const semDado = e.ufs.filter((u) => (metrica.valores[u.sigla] ?? null) === null);
     if (semDado.length) {
       posicao.append(
@@ -416,7 +431,25 @@ function tabelaCompleta(e: Estados): HTMLElement {
   const caixa = el("div", "painel-mundo");
   const rolavel = el("div", "tabela-rolavel");
   const tabela = el("table", "dados larga");
-  const cab = tabela.createTHead().insertRow();
+  const cabeca = tabela.createTHead();
+  // Uma linha com o assunto de cada bloco de colunas (Economia, Trabalho e renda…).
+  if (e.metricas.some((m) => m.grupo)) {
+    const grupos = cabeca.insertRow();
+    grupos.className = "grupos";
+    grupos.append(el("th"));
+    for (const m of e.metricas) {
+      const ultimo = grupos.lastElementChild as HTMLTableCellElement;
+      if (grupos.cells.length > 1 && ultimo.dataset.grupo === (m.grupo ?? "")) {
+        ultimo.colSpan += 1;
+        continue;
+      }
+      const th = el("th", "", m.grupo ?? "");
+      th.dataset.grupo = m.grupo ?? "";
+      th.scope = "colgroup";
+      grupos.append(th);
+    }
+  }
+  const cab = cabeca.insertRow();
   cab.append(el("th", "", "Estado"));
   for (const m of e.metricas) {
     const th = el("th", "", m.nome);

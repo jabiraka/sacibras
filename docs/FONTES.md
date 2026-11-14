@@ -32,7 +32,14 @@ Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
 | Fonte | O que dá | Observações |
 |-------|----------|-------------|
 | SICONFI, RGF Anexos 01 e 02 | pessoal/RCL, dívida líquida/RCL e RCL das 27 UFs | ~54 chamadas em série (cache de 24 h). O 3º quadrimestre de 2026 ainda vem vazio: vale o 2º. O DF é esfera `D` em `entes`, mas o RGF dele só responde com `co_esfera=E`. O Amapá informa os percentuais de limite em fração (0,49): os limites saem da razão entre os valores em reais e a RCL ajustada. O limite que o RGF traz **varia por estado** (pessoal: 49 % na maioria, 48,6 % em PA, BA e GO; dívida: 200 % na maioria, 90,2 % em RR): a tela mostra o da lei (`leis.py`, lida em 14/11/2026) e diz quem difere. |
-| IBGE SIDRA 4099 (nível UF) | desocupação trimestral por estado | A tabela 5938 (PIB por UF) para em 2023 e a 6579 não tem a população desse ano: PIB per capita ficou de fora. |
+| IBGE SIDRA 4099 (nível UF) | desocupação e subutilização trimestrais por estado | |
+| IBGE FTP, Contas Regionais (`ftp.ibge.gov.br/Contas_Regionais/<ano>/xls/Especiais_2010_<ano>_xls.zip`, ~290 KB) | o PIB oficial das 27 UFs de 2010 a 2024: corrente (tab01, R$ milhões) e volume encadeado (tab03, 2010 = 100) | Responde de fora do Brasil (14/11/2026). A edição de 2024 saiu em 13/11/2026; uma por ano, dois anos de atraso. `.xls` antigo: lido com `xlrd`. O PIB por habitante divide pela projeção do IBGE do mesmo ano (a tabela 5938 é a do PIB dos municípios e para em 2023). |
+| BCB SGS, IBC-R (13 UFs, sem ajuste) | prévia mensal do PIB de AM, BA, CE, ES, GO, MG, PA, PE, PR, RJ, RS, SC e SP | No CKAN (`package_search?q=IBCR`: os 13 e as 5 regiões, com e sem ajuste). Daqui saem os 12 meses e a prévia do último ano fechado, que o IBGE ainda não publicou. |
+| BCB SGS 14056–14082 e 15925–15951 | saldo (R$ milhões) e inadimplência (%) do crédito do SFN por UF, mensais | O CKAN não lista; conferidas uma a uma no serviço de metadados do SGS (`FachadaWSSGS?method=getUltimoValorXML&codigoSerie=N`), 14/11/2026. Códigos na ordem alfabética do nome do estado. Há também PF (14002–, 15861–) e PJ (14029–, 15893–). |
+| IBGE SIDRA 8529 e 5436 (nível UF) | informalidade e renda média habitual por estado, trimestrais | |
+| IBGE SIDRA 7060 (n7 e n6) | IPCA de 12 meses das 16 áreas pesquisadas (10 regiões metropolitanas e 6 capitais) | O código da área começa pelo da UF. |
+| IBGE SIDRA 5939 (nível UF), variável 529 | índice de Gini do PIB entre os municípios de cada UF | Até 2023. O DF é um município só: fica sem valor. |
+| Comex Stat, `api-comexstat.mdic.gov.br/general` (POST, JSON) | exportações FOB em US$ por estado de origem | Responde de fora (14/11/2026). Período que cruza o ano volta vazio com `success: true`: pede-se um pedaço por ano. Último mês em `/general/dates/updated`. |
 | Tesouro Transparente, RTN (XLSX, aba 1.1) | receita líquida, despesa total, Previdência, pessoal e primário do Governo Central, mensais | O nome do arquivo muda todo mês: o builder o descobre pelo CKAN (`package_show`). As linhas são achadas pelo texto do rótulo. Sai com uns dois meses de atraso. |
 | BCB SGS 4639 | primário mensal do Governo Federal e Banco Central (o Governo Central da meta), R$ milhões | Soma de 12 meses contra a meta da LDO. A conta da meta (desconto de precatórios, defesa, saúde) não tem API: vem do relatório bimestral do Executivo, lido à mão pela nota da Consultoria de Orçamentos do Senado (`leis.AVALIACOES_2026`). |
 | BCB SGS 4173 a 4180 | dívida mobiliária federal por indexador | A família não tem o IPCA: "índices de preços" é o que falta para 100 % (confere com a fatia das NTN-B). |
@@ -100,6 +107,7 @@ Da aba de riscos (14/11/2026):
 | FMI DataMapper `imf.org/external/datamapper/api` | 403 (Akamai) em parte das chamadas; trocado pela API SDMX. |
 | Stooq, Yahoo Finance | desafio de JavaScript, HTTP 429 ou sem CORS; não usar. |
 | DBnomics | responde, mas o WEO mais novo lá é abril/2025. |
+| Ministério do Trabalho, Novo Caged por UF (`gov.br/trabalho-e-emprego/...`) | 403 da nuvem em 14/11/2026 (o `pdet.mte.gov.br` redireciona para lá). O IPEADATA só tem o Caged do Brasil. Testar do PC. |
 
 ## B3: funciona, mas o site veda a coleta
 

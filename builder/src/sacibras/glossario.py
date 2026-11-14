@@ -52,6 +52,23 @@ TERMOS: list[Termo] = [
         "#atividade",
     ),
     Termo(
+        "ibc-r",
+        "IBC-R",
+        "O IBC-Br feito para um estado: a prévia mensal do PIB que o Banco Central publica "
+        "para 13 estados. O PIB oficial de cada estado, do IBGE, sai quase dois anos depois.",
+        ("IBC-R",),
+        "#estados/mapa",
+    ),
+    Termo(
+        "contas-regionais",
+        "Contas Regionais",
+        "O PIB de cada estado, calculado pelo IBGE com os órgãos de estatística estaduais. "
+        "Sai uma vez por ano, com quase dois anos de atraso: o de 2024 saiu em novembro de "
+        "2026.",
+        ("Contas Regionais",),
+        "#estados/mapa",
+    ),
+    Termo(
         "ajuste-sazonal",
         "Ajuste sazonal",
         "Correção do que se repete todo ano na mesma época (Natal, safra, férias), para "
@@ -1069,8 +1086,9 @@ TERMOS: list[Termo] = [
     Termo(
         "gini",
         "Índice de Gini",
-        "Mede a desigualdade da renda numa só conta: 0 seria todos com a mesma renda, e 1, uma "
-        "pessoa com toda a renda. O Brasil fica perto de 0,5; países europeus, perto de 0,3.",
+        "Mede a desigualdade numa só conta: 0 é tudo dividido por igual, 1 é tudo nas mãos de "
+        "um só (uma pessoa, ou um município, no PIB dos estados). Na renda, o Brasil fica perto "
+        "de 0,5; países europeus, perto de 0,3.",
         ("índice de Gini", "coeficiente de Gini", "Gini"),
         "#pobreza/desigualdade",
     ),

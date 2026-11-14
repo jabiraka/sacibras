@@ -73,7 +73,32 @@ Pronto em 14/11/2026 (a ficha do estado: escolha na lista ou toque no ranking):
 - **Números soltos**: investimento em % da RCL (com a mediana), dívida com a União (R$, % da
   dívida, % da RCL), ICMS, IPVA, ITCMD e FPE por habitante com a posição entre as 27.
 
+Pronto em 14/11/2026 (Caio: *"Quais outras métricas dos Estados dá pra colocar? Não vi o
+crescimento do PIB por Estado"*; *"pode fazer todas que vc sugeriu"*), no mapa, no ranking,
+nas duas métricas e na tabela, com as opções agrupadas (Economia, Trabalho e renda, Crédito,
+Contas do governo do estado, Impostos federais):
+
+- **PIB das Contas Regionais** (IBGE, edição 2024 de 13/11/2026): crescimento no ano,
+  crescimento médio em 10 anos, PIB por habitante (com a população da projeção do mesmo ano)
+  e peso no PIB do Brasil.
+- **Prévia do PIB pelo IBC-R** (13 estados): 12 meses e o último ano fechado (2025), conta
+  nossa com o índice do BC, dita como tal.
+- **Trabalho**: subutilização, informalidade e renda média (PNAD por UF).
+- **Inflação na capital** (IPCA das 16 áreas), **exportações por habitante** (Comex Stat),
+  **crédito por habitante** e **inadimplência** (SGS por UF) e **concentração do PIB nos
+  municípios** (Gini, SIDRA 5939).
+
+- **Prévia do PIB dos 14 estados sem IBC-R** (Caio, 14/11/2026: *"faça a nossa conta...
+  uma regra simples é preferível, isso é previsão"*): o estado cresce como a região dele (o
+  IBC-R da região). Com a faixa de erro do teste contra o PIB oficial de 2011 a 2024, refeito
+  a cada rodada; ponto vazado no ranking.
+
 Ideias que ficam:
+
+- **Emprego formal (Novo Caged) por estado**: o site do Ministério do Trabalho deu 403 da
+  nuvem; testar do PC (FONTES, "Não funcionam daqui").
+- **PIB por setor em cada estado** (tab05 das Contas Regionais: agro, indústria, serviços) na
+  ficha do estado.
 
 - **Estados no tempo**: a série de cada número do estado contra o Brasil (3º quadrimestre de
   cada ano, para não multiplicar as chamadas ao SICONFI).
