@@ -86,7 +86,7 @@ export interface Tabela {
   titulo: string;
   subtitulo: string;
   colunas: string[];
-  linhas: { rotulo: string; valores: (number | null)[]; unidade: string; casas: number; fonte: string }[];
+  linhas: { rotulo: string; valores: (number | null)[]; unidade: string; casas: number; fonte: string; textos?: string[] }[];
   fonte: string;
   nota: string;
 }

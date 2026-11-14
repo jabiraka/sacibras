@@ -141,7 +141,8 @@ function montarTabela(t: Tabela): HTMLElement {
       const th = el("th", "", l.rotulo);
       if (l.unidade) th.append(el("span", "sub", ` ${l.unidade}`));
       tr.append(th);
-      for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
+      if (l.textos?.length) for (const x of l.textos) tr.append(el("td", "texto", x));
+      else for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
     }
     rolavel.append(tabela);
     const pe = el("footer", "grafico-pe");

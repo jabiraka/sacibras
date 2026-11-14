@@ -702,6 +702,52 @@ TERMOS: list[Termo] = [
         ("IOF",),
     ),
     Termo(
+        "cbs",
+        "CBS",
+        "Contribuição sobre Bens e Serviços: o tributo federal sobre o consumo criado pela "
+        "reforma de 2023, que substitui o PIS e a Cofins a partir de 2027.",
+        ("CBS",),
+        "#impostos/crescimento",
+    ),
+    Termo(
+        "ibs",
+        "IBS",
+        "Imposto sobre Bens e Serviços: o tributo de estados e municípios criado pela reforma "
+        "de 2023, que substitui o ICMS e o ISS aos poucos, de 2029 a 2033.",
+        ("IBS",),
+        "#impostos/crescimento",
+    ),
+    Termo(
+        "imposto-seletivo",
+        "Imposto Seletivo",
+        "Imposto federal criado pela reforma de 2023 sobre produtos que fazem mal à saúde ou "
+        "ao meio ambiente. Começa em 2027.",
+        ("Imposto Seletivo",),
+        "#impostos/crescimento",
+    ),
+    Termo(
+        "iss",
+        "ISS",
+        "Imposto Sobre Serviços: municipal, cobrado de quem presta serviço.",
+        ("ISS",),
+    ),
+    Termo(
+        "irpj",
+        "IRPJ",
+        "Imposto de Renda da Pessoa Jurídica: o imposto federal sobre o lucro das empresas, "
+        "de 25 % para as grandes.",
+        ("IRPJ",),
+        "#impostos/quem-paga",
+    ),
+    Termo(
+        "aliquota-de-referencia",
+        "Alíquota de referência",
+        "A alíquota da CBS e do IBS que o Senado fixa para a arrecadação ficar igual à dos "
+        "tributos que saem. Cada estado e município pode cobrar acima ou abaixo dela.",
+        ("alíquota de referência", "alíquotas de referência"),
+        "#impostos/crescimento",
+    ),
+    Termo(
         "correlacao",
         "Correlação",
         "Mede de -1 a 1 o quanto duas coisas andam juntas. Perto de zero, não andam; andar "

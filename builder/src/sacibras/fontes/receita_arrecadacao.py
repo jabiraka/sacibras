@@ -123,3 +123,20 @@ def ler_csv(texto: str) -> dict[str, dict[str, list[Ponto]]]:
 def arrecadacao() -> dict[str, dict[str, list[Ponto]]]:
     corpo = baixar(URL, validade=24 * 3600, tempo_limite=120)
     return ler_csv(corpo.decode("latin-1"))
+
+
+def doze_meses_por_uf(dados: dict[str, dict[str, list[Ponto]]]) -> tuple[dict[str, float], date]:
+    """{UF: R$ nos 12 meses até o último mês do arquivo} (todos os tributos) e esse mês."""
+    por_uf: dict[str, dict[date, float]] = {}
+    for ufs in dados.values():
+        for uf, pontos in ufs.items():
+            if uf == "BR":
+                continue
+            for d, v in pontos:
+                por_uf.setdefault(uf, {})[d] = por_uf.get(uf, {}).get(d, 0.0) + v
+    ultimo = max(d for meses in por_uf.values() for d in meses)
+    janela = {
+        date(ultimo.year - (ultimo.month <= k), (ultimo.month - k - 1) % 12 + 1, 1)
+        for k in range(12)
+    }
+    return {uf: sum(v for d, v in m.items() if d in janela) for uf, m in por_uf.items()}, ultimo

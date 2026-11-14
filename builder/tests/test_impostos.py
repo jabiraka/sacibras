@@ -6,8 +6,8 @@ from datetime import date
 import openpyxl
 import pytest
 
-from sacibras import relatorios
-from sacibras.fontes import ocde_receita, receita_arrecadacao, receita_gastos
+from sacibras import leis, relatorios
+from sacibras.fontes import ocde_receita, receita_arrecadacao, receita_gastos, receita_irpf
 from sacibras.rede import FonteForaDoArError
 from sacibras.secoes import impostos
 
@@ -141,3 +141,100 @@ def test_estudos_tem_fonte_e_trecho_lido() -> None:
     for e in relatorios.EFEITOS_DE_IMPOSTO:
         assert e.fonte and e.leitura and e.unidade
         assert '"' in e.leitura or "“" in e.leitura  # o trecho original, entre aspas
+
+
+def test_dgt_regioes_e_previsao_do_ploa() -> None:
+    livro = openpyxl.Workbook()
+    iv = livro.active
+    iv.title = "Q IV"
+    iv.append(["QUADRO IV"])
+    iv.append(
+        ["FUNÇÃO / GASTO", "NORTE ", "NORDESTE ", "CENTRO-OESTE ", "SUDESTE ", "SUL ", "TOTAL "]
+    )
+    iv.append(["Agricultura", 1.0, 1.0, 1.0, 1.0, 1.0, 5.0])
+    iv.append(["TOTAL", 10.0, 20.0, 30.0, 40.0, 50.0, 150.0])
+    assert receita_gastos.ler_regioes(list(iv.iter_rows(values_only=True))) == {
+        "Norte": 10.0,
+        "Nordeste": 20.0,
+        "Centro-Oeste": 30.0,
+        "Sudeste": 40.0,
+        "Sul": 50.0,
+    }
+    assert receita_gastos.ler_regioes([("sem cabeçalho",), ("TOTAL", 1.0)]) == {}
+    vi = livro.create_sheet("Q VI")
+    vi.append(["TRIBUTO", "VALOR", "PART. %"])
+    vi.append(["COFINS", 1e9, 1.0])
+    vi.append(["TOTAL", 612e9, 4.43, 20.2, 100])
+    saida = io.BytesIO()
+    livro.save(saida)
+    previsao = receita_gastos.ler_previsao(saida.getvalue(), 2026)
+    assert (previsao.total, previsao.pct_pib) == (612e9, 4.43)
+
+
+def test_doze_meses_por_uf() -> None:
+    meses = [(date(2025 + (m > 12), (m - 1) % 12 + 1, 1), 1.0) for m in range(1, 22)]  # 21 meses
+    dados = {"ir": {"SP": meses, "BR": meses}, "ipi": {"SP": meses[-1:], "RJ": meses[:3]}}
+    por_uf, ultimo = receita_arrecadacao.doze_meses_por_uf(dados)
+    assert ultimo == date(2026, 9, 1)
+    assert por_uf == {"SP": 13.0, "RJ": 0.0}
+
+
+def _irpf(linhas: list[list[object]]) -> bytes:
+    livro = openpyxl.Workbook()
+    ws = livro.active
+    ws.title = "Tab8"
+    ws.append(["Tabela 8 - Resumo das declarações"])
+    ws.append(["tipo_formulario", "uf", *receita_irpf.COLUNAS.values()])
+    for linha in linhas:
+        ws.append(linha)
+    saida = io.BytesIO()
+    livro.save(saida)
+    return saida.getvalue()
+
+
+def test_irpf_soma_por_faixa_e_poe_em_ordem() -> None:
+    corpo = _irpf(
+        [
+            ["Completo", "SP", "Mais de 320", 10, 100.0, 200.0, 700.0, 300.0, 20.0],
+            ["Completo", "SP", "De 1/2 a 1", 5, 10.0, 0.0, 0.0, 0.0, 0.0],
+            ["Simplificado", "AC", "Mais de 320", "x", 0.0, 0.0, 0.0, 0.0, 0.0],
+            ["Completo", "RJ", "De 10 a 15", 1, 80.0, 10.0, 10.0, 0.0, 10.0],
+            ["Completo", "RJ", "Até 1/2", 1, 1.0, 0.0, 0.0, 0.0, 0.0],
+            ["Completo", "RJ", "De 2 a 3", 1, 1.0, 0.0, 0.0, 0.0, 0.0],
+            ["Simplificado", "RJ", "De 10 a 15", 1, 100.0, 0.0, 0.0, 0.0, 10.0],
+        ]
+    )
+    faixas = receita_irpf.ler_planilha(corpo)
+    assert [f.nome for f in faixas] == [
+        "Até 1/2",
+        "De 1/2 a 1",
+        "De 2 a 3",
+        "De 10 a 15",
+        "Mais de 320",
+    ]
+    topo = faixas[-1]
+    assert (topo.declarantes, topo.renda, topo.dividendos) == (10.0, 1000.0, 300.0)
+    assert topo.aliquota == pytest.approx(2.0)
+    assert faixas[3].aliquota == pytest.approx(10.0)
+
+
+def test_irpf_acha_a_planilha_mais_nova() -> None:
+    base = "https://www.gov.br/x/grandes-numeros-do-IRPF-2008-a-2025"
+    html = (
+        f'<a href="{base}/grandes-numeros-do-irpf-2024-ano-calendario-2023-tabelas-1/view">'
+        f'<a href="{base}/grandes-numeros-do-irpf-2025-ano-calendario-2024-tabelas/view">'
+        f'<a href="{base}/grandes-numeros-do-irpf-2025-ano-calendario-2024-metadados/view">'
+    )
+    ano, url = receita_irpf.mais_nova(html)
+    assert ano == 2024 and url.endswith("2024-tabelas/@@download/file")
+    with pytest.raises(FonteForaDoArError):
+        receita_irpf.mais_nova("<html></html>")
+
+
+def test_reforma_e_decimos_estao_inteiros() -> None:
+    assert [p.quando for p in leis.REFORMA_DO_CONSUMO][:2] == ["2026", "2027"]
+    assert all(p.muda and p.norma.startswith("ADCT") for p in leis.REFORMA_DO_CONSUMO)
+    assert len(relatorios.INCIDENCIA_POR_DECIMO) == 11
+    pobres, ricos = relatorios.INCIDENCIA_POR_DECIMO[0], relatorios.INCIDENCIA_POR_DECIMO[9]
+    assert pobres[1] + pobres[2] == pytest.approx(26.4)  # os totais que o estudo escreve
+    assert ricos[1] + ricos[2] == pytest.approx(19.2)

@@ -262,3 +262,32 @@ EFEITOS_DE_IMPOSTO: list[EfeitoDeImposto] = [
         ),
     ),
 ]
+
+
+# ------------------------------------------------------------------ quem paga
+
+# Ipea, Texto para Discussão 2823, "Tributação indireta: alíquotas efetivas e incidência sobre
+# as famílias" (Silveira, Palomo, Cornelio e Tonon, dez/2022; dados da POF 2017-2018), lido em
+# 14/11/2026 em repositorio.ipea.gov.br/handle/11058/11624. Gráfico 3 (p. 25), "Incidência da
+# tributação direta e indireta na renda total, segundo décimos de renda familiar per capita":
+# os rótulos das barras, conferidos na imagem da página. No texto (p. 25): "a incidência nos
+# 10% mais pobres alcançando 26,4%, ao passo que nos 10% mais ricos os tributos representam
+# 19,2% da renda"; (p. 23) "na média, os tributos indiretos representam 11,2% da renda total".
+# "Diretos" aqui inclui a contribuição à previdência, o IRPF, o IPTU e o IPVA (p. 23): não se
+# compara com a alíquota do IRPF dos Grandes Números. RELER quando o Ipea refizer a conta com
+# a próxima POF.
+FONTE_INCIDENCIA = "Ipea, Texto para Discussão 2823 (2022), gráfico 3, com dados da POF 2017-2018"
+INCIDENCIA_POR_DECIMO: list[tuple[str, float, float]] = [
+    # (décimo de renda familiar por pessoa, indiretos, diretos), em % da renda total
+    ("10 % mais pobres", 23.4, 3.0),
+    ("2º décimo", 17.3, 3.8),
+    ("3º décimo", 15.6, 3.8),
+    ("4º décimo", 14.3, 4.3),
+    ("5º décimo", 14.0, 4.9),
+    ("6º décimo", 13.1, 5.0),
+    ("7º décimo", 12.7, 5.6),
+    ("8º décimo", 12.5, 6.7),
+    ("9º décimo", 11.5, 8.2),
+    ("10 % mais ricos", 8.6, 10.6),
+    ("Média", 11.2, 8.0),
+]

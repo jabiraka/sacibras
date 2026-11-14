@@ -12,7 +12,7 @@ from datetime import date
 
 import pycountry
 
-from sacibras.fontes import bis, fmi
+from sacibras.fontes import bis, fmi, ocde_receita
 from sacibras.schema import GrupoMundo, MetricaMundo, Mundo, MundoPaises, Pais
 from sacibras.secoes.base import Contexto, br
 from sacibras.tipos import Ponto
@@ -328,6 +328,42 @@ def _metricas_de_credito(
     ]
 
 
+def _carga_tributaria(ctx: Contexto, inicio: int) -> dict[str, dict[int, float]]:
+    """{ISO3: {ano: carga tributária em % do PIB}} de todos os países da OCDE Global Revenue
+    Statistics, uma chamada por rodada."""
+    if "ocde_carga" not in ctx.memo:
+        tabela = ocde_receita.carga(None, ["S13"], ["_T"], inicio=inicio)
+        ctx.memo["ocde_carga"] = {p: v for (p, _, _), v in tabela.items() if len(p) == 3}
+    return ctx.memo["ocde_carga"]  # type: ignore[no-any-return]
+
+
+def _metrica_da_carga(
+    carga: dict[str, dict[int, float]], paises: list[str], anos: list[int]
+) -> MetricaMundo:
+    ultimo = max(a for por_ano in carga.values() for a in por_ano)
+    return MetricaMundo(
+        id="carga",
+        nome="Carga tributária",
+        descricao=(
+            "Impostos e contribuições sociais de todo o governo (no Brasil: União, estados, "
+            "municípios e INSS), no método da OCDE, igual para todos os países. Sai com atraso: "
+            f"o último ano é {ultimo}, e para parte dos países, {ultimo - 1}. Os detalhes estão "
+            "em Impostos."
+        ),
+        unidade="% do PIB",
+        casas=1,
+        maior_e_melhor=None,
+        fonte=ocde_receita.FONTE,
+        anos=anos,
+        primeiro_ano_projetado=None,
+        valores={
+            iso: [round(carga[iso][a], 2) if a in carga[iso] else None for a in anos]
+            for iso in paises
+            if iso in carga and any(a in carga[iso] for a in anos)
+        },
+    )
+
+
 def _todos_os_paises(
     ctx: Contexto,
     ano: int,
@@ -359,6 +395,10 @@ def _todos_os_paises(
                 if (mapa := weo.valores.get((iso, indicador[m.id])))
             }
             anos = anos_weo
+        elif m.id == "carga":
+            copia = _metrica_da_carga(ctx.memo["ocde_carga"], sorted(manter), anos_bis)
+            saida.append(copia)
+            continue
         else:
             if m.id in ("servico_divida", "hiato_credito"):
                 if m.id not in credito:
@@ -465,6 +505,12 @@ def montar(ctx: Contexto) -> Mundo:
         metricas += _metricas_de_credito(v_dsr, v_hiato, anos_bis, ultimo_tri)
     except Exception as erro:
         print(f"  aviso: mundo: crédito do BIS indisponível ({str(erro)[:120]})")
+
+    # Carga tributária (OCDE). Sem ela, segue o resto.
+    try:
+        metricas.append(_metrica_da_carga(_carga_tributaria(ctx, inicio), isos, anos_bis))
+    except Exception as erro:
+        print(f"  aviso: mundo: carga tributária da OCDE indisponível ({str(erro)[:120]})")
 
     def do_brasil(id: str, a: int) -> float | None:
         m = next(x for x in metricas if x.id == id)

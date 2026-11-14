@@ -22,7 +22,7 @@ from datetime import date, datetime
 from statistics import median
 
 from sacibras import leis, organizacao
-from sacibras.fontes import ibge_sidra, siconfi
+from sacibras.fontes import ibge_sidra, receita_arrecadacao, siconfi
 from sacibras.schema import (
     UF,
     BlocoDeConta,
@@ -294,6 +294,42 @@ FUNCOES_EM_DESTAQUE = {
     "26": "Transporte",
     "28": "Encargos especiais (dívida e repasses a municípios)",
 }
+
+
+def _arrecadacao_federal(populacao: dict[int, float]) -> MetricaEstados:
+    """Tributos federais arrecadados no estado em 12 meses, por habitante (CSV da Receita)."""
+    por_uf, ultimo = receita_arrecadacao.doze_meses_por_uf(receita_arrecadacao.arrecadacao())
+    valores: dict[str, float | None] = {}
+    soma = soma_pop = 0.0
+    for codigo, sigla, _, _ in UFS:
+        pop = populacao.get(codigo)
+        if sigla in por_uf and pop:
+            valores[sigla] = por_uf[sigla] / pop
+            soma += por_uf[sigla]
+            soma_pop += pop
+        else:
+            valores[sigla] = None
+    ref = f"12 meses até {periodo(ultimo, 'M')}"
+    return MetricaEstados(
+        id="arrecadacao_federal_per_capita",
+        nome="Arrecadação federal por habitante",
+        descricao=(
+            "Impostos e contribuições federais (com o INSS) pagos por quem tem endereço fiscal "
+            "no estado, não onde a venda ou o trabalho aconteceu: o Distrito Federal (órgãos "
+            "federais e estatais), São Paulo e Rio de Janeiro (sedes de empresas e bancos) "
+            "aparecem com mais do que a economia local explicaria."
+        ),
+        unidade="R$ por habitante",
+        casas=0,
+        referencia=ref,
+        maior_e_melhor=None,
+        fonte=(
+            f"{receita_arrecadacao.FONTE}, {ref}; população estimada do cadastro de entes do "
+            "SICONFI (IBGE)"
+        ),
+        valores=valores,
+        brasil=soma / soma_pop if soma_pop else None,
+    )
 
 
 def _mi(valor: float) -> float:
@@ -597,6 +633,10 @@ def montar(ctx: Contexto) -> Estados:
             faltam = [u for u, v in m.valores.items() if v is None]
             if faltam:
                 print(f"  aviso: {m.nome} sem dado de {', '.join(faltam)}")
+    try:
+        metricas.append(_arrecadacao_federal(siconfi.entes()))
+    except Exception as erro:
+        print(f"  aviso: arrecadação federal por UF indisponível: {str(erro)[:120]}")
     if fiscal:
         metricas.append(fiscal[2])  # RCL por habitante fecha a lista
 
