@@ -2,6 +2,8 @@
 
 Regra do projeto: número de lei só entra daqui, e só depois de a norma ter sido lida na fonte
 oficial (a data da leitura fica ao lado).
+O prazo de cada releitura mora em `leituras.py` (o build e o workflow "Prazos de releitura"
+avisam quando vence).
 """
 
 from __future__ import annotations

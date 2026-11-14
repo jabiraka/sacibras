@@ -4,6 +4,8 @@ estima que a Selic faz com a inflação e com o dólar.
 
 Mesma regra de `leis.py`: só entra o que foi lido na fonte, com a data da leitura e o
 endereço ao lado. Cada bloco diz quando precisa ser lido de novo.
+O prazo de cada releitura mora em `leituras.py` (o build e o workflow "Prazos de releitura"
+avisam quando vence).
 """
 
 from __future__ import annotations

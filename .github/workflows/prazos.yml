@@ -1,0 +1,58 @@
+name: Prazos de releitura
+
+# O que foi lido à mão em lei ou relatório (builder/src/sacibras/leituras.py) tem prazo para
+# ser lido de novo. Quando um prazo vence ou falta uma semana, abre ou atualiza a issue
+# "releitura"; quando tudo está em dia, fecha. Com prazo vencido, a execução fica vermelha.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 11 * * 1-5" # 8h23 de Brasília, dias úteis
+  push:
+    branches: [main]
+    paths:
+      - "builder/src/sacibras/leituras.py"
+      - ".github/workflows/prazos.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  prazos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen --no-dev
+      - name: Conferir os prazos
+        run: |
+          uv run --no-dev sacibras leituras --saida pendentes.md
+          uv run --no-dev sacibras leituras --todas >> "$GITHUB_STEP_SUMMARY"
+      - name: Abrir, atualizar ou fechar a issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const corpo = fs.readFileSync("builder/pendentes.md", "utf8");
+            const conta = (s) => corpo.split("\n").filter((l) => l.startsWith(`| ${s} |`)).length;
+            const [vencidas, logo] = [conta("vencida"), conta("vence logo")];
+            const partes = [];
+            if (vencidas) partes.push(`${vencidas} ${vencidas === 1 ? "vencida" : "vencidas"}`);
+            if (logo) partes.push(`${logo} ${logo === 1 ? "vence" : "vencem"} nesta semana`);
+            await require("./.github/scripts/aviso.js")({ github, context }, {
+              rotulo: "releitura",
+              cor: "fbca04",
+              titulo: `Releitura de lei ou relatório: ${partes.join(", ")}`,
+              explicacao:
+                "Números lidos à mão (`leis.py`, `relatorios.py`) com o prazo de releitura " +
+                "vencido ou vencendo em até 7 dias. Ao reler, atualize o número e o comentário " +
+                "no arquivo de origem e, em `builder/src/sacibras/leituras.py`, a `lida_em` e o " +
+                "`reler_ate`. A issue fecha sozinha quando tudo estiver em dia.",
+              corpo,
+            });
+      - name: Vermelho se houver prazo vencido
+        run: uv run --no-dev sacibras leituras --estrito > /dev/null
