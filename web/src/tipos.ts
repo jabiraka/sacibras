@@ -360,6 +360,8 @@ export interface ItemSecao {
   ok: boolean;
   erro: string;
   subcategorias?: { id: string; titulo: string }[];
+  /** O que veio da rodada anterior porque uma fonte da seção falhou nesta (ids). */
+  mantidos?: string[];
 }
 
 export interface Categoria {

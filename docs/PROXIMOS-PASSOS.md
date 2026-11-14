@@ -5,9 +5,27 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (Setor externo por setor, produto e parceiro, do Comex Stat, publicado no `main`; antes, no mesmo dia, Pobreza e condições de vida e Estados com PIB).
+Última atualização: 14/11/2026 (valor nunca em branco: fonte que falha fica com o dado do dia anterior; antes, no mesmo dia, Setor externo por setor, Pobreza e Estados com PIB).
 
 ---
+
+## Valor nunca em branco (14/11/2026)
+
+Pedido do Caio: *"se o agendamento falhar, pode manter os dados = ao dia anterior, nunca deixe
+em branco os valores"*.
+
+- `sacibras anterior` (`anterior.py`) traz do site no ar o `painel.json` e todo arquivo que ele
+  aponta (com `estados-contas` e `mundo-paises`) para `web/public/data`; o workflow roda antes
+  do build. Não grava por cima do que já está na pasta.
+- Seção que falha inteira: fica o JSON anterior (já era assim, mas no Actions a pasta vinha
+  vazia). Seção que sai com uma fonte falhando (`rede.FALHAS` cresceu): `construir.completar`
+  devolve o cartão, gráfico, tabela, simulador ou métrica (Estados, Mundo) que faltou, no
+  mesmo lugar. `ItemSecao.mantidos` diz o quê; a issue `fonte fora do ar` também.
+- Testado: inflação com a rede cortada sobre os JSONs do site no ar (o arquivo ficou igual, os
+  seis números da entrada também); `tests/test_anterior.py`.
+- Falta ver no Actions a primeira rodada agendada com o passo novo.
+- A tela ainda não marca a peça mantida (a data de referência dela já diz de quando é). Se o
+  Caio quiser um selo "dado anterior", o campo `mantidos` já está no `painel.json`.
 
 ## Estados: PIB e mais treze métricas (14/11/2026, branch `ccr-b41d9ce1-hd022f`)
 

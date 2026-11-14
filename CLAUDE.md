@@ -35,6 +35,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   `relatorios.py` ganha linha em `builder/src/sacibras/leituras.py` (lida em, reler até, onde
   procurar). Ao reler, atualizar as duas datas. O workflow "Prazos de releitura" abre a issue
   `releitura`; fonte que falha no build abre a `fonte fora do ar`.
+- **Valor nunca em branco** (Caio, 14/11/2026: *"se o agendamento falhar, pode manter os
+  dados = ao dia anterior, nunca deixe em branco os valores"*): o workflow roda `sacibras
+  anterior` (traz os JSONs do site no ar) antes do build. Seção que falha fica com o JSON
+  anterior; seção que sai com fonte falhando recebe de volta o que faltou (`completar` em
+  `construir.py`: só ids listados em `PARTES`, e só se uma URL falhou em `rede.FALHAS`). Cada
+  peça mantida leva a data de referência dela, e a issue `fonte fora do ar` lista o que ficou.
 - **O site da B3 fica desligado** (`SB_B3`; Caio, 14/11/2026: *"deixar desligado"*): a B3 veda
   coleta automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)).
   Não ligar no workflow nem no compose; o que depende dela fica fora.

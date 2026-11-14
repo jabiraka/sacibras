@@ -42,17 +42,25 @@ jobs:
           key: fontes-${{ github.run_id }}
           restore-keys: fontes-
 
+      # A rodada anterior: os JSONs do site no ar vêm para web/public/data antes do build.
+      # Seção cuja fonte falha fica com o dado do dia anterior, e peça que faltou numa seção
+      # que saiu também (Caio, 14/11/2026: "nunca deixe em branco os valores"). Se o site não
+      # responder, o build segue como antes.
+      - name: Trazer a rodada anterior
+        working-directory: builder
+        run: |
+          uv sync --frozen --no-dev
+          uv run --no-dev sacibras anterior
+
       - name: Gerar os JSONs
         working-directory: builder
         env:
           SB_CACHE_HORAS: "1"
-        run: |
-          uv sync --frozen --no-dev
-          uv run --no-dev sacibras build --tolerante --falhas falhas.md
+        run: uv run --no-dev sacibras build --tolerante --falhas falhas.md
 
-      # Fonte que falhou não derruba o site (--tolerante), mas a seção some dele: abre ou
-      # atualiza a issue "fonte fora do ar", e fecha quando todas voltam. Só no main, para
-      # não confundir com teste de branch.
+      # Fonte que falhou não derruba o site (--tolerante) e o número fica o do dia anterior:
+      # abre ou atualiza a issue "fonte fora do ar", e fecha quando todas voltam. Só no main,
+      # para não confundir com teste de branch.
       - name: Avisar fonte fora do ar
         if: github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
@@ -64,11 +72,15 @@ jobs:
             await require("./.github/scripts/aviso.js")({ github, context }, {
               rotulo: "fonte fora do ar",
               cor: "d73a4a",
-              titulo: `Fonte fora do ar: ${n} ${n === 1 ? "seção falhou" : "seções falharam"} no build`,
+              titulo:
+                n > 0
+                  ? `Fonte fora do ar: ${n} ${n === 1 ? "seção falhou" : "seções falharam"} no build`
+                  : "Fonte fora do ar: parte dos números ficou com o dado anterior",
               explicacao:
-                "O build das 9h40 e das 19h publica o site mesmo com seção falhando, e a seção " +
-                "que falhou fica fora do site até a fonte voltar. Esta issue fecha sozinha " +
-                "quando todas voltarem. Para testar a fonte: `uv run sacibras build --secao <id>`.",
+                "O build das 9h40 e das 19h publica o site mesmo com fonte falhando, e o que a " +
+                "fonte não refez fica com o dado da rodada anterior (o site no ar), com a data " +
+                "de referência de antes. Esta issue fecha sozinha quando todas voltarem. Para " +
+                "testar a fonte: `uv run sacibras build --secao <id>`.",
               corpo,
             });
 

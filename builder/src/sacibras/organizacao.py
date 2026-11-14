@@ -584,6 +584,16 @@ def partes_dos_estados(tem_contas: bool) -> list[Subcategoria]:
     ]
 
 
+def esperados(secao_id: str) -> dict[str, set[str]]:
+    """Os ids de cartão, gráfico e tabela que as partes do assunto listam: o que a tela espera
+    ver. Só estes vêm da rodada anterior quando a fonte falha (peça tirada do código não fica
+    voltando)."""
+    partes = PARTES.get(secao_id, [])
+    return {
+        k: {i for p in partes for i in getattr(p, k)} for k in ("cartoes", "graficos", "tabelas")
+    }
+
+
 def aplicar(secao: Secao) -> list[str]:
     """Põe as subcategorias na seção; devolve o que ficou sem lugar (foi para "Outros").
 

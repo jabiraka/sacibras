@@ -570,6 +570,8 @@ class ItemSecao(Modelo):
     """A manchete do assunto, para o cartão da página inicial (que não baixa a seção)."""
     ok: bool
     erro: str = ""
+    mantidos: list[str] = Field(default_factory=list)
+    """O que veio da rodada anterior porque uma fonte da seção falhou nesta (ids)."""
 
 
 class Categoria(Modelo):

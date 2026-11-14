@@ -1,7 +1,11 @@
 """Monta todas as seções e grava os JSONs do site.
 
 Uma seção que falha não derruba as outras: fica marcada no `painel.json`, e o JSON bom da
-rodada anterior, se existir na pasta de saída, continua valendo.
+rodada anterior, se existir na pasta de saída, continua valendo. Se a seção sai mas uma fonte
+dela falhou, o que faltou (cartão, gráfico, tabela, métrica) vem da rodada anterior: o valor
+nunca fica em branco (Caio, 14/11/2026: *"se o agendamento falhar, pode manter os dados = ao
+dia anterior, nunca deixe em branco os valores"*). No Actions, `sacibras anterior` traz os
+JSONs do site no ar para a pasta antes do build.
 """
 
 from __future__ import annotations
@@ -9,13 +13,13 @@ from __future__ import annotations
 import json
 import re
 import traceback
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras import organizacao
+from sacibras import organizacao, rede
 from sacibras.catalogo import SGS
 from sacibras.schema import (
     AoVivo,
@@ -136,6 +140,62 @@ def _gravar(pasta: Path, nome: str, modelo: BaseModel) -> None:
     (pasta / nome).write_text(texto, encoding="utf-8")
 
 
+def _juntar[T](novos: Sequence[T], antigos: Sequence[T], chave: Callable[[T], str]) -> list[T]:
+    """Os novos, mais os antigos que faltaram, cada um logo depois do vizinho que o precedia."""
+    juntos = list(novos)
+    tem = {chave(x) for x in juntos}
+    for i, velho in enumerate(antigos):
+        if chave(velho) in tem:
+            continue
+        lugar = 0
+        for anterior in reversed(antigos[:i]):
+            achou = [j for j, x in enumerate(juntos) if chave(x) == chave(anterior)]
+            if achou:
+                lugar = achou[0] + 1
+                break
+        juntos.insert(lugar, velho)
+        tem.add(chave(velho))
+    return juntos
+
+
+def completar(secao: BaseModel, caminho: Path) -> list[str]:
+    """Põe na seção o que a rodada anterior tinha e esta não trouxe; devolve os ids.
+
+    Chamado só quando uma fonte da seção falhou. Num `Secao`, só volta o que as partes de
+    `organizacao.PARTES` listam; em Estados e Brasil no mundo, as métricas. Cada peça leva a
+    própria data de referência, então a tela diz de quando é o número."""
+    if not caminho.exists():
+        return []
+    try:
+        antigo = type(secao).model_validate_json(caminho.read_text(encoding="utf-8"))
+    except (OSError, ValueError):  # JSON de outra versão do contrato: não dá para aproveitar
+        return []
+    mantidos: list[str] = []
+
+    def juntar(campo: str, aceitos: set[str] | None = None) -> None:
+        novos = getattr(secao, campo)
+        velhos = [x for x in getattr(antigo, campo) if aceitos is None or x.id in aceitos]
+        ids_novos = {x.id for x in novos}
+        juntos = _juntar(novos, velhos, lambda x: x.id)
+        mantidos.extend(x.id for x in juntos if x.id not in ids_novos)
+        setattr(secao, campo, juntos)
+
+    if isinstance(secao, Secao) and isinstance(antigo, Secao):
+        esperados = organizacao.esperados(secao.id)
+        for campo in ("cartoes", "graficos", "tabelas"):
+            juntar(campo, esperados[campo])
+        for campo in ("simulador", "simulador_selic", "simulador_reforma"):
+            if getattr(secao, campo) is None and getattr(antigo, campo) is not None:
+                setattr(secao, campo, getattr(antigo, campo))
+                mantidos.append(campo)
+        if not secao.alertas and antigo.alertas:
+            secao.alertas = antigo.alertas
+            mantidos.append("alertas")
+    elif hasattr(secao, "metricas"):
+        juntar("metricas")
+    return mantidos
+
+
 def construir(saida: Path, so: list[str] | None = None) -> Painel:
     saida.mkdir(parents=True, exist_ok=True)
     ctx = Contexto()
@@ -162,7 +222,11 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     cartoes[c["id"]] = Cartao.model_validate(c)
             continue
         try:
+            falhas_antes = len(rede.FALHAS)
             secao = montar(ctx)
+            mantidos = completar(secao, saida / arquivo) if len(rede.FALHAS) > falhas_antes else []
+            if mantidos:
+                print(f"  aviso: {id}: da rodada anterior (fonte falhou): {', '.join(mantidos)}")
             contas = ctx.memo.pop(f"{id}_contas", None)  # as contas de cada estado, à parte
             if contas is not None:
                 try:
@@ -191,6 +255,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     resumo=manchete(getattr(secao, "resumo", "")),
                     subcategorias=_partes(secao),
                     ok=True,
+                    mantidos=mantidos,
                 )
             )
             fontes.append(EstadoFonte(fonte=FONTES[id], ok=True))

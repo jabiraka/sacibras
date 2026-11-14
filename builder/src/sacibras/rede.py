@@ -30,6 +30,11 @@ class FonteForaDoArError(RuntimeError):
     """A fonte não respondeu (ou respondeu outra coisa) depois de todas as tentativas."""
 
 
+FALHAS: list[str] = []
+"""Cada URL que desistiu nesta rodada, em ordem. O build olha se a lista cresceu durante uma
+seção: se cresceu, o que a seção deixou de trazer vem da rodada anterior."""
+
+
 _cliente: httpx.Client | None = None
 
 
@@ -89,6 +94,7 @@ def baixar(
             # 4xx que não é "tente depois" não melhora com insistência. (O 403 fica de
             # fora: há porteiro de site que recusa ao acaso e aceita na tentativa seguinte.)
             if resposta.status_code in (400, 401, 404, 451):
+                FALHAS.append(url)
                 raise FonteForaDoArError(
                     f"HTTP {resposta.status_code} em {resposta.request.url}: "
                     f"{resposta.text[:200]!r}"
@@ -105,6 +111,7 @@ def baixar(
             ultimo = erro
             if tentativa + 1 < TENTATIVAS:
                 time.sleep(1.5 * (tentativa + 1))
+    FALHAS.append(url)
     raise FonteForaDoArError(f"sem resposta de {url}: {ultimo!r}") from ultimo
 
 
@@ -125,4 +132,5 @@ def baixar_json(url: str, **kw: Any) -> Any:
             _arquivo(chave).unlink(missing_ok=True)
             if tentativa + 1 < TENTATIVAS:
                 time.sleep(2.0 * (tentativa + 1))
+    FALHAS.append(url)
     raise FonteForaDoArError(f"{url} não devolveu JSON: {corpo[:120]!r}")

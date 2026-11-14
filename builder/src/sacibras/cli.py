@@ -1,4 +1,5 @@
-"""`sacibras build` gera os JSONs do site; `sacibras fontes-smoke` testa cada fonte;
+"""`sacibras build` gera os JSONs do site; `sacibras anterior` traz os do site no ar (para o
+build manter o que a fonte não refez); `sacibras fontes-smoke` testa cada fonte;
 `sacibras leituras` diz o que foi lido à mão e precisa ser lido de novo."""
 
 from __future__ import annotations
@@ -33,6 +34,11 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="grava aqui, em Markdown, as seções que falharam (vazio se nenhuma)",
     )
+    anterior = comandos.add_parser(
+        "anterior", help="traz os JSONs do site no ar para a pasta (a rodada anterior)"
+    )
+    anterior.add_argument("--saida", type=Path, default=SAIDA_PADRAO)
+    anterior.add_argument("--site", help="endereço da pasta data/ do site no ar")
     leituras = comandos.add_parser("leituras", help="prazos para reler leis e relatórios")
     leituras.add_argument("--todas", action="store_true", help="lista também as em dia")
     leituras.add_argument(
@@ -63,10 +69,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  aviso: releitura {situacao} ({x.reler_ate:%d/%m/%Y}): {x.o_que}")
         com_erro = [s for s in painel.secoes if s.erro]
         if args.falhas:
-            args.falhas.write_text(_falhas_md(com_erro), encoding="utf-8")
+            args.falhas.write_text(_falhas_md(painel.secoes), encoding="utf-8")
         if com_erro:
             print(f"Seções com falha: {', '.join(s.id for s in com_erro)}")
             return 0 if args.tolerante else 1
+        return 0
+
+    if args.comando == "anterior":
+        from sacibras import anterior as anterior_
+
+        try:
+            gravados = anterior_.trazer(args.saida, args.site or anterior_.SITE)
+        except Exception as erro:  # sem a rodada anterior, o build só não tem o que manter
+            print(f"aviso: rodada anterior não veio do site ({erro})")
+            return 0
+        print(f"Rodada anterior: {len(gravados)} arquivos em {args.saida}")
         return 0
 
     if args.comando == "leituras":
@@ -83,19 +100,27 @@ def main(argv: list[str] | None = None) -> int:
     return rodar(markdown=args.markdown)
 
 
-def _falhas_md(com_erro: list[ItemSecao]) -> str:
-    """As seções que falharam, em Markdown, para a issue do workflow (vazio se nenhuma)."""
-    if not com_erro:
-        return ""
-    linhas = [
-        "| Seção | Ficou no site? | Erro |",
-        "| --- | --- | --- |",
-    ]
-    for s in com_erro:
-        erro = " ".join(s.erro.split()).replace("|", "\\|")
-        ficou = "sim, a versão anterior" if s.ok else "não"
-        linhas.append(f"| {s.titulo} (`{s.id}`) | {ficou} | {erro} |")
-    return "\n".join(linhas) + "\n"
+def _falhas_md(secoes: list[ItemSecao]) -> str:
+    """O que falhou, em Markdown, para a issue do workflow (vazio se nada).
+
+    Uma linha de tabela por seção que falhou inteira; depois, em lista, as seções que saíram
+    com parte dos números da rodada anterior."""
+    com_erro = [s for s in secoes if s.erro]
+    com_mantidos = [s for s in secoes if s.mantidos and not s.erro]
+    linhas: list[str] = []
+    if com_erro:
+        linhas += ["| Seção | Ficou no site? | Erro |", "| --- | --- | --- |"]
+        for s in com_erro:
+            erro = " ".join(s.erro.split()).replace("|", "\\|")
+            ficou = "sim, a versão anterior" if s.ok else "não"
+            linhas.append(f"| {s.titulo} (`{s.id}`) | {ficou} | {erro} |")
+    if com_mantidos:
+        if linhas:
+            linhas.append("")
+        linhas.append("Com parte dos números da rodada anterior (uma fonte da seção falhou):")
+        linhas.append("")
+        linhas += [f"- {s.titulo} (`{s.id}`): {', '.join(s.mantidos)}" for s in com_mantidos]
+    return "\n".join(linhas) + "\n" if linhas else ""
 
 
 if __name__ == "__main__":
