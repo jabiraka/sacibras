@@ -21,15 +21,24 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   5434, volume `sb_pgdata`, e serve só de cache de desenvolvimento. Código útil do finance_agent
   é copiado e adaptado, nunca importado.
 - **Por enquanto, testar em Docker** (Caio, 13/11/2026): `docker compose` com `name: sacibras`.
+  No PC do Caio, a `.venv` do uv quebra (o "Á" de "Área de Trabalho" no `.pth` e os hardlinks
+  do OneDrive); os testes rodam num container com a venv num volume:
+  `docker run --rm -v "$(pwd -W)/builder:/app/builder" -v sb_testvenv:/venv -e UV_PROJECT_ENVIRONMENT=/venv -e UV_LINK_MODE=copy -w /app/builder ghcr.io/astral-sh/uv:python3.12-bookworm-slim sh -c "uv sync --frozen -q && uv run pytest -q"`
+  (no Git Bash, com `MSYS_NO_PATHCONV=1`).
 - **Registro explícito de séries com unidade** em `builder/src/sacibras/catalogo.py`. Série nova
   só entra depois de conferida no catálogo da fonte (para o SGS:
   `dadosabertos.bcb.gov.br/api/3/action/package_search?fq=codigo_sgs:N`), com a data no comentário.
   Série que o BC não lista no CKAN (EX3, P55, industriais, alimentação no domicílio) se confere
   no serviço de metadados do próprio SGS e, quando der, contra outra fonte oficial (o IBGE),
-  dito no comentário.
-- **O site da B3 fica desligado** (`SB_B3`), pendente de decisão do Caio: a B3 veda coleta
-  automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)). Não
-  ligar no workflow nem no compose sem o "sim" dele.
+  dito no comentário (aprovado pelo Caio em 14/11/2026).
+- **O site da B3 fica desligado** (`SB_B3`; Caio, 14/11/2026: *"deixar desligado"*): a B3 veda
+  coleta automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)).
+  Não ligar no workflow nem no compose; o que depende dela fica fora.
+- **Norma se lê na fonte oficial, do PC** (o Planalto e o `servicodados` do IBGE recusam quem
+  está fora do Brasil, como a nuvem e o Actions). No Windows, o `curl` do Planalto precisa de
+  `--ssl-no-revoke`. Resolução do Senado: `legis.senado.leg.br/norma/<id>` (o id sai de
+  `legis.senado.leg.br/dadosabertos/legislacao/lista?tipo=RSF&numero=N&ano=A`). O trecho lido
+  vai como comentário em `leis.py`, com a data.
 - **Curvas do Tesouro pelo método do Jabs** (Caio, 14/11/2026: *"o Jabs tem uma curva de
   inflação"*): taxa média entre compra e venda, curva zero com os papéis com cupom por
   *bootstrap*, fator de desconto log-linear, nada extrapolado (`builder/src/sacibras/curvas.py`,

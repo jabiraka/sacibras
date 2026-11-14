@@ -3,7 +3,8 @@
 Desocupação: PNAD Contínua trimestral (IBGE). Pessoal, dívida e receita: Relatório de Gestão Fiscal
 (RGF) do Poder Executivo de cada estado, no SICONFI do Tesouro Nacional. ICMS por habitante e
 resultado primário: Relatório Resumido da Execução Orçamentária (RREO), também do SICONFI. Os
-limites mostrados são os que o próprio RGF publica; o builder não escreve número de lei.
+limites de pessoal e de dívida vêm da norma lida (`leis.py`); o estado cujo RGF traz outro
+limite é nomeado na descrição.
 
 As contas de cada estado (`estados-contas.json`, lidas quando a pessoa abre um estado) vêm da
 Declaração de Contas Anuais (DCA) do ano fechado, que todas as UFs já entregaram, e do RGF-Anexo
@@ -17,10 +18,10 @@ população do mesmo ano não existe na tabela 6579, então a conta misturaria a
 
 from __future__ import annotations
 
-from collections import Counter
 from datetime import date, datetime
 from statistics import median
 
+from sacibras import leis
 from sacibras.fontes import ibge_sidra, siconfi
 from sacibras.schema import (
     UF,
@@ -103,20 +104,12 @@ def _desocupacao() -> MetricaEstados:
     )
 
 
-def _limite_comum(valores: list[float | None]) -> float | None:
-    """O limite que a maioria dos estados registra (alguns trazem um próprio no RGF)."""
-    vistos = [v for v in valores if v is not None]
-    return Counter(vistos).most_common(1)[0][0] if vistos else None
-
-
-def _diferentes(limites: dict[str, float | None], comum: float | None, folga: float) -> str:
-    """Quem registra limite diferente do comum (`folga` absorve o arredondamento da razão)."""
+def _diferentes(limites: dict[str, float | None], da_lei: float, folga: float) -> str:
+    """Quem registra no RGF limite diferente do da lei (`folga` absorve o arredondamento)."""
     fora = [
-        f"{u} ({br(v)} %)"
-        for u, v in limites.items()
-        if v is not None and comum is not None and abs(v - comum) > folga
+        f"{u} ({br(v)} %)" for u, v in limites.items() if v is not None and abs(v - da_lei) > folga
     ]
-    return f" O RGF de {', '.join(fora)} traz limite diferente." if fora else ""
+    return f" O RGF de {', '.join(fora)} traz limite diferente do da lei." if fora else ""
 
 
 def _fiscais(
@@ -131,17 +124,11 @@ def _fiscais(
     div = {u: coleta.divida.get(c) for u, c in por_uf.items()}
 
     max_pes = {u: p.maximo for u, p in pes.items() if p}
-    pru_pes = {u: p.prudencial for u, p in pes.items() if p}
     ale_pes = {u: p.alerta for u, p in pes.items() if p}
-    c_max, c_pru, c_ale = (_limite_comum(list(d.values())) for d in (max_pes, pru_pes, ale_pes))
     limites_pes = [
-        LinhaRef(valor=v, rotulo=r)
-        for v, r in (
-            (c_max, "limite máximo do RGF"),
-            (c_pru, "limite prudencial do RGF"),
-            (c_ale, "limite de alerta do RGF"),
-        )
-        if v is not None
+        LinhaRef(valor=leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, rotulo="limite máximo"),
+        LinhaRef(valor=leis.PESSOAL_PRUDENCIAL.valor, rotulo="limite prudencial"),
+        LinhaRef(valor=leis.PESSOAL_ALERTA.valor, rotulo="limite de alerta"),
     ]
     pessoal = MetricaEstados(
         id="pessoal",
@@ -149,8 +136,12 @@ def _fiscais(
         descricao=(
             "Quanto da receita corrente líquida ajustada o Poder Executivo do estado gasta com "
             "salários, aposentadorias e encargos, nos últimos 12 meses. As linhas são os "
-            "limites que o próprio Relatório de Gestão Fiscal traz."
-            + _diferentes(max_pes, c_max, 0.05)
+            "limites da lei para o Executivo estadual: o máximo, "
+            f"{br(leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, 0)} % da RCL "
+            f"({leis.PESSOAL_EXECUTIVO_ESTADUAL.referencia}); o prudencial, 95 % dele "
+            f"({leis.PESSOAL_PRUDENCIAL.referencia}); o de alerta, 90 % "
+            f"({leis.PESSOAL_ALERTA.referencia})."
+            + _diferentes(max_pes, leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, 0.05)
         ),
         unidade="% da RCL",
         casas=1,
@@ -162,15 +153,9 @@ def _fiscais(
     )
 
     lim_div = {u: d.limite for u, d in div.items() if d}
-    ale_div = {u: d.alerta for u, d in div.items() if d}
-    c_lim, c_ale_div = _limite_comum(list(lim_div.values())), _limite_comum(list(ale_div.values()))
     limites_div = [
-        LinhaRef(valor=v, rotulo=r)
-        for v, r in (
-            (c_lim, "limite do RGF (definido por Resolução do Senado)"),
-            (c_ale_div, "limite de alerta do RGF"),
-        )
-        if v is not None
+        LinhaRef(valor=leis.DIVIDA_ESTADUAL.valor, rotulo="limite"),
+        LinhaRef(valor=leis.DIVIDA_ALERTA.valor, rotulo="limite de alerta"),
     ]
     divida = MetricaEstados(
         id="divida",
@@ -178,7 +163,10 @@ def _fiscais(
         descricao=(
             "Dívida do estado já descontados o caixa e os haveres, em proporção da receita "
             "corrente líquida dos últimos 12 meses. Negativo quer dizer que o estado tem mais "
-            "ativos financeiros que dívida." + _diferentes(lim_div, c_lim, 1.0)
+            "ativos financeiros que dívida. As linhas são o limite, "
+            f"{br(leis.DIVIDA_ESTADUAL.valor, 0)} % da RCL ({leis.DIVIDA_ESTADUAL.referencia}), "
+            f"e o de alerta, 90 % dele ({leis.DIVIDA_ALERTA.referencia})."
+            + _diferentes(lim_div, leis.DIVIDA_ESTADUAL.valor, 1.0)
         ),
         unidade="% da RCL",
         casas=1,

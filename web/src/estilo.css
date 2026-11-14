@@ -591,6 +591,32 @@ main {
   border-color: var(--borda-forte);
 }
 
+/* Próximas divulgações do IBGE, lidas pelo navegador (calendario.ts). */
+.agenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 10px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--tinta-2);
+}
+.agenda-titulo {
+  flex-basis: 100%;
+  font-weight: 600;
+  color: var(--tinta);
+}
+.agenda-item strong {
+  font-weight: 600;
+  color: var(--tinta);
+}
+.agenda-fonte {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+}
+
 .secao-resumo {
   margin: 16px 0 0;
   max-width: 44rem;

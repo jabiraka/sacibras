@@ -39,7 +39,8 @@ Ideias que ficam:
 - **Previdência do estado** (RREO Anexo 04): déficit do regime próprio, servidores ativos e
   inativos.
 - **Despesa por função per capita**: saúde e educação por habitante, contra os mínimos
-  constitucionais (12 % e 25 %; só depois de ler a Constituição e a LC 141).
+  constitucionais (12 % e 25 %; normas lidas em 14/11/2026, a base de cálculo vem do RREO
+  Anexos 12 e 08).
 - **Regime de Recuperação Fiscal e Propag**: quem está, desde quando, o que muda na dívida com a
   União (precisa ler as leis).
 - **Capitais**: os mesmos números para as 27 capitais (SICONFI tem os municípios).
@@ -75,3 +76,7 @@ fonte aberta:
 - Brasil no mundo: câmbio no ano (BIS `WS_XRU`), juro de 10 anos (OCDE), inflação mensal.
 - Acabamento: "novo desde sua última visita", PNG dos gráficos, imagem de compartilhamento,
   domínio.
+- **Meta de primário do Governo Central** contra o realizado: a lei está lida; espera decisão
+  de como tratar os descontos da apuração oficial ([PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)).
+- **Agenda na entrada**: as divulgações da semana (IBGE, já buscado pelo navegador), guardada
+  atrás de um clique. O Copom não tem API com as reuniões futuras (ver [FONTES](FONTES.md)).

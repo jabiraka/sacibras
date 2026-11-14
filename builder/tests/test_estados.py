@@ -187,10 +187,24 @@ def test_montagem_das_metricas_fiscais_deixa_none_para_quem_falta() -> None:
     assert pessoal.referencia == "2º quadrimestre de 2026"
     assert len(pessoal.valores) == 27
     assert pessoal.valores["AC"] is None and pessoal.valores["SP"] == 45.0
-    assert (pessoal.limites[0].valor, pessoal.limites[0].rotulo) == (49, "limite máximo do RGF")
+    assert [(x.valor, x.rotulo) for x in pessoal.limites] == [
+        (49, "limite máximo"),
+        (46.55, "limite prudencial"),
+        (44.1, "limite de alerta"),
+    ]
+    assert "art. 20, II, c" in pessoal.descricao and "diferente" not in pessoal.descricao
     assert [x.valor for x in divida.limites] == [200, 180]
+    assert "Resolução do Senado nº 40/2001" in divida.descricao
     assert rcl.valores["SP"] == 35_000.0 and rcl.valores["AC"] is None
     assert "AC" not in alertas and alertas["SP"] == 44.1
+
+
+def test_estado_com_limite_proprio_no_rgf_e_nomeado() -> None:
+    coleta = _coleta(set())
+    coleta.pessoal[35] = siconfi.Pessoal(45.0, 50.0, 47.5, 45.0)  # SP com limite próprio
+    pessoal, *_ = estados._fiscais(coleta, {c: 1000.0 for c, *_ in estados.UFS})
+    assert pessoal.limites[0].valor == 49  # a linha continua sendo a da lei
+    assert "SP (50,0 %)" in pessoal.descricao
 
 
 def _coleta_rreo(sem_dado: set[int]) -> siconfi.ColetaRreo:

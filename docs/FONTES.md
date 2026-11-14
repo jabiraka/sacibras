@@ -8,7 +8,7 @@ estrangeiro), sem chave e sem serviço pago. "CORS" é a resposta a
 `fontes-smoke.yml`): responderam todas as fontes que o builder usa — SGS, Focus, Copom, SIDRA,
 FMI (WEO e grupos), BIS, SICONFI (RGF e RREO), CKAN e RTN, IPEADATA, Tesouro Direto (16 s),
 Comex Stat. Só o IBGE `servicodados` (calendário e malhas) caiu por tempo (41 s), como daqui:
-por isso a malha fica no repositório e o calendário espera o teste no PC.
+por isso a malha fica no repositório e o calendário é buscado pelo navegador do visitante.
 
 ## Em uso no builder
 
@@ -27,7 +27,7 @@ Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
 
 | Fonte | O que dá | Observações |
 |-------|----------|-------------|
-| SICONFI, RGF Anexos 01 e 02 | pessoal/RCL, dívida líquida/RCL e RCL das 27 UFs | ~54 chamadas em série (cache de 24 h). O 3º quadrimestre de 2026 ainda vem vazio: vale o 2º. O DF é esfera `D` em `entes`, mas o RGF dele só responde com `co_esfera=E`. O Amapá informa os percentuais de limite em fração (0,49): os limites saem da razão entre os valores em reais e a RCL ajustada. O limite que o RGF traz **varia por estado** (pessoal: 49 % na maioria, 48,6 % em PA, BA e GO; dívida: 200 % na maioria, 90,2 % em RR): a tela mostra o mais comum e diz quem difere. |
+| SICONFI, RGF Anexos 01 e 02 | pessoal/RCL, dívida líquida/RCL e RCL das 27 UFs | ~54 chamadas em série (cache de 24 h). O 3º quadrimestre de 2026 ainda vem vazio: vale o 2º. O DF é esfera `D` em `entes`, mas o RGF dele só responde com `co_esfera=E`. O Amapá informa os percentuais de limite em fração (0,49): os limites saem da razão entre os valores em reais e a RCL ajustada. O limite que o RGF traz **varia por estado** (pessoal: 49 % na maioria, 48,6 % em PA, BA e GO; dívida: 200 % na maioria, 90,2 % em RR): a tela mostra o da lei (`leis.py`, lida em 14/11/2026) e diz quem difere. |
 | IBGE SIDRA 4099 (nível UF) | desocupação trimestral por estado | A tabela 5938 (PIB por UF) para em 2023 e a 6579 não tem a população desse ano: PIB per capita ficou de fora. |
 | Tesouro Transparente, RTN (XLSX, aba 1.1) | receita líquida, despesa total, Previdência, pessoal e primário do Governo Central, mensais | O nome do arquivo muda todo mês: o builder o descobre pelo CKAN (`package_show`). As linhas são achadas pelo texto do rótulo. Sai com uns dois meses de atraso. |
 | BCB SGS 4173 a 4180 | dívida mobiliária federal por indexador | A família não tem o IPCA: "índices de preços" é o que falta para 100 % (confere com a fatia das NTN-B). |
@@ -58,8 +58,8 @@ Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
 
 | Fonte | O que aconteceu |
 |-------|-----------------|
-| IBGE `servicodados.ibge.gov.br` (calendário de divulgações, malhas, metadados) | conexão derrubada no TLS em todas as tentativas. Do Brasil deve responder: o navegador do visitante pode chamar. |
-| Planalto `planalto.gov.br/ccivil_03` | redireciona para a página inicial. Por isso **não foram lidos**: LC 200/2023 e LDO (meta de primário e banda), LC 101/2000 arts. 19–20 (limites de pessoal), Resolução do Senado 40/2001 (dívida dos estados) e o Decreto 12.079/2024. Esses números ficam fora da tela até alguém ler a norma. |
+| IBGE `servicodados.ibge.gov.br` (calendário de divulgações, malhas, metadados) | conexão derrubada no TLS em todas as tentativas. **Do Brasil responde** (PC do Caio, 14/11/2026): o calendário (`/api/v3/calendario/?de=MM-DD-AAAA&ate=MM-DD-AAAA&qtd=N`) volta com `Access-Control-Allow-Origin: *`, e o navegador do visitante o busca direto (`web/src/calendario.ts`). Alguns títulos vêm com acento em codificação dupla ("Ã§"): a tela usa nomes próprios, não o título da API. |
+| Planalto `planalto.gov.br/ccivil_03` | redireciona para a página inicial. **Do Brasil abre** (PC do Caio, 14/11/2026; no `curl` do Windows, com `--ssl-no-revoke`). Lidos nesse dia: LC 200/2023, LDO 2026 (Lei 15.321/2025), LC 101/2000, LC 141/2012 e a Constituição (arts. 198 e 212); trechos em `leis.py`. A Resolução do Senado 40/2001 foi lida em `legis.senado.leg.br/norma/562458`. Falta o Decreto 12.079/2024. |
 | FMI DataMapper `imf.org/external/datamapper/api` | 403 (Akamai) em parte das chamadas; trocado pela API SDMX. |
 | Stooq, Yahoo Finance | desafio de JavaScript, HTTP 429 ou sem CORS; não usar. |
 | DBnomics | responde, mas o WEO mais novo lá é abril/2025. |
@@ -76,7 +76,7 @@ tentativa seguinte). **Mas** a página do Boletim Diário do Mercado da B3 diz, 
 
 Por isso o builder **não lê o site da B3 por padrão**: o Ibovespa vem do IPEADATA, o câmbio do
 Banco Central e a curva de juros do Tesouro Direto. As fontes abaixo estão escritas e ligam com
-`SB_B3=1` — decisão que cabe ao Caio (ver "Em aberto" no [PLANO](PLANO.md)).
+`SB_B3=1`, que **fica desligado** (Caio, 14/11/2026).
 
 | Rota | O que dá |
 |------|----------|

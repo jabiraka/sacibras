@@ -30,29 +30,37 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
-## Esperando decisão do Caio (no PC)
+## Resolvido no PC em 14/11/2026
 
-1. **Ligar o Pages** (Settings → Pages → Source: GitHub Actions). O `build-deploy.yml` publica
-   a cada push no `main` e duas vezes por dia útil; sem o Pages ligado, o deploy falha.
-2. **B3: ligar ou não** (`SB_B3`). O site da B3 veda coleta automatizada. Recomendação: deixar
-   desligado até ter autorização. Com ela vêm os futuros de DI (a probabilidade da próxima
-   reunião do Copom, como o FedWatch do Econvitals), os índices setoriais e o cupom de IPCA.
-3. **Séries fora do catálogo do BC.** Bens industriais (27863) e alimentação no domicílio
-   (27864) não estão no CKAN do BC; foram conferidas no serviço de metadados do SGS e a
-   alimentação bate com o IBGE. A regra do `CLAUDE.md` ganhou essa saída: confirmar.
-4. **Normas que faltam ler** (o Planalto não abre de fora do Brasil). Colando os trechos, entram
-   na tela: LC 200/2023 e LDO 2026 (meta de primário e banda), LC 101/2000 arts. 19 e 20
-   (limites de pessoal), Resolução do Senado 40/2001 (dívida dos estados), Constituição e
-   LC 141 (mínimos de saúde e educação, para a despesa por função dos estados).
-5. **Calendário de divulgações.** A API de calendário do IBGE (`servicodados`) derruba a conexão
-   de fora do Brasil (daqui e do Actions). No PC: abrir
-   `https://servicodados.ibge.gov.br/api/v3/calendario/?qtd=20` no navegador e ver se responde
-   com `Access-Control-Allow-Origin`; se sim, o navegador do visitante pode buscar direto.
+- **Pages ligado** pela API (Source: GitHub Actions): o site está em
+  https://jabiraka.github.io/sacibras/, com as onze seções saindo `ok` no primeiro deploy.
+- **B3 fica desligada** (`SB_B3`), decisão do Caio.
+- **Séries fora do CKAN do BC** (27863, 27864): a saída da regra no `CLAUDE.md` foi aprovada.
+- **Normas lidas** no Planalto e no Senado (trechos em `leis.py`): os limites de pessoal (LRF,
+  arts. 19, 20, 22 e 59) e de dívida (Resolução do Senado 40/2001) dos estados agora vêm da lei,
+  com o artigo na descrição, e o estado cujo RGF traz outro limite é nomeado; a meta de primário
+  de 2026 (LDO, art. 2º) está registrada, fora da tela (abaixo); os mínimos de saúde (LC 141,
+  art. 6º) e de educação (Constituição, art. 212) estão anotados.
+- **Calendário do IBGE**: do Brasil responde com CORS `*`. Cada assunto mostra a próxima
+  divulgação das pesquisas dele (`web/src/calendario.ts`), buscada pelo navegador.
+
+## Esperando decisão do Caio
+
+1. **Meta de primário na tela: como mostrar.** A LDO 2026 foi lida: meta de R$ 34,3 bi, piso
+   R$ 0, teto R$ 68,5 bi (`leis.META_PRIMARIA_2026`); a LC 200 diz que quem apura é o BC. O
+   primário do Governo Central no BC (SGS 4639, ainda fora do catálogo) dá déficit de R$ 52,7 bi
+   em 12 meses até set/2026 e de R$ 93,6 bi no ano. Mas a apuração oficial desconta despesas que
+   outras normas tiram da meta (EC 136/2025, LCs 221, 223 e 235: R$ 67,3 bi no 4º bimestre,
+   segundo a nota da Consultoria de Orçamento do Senado de 25/09/2026). O número cru diria
+   "abaixo do piso". Opções: (a) a meta contra o resultado "para fins de meta" do relatório
+   bimestral, lido à mão a cada dois meses; (b) o número do BC contra a meta, com o desconto em
+   reais dito ao lado; (c) fora da tela.
 
 ## Próximos passos, em ordem (dá para fazer na nuvem)
 
-1. **Conferir o site no ar** depois do primeiro deploy: o build do Actions roda a frio (sem
-   cache) e leva uns 3 minutos; ver se as onze seções saíram e se a busca acha.
+1. **Mínimos de saúde e educação dos estados**: o RREO Anexo 12 (saúde) e o Anexo 08
+   (educação) trazem o percentual apurado sobre a base que a lei manda; as normas já estão
+   lidas (`leis.py`). Na ficha do estado, contra 12 % e 25 %.
 2. **O que faltou do Econvitals:** serviços subjacentes (achar o código SGS), Caged por setor
    (achar fonte com nome legível), taxa de investimento e de poupança, consumo das famílias +
    investimento (a "demanda privada"), PIB por pessoa ocupada. Lista no [PROPOSTAS](PROPOSTAS.md).
@@ -83,6 +91,8 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - No resultado primário dos estados, o numerador é o acumulado do ano (jan–ago) e o
   denominador é a RCL de 12 meses.
 - O build a frio leva perto de 3 minutos (SICONFI, DCA e Focus sem cache).
+- O calendário mostra só o dia da divulgação: a API traz a hora sem dizer o fuso. Se a API do
+  IBGE não responder em 6 s, a linha não aparece.
 
 ## Para conferir antes de mostrar
 

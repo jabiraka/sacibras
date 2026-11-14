@@ -8,6 +8,7 @@ import "./estilo.css";
 import { comUnidade, data, dataHora, numero, periodo } from "./formato";
 import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, revelar } from "./busca";
+import { agendaDoAssunto } from "./calendario";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
@@ -322,7 +323,7 @@ function vistaAssunto(painel: Painel, id: string, conteudo: HTMLElement): void {
   const secao = el("section", "secao");
   const voltar = el("a", "voltar", "← Voltar");
   voltar.href = "#";
-  secao.append(voltar, el("p", "sobretitulo", "Assunto"), el("h2", "", item.titulo));
+  secao.append(voltar, el("p", "sobretitulo", "Assunto"), el("h2", "", item.titulo), agendaDoAssunto(id));
   const corpo = el("div");
   secao.append(corpo);
 
