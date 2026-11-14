@@ -25,10 +25,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.comando == "build":
+        from sacibras import busca
         from sacibras.construir import construir
 
         print(f"Gerando em {args.saida}")
         painel = construir(args.saida, args.secao)
+        try:  # o índice da busca lê os JSONs gravados; sem ele, o site só fica sem busca
+            print(f"  busca: {busca.gravar(args.saida)} itens")
+        except Exception as erro:
+            print(f"  aviso: índice da busca não gravado ({erro})")
         falhas = [s.id for s in painel.secoes if s.erro]
         if falhas:
             print(f"Seções com falha: {', '.join(falhas)}")

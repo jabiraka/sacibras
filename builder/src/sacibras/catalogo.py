@@ -36,6 +36,12 @@ SGS: dict[str, SerieSGS] = {
     "SELIC_ANUAL": SerieSGS(
         1178, "Taxa Selic efetiva anualizada, base 252", "% a.a.", "D", "14/11/2026"
     ),
+    # Conferida no package_search do BCB em 14/11/2026: "Depósitos de poupança a partir de
+    # 04.05.2012 - Rentabilidade no período". Cada dia traz o rendimento do mês que começa nele
+    # (o aniversário); a conta usa o do dia 1º.
+    "POUPANCA": SerieSGS(
+        195, "Depósitos de poupança, rentabilidade no período", "% no mês", "D", "14/11/2026"
+    ),
     "CDI_ANUAL": SerieSGS(4389, "Taxa CDI anualizada, base 252", "% a.a.", "D", "14/11/2026"),
     # ---- preços
     "IPCA": SerieSGS(433, "IPCA, variação mensal", "% no mês", "M", "13/11/2026"),

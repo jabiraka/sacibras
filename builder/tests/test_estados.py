@@ -224,6 +224,7 @@ def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
     monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
+    monkeypatch.setattr(estados.siconfi, "coletar_anual", lambda *a, **k: None)
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert len(e.ufs) == 27
@@ -248,6 +249,319 @@ def test_rreo_fora_do_ar_nao_derruba_as_outras_metricas(monkeypatch: pytest.Monk
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
     monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", cai)
+    monkeypatch.setattr(estados.siconfi, "coletar_anual", cai)
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert [m.id for m in e.metricas] == ["desocupacao", "pessoal", "divida", "rcl_per_capita"]
+
+
+# ---------------------------------------------------------------- contas de cada estado (DCA)
+
+
+def _dca(anexo: str, conta: str, coluna: str, valor: float, texto: str = "") -> dict[str, Any]:
+    return {
+        "anexo": f"DCA-Anexo {anexo}",
+        "cod_conta": conta,
+        "conta": texto or conta,
+        "coluna": coluna,
+        "valor": valor,
+    }
+
+
+def _receita(anexo_c: list[tuple[str, float]]) -> list[dict[str, Any]]:
+    return [_dca("I-C", c, siconfi.COL_BRUTA, v) for c, v in anexo_c]
+
+
+# Trechos reais da DCA 2025 (consultada em 14/11/2026): SP, DF e AC (o Acre não tem a conta do
+# adicional de ICMS do fundo de pobreza).
+C_SP = _receita(
+    [
+        ("ReceitasExcetoIntraOrcamentarias", 400067309037.12),
+        ("RO1.0.0.0.00.0.0", 391843249289.61),
+        ("RO2.0.0.0.00.0.0", 8224059747.51),
+        ("RO1.1.0.0.00.0.0", 308817766033.1),
+        ("RO1.1.1.2.51.0.0", 31876947927.41),
+        ("RO1.1.1.2.52.0.0", 7356323453.8),
+        ("RO1.1.1.4.50.1.0", 237071553843.02),
+        ("RO1.1.1.4.50.2.0", 989671514),
+        ("RO1.7.1.0.00.0.0", 16976648259.35),
+        ("RO1.7.1.1.50.0.0", 2198843536.87),
+        ("RO1.7.5.1.00.0.0", 27628403587.9),
+    ]
+)
+C_DF = _receita(
+    [
+        ("ReceitasExcetoIntraOrcamentarias", 42812567643.95),
+        ("RO1.0.0.0.00.0.0", 42206905726.33),
+        ("RO2.0.0.0.00.0.0", 605661917.62),
+        ("RO1.1.0.0.00.0.0", 27036709581.04),
+        ("RO1.1.1.2.51.0.0", 1980575602.08),
+        ("RO1.1.1.2.52.0.0", 397912793.92),
+        ("RO1.1.1.4.50.1.0", 12495978651.6),
+        ("RO1.1.1.4.50.2.0", 102870659.48),
+        ("RO1.7.1.0.00.0.0", 3634462504.54),
+        ("RO1.7.1.1.50.0.0", 1401061527.03),
+        ("RO1.7.5.1.00.0.0", 3378160052.62),
+    ]
+)
+C_AC = _receita(
+    [
+        ("ReceitasExcetoIntraOrcamentarias", 14543589194.55),
+        ("RO1.1.0.0.00.0.0", 3356381239.02),
+        ("RO1.1.1.2.51.0.0", 157312868.39),
+        ("RO1.1.1.2.52.0.0", 9550865.61),
+        ("RO1.1.1.4.50.1.0", 2220306998.18),
+        ("RO1.7.1.0.00.0.0", 8580977171.32),
+        ("RO1.7.1.1.50.0.0", 7699187827.42),
+        ("RO1.7.5.1.00.0.0", 1365078748.25),
+    ]
+)
+LIQ = siconfi.COL_LIQUIDADA
+D_SP = [
+    _dca("I-D", "TotalDespesas", LIQ, 369170001590.1),
+    _dca("I-D", "DO3.1.00.00.00.00", LIQ, 153744558649.7),
+    _dca("I-D", "DO3.2.00.00.00.00", LIQ, 15491578316.02),
+    _dca("I-D", "DO3.3.00.00.00.00", LIQ, 164618844359.92),
+    _dca("I-D", "DO4.4.00.00.00.00", LIQ, 11939191762.84),
+    _dca("I-D", "DO4.5.00.00.00.00", LIQ, 10892702376.33),
+    _dca("I-D", "DO4.6.00.00.00.00", LIQ, 12483126125.29),
+    # a mesma conta em outra coluna não pode entrar
+    _dca("I-D", "DO4.4.00.00.00.00", "Despesas Empenhadas", 17046272275.75),
+]
+D_DF = [  # o DF não tem amortização lançada neste trecho: grupo ausente vale zero
+    _dca("I-D", "TotalDespesas", LIQ, 42370260061.43),
+    _dca("I-D", "DO3.1.00.00.00.00", LIQ, 22321759198.82),
+    _dca("I-D", "DO3.2.00.00.00.00", LIQ, 445626882.92),
+    _dca("I-D", "DO3.3.00.00.00.00", LIQ, 17012252934),
+    _dca("I-D", "DO4.4.00.00.00.00", LIQ, 1858202159.79),
+    _dca("I-D", "DO4.5.00.00.00.00", LIQ, 76702580.67),
+    _dca("I-D", "DO4.6.00.00.00.00", LIQ, 655716305.23),
+]
+
+
+def _funcoes(total: float, linhas: list[tuple[str, float]]) -> list[dict[str, Any]]:
+    # Na DCA-Anexo I-E a conta é sempre `TotalDespesas`; a função vem no texto.
+    itens = [_dca("I-E", "TotalDespesas", LIQ, total, "Despesas Exceto Intraorçamentárias")]
+    itens += [_dca("I-E", "TotalDespesas", LIQ, v, t) for t, v in linhas]
+    # subfunção e intraorçamentárias não são função
+    itens.append(_dca("I-E", "TotalDespesas", LIQ, 1.0, "10.302 - Assistência Hospitalar"))
+    itens.append(_dca("I-E", "TotalDespesas", LIQ, 1.0, "Despesas Intraorçamentárias"))
+    return itens
+
+
+F_SP = _funcoes(
+    355439276197.86,
+    [
+        ("01 - Legislativa", 3495057248.48),
+        ("04 - Administração", 7459323154.63),
+        ("06 - Segurança Pública", 17697921882.41),
+        ("09 - Previdência Social", 30818599756.54),
+        ("10 - Saúde", 42153192468.94),
+        ("12 - Educação", 69278015667.13),
+        ("26 - Transporte", 19088178066.7),
+        ("28 - Encargos Especiais", 111822024706.41),
+    ],
+)
+
+
+def test_receita_anual_de_sp_soma_o_adicional_do_icms() -> None:
+    r = siconfi.parse_receita_anual(C_SP)
+    assert r is not None
+    assert r.total == 400067309037.12
+    assert r.icms == pytest.approx(237071553843.02 + 989671514)
+    assert (r.ipva, r.itcmd, r.fpe) == (31876947927.41, 7356323453.8, 2198843536.87)
+    assert r.corrente is not None and r.capital is not None
+    assert r.corrente + r.capital == pytest.approx(r.total, rel=1e-4)
+
+
+def test_receita_anual_do_df_e_do_acre_sem_a_conta_do_adicional() -> None:
+    df = siconfi.parse_receita_anual(C_DF)
+    assert df is not None and df.icms == pytest.approx(12495978651.6 + 102870659.48)
+    ac = siconfi.parse_receita_anual(C_AC)
+    assert ac is not None and ac.icms == 2220306998.18  # só a conta principal
+    assert ac.corrente is None and ac.capital is None  # trecho sem os dois totais
+    assert siconfi.parse_receita_anual([]) is None
+    assert siconfi.parse_receita_anual(C_SP[1:]) is None  # sem o total, nada
+
+
+def test_despesa_anual_usa_so_a_coluna_liquidada_e_fecha_no_total() -> None:
+    d = siconfi.parse_despesa_anual(D_SP)
+    assert d is not None
+    assert d.investimentos == 11939191762.84  # e não os 17,0 bi empenhados
+    soma = d.pessoal + d.juros + d.outras_correntes + d.investimentos + d.inversoes + d.amortizacao
+    assert soma == pytest.approx(d.total, rel=1e-6)
+    df = siconfi.parse_despesa_anual(D_DF)
+    assert df is not None and df.pessoal == 22321759198.82
+    assert siconfi.parse_despesa_anual([]) is None
+    sem_grupo = siconfi.parse_despesa_anual(D_SP[:2])
+    assert sem_grupo is not None and sem_grupo.juros == 0.0  # grupo ausente vale zero
+
+
+def test_funcoes_anuais_pegam_so_o_codigo_de_dois_digitos() -> None:
+    f = siconfi.parse_funcoes_anuais(F_SP)
+    assert f is not None
+    assert f.total == 355439276197.86
+    assert f.por_funcao["10"] == ("Saúde", 42153192468.94)
+    assert "10.302" not in f.por_funcao and len(f.por_funcao) == 8
+    assert siconfi.parse_funcoes_anuais([]) is None
+    assert siconfi.parse_funcoes_anuais(F_SP[:1]) is None  # só o total, sem função
+
+
+def test_parse_dca_junta_os_tres_anexos_e_devolve_none_se_nada_veio() -> None:
+    c = siconfi.parse_dca(C_SP + D_SP + F_SP)
+    assert c is not None and c.receita and c.despesa and c.funcoes
+    so_receita = siconfi.parse_dca(C_AC)
+    assert so_receita is not None and so_receita.despesa is None and so_receita.funcoes is None
+    assert siconfi.parse_dca([]) is None
+
+
+# Trecho real do RGF-Anexo 02 de SP (2º quadrimestre de 2026) e do AM, que lança os empréstimos em
+# "Financiamentos".
+def _div(conta: str, valor: float) -> dict[str, Any]:
+    return _linha(conta, COL2, valor)
+
+
+A2_COMP_SP = [
+    _div("DividaConsolidada", 390041766345.85),
+    _div("DividaContratual", 359521548266.76),
+    _div("RGF2EmprestimosInternos", 22800735828.09),
+    _div("RGF2EmprestimosExternos", 24926152012.99),
+    _div("RGF2ReestruturacaoDaDividaDeEstadosEMunicipios", 311646985702.58),
+    _div("RGF2ParcelamentoERenegociacaoDeDividas", 147674723.1),
+    _div("PrecatoriosPosterioresA05052000VencidosENaoPagos", 30490337111.85),
+    _div("OutrasDividas", 29880967.24),
+    _div("DeducoesDaDividaConsolidada", 74133295498.6),
+    _div("RGF2DisponibilidadeDeCaixa", 69524884535.06),
+    _div("DemaisHaveresFinanceiros", 4608410963.54),
+    _div("DividaConsolidadaLiquida", 315908470847.25),
+    _div("PercentualDaDCLSobreARCL", 113.03),
+    _div("RGF2ReceitaCorrenteLiquida", 279658527567.42),
+]
+A2_COMP_AM = [
+    _div("DividaConsolidada", 10087765866.21),
+    _div("RGF2ReestruturacaoDaDividaDeEstadosEMunicipios", 184902303.93),
+    _div("RGF2FinanciamentosInternos", 5430200000.0),
+    _div("RGF2FinanciamentosExternos", 4450200000.0),
+    _div("RGF2ParcelamentoERenegociacaoDeDividas", 22385847.63),
+    _div("DeducoesDaDividaConsolidada", 4032200000.0),
+    _div("RGF2DisponibilidadeDeCaixa", 4029600000.0),
+    _div("DemaisHaveresFinanceiros", 2600000.0),
+]
+
+
+def test_composicao_da_divida_de_sp_fecha_no_total() -> None:
+    c = siconfi.parse_composicao_divida(A2_COMP_SP, 2)
+    assert c is not None
+    soma = c.uniao + c.emprestimos_internos + c.emprestimos_externos + c.parcelamentos
+    soma += c.precatorios + c.outras
+    assert soma == pytest.approx(c.total, rel=1e-6)
+    assert c.caixa is not None and c.haveres is not None and c.deducoes is not None
+    assert c.caixa + c.haveres == pytest.approx(c.deducoes, rel=1e-4)
+    assert siconfi.parse_composicao_divida(A2_COMP_SP, 1) is None  # outra coluna
+    assert siconfi.parse_composicao_divida([], 2) is None
+    d = siconfi.parse_divida(A2_COMP_SP, 2)
+    assert d is not None and d.composicao == c
+
+
+def test_composicao_do_am_soma_financiamentos_aos_emprestimos() -> None:
+    c = siconfi.parse_composicao_divida(A2_COMP_AM, 2)
+    assert c is not None
+    assert c.emprestimos_internos == 5430200000.0 and c.emprestimos_externos == 4450200000.0
+    assert c.precatorios == 0.0  # conta ausente vale zero
+
+
+def _contas_de_teste(sem_dca: set[int] | None = None) -> estados.EstadosContas:
+    cods = [c for c, *_ in estados.UFS]
+    ucs = {
+        35: siconfi.parse_dca(C_SP + D_SP + F_SP),
+        53: siconfi.parse_dca(C_DF + D_DF),  # DF sem o anexo de funções
+        12: siconfi.parse_dca(C_AC),
+    }
+    dca = {c: (ucs.get(c) if c not in (sem_dca or set()) else None) for c in cods}
+    rcl: dict[int, float | None] = {c: 1e9 * c for c in cods}
+    rcl[35] = 266.2e9
+    anual = siconfi.ColetaAnual(2025, dca, rcl)
+    divida = {c: None for c in cods}
+    divida[35] = siconfi.parse_divida(A2_COMP_SP, 2)
+    rgf = siconfi.ColetaRgf(2026, 2, {}, divida)
+    populacao = {c: 1_000_000.0 * (c % 10 + 1) for c in cods}
+    populacao[35] = 46_024_937.0
+    return estados._contas(anual, rgf, populacao, Contexto().agora())
+
+
+def test_fatias_de_cada_bloco_somam_o_total_e_vem_da_maior_para_a_menor() -> None:
+    contas = _contas_de_teste()
+    for uf, ce in contas.contas.items():
+        for b in ce.blocos:
+            assert b.total is not None
+            assert sum(f.valor for f in b.fatias) == pytest.approx(b.total, rel=0.01), (uf, b.id)
+            nomes = [f.nome for f in b.fatias]
+            corpo = [f.valor for f in b.fatias if f.nome != "Outras"]
+            assert corpo == sorted(corpo, reverse=True), (uf, b.id)
+            if "Outras" in nomes:
+                assert nomes[-1] == "Outras"
+            assert b.referencia and b.fonte and b.descricao
+    assert [b.id for b in contas.contas["SP"].blocos] == [
+        "receita",
+        "despesa_grupo",
+        "despesa_funcao",
+        "divida",
+        "deducoes",
+    ]
+
+
+def test_contas_de_sp_numeros_e_posicao() -> None:
+    sp = _contas_de_teste().contas["SP"]
+    rec = next(b for b in sp.blocos if b.id == "receita")
+    assert rec.fatias[0].nome == "ICMS" and rec.total == 400067.3
+    uniao = next(n for n in sp.numeros if n.id == "sp_divida_uniao")
+    assert uniao.valor == 311.6 and uniao.unidade == "R$ bilhões"
+    inv = next(n for n in sp.numeros if n.id == "sp_investimento")
+    assert inv.valor == pytest.approx(11.939 / 266.2 * 100, abs=0.05) and inv.unidade == "% da RCL"
+    icms = next(n for n in sp.numeros if n.id == "sp_icms_por_habitante")
+    assert "º maior entre as" in icms.detalhe and icms.casas == 0
+
+
+def test_estado_sem_dca_ou_sem_uma_conta_sai_com_o_que_tem() -> None:
+    contas = _contas_de_teste(sem_dca={53})
+    assert "DF" not in contas.contas  # nada para mostrar: fora, e não vazio
+    ac = contas.contas["AC"]
+    assert [b.id for b in ac.blocos] == ["receita"]  # sem despesa, função nem dívida
+    assert not any(n.id == "ac_divida_uniao" for n in ac.numeros)
+    df = _contas_de_teste().contas["DF"]
+    assert [b.id for b in df.blocos] == ["receita", "despesa_grupo"]  # sem o anexo de funções
+
+
+def test_montar_poe_as_contas_no_memo_e_aponta_o_arquivo(monkeypatch: pytest.MonkeyPatch) -> None:
+    deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in estados.UFS}
+    monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
+    monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
+    monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
+    monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
+    monkeypatch.setattr(estados.siconfi, "coletar_anual", lambda *a, **k: _anual_falso())
+    ctx = Contexto(hoje=date(2026, 11, 14))
+    e = estados.montar(ctx)
+    assert e.arquivo_contas == "estados-contas.json"
+    assert ctx.memo["estados_contas"].id == "estados-contas"
+
+
+def _anual_falso() -> siconfi.ColetaAnual:
+    cods = [c for c, *_ in estados.UFS]
+    dca = {c: siconfi.parse_dca(C_SP + D_SP + F_SP) for c in cods}
+    return siconfi.ColetaAnual(2025, dca, {c: 266.2e9 for c in cods})
+
+
+def test_sem_dca_o_estados_json_sai_sem_o_arquivo_de_contas(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in estados.UFS}
+    monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
+    monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
+    monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
+    monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
+    monkeypatch.setattr(estados.siconfi, "coletar_anual", lambda *a, **k: None)
+    ctx = Contexto(hoje=date(2026, 11, 14))
+    e = estados.montar(ctx)
+    assert e.arquivo_contas == "" and "estados_contas" not in ctx.memo

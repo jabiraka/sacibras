@@ -17,7 +17,8 @@ import {
   type LinhaDoRanking,
   type PontoDisperso,
 } from "./pontos";
-import type { Estados, MetricaEstados } from "./tipos";
+import { montarFicha } from "./ficha";
+import type { Estados, EstadosContas, MetricaEstados } from "./tipos";
 
 type PropriedadesUF = { uf: string; area: number };
 type UFNoMapa = Feature<Geometry, PropriedadesUF>;
@@ -182,7 +183,59 @@ export function montarEstados(e: Estados): HTMLElement {
     peDispersao,
   );
 
-  raiz.append(barra, sobre, grade, painelDispersao);
+  // A ficha de um estado: escolhida na lista ou com um toque no ranking.
+  const painelFicha = el("div", "painel-mundo ficha");
+  const corpoFicha = el("div", "ficha-corpo");
+  let contas: Promise<EstadosContas | null> | null = null;
+  const lerContas = (): Promise<EstadosContas | null> =>
+    (contas ??= e.arquivo_contas
+      ? fetch(`data/${e.arquivo_contas}`, { cache: "no-cache" })
+          .then((r) => (r.ok ? (r.json() as Promise<EstadosContas>) : null))
+          .catch(() => null)
+      : Promise.resolve(null));
+  let fichaDe = "";
+  const opcoesUf = [{ valor: "", rotulo: "Escolha um estado" }, ...[...e.ufs].sort((a, b) => a.nome.localeCompare(b.nome)).map((u) => ({ valor: u.sigla, rotulo: u.nome }))];
+  const escolhaFicha = listaSuspensa(
+    "estados-ficha",
+    "Estado",
+    opcoesUf,
+    "",
+    (uf) => abrirFicha(uf),
+  );
+  const barraFicha = el("div", "barra-controles");
+  barraFicha.append(escolhaFicha.caixa);
+  painelFicha.append(
+    el("h3", "", "As contas de um estado"),
+    el(
+      "p",
+      "sub",
+      "De onde vem a receita, para onde vai a despesa, quanto investe e do que é feita a dívida. Escolha na lista ou toque num estado do ranking.",
+    ),
+    barraFicha,
+    corpoFicha,
+  );
+  function abrirFicha(uf: string): void {
+    fichaDe = uf;
+    escolhaFicha.trocar(opcoesUf, uf);
+    if (!uf) {
+      corpoFicha.replaceChildren();
+      return;
+    }
+    corpoFicha.replaceChildren(el("p", "sub", "Lendo as contas…"));
+    void lerContas().then((todas) => {
+      if (fichaDe !== uf) return;
+      const c = todas?.contas[uf];
+      corpoFicha.replaceChildren(
+        ...(todas && c
+          ? montarFicha(c, todas)
+          : [el("p", "sub", "As contas deste estado não vieram nesta rodada.")]),
+      );
+    });
+  }
+
+  raiz.append(barra, sobre, grade);
+  if (e.arquivo_contas) raiz.append(painelFicha);
+  raiz.append(painelDispersao);
   const caixaTabela = el("div");
   raiz.append(caixaTabela);
 
@@ -199,6 +252,7 @@ export function montarEstados(e: Estados): HTMLElement {
 
   function destacar(uf: string): void {
     destaque = destaque === uf ? "" : uf;
+    if (destaque && e.arquivo_contas) abrirFicha(destaque);
     pintarRanking();
     pintarDispersao();
   }

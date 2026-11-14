@@ -4,8 +4,11 @@ Teste de 14/11/2026, de uma máquina **fora do Brasil** (o que revela bloqueio p
 estrangeiro), sem chave e sem serviço pago. "CORS" é a resposta a
 `Origin: https://x.github.io`: com CORS, o navegador do visitante também pode chamar.
 
-Ainda **não testado de dentro do GitHub Actions**: o workflow `fontes-smoke.yml` roda
-`sacibras fontes-smoke` lá e põe a tabela no resumo da execução.
+**De dentro do GitHub Actions** (máquina nos EUA, execução de 14/11/2026, workflow
+`fontes-smoke.yml`): responderam todas as fontes que o builder usa — SGS, Focus, Copom, SIDRA,
+FMI (WEO e grupos), BIS, SICONFI (RGF e RREO), CKAN e RTN, IPEADATA, Tesouro Direto (16 s),
+Comex Stat. Só o IBGE `servicodados` (calendário e malhas) caiu por tempo (41 s), como daqui:
+por isso a malha fica no repositório e o calendário espera o teste no PC.
 
 ## Em uso no builder
 
@@ -34,6 +37,8 @@ Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
 
 | FMI SDMX, hierarquia `H_WEO_COUNTRIES` (`hierarchicalcodelist/all/all/latest`, 2,7 MB) | quem pertence a cada grupo do WEO (Mundo 197, Avançados 43, Emergentes 154, América Latina 33, Zona do euro 21…) | Responde de fora. Os nomes em português vêm do `pycountry` (tradução pt_BR do ISO 3166), com 20 corrigidos à mão. A chave de país vazia no WEO traz os 197 numa chamada. |
 | SICONFI, RREO Anexos 03 e 06 | ICMS de 12 meses e resultado primário do ano, por UF | 4º bimestre de 2026 nas 27 UFs (o 5º ainda vazio). ICMS somado: R$ 909,6 bi em 12 meses. Primário: a conta "sem RPPS, acima da linha", a mesma da meta da LDO. |
+| BCB SGS 195 (poupança, rentabilidade no período) | o rendimento da poupança de cada aniversário | Conferida no `package_search` em 14/11/2026. Cada dia traz o rendimento do mês que começa nele; "Quanto rendeu R$ 100" usa o do dia 1º. |
+| Tesouro Direto, os quatro tipos | curva zero nominal (Prefixado + Prefixado com Juros Semestrais) e real (IPCA+ + IPCA+ com Juros Semestrais) | Taxa média entre compra e venda (o "mid", como no finance_agent). Os papéis com cupom entram por *bootstrap* depois do último sem cupom (`curvas.py`); o preço refeito pela curva bate com o da taxa do papel. O IPCA+ sem cupom mais curto vence em mai/2029: antes disso não há inflação implícita. |
 | SGS e SIDRA, pelo navegador | o ponto mais novo dos números da página inicial | CORS `*` conferido com `Origin` de github.io. O SGS às vezes devolve HTML no lugar do JSON: o builder agora pede de novo antes de desistir. |
 
 ## Testadas, ainda sem uso (próximas fases)

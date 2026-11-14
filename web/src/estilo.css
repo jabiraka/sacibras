@@ -189,7 +189,7 @@ button {
   top: 14px;
   z-index: 40;
   transform: translateX(-50%);
-  /* Só a marca (Caio, 14/11/2026): a pílula fica do tamanho dela. */
+  /* Só a marca e a lupa da busca (Caio, 14/11/2026): a pílula fica do tamanho delas. */
   width: auto;
   border-radius: 999px;
   background: var(--vidro-forte);
@@ -1942,5 +1942,344 @@ button.ponto-linha:hover {
   .luz,
   .pontos {
     display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ quanto rendeu R$ 100 */
+
+.retornos {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 12px;
+}
+
+.retornos .painel-retornos {
+  grid-column: auto;
+}
+
+.retornos-grafico {
+  min-width: 0;
+  display: grid;
+}
+
+.retornos .janelas {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .retornos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ------------------------------------------------------------------ busca */
+
+.topo button.lupa {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin-left: 6px;
+  color: var(--tinta-2);
+}
+
+.lupa svg {
+  width: 18px;
+  height: 18px;
+}
+
+.procurar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 30rem);
+  margin: 22px auto 0;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--borda-forte);
+  background: var(--vidro-forte);
+  box-shadow: var(--brilho-topo);
+  color: var(--tinta-3);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: text;
+}
+
+.procurar span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.procurar-lupa {
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--tinta-2);
+}
+
+dialog.busca {
+  width: min(calc(100vw - 32px), 36rem);
+  max-height: min(80vh, 40rem);
+  margin: 72px auto auto;
+  padding: 14px;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--tinta);
+  box-shadow: 0 24px 60px rgb(20 38 28 / 18%);
+  overflow: auto;
+}
+
+dialog.busca::backdrop {
+  background: rgb(20 38 28 / 22%);
+  backdrop-filter: blur(3px);
+}
+
+.busca-linha {
+  display: flex;
+  gap: 8px;
+}
+
+.busca-campo {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 1rem; /* 16 px: o iPhone não dá zoom no campo */
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--borda-forte);
+  background: #fff;
+  color: var(--tinta);
+}
+
+.busca-campo:focus {
+  outline: 2px solid var(--verde);
+  outline-offset: 1px;
+}
+
+.busca-fechar {
+  flex: none;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: none;
+  color: var(--tinta-2);
+}
+
+.busca-aviso:empty {
+  display: none;
+}
+
+.busca-aviso {
+  margin: 12px 4px 0;
+  color: var(--tinta-2);
+  font-size: 0.9rem;
+}
+
+.busca-resultados {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.busca-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--tinta);
+}
+
+.busca-item:hover,
+.busca-item:focus-visible {
+  background: var(--verde-claro);
+  outline: none;
+}
+
+.busca-titulo {
+  font-weight: 500;
+}
+
+.busca-onde {
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+}
+
+.achado {
+  animation: achado 2.2s var(--suave);
+}
+
+@keyframes achado {
+  0%,
+  40% {
+    box-shadow: 0 0 0 3px var(--amarelo);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+/* ------------------------------------------------------------------ ficha do estado */
+
+.ficha {
+  margin-top: 12px;
+}
+
+.ficha-corpo {
+  display: grid;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.ficha-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: 10px;
+}
+
+.ficha-numero {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--vidro-sutil);
+  border: 1px solid var(--borda);
+}
+
+.ficha-numero .rotulo {
+  font-size: 0.8125rem;
+  color: var(--tinta-2);
+}
+
+.ficha-numero strong {
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.ficha-numero .detalhe,
+.ficha-numero .quando {
+  font-size: 0.78rem;
+  color: var(--tinta-3);
+}
+
+.ficha-bloco {
+  padding-top: 12px;
+  border-top: 1px solid var(--fio);
+  min-width: 0;
+}
+
+.ficha-bloco-cabeca {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ficha-bloco h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.ficha-total {
+  flex: none;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha-barra {
+  display: flex;
+  height: 12px;
+  margin: 10px 0 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--fio);
+}
+
+.ficha-barra i {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+}
+
+.ficha-barra i + i {
+  border-left: 2px solid var(--superficie);
+}
+
+.ficha-partes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha-partes th,
+.ficha-partes td {
+  padding: 5px 6px;
+  text-align: right;
+  border-bottom: 1px solid var(--fio);
+}
+
+.ficha-partes thead th {
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--tinta-3);
+}
+
+.ficha-partes tbody th {
+  text-align: left;
+  font-weight: 400;
+}
+
+.ficha-partes td.media {
+  color: var(--tinta-3);
+}
+
+.ficha-chave {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  border-radius: 3px;
+  vertical-align: 0;
+}
+
+.ficha-bloco .fonte {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+}
+
+/* Na ficha, a tabela tem poucas linhas: mostra todas, e os números não quebram. */
+.ficha-bloco .tabela-rolavel {
+  max-height: none;
+  margin-top: 8px;
+}
+
+.ficha-partes td {
+  white-space: nowrap;
+}
+
+.ficha-partes tbody th {
+  min-width: 9rem;
+}
+
+@media (max-width: 480px) {
+  .ficha-partes {
+    font-size: 0.8125rem;
+  }
+
+  .ficha-partes th,
+  .ficha-partes td {
+    padding: 5px 4px;
   }
 }

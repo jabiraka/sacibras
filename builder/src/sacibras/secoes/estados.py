@@ -5,6 +5,12 @@ Desocupação: PNAD Contínua trimestral (IBGE). Pessoal, dívida e receita: Rel
 resultado primário: Relatório Resumido da Execução Orçamentária (RREO), também do SICONFI. Os
 limites mostrados são os que o próprio RGF publica; o builder não escreve número de lei.
 
+As contas de cada estado (`estados-contas.json`, lidas quando a pessoa abre um estado) vêm da
+Declaração de Contas Anuais (DCA) do ano fechado, que todas as UFs já entregaram, e do RGF-Anexo
+02 (dívida em partes). Receita e despesa são do Governo do Estado inteiro (todos os poderes), em
+valores brutos: o ICMS sai antes de repassar aos municípios e ao Fundeb, e o Fundeb aparece como
+fatia.
+
 PIB per capita por UF ficou de fora: a tabela 5938 do IBGE vai só até 2023 e a estimativa de
 população do mesmo ano não existe na tabela 6579, então a conta misturaria anos.
 """
@@ -12,10 +18,21 @@ população do mesmo ano não existe na tabela 6579, então a conta misturaria a
 from __future__ import annotations
 
 from collections import Counter
-from datetime import date
+from datetime import date, datetime
+from statistics import median
 
 from sacibras.fontes import ibge_sidra, siconfi
-from sacibras.schema import UF, Estados, LinhaRef, MetricaEstados
+from sacibras.schema import (
+    UF,
+    BlocoDeConta,
+    Cartao,
+    ContasEstado,
+    Estados,
+    EstadosContas,
+    Fatia,
+    LinhaRef,
+    MetricaEstados,
+)
 from sacibras.secoes.base import MESES, Contexto, br, periodo
 
 # (código IBGE, sigla, nome, região)
@@ -279,6 +296,282 @@ def _rreo(
     return primario, icms
 
 
+ARQUIVO_CONTAS = "estados-contas.json"
+FUNCOES_EM_DESTAQUE = {
+    "10": "Saúde",
+    "12": "Educação",
+    "06": "Segurança pública",
+    "09": "Previdência social",
+    "04": "Administração",
+    "26": "Transporte",
+    "28": "Encargos especiais (dívida e repasses a municípios)",
+}
+
+
+def _mi(valor: float) -> float:
+    return round(valor / 1e6, 1)
+
+
+def _fatias(partes: list[tuple[str, float | None]], outras: float | None = None) -> list[Fatia]:
+    """Da maior para a menor, só o que é positivo; "Outras" por último (e só se sobrou)."""
+    uteis = sorted(((n, v) for n, v in partes if v is not None and v > 0), key=lambda p: -p[1])
+    fatias = [Fatia(nome=n, valor=_mi(v)) for n, v in uteis]
+    if outras is not None and outras > 0:
+        fatias.append(Fatia(nome="Outras", valor=_mi(outras)))
+    return fatias
+
+
+def _bloco_receita(r: siconfi.ReceitaAnual, ano: int) -> BlocoDeConta:
+    impostos = (r.icms or 0) + (r.ipva or 0) + (r.itcmd or 0)
+    outros_tributos = (r.tributos - impostos) if r.tributos is not None else None
+    outras_uniao = (r.uniao - (r.fpe or 0)) if r.uniao is not None else None
+    partes: list[tuple[str, float | None]] = [
+        ("ICMS", r.icms),
+        ("IPVA", r.ipva),
+        ("ITCMD (herança e doação)", r.itcmd),
+        ("Outros impostos, taxas e contribuições de melhoria", outros_tributos),
+        ("FPE (Fundo de Participação dos Estados)", r.fpe),
+        ("Outras transferências da União", outras_uniao),
+        ("Fundeb", r.fundeb),
+    ]
+    identificado = sum(v for _, v in partes if v is not None and v > 0)
+    return BlocoDeConta(
+        id="receita",
+        titulo="De onde vem a receita",
+        descricao=(
+            "O dinheiro que o governo do estado arrecadou no ano, por fonte: impostos próprios, "
+            "repasses da União e o que volta do Fundeb. Valores brutos, antes de repassar aos "
+            "municípios."
+        ),
+        referencia=f"{ano} (ano fechado)",
+        fonte=(
+            "Tesouro Nacional, SICONFI, Declaração de Contas Anuais (DCA), Anexo I-C, "
+            f"receitas brutas realizadas, exceto intraorçamentárias, {ano}"
+        ),
+        fatias=_fatias(partes, r.total - identificado),
+        total=_mi(r.total),
+    )
+
+
+def _bloco_despesa(d: siconfi.DespesaAnual, ano: int) -> BlocoDeConta:
+    partes: list[tuple[str, float | None]] = [
+        ("Pessoal e encargos", d.pessoal),
+        ("Outras despesas correntes", d.outras_correntes),
+        ("Juros e encargos da dívida", d.juros),
+        ("Investimentos", d.investimentos),
+        ("Inversões financeiras", d.inversoes),
+        ("Amortização da dívida", d.amortizacao),
+    ]
+    return BlocoDeConta(
+        id="despesa_grupo",
+        titulo="Em que o governo gasta",
+        descricao=(
+            "O que o estado pagou no ano, por tipo de gasto: salários e aposentadorias, custeio, "
+            "obras e equipamentos (investimentos), e o serviço da dívida. Inversão financeira é "
+            "compra de participação em empresa ou empréstimo concedido."
+        ),
+        referencia=f"{ano} (ano fechado)",
+        fonte=(
+            "Tesouro Nacional, SICONFI, Declaração de Contas Anuais (DCA), Anexo I-D, "
+            f"despesas liquidadas por natureza, {ano}"
+        ),
+        fatias=_fatias(partes),
+        total=_mi(d.total),
+    )
+
+
+def _bloco_funcao(f: siconfi.FuncoesAnuais, ano: int) -> BlocoDeConta:
+    partes: list[tuple[str, float | None]] = []
+    resto = f.total
+    for cod, nome in FUNCOES_EM_DESTAQUE.items():
+        achada = f.por_funcao.get(cod)
+        if achada:
+            partes.append((nome, achada[1]))
+            resto -= achada[1]
+    return BlocoDeConta(
+        id="despesa_funcao",
+        titulo="Para onde vai a despesa",
+        descricao=(
+            'A despesa do ano por área de governo. Em "Outras" ficam Justiça, Assembleia, '
+            "assistência social, segurança prisional, cultura, meio ambiente e as demais funções."
+        ),
+        referencia=f"{ano} (ano fechado)",
+        fonte=(
+            "Tesouro Nacional, SICONFI, Declaração de Contas Anuais (DCA), Anexo I-E, "
+            f"despesas liquidadas por função, exceto intraorçamentárias, {ano}"
+        ),
+        fatias=_fatias(partes, resto),
+        total=_mi(f.total),
+    )
+
+
+def _blocos_divida(c: siconfi.ComposicaoDivida, ref: str) -> list[BlocoDeConta]:
+    fonte = f"Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal, Anexo 02 ({ref})"
+    partes: list[tuple[str, float | None]] = [
+        ("União (renegociação da dívida dos estados, Lei 9.496/97)", c.uniao),
+        ("Empréstimos e financiamentos no país", c.emprestimos_internos),
+        ("Empréstimos e financiamentos no exterior", c.emprestimos_externos),
+        ("Precatórios vencidos e não pagos", c.precatorios),
+    ]
+    blocos = [
+        BlocoDeConta(
+            id="divida",
+            titulo="Do que é feita a dívida",
+            descricao=(
+                "A dívida consolidada do estado por credor e tipo, antes de descontar o caixa. "
+                "A parte da União é o saldo da renegociação das dívidas dos estados."
+            ),
+            referencia=ref,
+            fonte=fonte + ", dívida consolidada bruta",
+            fatias=_fatias(partes, c.total - sum(v or 0 for _, v in partes)),
+            total=_mi(c.total),
+        )
+    ]
+    if c.deducoes:
+        blocos.append(
+            BlocoDeConta(
+                id="deducoes",
+                titulo="O que se desconta da dívida",
+                descricao=(
+                    "Do que o estado tem em caixa e em haveres financeiros, que se abate da dívida "
+                    "para chegar à dívida líquida, a que vale para o limite do Senado."
+                ),
+                referencia=ref,
+                fonte=fonte + ", deduções da dívida consolidada",
+                fatias=_fatias(
+                    [
+                        ("Disponibilidade de caixa", c.caixa),
+                        ("Demais haveres financeiros", c.haveres),
+                    ]
+                ),
+                total=_mi(c.deducoes),
+            )
+        )
+    return blocos
+
+
+def _posicao(valores: dict[str, float], uf: str) -> int:
+    """1 = o maior valor entre as UFs com dado."""
+    return 1 + sum(1 for v in valores.values() if v > valores[uf])
+
+
+def _contas(
+    anual: siconfi.ColetaAnual,
+    rgf: siconfi.ColetaRgf | None,
+    populacao: dict[int, float],
+    agora: datetime,
+) -> EstadosContas:
+    """Um `ContasEstado` por UF: receita, despesa (grupo e função), dívida e números soltos."""
+    ano = anual.ano
+    ref_div = f"{rgf.quadrimestre}º quadrimestre de {rgf.ano}" if rgf else ""
+    inicio_ano, inicio_q = (
+        date(ano, 1, 1),
+        (date(rgf.ano, rgf.quadrimestre * 4 - 3, 1) if rgf else date(ano, 1, 1)),
+    )
+
+    # R$ por habitante de cada fonte, para dizer em que posição o estado fica entre as UFs.
+    fontes_pc: dict[str, tuple[str, dict[str, float]]] = {}
+    for chave, nome, campo in (
+        ("icms", "ICMS", "icms"),
+        ("ipva", "IPVA", "ipva"),
+        ("itcmd", "ITCMD", "itcmd"),
+        ("fpe", "FPE", "fpe"),
+    ):
+        por_uf: dict[str, float] = {}
+        for cod, a in anual.dca.items():
+            v = getattr(a.receita, campo, None) if a and a.receita else None
+            pop = populacao.get(cod)
+            if v and pop:
+                por_uf[SIGLA[cod]] = v / pop
+        fontes_pc[chave] = (nome, por_uf)
+
+    inv_rcl: dict[str, float] = {}
+    for cod, a in anual.dca.items():
+        rcl = anual.rcl.get(cod)
+        if a and a.despesa and rcl:
+            inv_rcl[SIGLA[cod]] = a.despesa.investimentos / rcl * 100
+
+    contas: dict[str, ContasEstado] = {}
+    for cod, sigla, nome, _ in UFS:
+        a = anual.dca.get(cod)
+        blocos: list[BlocoDeConta] = []
+        numeros: list[Cartao] = []
+        fonte_dca = f"Tesouro Nacional, SICONFI, DCA {ano}"
+        if a and a.receita:
+            blocos.append(_bloco_receita(a.receita, ano))
+        if a and a.despesa:
+            blocos.append(_bloco_despesa(a.despesa, ano))
+        if a and a.funcoes:
+            blocos.append(_bloco_funcao(a.funcoes, ano))
+        d = rgf.divida.get(cod) if rgf else None
+        comp = d.composicao if d else None
+        if comp:
+            blocos += _blocos_divida(comp, ref_div)
+
+        if sigla in inv_rcl and a and a.despesa:
+            numeros.append(
+                Cartao(
+                    id=f"{sigla.lower()}_investimento",
+                    rotulo="Investimento",
+                    valor=round(inv_rcl[sigla], 1),
+                    unidade="% da RCL",
+                    casas=1,
+                    referencia=inicio_ano,
+                    periodicidade="A",
+                    detalhe=(
+                        f"R$ {br(a.despesa.investimentos / 1e9)} bi em obras e equipamentos em "
+                        f"{ano}. Mediana das UFs: {br(median(inv_rcl.values()))} % da RCL."
+                    ),
+                    fonte=f"{fonte_dca} (Anexo I-D, investimentos) e RREO Anexo 03 (RCL)",
+                )
+            )
+        if comp and comp.uniao > 0:
+            rcl = d.rcl if d else None
+            falas = [f"{br(comp.uniao / comp.total * 100)} % da dívida consolidada"]
+            if rcl:
+                falas.append(f"{br(comp.uniao / rcl * 100)} % da RCL")
+            numeros.append(
+                Cartao(
+                    id=f"{sigla.lower()}_divida_uniao",
+                    rotulo="Dívida com a União",
+                    valor=round(comp.uniao / 1e9, 1 if comp.uniao >= 1e9 else 2),
+                    unidade="R$ bilhões",
+                    casas=1 if comp.uniao >= 1e9 else 2,
+                    referencia=inicio_q,
+                    periodicidade="T",
+                    detalhe=(
+                        "Saldo da renegociação das dívidas dos estados (Lei 9.496/97): "
+                        + "; ".join(falas)
+                        + "."
+                    ),
+                    fonte=f"Tesouro Nacional, SICONFI, RGF, Anexo 02 ({ref_div})",
+                )
+            )
+        for chave, (rotulo, valores) in fontes_pc.items():
+            if sigla not in valores:
+                continue
+            pos, n = _posicao(valores, sigla), len(valores)
+            numeros.append(
+                Cartao(
+                    id=f"{sigla.lower()}_{chave}_por_habitante",
+                    rotulo=f"{rotulo} por habitante",
+                    valor=round(valores[sigla]),
+                    unidade="R$ por pessoa",
+                    casas=0,
+                    referencia=inicio_ano,
+                    periodicidade="A",
+                    detalhe=(
+                        f"{pos}º maior entre as {n} UFs com dado; a maior arrecada "
+                        f"R$ {br(max(valores.values()), 0)} por pessoa."
+                    ),
+                    fonte=f"{fonte_dca} (Anexo I-C, receita bruta); população estimada do SICONFI",
+                )
+            )
+        if blocos or numeros:
+            contas[sigla] = ContasEstado(uf=sigla, nome=nome, blocos=blocos, numeros=numeros)
+    return EstadosContas(contas=contas, gerado_em=agora)
+
+
 def montar(ctx: Contexto) -> Estados:
     metricas: list[MetricaEstados] = []
     deso: MetricaEstados | None = None
@@ -290,6 +583,7 @@ def montar(ctx: Contexto) -> Estados:
 
     fiscal: tuple[MetricaEstados, MetricaEstados, MetricaEstados, dict[str, float | None]] | None
     fiscal = None
+    coleta: siconfi.ColetaRgf | None = None
     try:
         coleta = siconfi.coletar([c for c, *_ in UFS], ctx.hoje)
         if coleta is None:
@@ -309,6 +603,16 @@ def montar(ctx: Contexto) -> Estados:
             rreo = _rreo(recolha, siconfi.entes())
     except Exception as erro:
         print(f"  aviso: RREO indisponível: {erro}")
+
+    contas: EstadosContas | None = None
+    try:
+        anual = siconfi.coletar_anual([c for c, *_ in UFS], ctx.hoje)
+        if anual is None:
+            print("  aviso: nenhuma DCA recente com 24 estados; estados.json sai sem as contas")
+        else:
+            contas = _contas(anual, coleta, siconfi.entes(), ctx.agora())
+    except Exception as erro:
+        print(f"  aviso: contas dos estados indisponíveis ({erro}); estados.json sai sem elas")
 
     if rreo:
         metricas += list(rreo)
@@ -343,10 +647,13 @@ def montar(ctx: Contexto) -> Estados:
             f"No RGF do {pessoal.referencia}, {len(acima)} dos {n} estados com dado gastam com "
             "pessoal mais que o limite de alerta do Executivo."
         )
+    if contas:
+        ctx.memo["estados_contas"] = contas
     return Estados(
         titulo="Estados",
         resumo=" ".join(frases),
         ufs=[UF(sigla=s, nome=n, regiao=r) for _, s, n, r in UFS],  # type: ignore[arg-type]
         metricas=metricas,
+        arquivo_contas=ARQUIVO_CONTAS if contas else "",
         gerado_em=ctx.agora(),
     )

@@ -6,6 +6,8 @@ as fases estão em [docs/PLANO.md](docs/PLANO.md) — leia antes de começar.
 **Comece e termine pelo [docs/PROXIMOS-PASSOS.md](docs/PROXIMOS-PASSOS.md)** (Caio, 14/11/2026):
 no começo da sessão ele diz o que fazer e o que espera decisão; no fim, atualize-o (o que foi
 feito sai, o que apareceu entra, a data muda) e mande no mesmo commit.
+Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROPOSTAS.md)
+(Caio, 14/11/2026: *"anote no propostas"*).
 
 ## Dados
 
@@ -25,6 +27,11 @@ feito sai, o que apareceu entra, a data muda) e mande no mesmo commit.
 - **O site da B3 fica desligado** (`SB_B3`), pendente de decisão do Caio: a B3 veda coleta
   automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)). Não
   ligar no workflow nem no compose sem o "sim" dele.
+- **Curvas do Tesouro pelo método do Jabs** (Caio, 14/11/2026: *"o Jabs tem uma curva de
+  inflação"*): taxa média entre compra e venda, curva zero com os papéis com cupom por
+  *bootstrap*, fator de desconto log-linear, nada extrapolado (`builder/src/sacibras/curvas.py`,
+  copiado e adaptado do `domain/curves.py` do finance_agent). Comparação com o Focus sempre no
+  mesmo prazo (`media_do_caminho`), nunca taxa contra taxa de anos diferentes.
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 
@@ -43,6 +50,11 @@ feito sai, o que apareceu entra, a data muda) e mande no mesmo commit.
 - **Número com meta se mostra contra a meta** (Caio, 14/11/2026, o IPCA na entrada): o
   cartão leva `meta` (centro e intervalo, da norma lida) e a tela diz em palavras e na régua
   se está dentro, acima do teto ou abaixo do piso.
+- **Busca** (Caio, 14/11/2026: *"barra de pesquisa pras pessoas pesquisarem por nome ou
+  sinônimos"*): a lupa no cabeçalho e a caixa na entrada abrem a mesma busca; o índice
+  (`busca.json`) sai do builder (`busca.py`) com tudo o que a tela mostra, e o resultado leva
+  direto ao número, gráfico ou tabela, abrindo o que estiver guardado. Coisa nova que alguém
+  procuraria por outra palavra ganha o sinônimo em `SINONIMOS`.
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,

@@ -255,12 +255,52 @@ class MetricaEstados(Modelo):
     """Linhas de referência que a própria fonte publica (ex.: o limite que consta do RGF)."""
 
 
+class Fatia(Modelo):
+    nome: str
+    valor: float
+    """Na unidade do bloco (R$ milhões, salvo dito)."""
+
+
+class BlocoDeConta(Modelo):
+    """Uma conta do estado aberta em partes: de onde vem a receita, para onde vai a despesa,
+    do que é feita a dívida."""
+
+    id: str
+    titulo: str
+    descricao: str = ""
+    unidade: str = "R$ milhões"
+    referencia: str
+    """O período escrito: "2025", "jan–ago/2026", "2º quadrimestre de 2026"."""
+    fonte: str
+    fatias: list[Fatia]
+    total: float | None = None
+    """O total da conta, quando a soma das fatias não é o total (sobra "outras")."""
+
+
+class ContasEstado(Modelo):
+    uf: str
+    nome: str
+    blocos: list[BlocoDeConta]
+    numeros: list[Cartao] = Field(default_factory=list)
+    """Os números soltos do estado (investimento % da RCL, dívida com a União…)."""
+
+
+class EstadosContas(Modelo):
+    """As contas de cada UF, lidas só quando a pessoa abre um estado."""
+
+    id: Literal["estados-contas"] = "estados-contas"
+    contas: dict[str, ContasEstado]
+    gerado_em: datetime
+
+
 class Estados(Modelo):
     id: Literal["estados"] = "estados"
     titulo: str
     resumo: str
     ufs: list[UF]
     metricas: list[MetricaEstados]
+    arquivo_contas: str = ""
+    """O JSON com `EstadosContas`, quando houver."""
     gerado_em: datetime
 
 

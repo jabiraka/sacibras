@@ -7,12 +7,14 @@ import "@fontsource-variable/geist";
 import "./estilo.css";
 import { comUnidade, data, dataHora, numero, periodo } from "./formato";
 import { pontoMaisNovo } from "./aovivo";
+import { abrirBusca, revelar } from "./busca";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
+import { montarRetornos } from "./retornos";
 import { el, guardar } from "./pecas";
 import { montarSimulador } from "./simulador";
-import type { Cartao, Estados, Mundo, Painel, Secao, Tabela } from "./tipos";
+import type { Cartao, Estados, Grafico, Mundo, Painel, Secao, Tabela } from "./tipos";
 
 const NUMEROS_A_VISTA = 4;
 const GRAFICOS_A_VISTA = 2;
@@ -85,6 +87,7 @@ function miniatura(pontos: [string, number][]): SVGSVGElement {
 
 function montarCartao(c: Cartao): HTMLElement {
   const no = el("div", "cartao");
+  no.id = `c-${c.id}`;
   no.append(el("span", "cartao-rotulo", c.rotulo));
   const valor = el("span", "cartao-valor");
   valorComUnidade(c, valor);
@@ -101,7 +104,7 @@ function montarCartao(c: Cartao): HTMLElement {
 }
 
 function montarTabela(t: Tabela): HTMLElement {
-  return guardar(t.titulo, t.subtitulo, () => {
+  const caixa = guardar(t.titulo, t.subtitulo, () => {
     const rolavel = el("div", "tabela-rolavel");
     const tabela = el("table", "dados");
     const cab = tabela.createTHead().insertRow();
@@ -122,6 +125,8 @@ function montarTabela(t: Tabela): HTMLElement {
     if (t.nota) partes.push(el("p", "nota", t.nota));
     return partes;
   });
+  caixa.id = `t-${t.id}`;
+  return caixa;
 }
 
 /** O botão que revela o que ficou guardado, e some. */
@@ -136,6 +141,11 @@ function botaoDeAbrir(rotulo: string, quantos: number, abrir: () => void): HTMLE
   });
   caixa.append(botao);
   return caixa;
+}
+
+/** O gráfico, ou a peça própria quando o gráfico tem uma (o comparador de retornos). */
+function montarPeca(g: Grafico): HTMLElement {
+  return g.id === "retornos-em-reais" ? montarRetornos(g) : montarGrafico(g);
 }
 
 function montarSecao(s: Secao, alvo: HTMLElement): void {
@@ -156,13 +166,13 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
     const grade = el("div", "graficos");
     // Um gráfico de largura inteira já enche a tela: abre só ele.
     const aVista = s.graficos[0]?.largura === "inteira" ? 1 : GRAFICOS_A_VISTA;
-    s.graficos.slice(0, aVista).forEach((g) => grade.append(montarGrafico(g)));
+    s.graficos.slice(0, aVista).forEach((g) => grade.append(montarPeca(g)));
     alvo.append(grade);
     const resto = s.graficos.slice(aVista);
     if (resto.length) {
       alvo.append(
         botaoDeAbrir("Mais gráficos", resto.length, () => {
-          resto.forEach((g) => grade.append(montarGrafico(g)));
+          resto.forEach((g) => grade.append(montarPeca(g)));
         }),
       );
     }
@@ -252,7 +262,13 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
     "Cada número com a data e a fonte oficial. O resto está guardado por assunto: abra o que interessa.",
   );
   lema.style.setProperty("--i", "2");
-  heroi.append(selo, titulo, lema);
+  // A busca também na entrada, onde a pessoa chega procurando algo.
+  const procurar = el("button", "procurar entra");
+  procurar.type = "button";
+  procurar.style.setProperty("--i", "2");
+  procurar.append(el("span", "procurar-lupa", "⌕"), el("span", "", "Buscar: inflação, dólar, desemprego, dívida dos estados…"));
+  procurar.addEventListener("click", () => abrirBusca());
+  heroi.append(selo, titulo, lema, procurar);
 
   const essenciais = el("section", "essenciais entra");
   essenciais.style.setProperty("--i", "3");
@@ -359,7 +375,8 @@ async function iniciar(): Promise<void> {
 
   let vistaAtual = "";
   const desenhar = (): void => {
-    const alvo = location.hash.slice(1);
+    // "#juros" abre o assunto; "#juros/g-curva-prefixada" abre e vai ao gráfico (a busca).
+    const [alvo = "", peca = ""] = location.hash.slice(1).split("/");
     const assunto = painel.secoes.some((s) => s.id === alvo && s.id !== "resumo") ? alvo : "";
     if (assunto !== vistaAtual || !conteudo.firstChild) {
       vistaAtual = assunto;
@@ -369,9 +386,25 @@ async function iniciar(): Promise<void> {
     }
     // "#assuntos" é uma âncora dentro do início, não um assunto.
     if (!assunto && alvo) document.getElementById(alvo)?.scrollIntoView();
+    if (assunto && peca) esperarEDepois(() => revelar(decodeURIComponent(peca)));
   };
   window.addEventListener("hashchange", desenhar);
+  document.querySelector(".lupa")?.addEventListener("click", () => abrirBusca());
+  document.addEventListener("keydown", (ev) => {
+    const alvoDoTeclado = ev.target as HTMLElement;
+    if (ev.key === "/" && !/^(INPUT|SELECT|TEXTAREA)$/.test(alvoDoTeclado.tagName)) {
+      ev.preventDefault();
+      abrirBusca();
+    }
+  });
   desenhar();
+}
+
+/** O assunto monta o conteúdo depois de ler o JSON dele: espera aparecer e então age. */
+function esperarEDepois(fazer: () => void, tentativas = 40): void {
+  const pronto = document.querySelector("#conteudo .cartoes, #conteudo .graficos, #conteudo .mapa");
+  if (pronto || tentativas <= 0) window.setTimeout(fazer, 60);
+  else window.setTimeout(() => esperarEDepois(fazer, tentativas - 1), 100);
 }
 
 void iniciar();

@@ -28,7 +28,7 @@ PREFIXADO_JUROS = "Tesouro Prefixado com Juros Semestrais"
 IPCA_JUROS = "Tesouro IPCA+ com Juros Semestrais"
 
 Curvas = dict[str, dict[date, list[Ponto]]]
-"""{tipo do título: {data-base: [(vencimento, taxa de compra % a.a.)]}}."""
+"""{tipo do título: {data-base: [(vencimento, taxa média entre compra e venda, % a.a.)]}}."""
 
 
 def _data(texto: str) -> date:
@@ -41,11 +41,15 @@ def curvas(desde: date) -> Curvas:
     saida: Curvas = {}
     for linha in leitor:
         base = _data(linha["Data Base"])
-        taxa = linha["Taxa Compra Manha"].replace(",", ".")
-        if base < desde or not taxa:
+        compra = linha["Taxa Compra Manha"].replace(",", ".")
+        venda = linha["Taxa Venda Manha"].replace(",", ".")
+        if base < desde or not (compra or venda):
             continue
+        # A taxa média entre compra e venda (o "mid", como no finance_agent): usar só um lado
+        # embute metade do spread do Tesouro Direto (~12 bps) como viés.
+        taxas = [float(t) for t in (compra, venda) if t]
         saida.setdefault(linha["Tipo Titulo"].strip(), {}).setdefault(base, []).append(
-            (_data(linha["Data Vencimento"]), float(taxa))
+            (_data(linha["Data Vencimento"]), sum(taxas) / len(taxas))
         )
     for por_data in saida.values():
         for pontos in por_data.values():

@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md). Aqui fica só o que vem a
 seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (terceira sessão do dia).
+Última atualização: 14/11/2026 (quarta sessão do dia).
 
 ---
 
@@ -16,12 +16,12 @@ seguir, em ordem, e o que espera decisão.
   buscado pelo navegador, o IPCA contra a meta) e onze assuntos — atividade, trabalho,
   inflação, juros e Copom, crédito, mercados, setor externo, contas públicas e dívida, estados,
   Brasil no mundo, previsões.
-- Feito nesta sessão: simulador da dívida de volta; barras de erro do Focus como cápsula
-  vertical; cabeçalho só com a marca; em "Brasil no mundo", métrica e ano em lista suspensa,
-  ranking em pontos, grupos do FMI que abrem por país (197 países) e o gráfico de duas
-  métricas; em "Estados", o mesmo tratamento e duas métricas novas (ICMS por habitante e
-  resultado primário); o teste das fontes passou a rodar no Actions a cada push que mexe nas
-  fontes.
+- Feito nesta sessão: curva zero do Tesouro pelo método do Jabs (`curvas.py`) e, em Juros, os
+  títulos contra o Focus no mesmo prazo (juro e inflação; responde "o Focus está abaixo dos
+  títulos?": empatam em jan/2027, 1 ponto acima em jan/2028, ~4,7 pontos em 2036); "Quanto
+  rendeu R$ 100" em Mercados; a busca com sinônimos (lupa no cabeçalho, caixa na entrada);
+  a ficha de cada estado (receita, despesa por natureza e por função, investimento, dívida em
+  partes e com a União, pela DCA 2025 e o RGF), com a média dos estados ao lado; o teste das fontes no Actions passou (resultado em [FONTES](FONTES.md)).
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
@@ -42,9 +42,10 @@ seguir, em ordem, e o que espera decisão.
 
 ## Próximos passos, em ordem (dá para fazer na nuvem)
 
-1. **Ler o resultado do teste das fontes no Actions** (workflow "Fontes (teste de fumaça)",
-   resumo da execução) e anotar em [FONTES](FONTES.md) o que bloqueia de lá. A primeira rodada
-   sai com o push desta sessão.
+1. **Contas de cada estado: conferir.** Pronto nesta sessão (ficha do estado, 27 UFs, somas
+   conferidas). Falta olhar com calma os casos estranhos: TO e PR (partes da dívida contratual
+   fora das contas lidas, vão para "Outras"), o ITCMD do DF, RR e AC com dívida com a União
+   perto de zero. A lista do que mais dá para abrir por estado está no [PROPOSTAS](PROPOSTAS.md).
 2. **Estados no tempo.** O assunto é uma foto do último período. Faltam a série de cada estado
    (tocar no estado e ver a linha dele contra o Brasil), a nota CAPAG (CSV do Tesouro) e a
    despesa por função per capita. Cuidado com o custo: cada período a mais são 54 chamadas ao

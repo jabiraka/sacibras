@@ -20,6 +20,26 @@ formato. Do Executivo estadual:
   como meta e a mais comparável. Vista em SP, DF e AC em 14/11/2026 (4º bimestre de 2026; o 5º
   ainda voltava vazio).
 
+A `dca` (Declaração de Contas Anuais, ano fechado, Governo do Estado inteiro: todos os poderes)
+devolve todos os anexos numa chamada só por UF (~3 mil linhas, `anexo` + `cod_conta` + `coluna`).
+Vistos em SP, RJ, MG, DF e AC (e as 27 UFs de 2025 respondem) em 14/11/2026:
+
+- Anexo I-C (receita), coluna "Receitas Brutas Realizadas": ICMS (`RO1.1.1.4.50.1.0`, mais o
+  adicional do fundo de pobreza `RO1.1.1.4.50.2.0`, que 22 UFs têm), IPVA (`RO1.1.1.2.51.0.0`),
+  ITCMD (`RO1.1.1.2.52.0.0`), FPE (`RO1.7.1.1.50.0.0`), transferências correntes da União
+  (`RO1.7.1.0.00.0.0`), Fundeb (`RO1.7.5.1.00.0.0`) e o total sem as intraorçamentárias
+  (`ReceitasExcetoIntraOrcamentarias`).
+- Anexo I-D (despesa por natureza), coluna "Despesas Liquidadas": os seis grupos (`DO3.1`, `DO3.2`,
+  `DO3.3`, `DO4.4`, `DO4.5`, `DO4.6`), que somam `TotalDespesas`.
+- Anexo I-E (despesa por função): a conta é sempre `TotalDespesas`; a função vem no texto da
+  conta ("10 - Saúde"), mais "Despesas Exceto Intraorçamentárias".
+
+Dívida com a União: o RGF-Anexo 02 tem `RGF2ReestruturacaoDaDividaDeEstadosEMunicipios`, o saldo da
+renegociação da Lei 9.496/1997 (e afins) com o Tesouro. É o que a fonte aberta separa; empréstimos
+com a União fora desses programas ficam em "Empréstimos". Os conjuntos de haveres e de estoque do
+Tesouro Transparente (`saldos-devedores...por-mutuario`, `estoque-da-divida-de-estados`) pararam
+em 2019/2020, então não servem para "hoje".
+
 Armadilhas vistas em 14/11/2026: o DF é esfera D em `entes`, mas o RGF dele só responde com
 `co_esfera=E`; o Amapá informa os limites em fração (0,49) e não em pontos percentuais (49), por
 isso os limites saem da razão entre os valores em R$ e não da coluna de %.
@@ -27,6 +47,7 @@ isso os limites saem da razão entre os valores em R$ e não da coluna de %.
 
 from __future__ import annotations
 
+import re
 import sys
 import time
 from dataclasses import dataclass
@@ -43,6 +64,9 @@ VALIDADE = 24 * 3600.0
 COL_PCT = "% sobre a RCL Ajustada"
 COL_12M = "TOTAL (ÚLTIMOS 12 MESES)"
 COL_PRIMARIO = "VALOR"
+COL_BRUTA = "Receitas Brutas Realizadas"
+COL_LIQUIDADA = "Despesas Liquidadas"
+VALIDADE_ANO_FECHADO = 30 * 24 * 3600.0
 
 
 @dataclass(frozen=True)
@@ -56,6 +80,28 @@ class Pessoal:
 
 
 @dataclass(frozen=True)
+class ComposicaoDivida:
+    """RGF-Anexo 02 aberto: do que é feita a dívida consolidada e o que se desconta dela (R$)."""
+
+    total: float
+    """Dívida consolidada bruta (DC)."""
+    uniao: float
+    """Reestruturação da dívida de estados e municípios: o que se deve ao Tesouro (Lei 9.496/97)."""
+    emprestimos_internos: float
+    """Empréstimos e financiamentos internos."""
+    emprestimos_externos: float
+    parcelamentos: float
+    precatorios: float
+    """Precatórios vencidos e não pagos, posteriores a 05/05/2000, dentro da dívida."""
+    outras: float
+    deducoes: float | None
+    caixa: float | None
+    """Disponibilidade de caixa (já sem restos a pagar e depósitos vinculados)."""
+    haveres: float | None
+    liquida: float | None
+
+
+@dataclass(frozen=True)
 class Divida:
     """Anexo 02 do RGF: dívida consolidada líquida e a receita corrente líquida."""
 
@@ -65,6 +111,8 @@ class Divida:
     limite: float | None
     """Limite da dívida em % da RCL ajustada, como consta do RGF."""
     alerta: float | None
+    composicao: ComposicaoDivida | None = None
+    """A dívida aberta em partes (mesmo anexo, mesma coluna), quando o RGF traz."""
 
 
 @dataclass(frozen=True)
@@ -86,7 +134,13 @@ def entes() -> dict[int, float]:
 
 
 def _demonstrativo(
-    tipo: str, periodicidade: str, ano: int, periodo: int, anexo: int, ente: int
+    tipo: str,
+    periodicidade: str,
+    ano: int,
+    periodo: int,
+    anexo: int,
+    ente: int,
+    validade: float = VALIDADE,
 ) -> list[dict[str, Any]]:
     """As linhas de um anexo do Executivo do estado `ente` (vazio se não entregou)."""
     for esfera in ("E", "D") if ente == DF else ("E",):
@@ -100,7 +154,7 @@ def _demonstrativo(
             "co_poder": "E",
             "id_ente": str(ente),
         }
-        itens = baixar_json(f"{BASE}/{tipo.lower()}", params=params, validade=VALIDADE)["items"]
+        itens = baixar_json(f"{BASE}/{tipo.lower()}", params=params, validade=validade)["items"]
         time.sleep(PAUSA)
         if itens:
             return list(itens)
@@ -112,9 +166,19 @@ def rgf(ano: int, quadrimestre: int, anexo: int, ente: int) -> list[dict[str, An
     return _demonstrativo("RGF", "Q", ano, quadrimestre, anexo, ente)
 
 
-def rreo(ano: int, bimestre: int, anexo: int, ente: int) -> list[dict[str, Any]]:
+def rreo(
+    ano: int, bimestre: int, anexo: int, ente: int, validade: float = VALIDADE
+) -> list[dict[str, Any]]:
     """As linhas do RREO-Anexo `anexo` do Executivo do estado `ente` (vazio se não entregou)."""
-    return _demonstrativo("RREO", "B", ano, bimestre, anexo, ente)
+    return _demonstrativo("RREO", "B", ano, bimestre, anexo, ente, validade)
+
+
+def dca(ano: int, ente: int) -> list[dict[str, Any]]:
+    """Todos os anexos da DCA do ano fechado do estado `ente`, numa chamada (vazio se não veio)."""
+    params = {"an_exercicio": str(ano), "id_ente": str(ente)}
+    itens = baixar_json(f"{BASE}/dca", params=params, validade=VALIDADE_ANO_FECHADO)["items"]
+    time.sleep(PAUSA)
+    return list(itens)
 
 
 def valor(itens: list[dict[str, Any]], conta: str, coluna: str) -> float | None:
@@ -169,6 +233,37 @@ def parse_divida(itens: list[dict[str, Any]], quadrimestre: int) -> Divida | Non
         rcl=rcl,
         limite=limite("LimiteDefinidoPorResolucaoDoSenadoFederal"),
         alerta=limite("LimiteDeAlerta"),
+        composicao=parse_composicao_divida(itens, quadrimestre),
+    )
+
+
+def parse_composicao_divida(
+    itens: list[dict[str, Any]], quadrimestre: int
+) -> ComposicaoDivida | None:
+    """RGF-Anexo 02: a dívida consolidada em partes e as deduções até a líquida (R$)."""
+    coluna = f"Até o {quadrimestre}º Quadrimestre"
+
+    def v(conta: str) -> float | None:
+        return valor(itens, conta, coluna)
+
+    total = v("DividaConsolidada")
+    if total is None:
+        return None
+    return ComposicaoDivida(
+        total=total,
+        uniao=v("RGF2ReestruturacaoDaDividaDeEstadosEMunicipios") or 0.0,
+        # Alguns estados (AM, BA, ES...) lançam em "Financiamentos" em vez de "Empréstimos".
+        emprestimos_internos=(v("RGF2EmprestimosInternos") or 0.0)
+        + (v("RGF2FinanciamentosInternos") or 0.0),
+        emprestimos_externos=(v("RGF2EmprestimosExternos") or 0.0)
+        + (v("RGF2FinanciamentosExternos") or 0.0),
+        parcelamentos=v("RGF2ParcelamentoERenegociacaoDeDividas") or 0.0,
+        precatorios=v("PrecatoriosPosterioresA05052000VencidosENaoPagos") or 0.0,
+        outras=v("OutrasDividas") or 0.0,
+        deducoes=v("DeducoesDaDividaConsolidada"),
+        caixa=v("RGF2DisponibilidadeDeCaixa"),
+        haveres=v("DemaisHaveresFinanceiros"),
+        liquida=v("DividaConsolidadaLiquida"),
     )
 
 
@@ -184,6 +279,146 @@ def parse_receita(itens: list[dict[str, Any]]) -> Receita | None:
 def parse_primario(itens: list[dict[str, Any]]) -> float | None:
     """RREO-Anexo 06: resultado primário sem RPPS, acima da linha, no ano até o bimestre (R$)."""
     return valor(itens, "ResultadoPrimarioSemRPPSAcimaDaLinha", COL_PRIMARIO)
+
+
+@dataclass(frozen=True)
+class ReceitaAnual:
+    """DCA-Anexo I-C: a receita bruta realizada do ano, em R$, aberta nas fontes que importam."""
+
+    total: float
+    """Receitas exceto intraorçamentárias."""
+    icms: float | None
+    """ICMS mais o adicional do fundo de combate à pobreza, que 22 UFs registram à parte."""
+    ipva: float | None
+    itcmd: float | None
+    tributos: float | None
+    """Impostos, taxas e contribuições de melhoria (o ICMS, o IPVA e o ITCMD estão aqui dentro)."""
+    fpe: float | None
+    uniao: float | None
+    """Transferências correntes da União e de suas entidades (o FPE está aqui dentro)."""
+    fundeb: float | None
+    corrente: float | None
+    capital: float | None
+
+
+@dataclass(frozen=True)
+class DespesaAnual:
+    """DCA-Anexo I-D: a despesa liquidada do ano por grupo de natureza, em R$."""
+
+    total: float
+    pessoal: float
+    juros: float
+    outras_correntes: float
+    investimentos: float
+    inversoes: float
+    amortizacao: float
+
+
+@dataclass(frozen=True)
+class FuncoesAnuais:
+    """DCA-Anexo I-E: a despesa liquidada do ano por função (código de 2 dígitos), em R$."""
+
+    total: float
+    """Despesas exceto intraorçamentárias."""
+    por_funcao: dict[str, tuple[str, float]]
+    """{código: (nome, valor)}."""
+
+
+@dataclass(frozen=True)
+class ContasAnuais:
+    receita: ReceitaAnual | None
+    despesa: DespesaAnual | None
+    funcoes: FuncoesAnuais | None
+
+
+def _dca(itens: list[dict[str, Any]], anexo: str, conta: str, coluna: str) -> float | None:
+    for i in itens:
+        if (
+            i["anexo"] == f"DCA-Anexo {anexo}"
+            and i["cod_conta"] == conta
+            and i["coluna"] == coluna
+            and i["valor"] is not None
+        ):
+            return float(i["valor"])
+    return None
+
+
+def _soma(*partes: float | None) -> float | None:
+    """A soma do que existe; `None` só se nenhuma parte existe."""
+    existentes = [p for p in partes if p is not None]
+    return sum(existentes) if existentes else None
+
+
+def parse_receita_anual(itens: list[dict[str, Any]]) -> ReceitaAnual | None:
+    def v(conta: str) -> float | None:
+        return _dca(itens, "I-C", conta, COL_BRUTA)
+
+    total = v("ReceitasExcetoIntraOrcamentarias")
+    if total is None:
+        return None
+    return ReceitaAnual(
+        total=total,
+        icms=_soma(v("RO1.1.1.4.50.1.0"), v("RO1.1.1.4.50.2.0")),
+        ipva=v("RO1.1.1.2.51.0.0"),
+        itcmd=v("RO1.1.1.2.52.0.0"),
+        tributos=v("RO1.1.0.0.00.0.0"),
+        fpe=v("RO1.7.1.1.50.0.0"),
+        uniao=v("RO1.7.1.0.00.0.0"),
+        fundeb=v("RO1.7.5.1.00.0.0"),
+        corrente=v("RO1.0.0.0.00.0.0"),
+        capital=v("RO2.0.0.0.00.0.0"),
+    )
+
+
+def parse_despesa_anual(itens: list[dict[str, Any]]) -> DespesaAnual | None:
+    """DCA-Anexo I-D: os seis grupos (`DO...`) somam o `TotalDespesas` (visto nas 27 UFs)."""
+
+    def grupo(sufixo: str) -> float:
+        return _dca(itens, "I-D", f"DO{sufixo}", COL_LIQUIDADA) or 0.0
+
+    total = _dca(itens, "I-D", "TotalDespesas", COL_LIQUIDADA)
+    if total is None:
+        return None
+    return DespesaAnual(
+        total=total,
+        pessoal=grupo("3.1.00.00.00.00"),
+        juros=grupo("3.2.00.00.00.00"),
+        outras_correntes=grupo("3.3.00.00.00.00"),
+        investimentos=grupo("4.4.00.00.00.00"),
+        inversoes=grupo("4.5.00.00.00.00"),
+        amortizacao=grupo("4.6.00.00.00.00"),
+    )
+
+
+_FUNCAO = re.compile(r"^(\d{2}) - (.+)$")
+
+
+def parse_funcoes_anuais(itens: list[dict[str, Any]]) -> FuncoesAnuais | None:
+    """DCA-Anexo I-E: as linhas de função ("10 - Saúde") vêm todas com a conta `TotalDespesas`."""
+    total: float | None = None
+    funcoes: dict[str, tuple[str, float]] = {}
+    for i in itens:
+        if i["anexo"] != "DCA-Anexo I-E" or i["coluna"] != COL_LIQUIDADA or i["valor"] is None:
+            continue
+        if i["conta"] == "Despesas Exceto Intraorçamentárias":
+            total = float(i["valor"])
+        elif achou := _FUNCAO.match(i["conta"]):
+            funcoes[achou.group(1)] = (achou.group(2).strip(), float(i["valor"]))
+    if total is None or not funcoes:
+        return None
+    return FuncoesAnuais(total=total, por_funcao=funcoes)
+
+
+def parse_dca(itens: list[dict[str, Any]]) -> ContasAnuais | None:
+    """A receita, a despesa por grupo e a despesa por função da DCA; `None` se não veio nada."""
+    contas = ContasAnuais(
+        receita=parse_receita_anual(itens),
+        despesa=parse_despesa_anual(itens),
+        funcoes=parse_funcoes_anuais(itens),
+    )
+    if contas.receita is None and contas.despesa is None and contas.funcoes is None:
+        return None
+    return contas
 
 
 def candidatos(hoje: date, quantos: int = 4) -> list[tuple[int, int]]:
@@ -290,4 +525,46 @@ def coletar_rreo(entes_ibge: list[int], hoje: date, minimo: int = 24) -> ColetaR
                 primario[e] = None
                 _aviso(e, erro)
         return ColetaRreo(ano, b, receita, primario)
+    return None
+
+
+@dataclass
+class ColetaAnual:
+    ano: int
+    dca: dict[int, ContasAnuais | None]
+    rcl: dict[int, float | None]
+    """RCL do ano fechado (RREO-Anexo 03 do 6º bimestre, 12 meses), em R$."""
+
+
+def coletar_anual(entes_ibge: list[int], hoje: date, minimo: int = 24) -> ColetaAnual | None:
+    """A DCA do ano fechado mais recente em que ao menos `minimo` estados já entregaram.
+
+    O ano fechado (e não o bimestre corrente) é o que todas as UFs têm e o que fecha as contas.
+    Por UF: uma chamada da `dca` (todos os anexos) e uma do RREO-Anexo 03 do 6º bimestre (a RCL).
+    """
+    sondagem = [35, 31, 33, 29, 43]
+    for ano in (hoje.year - 1, hoje.year - 2):
+        try:
+            if not any(dca(ano, e) for e in sondagem if e in entes_ibge):
+                continue
+        except FonteForaDoArError as erro:
+            _aviso(sondagem[0], erro)
+            continue
+        contas: dict[int, ContasAnuais | None] = {}
+        rcl: dict[int, float | None] = {}
+        for e in entes_ibge:
+            try:
+                contas[e] = parse_dca(dca(ano, e))
+            except FonteForaDoArError as erro:
+                contas[e] = None
+                _aviso(e, erro)
+            try:
+                r = parse_receita(rreo(ano, 6, 3, e, VALIDADE_ANO_FECHADO))
+                rcl[e] = r.rcl if r else None
+            except FonteForaDoArError as erro:
+                rcl[e] = None
+                _aviso(e, erro)
+        if sum(c is not None for c in contas.values()) < minimo:
+            continue
+        return ColetaAnual(ano, contas, rcl)
     return None

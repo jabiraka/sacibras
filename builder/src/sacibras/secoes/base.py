@@ -61,6 +61,7 @@ def serie(
     papel: str = "realizado",
     casas: int = 2,
     desde: date | None = None,
+    tracejado_desde: date | None = None,
 ) -> Serie:
     if desde:
         pontos = [p for p in pontos if p[0] >= desde]
@@ -69,6 +70,7 @@ def serie(
         nome=nome,
         pontos=[(d, round(v, casas)) for d, v in pontos],
         papel=papel,  # type: ignore[arg-type]
+        tracejado_desde=tracejado_desde,
     )
 
 

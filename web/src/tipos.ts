@@ -151,12 +151,37 @@ export interface MetricaEstados {
   limites: { valor: number; rotulo: string }[];
 }
 
+export interface BlocoDeConta {
+  id: string;
+  titulo: string;
+  descricao: string;
+  unidade: string;
+  referencia: string;
+  fonte: string;
+  fatias: { nome: string; valor: number }[];
+  total: number | null;
+}
+
+export interface ContasEstado {
+  uf: string;
+  nome: string;
+  blocos: BlocoDeConta[];
+  numeros: Cartao[];
+}
+
+export interface EstadosContas {
+  id: "estados-contas";
+  contas: Record<string, ContasEstado>;
+  gerado_em: string;
+}
+
 export interface Estados {
   id: "estados";
   titulo: string;
   resumo: string;
   ufs: UF[];
   metricas: MetricaEstados[];
+  arquivo_contas: string;
   gerado_em: string;
 }
 

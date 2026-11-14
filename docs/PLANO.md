@@ -342,7 +342,9 @@ habitante, ICMS por habitante e resultado primário (RREO); ranking em pontos e 
 métricas. ⬜ Despesa por função per capita, CAPAG, capitais, série de cada estado no tempo.
 
 **Fase 4 — Mercados** 🟡: ✅ Ibovespa (reais e dólares), dólar, euro, curva prefixada e de juro
-real, inflação implícita, IC-Br. Escrito e desligado (`SB_B3`): índices setoriais, futuros de
+real, inflação implícita, IC-Br; "Quanto rendeu R$ 100" (Ibovespa, dólar, euro, CDI, poupança
+contra o IPCA, período em lista suspensa); curva zero do Tesouro pelo método do Jabs
+(bootstrap das NTN-F e NTN-B) contra o Focus no mesmo prazo, nos juros e na inflação. Escrito e desligado (`SB_B3`): índices setoriais, futuros de
 DI, dólar, Ibovespa e agrícolas. ⬜ ETFs (COTAHIST), amplitude, moedas de emergentes.
 
 **Fase 5 — Previsões** 🟡: ✅ consenso do Focus (tabela, história das apostas) e FMI ao lado do
@@ -359,8 +361,8 @@ conta corrente, investimento, PIB per capita — com ranking por ano, trajetóri
 projeções do FMI até 2031 e tabela ordenável. ⬜ Câmbio e bolsa no ano, juro de 10 anos,
 inflação mensal.
 
-**Fase 6 — Acabamento** 🟡: ✅ tema claro e escuro, tabela e CSV em todo gráfico, texto
-alternativo. ⬜ calendário, "novo desde sua última visita", PNG dos gráficos, imagem de
+**Fase 6 — Acabamento** 🟡: ✅ tema claro (só ele, a pedido), tabela e CSV em todo gráfico, texto
+alternativo, busca com sinônimos (lupa no cabeçalho e caixa na entrada). ⬜ calendário, "novo desde sua última visita", PNG dos gráficos, imagem de
 compartilhamento, domínio.
 
 ---

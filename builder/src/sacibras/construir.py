@@ -117,6 +117,13 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
             continue
         try:
             secao = montar(ctx)
+            contas = ctx.memo.pop(f"{id}_contas", None)  # as contas de cada estado, à parte
+            if contas is not None:
+                try:
+                    _gravar(saida, getattr(secao, "arquivo_contas", ""), contas)
+                except Exception as erro:  # sem o arquivo, a seção sai sem apontar para ele
+                    setattr(secao, "arquivo_contas", "")  # noqa: B010
+                    print(f"  aviso: {id}: contas não gravadas ({erro})")
             _gravar(saida, arquivo, secao)
             extra = ctx.memo.pop(f"{id}_paises", None)  # o arquivo à parte da seção, se houver
             if extra is not None:

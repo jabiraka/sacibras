@@ -5,12 +5,13 @@ from __future__ import annotations
 from datetime import date, timedelta
 from itertools import pairwise
 
+from sacibras import curvas, leis
 from sacibras.calendario import ultimo_dia_util
 from sacibras.catalogo import SGS
 from sacibras.config import usar_b3
 from sacibras.fontes import b3_derivativos, bcb_copom, bcb_focus, bcb_sgs, tesouro_direto
 from sacibras.juros_futuros import a_termo
-from sacibras.schema import Cartao, Grafico, Secao
+from sacibras.schema import Cartao, Grafico, LinhaRef, Secao
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -59,7 +60,7 @@ def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
     dia, pre_hoje = tesouro_direto.no_dia(pre, ctx.hoje)
     _, real_hoje = tesouro_direto.no_dia(real, ctx.hoje)
     ctx.memo["curva_prefixada"] = pre_hoje
-    fonte = "Tesouro Nacional, Tesouro Direto (taxa de compra dos títulos sem cupom)"
+    fonte = "Tesouro Nacional, Tesouro Direto (taxa média entre compra e venda, títulos sem cupom)"
 
     def tres_datas(por_data: dict[date, list[Ponto]], id: str) -> list:  # type: ignore[type-arg]
         series = []
@@ -206,6 +207,177 @@ def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
         termo.append((pre_hoje[-1][0], termo[-1][1]))
         termo = [p for p in termo if p[0] <= date(ctx.hoje.year + 3, 1, 5)]
     return cartoes, graficos, termo
+
+
+def _mercado_x_focus(
+    ctx: Contexto, esperada: list[Ponto], distancia: float
+) -> tuple[list[Cartao], list[Grafico], str]:
+    """A curva do Tesouro contra o Focus no mesmo prazo: o juro prefixado contra o CDI que a
+    Selic do Focus renderia, e a inflação implícita contra o IPCA do Focus acumulado."""
+    td = tesouro_direto.curvas(ctx.hoje - timedelta(days=15))
+    dia, pre = tesouro_direto.no_dia(td[tesouro_direto.PREFIXADO], ctx.hoje)
+    _, ntnf = tesouro_direto.no_dia(td[tesouro_direto.PREFIXADO_JUROS], ctx.hoje)
+    _, ipca_mais = tesouro_direto.no_dia(td[tesouro_direto.IPCA], ctx.hoje)
+    _, ntnb = tesouro_direto.no_dia(td[tesouro_direto.IPCA_JUROS], ctx.hoje)
+    nominal = curvas.montar(dia, pre, ntnf, curvas.CUPOM_NTNF)
+    real = curvas.montar(dia, ipca_mais, ntnb, curvas.CUPOM_NTNB)
+
+    # O Focus em degraus. Selic: a de cada reunião; depois da última, a média entre o fim de
+    # um ano e o do seguinte; o CDI fica à mesma distância da meta de hoje.
+    selic_anual = bcb_focus.mediana_anual_hoje("Selic")
+    degraus_selic = [(d, v - distancia) for d, v in esperada]
+    ultimo_ano = max(selic_anual)
+    for ano in range(esperada[-1][0].year + 1, ultimo_ano + 1):
+        if ano in selic_anual and ano - 1 in selic_anual:
+            media = (selic_anual[ano - 1] + selic_anual[ano]) / 2
+            degraus_selic.append((date(ano, 1, 1), media - distancia))
+    # IPCA: o de cada mês que falta no ano (anualizado), depois o de cada ano.
+    _, ipca_mes = bcb_focus.mensais_hoje("IPCA")
+    ipca_anual = bcb_focus.mediana_anual_hoje("IPCA")
+    degraus_ipca = [
+        (d, ((1 + v / 100) ** 12 - 1) * 100)
+        for d, v in ipca_mes
+        if d.year == ctx.hoje.year and d >= ctx.hoje.replace(day=1)
+    ]
+    degraus_ipca += [(date(a, 1, 1), v) for a, v in sorted(ipca_anual.items()) if a > ctx.hoje.year]
+    horizonte = date(min(ultimo_ano, max(ipca_anual)) + 1, 1, 1)
+    alem = date(horizonte.year + 5, 1, 1)
+
+    def prazos(curva: curvas.Curva, desde: int) -> list[date]:
+        vencimentos = [
+            d
+            for d in (ctx.hoje + timedelta(days=x) for x in range(0, 4000, 1))
+            if d.day == 1 and d.month in (1, 7)
+        ]
+        return [d for d in vencimentos if desde <= curva.du_de(d) <= curva.fim and d <= alem]
+
+    juro_titulos, juro_focus = [], []
+    for d in prazos(nominal, 20):
+        juro_titulos.append((d, nominal.taxa(nominal.du_de(d)) * 100))
+        juro_focus.append((d, curvas.media_do_caminho(degraus_selic, dia, d)))
+    inflacao = curvas.inflacao_implicita(
+        nominal, real, [v for v, _ in ipca_mais] + prazos(real, real.vertices[0][0])
+    )
+    infl_titulos = [(p.vencimento, p.implicita) for p in inflacao]
+    infl_focus = [
+        (p.vencimento, curvas.media_do_caminho(degraus_ipca, dia, p.vencimento)) for p in inflacao
+    ]
+
+    fonte = (
+        "Tesouro Direto (taxa média, curva zero com os títulos com cupom por bootstrap); "
+        f"Focus de {periodo(dia, 'D')}"
+    )
+    nota_alem = f" Depois de {horizonte.year - 1}, o último ano do Focus fica parado (tracejado)."
+    alvo = date(ctx.hoje.year + 2, 1, 1)
+    titulo_alvo = dict(juro_titulos).get(alvo)
+    focus_alvo = dict(juro_focus).get(alvo)
+    cartoes: list[Cartao] = []
+    frase = ""
+    if titulo_alvo is not None and focus_alvo is not None:
+        premio = titulo_alvo - focus_alvo
+        cartoes.append(
+            cartao(
+                "premio-curva",
+                f"Prefixado acima do Focus até {periodo(alvo, 'M')}",
+                [(dia, premio)],
+                unidade="pp",
+                periodicidade="D",
+                casas=2,
+                detalhe=(
+                    f"títulos {br(titulo_alvo, 2)} % a.a.; o CDI da Selic do Focus, "
+                    f"{br(focus_alvo, 2)} %"
+                ),
+                fonte=fonte,
+                procedencia="calculado",
+                secao="juros",
+            )
+        )
+        palavra = "ponto" if round(premio, 1) == 1 else "pontos"
+        frase = (
+            f" Os títulos prefixados até {periodo(alvo, 'M')} pagam {br(titulo_alvo, 1)} % ao "
+            f"ano, {br(premio, 1)} {palavra} acima do que renderia a Selic que o Focus espera no "
+            "mesmo prazo: além da Selic esperada, o preço carrega o prêmio pelo risco de "
+            "emprestar ao governo por mais tempo."
+        )
+    if inflacao:
+        p = inflacao[0]
+        focus_p = infl_focus[0][1]
+        cartoes.append(
+            cartao(
+                "inflacao-implicita-focus",
+                f"Inflação implícita até {periodo(p.vencimento, 'M')} × Focus",
+                [(dia, p.implicita - focus_p)],
+                unidade="pp",
+                periodicidade="D",
+                casas=2,
+                detalhe=(
+                    f"títulos {br(p.implicita, 2)} % a.a.; IPCA do Focus no prazo, "
+                    f"{br(focus_p, 2)} %"
+                ),
+                fonte=fonte,
+                procedencia="calculado",
+                secao="juros",
+            )
+        )
+    graficos = [
+        grafico(
+            "juro-titulos-focus",
+            "Juro dos títulos × Selic do Focus, prazo a prazo",
+            [
+                serie("titulos", "Títulos prefixados (curva zero)", juro_titulos, casas=2),
+                serie(
+                    "focus",
+                    "CDI pela Selic do Focus",
+                    juro_focus,
+                    casas=2,
+                    papel="consenso",
+                    tracejado_desde=horizonte,
+                ),
+            ],
+            tipo="curva",
+            unidade="% a.a., de hoje até o vencimento",
+            casas=2,
+            periodicidade="M",
+            fonte=fonte,
+            nota=(
+                "Para cada vencimento, a taxa da curva zero do Tesouro e a taxa média que o CDI "
+                "teria de hoje até lá se a Selic seguisse o Focus (a de cada reunião, depois a "
+                "de cada ano), em dias úteis. A distância é o prêmio de prazo e de risco."
+                + nota_alem
+            ),
+        ),
+    ]
+    if inflacao:
+        graficos.append(
+            grafico(
+                "inflacao-titulos-focus",
+                "Inflação implícita × IPCA do Focus, prazo a prazo",
+                [
+                    serie("titulos", "Implícita nos títulos", infl_titulos, casas=2),
+                    serie(
+                        "focus",
+                        "IPCA do Focus no mesmo prazo",
+                        infl_focus,
+                        casas=2,
+                        papel="consenso",
+                        tracejado_desde=horizonte,
+                    ),
+                ],
+                tipo="curva",
+                unidade="% a.a., de hoje até o vencimento",
+                casas=2,
+                periodicidade="M",
+                linhas=[LinhaRef(valor=leis.META_CONTINUA.centro, rotulo="meta")],
+                fonte=fonte,
+                nota=(
+                    "Implícita: (1 + juro nominal) / (1 + juro real) − 1, as duas da curva zero "
+                    "no mesmo vencimento (o método da curva de inflação do Jabs). Focus: o IPCA "
+                    "de cada ano acumulado de hoje até o vencimento. A implícita inclui o "
+                    "prêmio pelo risco de inflação." + nota_alem
+                ),
+            )
+        )
+    return cartoes, graficos, frase
 
 
 def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
@@ -414,6 +586,14 @@ def montar(ctx: Contexto) -> Secao:
         origem = "nos títulos prefixados do Tesouro"
     except Exception as erro:
         print(f"    curva do Tesouro ficou de fora: {str(erro)[:120]}")
+    frase_premio = ""
+    try:
+        cdi = ctx.sgs("CDI_ANUAL", anos=1)[-1][1]
+        cartoes_mf, graficos_mf, frase_premio = _mercado_x_focus(ctx, esperada, meta[-1][1] - cdi)
+        cartoes.extend(cartoes_mf)
+        graficos_di.extend(graficos_mf)
+    except Exception as erro:
+        print(f"    curva contra o Focus ficou de fora: {str(erro)[:120]}")
     if usar_b3():
         try:
             cartoes_di, graficos_b3, embutida = _curva_di(ctx, meta[-1][1])
@@ -491,7 +671,7 @@ def montar(ctx: Contexto) -> Secao:
         f"A Selic está em {br(meta[-1][1], 2)} % ao ano desde {periodo(desde_quando, 'D')} "
         f"(reunião nº {ultima.numero} do Copom, em {periodo(ultima.data, 'D')}). Descontada a "
         f"inflação esperada para os próximos 12 meses, o juro real é de {br(real_ex_ante, 1)} % "
-        "ao ano."
+        "ao ano." + frase_premio
     )
     return Secao(
         id="juros",
