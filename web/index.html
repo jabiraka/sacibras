@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>sacibras — a economia brasileira em uma página</title>
+    <meta
+      name="description"
+      content="PIB, emprego, inflação, juros, mercados, contas públicas e o Brasil comparado com o mundo, em gráficos com fonte oficial e data."
+    />
+    <meta name="theme-color" content="#00562a" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <script>
+      // Antes do primeiro quadro, para o tema escolhido não piscar.
+      try {
+        const t = localStorage.getItem("tema");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <header class="topo">
+      <div class="miolo">
+        <div>
+          <a class="marca" href="./" aria-label="sacibras, início">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <polygon points="24,3 45,24 24,45 3,24" fill="#ffd400" />
+              <circle cx="24" cy="24" r="10.5" fill="#0b2a6f" />
+              <polyline
+                points="15.5,27.5 20.5,24 24.5,26 32.5,19.5"
+                fill="none"
+                stroke="#fff"
+                stroke-width="2.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <h1>saci<span>bras</span></h1>
+          </a>
+          <p class="lema">A economia brasileira em uma página: o número, a data e a fonte.</p>
+        </div>
+        <div class="topo-lado">
+          <span id="atualizado">Carregando…</span>
+          <button type="button" id="tema" aria-label="Trocar entre tema claro e escuro">Tema</button>
+        </div>
+      </div>
+    </header>
+    <nav class="nav" aria-label="Seções"><div class="miolo" id="nav"></div></nav>
+    <main class="miolo" id="conteudo"></main>
+    <footer class="rodape">
+      <div class="miolo">
+        <h2>Fontes desta rodada</h2>
+        <ul id="fontes"></ul>
+        <p>
+          Cada gráfico cita o órgão e a série. Os números são lidos das fontes oficiais por um
+          programa de código aberto e publicados sem banco de dados no meio; consenso de mercado
+          é a mediana do Focus (Banco Central) e as projeções internacionais são do FMI. Nada
+          aqui é recomendação de investimento.
+        </p>
+      </div>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

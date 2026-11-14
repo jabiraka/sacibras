@@ -1,0 +1,111 @@
+"""Um lugar só para falar com as fontes: tentativas, espera e cache em arquivo.
+
+O cache (`.cache/`, fora do git) existe para iterar sem martelar as APIs: a mesma URL
+pedida de novo dentro da validade vem do disco. No GitHub Actions a pasta começa vazia a
+cada rodada, então produção sempre lê a fonte.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any
+
+import httpx
+
+# Navegador genérico: várias fontes (B3, Tesouro) recusam o agente padrão do httpx.
+AGENTE = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
+TEMPO_LIMITE = float(os.environ.get("SB_HTTP_TIMEOUT", "40"))
+TENTATIVAS = int(os.environ.get("SB_HTTP_TENTATIVAS", "3"))
+PASTA_CACHE = Path(os.environ.get("SB_CACHE_DIR", ".cache"))
+VALIDADE_PADRAO = float(os.environ.get("SB_CACHE_HORAS", "6")) * 3600
+
+
+class FonteForaDoArError(RuntimeError):
+    """A fonte não respondeu (ou respondeu outra coisa) depois de todas as tentativas."""
+
+
+_cliente: httpx.Client | None = None
+
+
+def cliente() -> httpx.Client:
+    global _cliente
+    if _cliente is None:
+        _cliente = httpx.Client(
+            headers={"User-Agent": AGENTE, "Accept-Language": "pt-BR,pt;q=0.9"},
+            timeout=TEMPO_LIMITE,
+            follow_redirects=True,
+        )
+    return _cliente
+
+
+def _arquivo(chave: str) -> Path:
+    return PASTA_CACHE / (hashlib.sha256(chave.encode()).hexdigest()[:32] + ".bin")
+
+
+def baixar(
+    url: str,
+    *,
+    params: dict[str, str] | None = None,
+    metodo: str = "GET",
+    dados: dict[str, str] | None = None,
+    cabecalhos: dict[str, str] | None = None,
+    validade: float | None = None,
+    tempo_limite: float | None = None,
+) -> bytes:
+    """O corpo da resposta, com cache em arquivo. `validade` em segundos (0 = sem cache)."""
+    validade = VALIDADE_PADRAO if validade is None else validade
+    chave = json.dumps([metodo, url, params, dados], sort_keys=True, ensure_ascii=False)
+    arquivo = _arquivo(chave)
+    if validade > 0 and arquivo.exists() and time.time() - arquivo.stat().st_mtime < validade:
+        return arquivo.read_bytes()
+
+    ultimo: Exception | None = None
+    for tentativa in range(TENTATIVAS):
+        try:
+            resposta = cliente().request(
+                metodo,
+                url,
+                params=params,
+                data=dados,
+                headers=cabecalhos,
+                timeout=tempo_limite or TEMPO_LIMITE,
+            )
+            # 4xx que não é "tente depois" não melhora com insistência.
+            if resposta.status_code in (400, 401, 403, 404, 451):
+                raise FonteForaDoArError(
+                    f"HTTP {resposta.status_code} em {resposta.request.url}: "
+                    f"{resposta.text[:200]!r}"
+                )
+            resposta.raise_for_status()
+            corpo = resposta.content
+            if validade > 0:
+                PASTA_CACHE.mkdir(parents=True, exist_ok=True)
+                arquivo.write_bytes(corpo)
+            return corpo
+        except FonteForaDoArError:
+            raise
+        except (httpx.HTTPError, OSError) as erro:
+            ultimo = erro
+            if tentativa + 1 < TENTATIVAS:
+                time.sleep(1.5 * (tentativa + 1))
+    raise FonteForaDoArError(f"sem resposta de {url}: {ultimo!r}") from ultimo
+
+
+def baixar_json(url: str, **kw: Any) -> Any:
+    """O JSON da resposta. Fonte que devolve HTML no lugar (o SGS faz isso) é falha."""
+    corpo = baixar(url, **kw)
+    try:
+        return json.loads(corpo)
+    except json.JSONDecodeError as erro:
+        # Não deixar a resposta ruim no cache.
+        chave = json.dumps(
+            [kw.get("metodo", "GET"), url, kw.get("params"), kw.get("dados")],
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        _arquivo(chave).unlink(missing_ok=True)
+        raise FonteForaDoArError(f"{url} não devolveu JSON: {corpo[:120]!r}") from erro
