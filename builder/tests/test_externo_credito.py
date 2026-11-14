@@ -86,7 +86,12 @@ EXTERNO = {
 }
 
 
-def test_externo_guarda_o_balanco_no_fim() -> None:
+def test_externo_guarda_o_balanco_no_fim(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Sem o Comex Stat (aqui, sem rede), a seção sai com o resto.
+    def fora_do_ar(ctx: Contexto) -> None:
+        raise RuntimeError("Comex Stat fora do ar")
+
+    monkeypatch.setattr(externo, "comercio_detalhado", fora_do_ar)
     secao = externo.montar(_contexto(EXTERNO, {"CAMBIO_REAL_EFETIVO": 25}))
     assert [c.id for c in secao.cartoes][:4] == [
         "transacoes-correntes",

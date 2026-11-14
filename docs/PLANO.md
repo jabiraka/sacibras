@@ -116,7 +116,7 @@ Teste feito com `Origin: https://x.github.io`, a partir de uma máquina fora do 
 | Tesouro Transparente (CKAN) | RTN, dívida pública federal, Tesouro Direto | **não** | builder |
 | B3 (COTAHIST, IndexCall) | ações, índices (IFIX, SMLL, setoriais) | **não** | builder |
 | Receita Federal (dados abertos) | arrecadação federal por tributo | a testar | builder |
-| Comex Stat (MDIC) | balança comercial detalhada | **HTTP 451** "não disponível para essa origem" | a investigar |
+| Comex Stat (MDIC) | balança comercial detalhada | **HTTP 451** "não disponível para essa origem" | resolvido: o 451 era só do GET com `Origin`; o POST responde e está em uso desde 14/11/2026 (FONTES) |
 | brapi.dev | cotações | `*`, mas pede token | opcional |
 | Yahoo Finance | cotações | **HTTP 429** | não usar |
 | Portal da Transparência | despesas detalhadas | `*`, pede chave gratuita | fase posterior |

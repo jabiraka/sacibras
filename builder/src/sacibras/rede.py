@@ -44,6 +44,12 @@ def cliente() -> httpx.Client:
     return _cliente
 
 
+def _chave(metodo: str, url: str, params: Any, dados: Any, corpo_json: Any) -> str:
+    """A chave do cache. Sem corpo JSON, a mesma de antes (o cache já gravado continua valendo)."""
+    partes = [metodo, url, params, dados] + ([corpo_json] if corpo_json is not None else [])
+    return json.dumps(partes, sort_keys=True, ensure_ascii=False)
+
+
 def _arquivo(chave: str) -> Path:
     return PASTA_CACHE / (hashlib.sha256(chave.encode()).hexdigest()[:32] + ".bin")
 
@@ -54,13 +60,16 @@ def baixar(
     params: dict[str, str] | None = None,
     metodo: str = "GET",
     dados: dict[str, str] | None = None,
+    corpo_json: Any = None,
     cabecalhos: dict[str, str] | None = None,
     validade: float | None = None,
     tempo_limite: float | None = None,
 ) -> bytes:
-    """O corpo da resposta, com cache em arquivo. `validade` em segundos (0 = sem cache)."""
+    """O corpo da resposta, com cache em arquivo. `validade` em segundos (0 = sem cache).
+
+    `dados` vai como formulário; `corpo_json`, como JSON (o Comex Stat)."""
     validade = 0 if SEM_CACHE else VALIDADE_PADRAO if validade is None else validade
-    chave = json.dumps([metodo, url, params, dados], sort_keys=True, ensure_ascii=False)
+    chave = _chave(metodo, url, params, dados, corpo_json)
     arquivo = _arquivo(chave)
     if validade > 0 and arquivo.exists() and time.time() - arquivo.stat().st_mtime < validade:
         return arquivo.read_bytes()
@@ -73,6 +82,7 @@ def baixar(
                 url,
                 params=params,
                 data=dados,
+                json=corpo_json,
                 headers=cabecalhos,
                 timeout=tempo_limite or TEMPO_LIMITE,
             )
@@ -102,10 +112,8 @@ def baixar_json(url: str, **kw: Any) -> Any:
     """O JSON da resposta. O SGS às vezes devolve uma página HTML no lugar (visto em
     14/11/2026, no meio de uma rodada que funcionava): pede de novo, sem cache, antes de
     desistir."""
-    chave = json.dumps(
-        [kw.get("metodo", "GET"), url, kw.get("params"), kw.get("dados")],
-        sort_keys=True,
-        ensure_ascii=False,
+    chave = _chave(
+        kw.get("metodo", "GET"), url, kw.get("params"), kw.get("dados"), kw.get("corpo_json")
     )
     corpo = b""
     for tentativa in range(TENTATIVAS):

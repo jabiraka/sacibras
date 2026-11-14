@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 
 from sacibras import contas
 from sacibras.catalogo import SGS
-from sacibras.schema import LinhaRef, LinhaTabela, Secao, Tabela
-from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.fontes import comexstat
+from sacibras.fontes.comexstat import Item
+from sacibras.schema import Cartao, Grafico, LinhaRef, LinhaTabela, Secao, Tabela
+from sacibras.secoes.base import MESES, Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
 # O balanço de pagamentos em partes: (chave do catálogo, rótulo, sinal). Na conta financeira o
@@ -102,6 +105,341 @@ def tabela_balanco(
             "entre conta corrente e conta financeira são a conta capital e os erros e omissões."
         ),
     )
+
+
+# ---------------------------------------------------------------- comércio por setor e produto
+FONTE_COMEX = f"{comexstat.FONTE}, valores em US$ FOB"
+NOTA_FOB = (
+    "Valores FOB: o preço da mercadoria embarcada, sem frete nem seguro. O Comex Stat registra "
+    "a mercadoria quando passa pela alfândega; o balanço de pagamentos do Banco Central (o "
+    "saldo das outras partes) segue outro critério, e os totais não batem exatamente."
+)
+
+
+def _faixa(mes: int, ano: int) -> str:
+    """'jan–out/2026'."""
+    return f"jan–{MESES[mes - 1]}/{ano}"
+
+
+def _pct(parte: float, total: float) -> float:
+    return round(parte / total * 100, 1) if total else 0.0
+
+
+def tabela_ranking(
+    id: str,
+    titulo: str,
+    fechado: dict[Item, float],
+    ano_fechado: int,
+    *,
+    nome: Callable[[Item], str],
+    demais: str,
+    fonte: str,
+    nota: str,
+    acumulado: tuple[dict[Item, float], dict[Item, float], int, int] | None = None,
+    n: int = 10,
+) -> Tabela:
+    """Os `n` maiores do ano fechado, o resto somado e o total, que fecha a coluna.
+
+    Com `acumulado` (este ano e o passado, de janeiro ao mesmo mês; o mês e o ano de agora),
+    duas colunas a mais: quanto vai no ano e quanto mudou contra o mesmo período do ano
+    passado."""
+    total = sum(fechado.values())
+    agora, antes = (acumulado[0], acumulado[1]) if acumulado else ({}, {})
+    todos = set(fechado) | set(agora) | set(antes)
+    maiores = sorted(fechado, key=lambda i: -fechado[i])[:n]
+
+    def linha(rotulo: str, itens: list[Item] | set[Item]) -> LinhaTabela:
+        v = sum(fechado.get(i, 0.0) for i in itens)
+        valores: list[float | None] = [round(v / 1e9, 1), _pct(v, total)]
+        if acumulado:
+            a = sum(agora.get(i, 0.0) for i in itens)
+            b = sum(antes.get(i, 0.0) for i in itens)
+            valores += [round(a / 1e9, 1), round((a / b - 1) * 100, 1) if b > 0 else None]
+        return LinhaTabela(rotulo=rotulo, valores=valores, unidade="", casas=1)
+
+    linhas = [linha(nome(i), [i]) for i in maiores]
+    if todos - set(maiores):
+        linhas.append(linha(demais, todos - set(maiores)))
+    linhas.append(linha("Total", todos))
+    colunas = [f"{ano_fechado} (US$ bi)", f"% em {ano_fechado}"]
+    subtitulo = f"{ano_fechado}, do maior ao menor"
+    if acumulado:
+        _, _, mes, ano = acumulado
+        colunas += [f"{_faixa(mes, ano)} (US$ bi)", f"Contra {_faixa(mes, ano - 1)} (%)"]
+        subtitulo += f"; e {ano} até {MESES[mes - 1]}"
+    return Tabela(
+        id=id,
+        titulo=titulo,
+        subtitulo=subtitulo,
+        colunas=colunas,
+        linhas=linhas,
+        fonte=fonte,
+        nota=nota,
+    )
+
+
+def tabela_parceiros(
+    exportacoes: dict[Item, float], importacoes: dict[Item, float], ano: int, n: int = 10
+) -> Tabela:
+    """Os `n` países com mais comércio (exportação + importação) e o saldo com cada um."""
+    paises = set(exportacoes) | set(importacoes)
+    total_x, total_m = sum(exportacoes.values()), sum(importacoes.values())
+
+    def corrente(i: Item) -> float:
+        return exportacoes.get(i, 0.0) + importacoes.get(i, 0.0)
+
+    maiores = sorted(paises, key=lambda i: -corrente(i))[:n]
+
+    def linha(rotulo: str, itens: list[Item] | set[Item]) -> LinhaTabela:
+        x = sum(exportacoes.get(i, 0.0) for i in itens)
+        m = sum(importacoes.get(i, 0.0) for i in itens)
+        return LinhaTabela(
+            rotulo=rotulo,
+            valores=[
+                round(x / 1e9, 1),
+                _pct(x, total_x),
+                round(m / 1e9, 1),
+                _pct(m, total_m),
+                round((x - m) / 1e9, 1),
+            ],
+            unidade="",
+            casas=1,
+        )
+
+    linhas = [linha(i.nome, [i]) for i in maiores]
+    linhas.append(linha("Demais países", paises - set(maiores)))
+    linhas.append(linha("Total", paises))
+    return Tabela(
+        id="parceiros",
+        titulo="Com quem o Brasil mais negocia",
+        subtitulo=f"{ano}, pela soma do que vende e do que compra de cada país",
+        colunas=[
+            "Vendeu (US$ bi)",
+            "% das vendas",
+            "Comprou (US$ bi)",
+            "% das compras",
+            "Saldo (US$ bi)",
+        ],
+        linhas=linhas,
+        fonte=FONTE_COMEX,
+        nota=(
+            "Saldo positivo: o Brasil vendeu ao país mais do que comprou dele. O país de "
+            "destino é o declarado no embarque; o de origem, o de onde a mercadoria veio. "
+            + NOTA_FOB
+        ),
+    )
+
+
+def composicao(sitc: comexstat.Valores) -> dict[str, list[Ponto]]:
+    """A parte de cada grupo da UNCTAD nas exportações, ano a ano, em %."""
+    por_ano: dict[int, dict[str, float]] = {}
+    for item, anos in sitc.items():
+        grupo = comexstat.grupo_unctad(item.codigo)
+        for ano, v in anos.items():
+            por_ano.setdefault(ano, {}).setdefault(grupo, 0.0)
+            por_ano[ano][grupo] += v
+    saida: dict[str, list[Ponto]] = {g: [] for g, _ in comexstat.GRUPOS_UNCTAD}
+    for ano in sorted(por_ano):
+        total = sum(por_ano[ano].values())
+        for g, _ in comexstat.GRUPOS_UNCTAD:
+            saida[g].append((date(ano, 1, 1), por_ano[ano].get(g, 0.0) / total * 100))
+    return saida
+
+
+def participacao(valores: comexstat.Valores, nome: str) -> list[Ponto]:
+    """A parte de um item (um país, um bloco) no total de cada ano, em %."""
+    totais: dict[int, float] = {}
+    for anos in valores.values():
+        for ano, v in anos.items():
+            totais[ano] = totais.get(ano, 0.0) + v
+    alvo = next((anos for item, anos in valores.items() if item.nome == nome), {})
+    return [(date(a, 1, 1), alvo.get(a, 0.0) / totais[a] * 100) for a in sorted(totais)]
+
+
+Pecas = tuple[list[Cartao], list[Grafico], list[Tabela], str]
+
+
+def comercio_detalhado(ctx: Contexto) -> Pecas:
+    """Setores, produtos e parceiros do Comex Stat."""
+    ultimo = comexstat.ultimo_mes()
+    fechado = ultimo.year if ultimo.month == 12 else ultimo.year - 1
+    mes = ultimo.month
+
+    def consulta(
+        fluxo: comexstat.Fluxo, detalhe: str
+    ) -> tuple[dict[Item, float], tuple[dict[Item, float], dict[Item, float], int, int] | None]:
+        ano = comexstat.no_ano(comexstat.consultar(fluxo, detalhe, fechado, fechado), fechado)
+        if ultimo.month == 12:
+            return ano, None
+        corrente = comexstat.consultar(fluxo, detalhe, ultimo.year - 1, ultimo.year, mes)
+        return ano, (
+            comexstat.no_ano(corrente, ultimo.year),
+            comexstat.no_ano(corrente, ultimo.year - 1),
+            mes,
+            ultimo.year,
+        )
+
+    nota_setor = (
+        "Setor pela divisão da ISIC, a classificação de atividades da ONU (a mesma base da "
+        "CNAE): o setor é o que produz a mercadoria, não a empresa que exporta. A soja em grão "
+        "conta na agropecuária; o farelo, a carne e o açúcar, na fabricação de alimentos. "
+        + NOTA_FOB
+    )
+    tabelas: list[Tabela] = []
+    produtos: dict[str, dict[Item, float]] = {}
+    fluxos: list[tuple[comexstat.Fluxo, str]] = [("export", "exporta"), ("import", "importa")]
+    for fluxo, palavra in fluxos:
+        ano, acumulado = consulta(fluxo, "ISICDivision")
+        tabelas.append(
+            tabela_ranking(
+                f"{fluxo}acoes-setores",
+                f"O que o Brasil {palavra}, por setor",
+                ano,
+                fechado,
+                nome=comexstat.setor_curto,
+                demais="Demais setores",
+                fonte=FONTE_COMEX,
+                nota=nota_setor,
+                acumulado=acumulado,
+            )
+        )
+        ano, acumulado = consulta(fluxo, "heading")
+        produtos[fluxo] = ano
+        tabelas.append(
+            tabela_ranking(
+                f"{fluxo}acoes-produtos",
+                f"Os produtos que o Brasil mais {palavra}",
+                ano,
+                fechado,
+                nome=comexstat.nome_curto,
+                demais="Demais produtos",
+                fonte=FONTE_COMEX,
+                nota=(
+                    "Produto pela posição do Sistema Harmonizado (os quatro primeiros dígitos "
+                    "da NCM), com nome de todo dia no lugar do oficial. " + NOTA_FOB
+                ),
+                acumulado=acumulado,
+            )
+        )
+    # As tabelas de setor e de produto em ordem: setores (vende, compra), produtos (vende, compra).
+    tabelas = [tabelas[0], tabelas[2], tabelas[1], tabelas[3]]
+
+    # ---- o que pesa nas exportações, desde 1997
+    sitc = comexstat.consultar("export", "SITCGroup", comexstat.PRIMEIRO_ANO, fechado)
+    grupos = composicao(sitc)
+    commodities = [
+        (d, sum(grupos[g][k][1] for g in comexstat.COMMODITIES))
+        for k, (d, _) in enumerate(grupos["alimentos"])
+    ]
+    nomes_grupo = dict(comexstat.GRUPOS_UNCTAD)
+    graficos = [
+        grafico(
+            "exportacoes-composicao",
+            "Do que são feitas as exportações",
+            [serie(g, nomes_grupo[g], grupos[g], casas=1) for g, _ in comexstat.GRUPOS_UNCTAD],
+            tipo="empilhado",
+            unidade="% das exportações",
+            casas=1,
+            periodicidade="A",
+            fonte=f"{FONTE_COMEX}; grupos da UNCTAD (ONU)",
+            nota=(
+                "Grupos de produtos da UNCTAD, a agência da ONU para comércio: commodities são "
+                "alimentos, combustíveis, minérios e metais e matérias-primas agrícolas, "
+                "processados ou não (o farelo e a carne contam como alimento; o aço, como "
+                "manufaturado). Classificação aplicada por nós aos grupos da CUCI do Comex Stat."
+            ),
+            largura="inteira",
+        )
+    ]
+    # ---- para onde vendem
+    paises_x = comexstat.consultar("export", "country", comexstat.PRIMEIRO_ANO, fechado)
+    blocos_x = comexstat.consultar("export", "economicBlock", comexstat.PRIMEIRO_ANO, fechado)
+    destinos = {
+        "china": ("China", participacao(paises_x, "China")),
+        "eua": ("Estados Unidos", participacao(paises_x, "Estados Unidos")),
+        "ue": ("União Europeia", participacao(blocos_x, "União Europeia - UE")),
+        "argentina": ("Argentina", participacao(paises_x, "Argentina")),
+    }
+    graficos.append(
+        grafico(
+            "exportacoes-destinos",
+            "Para onde vão as exportações",
+            [serie(k, nome, pontos, casas=1) for k, (nome, pontos) in destinos.items()],
+            unidade="% das exportações",
+            casas=1,
+            periodicidade="A",
+            fonte=FONTE_COMEX,
+            nota=(
+                "A União Europeia na composição que o Comex Stat usa para toda a série. "
+                "Valores FOB, pelo país de destino declarado no embarque."
+            ),
+        )
+    )
+    paises_m = comexstat.consultar("import", "country", fechado, fechado)
+    tabelas.append(
+        tabela_parceiros(
+            comexstat.no_ano(paises_x, fechado), comexstat.no_ano(paises_m, fechado), fechado
+        )
+    )
+
+    # ---- os cartões, do ano fechado
+    total_x = sum(produtos["export"].values())
+    ordem = sorted(produtos["export"], key=lambda i: -produtos["export"][i])
+    primeiro, segundo, terceiro = ordem[:3]
+    referencia = date(fechado, 1, 1)
+    nome_1 = comexstat.nome_curto(primeiro)
+    china, ue = destinos["china"][1], destinos["ue"][1]
+    eua = destinos["eua"][1]
+    cartoes = [
+        cartao(
+            "commodities-exportacoes",
+            "Commodities nas exportações",
+            commodities,
+            unidade="% do total",
+            periodicidade="A",
+            casas=1,
+            detalhe=f"em {commodities[0][0].year}: {br(commodities[0][1])} %",
+            fonte=f"{FONTE_COMEX}; grupos da UNCTAD",
+            procedencia="calculado",
+            secao="externo",
+            mini=40,
+        ),
+        Cartao(
+            id="maior-exportacao",
+            rotulo="Maior exportação",
+            valor=_pct(produtos["export"][primeiro], total_x),
+            unidade="% das exportações",
+            casas=1,
+            texto=nome_1,
+            referencia=referencia,
+            periodicidade="A",
+            detalhe=(
+                f"{br(_pct(produtos['export'][primeiro], total_x))} %; depois, "
+                f"{comexstat.nome_curto(segundo).lower()} e "
+                f"{comexstat.nome_curto(terceiro).lower()}"
+            ),
+            fonte=FONTE_COMEX,
+            secao="externo",
+        ),
+        cartao(
+            "china-exportacoes",
+            "China nas exportações",
+            china,
+            unidade="% do total",
+            periodicidade="A",
+            casas=1,
+            detalhe=f"EUA: {br(eua[-1][1])} %; União Europeia: {br(ue[-1][1])} %",
+            fonte=FONTE_COMEX,
+            secao="externo",
+            mini=40,
+        ),
+    ]
+    frase = (
+        f"Em {fechado}, commodities foram {br(commodities[-1][1], 0)} % das exportações; o "
+        f"produto mais vendido foi {nome_1.lower()} ({br(cartoes[1].valor)} %), e a China "
+        f"comprou {br(china[-1][1], 0)} % do total."
+    )
+    return cartoes, graficos, tabelas, frase
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -276,12 +614,23 @@ def montar(ctx: Contexto) -> Secao:
         )
     ]
 
+    try:
+        c, g, t, frase = comercio_detalhado(ctx)
+        cartoes += c
+        graficos += g
+        tabelas += t
+    except Exception as erro:
+        frase = ""
+        print(f"    externo: comércio por setor (Comex Stat) ficou de fora: {str(erro)[:160]}")
+
     sinal = "déficit" if tc_pib[-1][1] < 0 else "superávit"
     resumo = (
         f"A conta corrente tem {sinal} de {br(abs(tc_pib[-1][1]), 2)} % do PIB em 12 meses até "
         f"{periodo(tc_pib[-1][0], 'M')}; o investimento direto soma {br(idp_pib[-1][1], 2)} % do "
         f"PIB. As reservas estão em US$ {br(reservas[-1][1])} bilhões."
     )
+    if frase:
+        resumo += " " + frase
     return Secao(
         id="externo",
         titulo="Setor externo",

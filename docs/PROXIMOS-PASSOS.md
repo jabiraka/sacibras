@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o simulador da reforma do consumo em Impostos, no `main` junto com os prazos de releitura e as dez sugestões de Impostos; antes, no mesmo dia, o efeito da Selic com faixas de erro).
+Última atualização: 14/11/2026 (Setor externo por setor, produto e parceiro, do Comex Stat; antes, no mesmo dia, o simulador da reforma do consumo em Impostos).
 
 ---
 
@@ -43,6 +43,28 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
+
+## Comércio por setor, produto e parceiro (14/11/2026, na nuvem, branch `ccr-29b41d1c-2en3yg`)
+
+Pergunta do Caio: *"Nas contas externas, tem como fazer a atribuição do que é exportado e
+importado? Qual nosso maior setor de exportação?"*; pedido: *"pode seguir"*.
+
+- **Fonte nova**: Comex Stat (`fontes/comexstat.py`, POST com JSON; `rede.baixar` ganhou
+  `corpo_json`). As manhas da API estão no FONTES (o período se recorta mês a mês dentro de
+  cada ano). Se ela cair, a seção sai sem as três partes e o build avisa no log.
+- **Setor externo › O que vende e compra** (`#externo/setores`): o cartão e o gráfico
+  empilhado das commodities nas exportações desde 1997, pelos grupos da UNCTAD (lidos no PDF
+  da UNCTADstat, citado no código), e as tabelas por setor (divisão ISIC, com nome de todo
+  dia em `SETORES_CURTOS`). **Principais produtos** (`#externo/produtos`): os dez maiores
+  produtos (SH4) de cada lado, nomes em `NOMES_CURTOS` (produto novo no topo sai com o nome
+  oficial cortado: dar nome a ele). **Com quem negocia** (`#externo/parceiros`): China,
+  EUA, União Europeia e Argentina desde 1997 e os dez maiores parceiros com o saldo.
+- Resposta da pergunta: por seção, a indústria de transformação (54 % em 2025), mas metade
+  dela é alimento processado; por setor fino, a agropecuária (22 %); por produto, o petróleo
+  bruto (12,8 %), à frente da soja (12,5 %), e em 2026 com mais folga.
+- Busca (soja, petróleo, China, parceiros, em outras línguas) e dois verbetes (commodities,
+  FOB). Conferido a 390 e 1280 px (com o navegador em inglês, pela tradução).
+- **Não está no `main`**: espera o "pode publicar" do Caio.
 
 ## Reforma do consumo (14/11/2026, mesma sessão e branch da Selic, publicada no `main`)
 

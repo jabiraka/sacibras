@@ -489,6 +489,23 @@ TERMOS: list[Termo] = [
         ("balança comercial",),
     ),
     Termo(
+        "commodity",
+        "Commodities",
+        "Produtos vendidos em grande quantidade, quase iguais de um vendedor para outro, com "
+        "preço dado no mercado mundial: soja, petróleo, minério, carne, café. Aqui, pelos "
+        "grupos da UNCTAD (ONU): alimentos, combustíveis, minérios e metais e matérias-primas "
+        "agrícolas.",
+        ("commodities", "commodity"),
+        "#externo/setores",
+    ),
+    Termo(
+        "fob",
+        "FOB",
+        "O valor da mercadoria embarcada no porto, sem o frete e o seguro até o destino. É como "
+        "o Brasil registra o que exporta e importa.",
+        ("FOB",),
+    ),
+    Termo(
         "idp",
         "Investimento direto",
         "Dinheiro de estrangeiros para abrir, comprar ou ampliar empresas no Brasil (com 10 % "
