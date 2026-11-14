@@ -2,7 +2,12 @@
 
 A regra da casa: previsão nunca sozinha. O "PIB agora" aparece com o Focus do mesmo
 trimestre e com o erro que o método teve fora da amostra; o Focus aparece com o quanto
-costuma errar nesta época do ano; o simulador da dívida parte das hipóteses do Focus.
+costuma errar nesta época do ano.
+
+O simulador da dívida (`_simulador`, `modelos/divida.py` e `web/src/simulador.ts`) está
+pronto e testado, mas FORA DA TELA por decisão do Caio (14/11/2026: *"tire 'a sua simulação'
+nos gráficos por enquanto… vamos deixar só de fontes que temos"*). Para religar, ver
+docs/PROXIMOS-PASSOS.md.
 """
 
 from __future__ import annotations
@@ -22,6 +27,9 @@ from sacibras.schema import (
 )
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
+
+MOSTRAR_SIMULADOR = False
+"""Fora da tela até o Caio pedir de volta (docs/PROXIMOS-PASSOS.md)."""
 
 # (indicador do Focus, detalhe, rótulo, unidade, casas)
 LINHAS: list[tuple[str, str | None, str, str, int]] = [
@@ -420,12 +428,14 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
 
-    # O simulador da dívida: linha de base com as hipóteses do Focus.
+    # O simulador da dívida: linha de base com as hipóteses do Focus. Desligado por enquanto
+    # (ver o docstring do módulo).
     simulador = None
-    try:
-        simulador = _simulador(ctx, medianas, edicao)
-    except Exception as erro:
-        print(f"    simulador da dívida ficou de fora: {str(erro)[:120]}")
+    if MOSTRAR_SIMULADOR:
+        try:
+            simulador = _simulador(ctx, medianas, edicao)
+        except Exception as erro:
+            print(f"    simulador da dívida ficou de fora: {str(erro)[:120]}")
 
     for indicador, rotulo, unidade, casas in [
         ("PIB Total", f"Focus: PIB de {ano}", "%", 2),

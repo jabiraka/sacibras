@@ -3,6 +3,10 @@
 Painel da economia brasileira (site estático + builder em Python). O plano, as fontes testadas e
 as fases estão em [docs/PLANO.md](docs/PLANO.md) — leia antes de começar.
 
+**Comece e termine pelo [docs/PROXIMOS-PASSOS.md](docs/PROXIMOS-PASSOS.md)** (Caio, 14/11/2026):
+no começo da sessão ele diz o que fazer e o que espera decisão; no fim, atualize-o (o que foi
+feito sai, o que apareceu entra, a data muda) e mande no mesmo commit.
+
 ## Dados
 
 - **Sem banco em produção.** O builder chama as APIs e gera JSONs que vão com o site; nada de
@@ -41,6 +45,9 @@ as fases estão em [docs/PLANO.md](docs/PLANO.md) — leia antes de começar.
   se está dentro, acima do teto ou abaixo do piso.
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
+- **Na tela, só o que vem das fontes** (Caio, 14/11/2026): o simulador da dívida ("a sua
+  simulação") está fora até ele pedir de volta. Cenário montado pela pessoa não entra sem o
+  "sim" dele.
 - Cada número com data de referência.
 
 ## Verificação antes de mostrar

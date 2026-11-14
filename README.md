@@ -9,7 +9,8 @@ fontes oficiais em agenda, calcula tudo e publica JSONs pequenos junto de um sit
 Sem banco de dados em produção.
 
 **Estado (14/11/2026):** builder e site funcionando com dez seções de dados reais; ainda sem
-deploy. O plano e o que falta estão em [docs/PLANO.md](docs/PLANO.md); as fontes testadas, em
+deploy. O plano está em [docs/PLANO.md](docs/PLANO.md), o que vem a seguir em
+[docs/PROXIMOS-PASSOS.md](docs/PROXIMOS-PASSOS.md) e as fontes testadas em
 [docs/FONTES.md](docs/FONTES.md).
 
 ## Fontes

@@ -78,3 +78,11 @@ def test_acerto_do_focus_mede_erro_absoluto_e_vies(monkeypatch: pytest.MonkeyPat
     assert medido.erro_tipico == pytest.approx(1.0)
     assert medido.vies == pytest.approx(0.0)
     assert medido.anos == list(range(2010, 2026))
+
+
+def test_simulador_fica_fora_da_tela_por_enquanto() -> None:
+    # Decisão do Caio (14/11/2026): só o que vem das fontes. Religar é uma linha, e é decisão
+    # dele (docs/PROXIMOS-PASSOS.md).
+    from sacibras.secoes import previsoes
+
+    assert previsoes.MOSTRAR_SIMULADOR is False

@@ -8,6 +8,8 @@ Escrito em 13/11/2026. Referência: [econvitals.org](https://econvitals.org/) (E
 
 ## Estado em 14/11/2026
 
+> O que vem a seguir, e o que espera decisão, está em [PROXIMOS-PASSOS.md](PROXIMOS-PASSOS.md).
+
 No ar (no Docker local e no build do Actions, ainda sem deploy porque o trabalho está no
 branch): o builder, o site e onze assuntos com dados reais — **atividade, trabalho, inflação,
 juros e Copom, crédito, mercados, setor externo, contas públicas e dívida, estados, Brasil no
@@ -346,7 +348,8 @@ DI, dólar, Ibovespa e agrícolas. ⬜ ETFs (COTAHIST), amplitude, moedas de eme
 **Fase 5 — Previsões** 🟡: ✅ consenso do Focus (tabela, história das apostas) e FMI ao lado do
 realizado; **histórico de acerto do Focus** (erro típico nesta época do ano, desde 2010) como
 faixa de erro; **PIB agora** (equação-ponte com o IBC-Br, erro medido fora da amostra, Focus
-do trimestre ao lado); **simulador da dívida** no navegador, com linha de base do Focus.
+do trimestre ao lado). ⏸ Simulador da dívida: pronto, fora da tela a pedido do Caio
+(14/11/2026), ver [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 ⬜ IPCA e desocupação com modelo sazonal, "o que mudou desde a última leitura" (pede guardar
 a leitura anterior), PIB agora com indústria, varejo e serviços além do IBC-Br.
 
