@@ -21,7 +21,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from statistics import median
 
-from sacibras import leis
+from sacibras import leis, organizacao
 from sacibras.fontes import ibge_sidra, siconfi
 from sacibras.schema import (
     UF,
@@ -327,9 +327,7 @@ def _bloco_receita(r: siconfi.ReceitaAnual, ano: int, sigla: str = "") -> BlocoD
         id="receita",
         titulo="De onde vem a receita",
         descricao=(
-            "O dinheiro que o governo do estado arrecadou no ano, por fonte: impostos próprios, "
-            "repasses da União e o que volta do Fundeb. Valores brutos, antes de repassar aos "
-            "municípios."
+            "A arrecadação do ano por fonte, antes dos repasses aos municípios."
             + (
                 " O DF também cobra os impostos que nos estados são dos municípios (IPTU, ISS e "
                 'ITBI): eles estão em "Outros impostos".'
@@ -359,11 +357,7 @@ def _bloco_despesa(d: siconfi.DespesaAnual, ano: int) -> BlocoDeConta:
     return BlocoDeConta(
         id="despesa_grupo",
         titulo="Em que o governo gasta",
-        descricao=(
-            "O que o estado pagou no ano, por tipo de gasto: salários e aposentadorias, custeio, "
-            "obras e equipamentos (investimentos), e o serviço da dívida. Inversão financeira é "
-            "compra de participação em empresa ou empréstimo concedido."
-        ),
+        descricao=("O que o estado pagou no ano, por tipo de gasto."),
         referencia=f"{ano} (ano fechado)",
         fonte=(
             "Tesouro Nacional, SICONFI, Declaração de Contas Anuais (DCA), Anexo I-D, "
@@ -386,8 +380,7 @@ def _bloco_funcao(f: siconfi.FuncoesAnuais, ano: int) -> BlocoDeConta:
         id="despesa_funcao",
         titulo="Para onde vai a despesa",
         descricao=(
-            'A despesa do ano por área de governo. Em "Outras" ficam Justiça, Assembleia, '
-            "assistência social, segurança prisional, cultura, meio ambiente e as demais funções."
+            'A despesa do ano por área de governo; Justiça, Assembleia e o resto em "Outras".'
         ),
         referencia=f"{ano} (ano fechado)",
         fonte=(
@@ -414,10 +407,7 @@ def _blocos_divida(c: siconfi.ComposicaoDivida, ref: str) -> list[BlocoDeConta]:
         BlocoDeConta(
             id="divida",
             titulo="Do que é feita a dívida",
-            descricao=(
-                "A dívida consolidada do estado por credor e tipo, antes de descontar o caixa. "
-                "A parte da União é o saldo da renegociação das dívidas dos estados."
-            ),
+            descricao=("A dívida consolidada por credor, antes de descontar o caixa."),
             referencia=ref,
             fonte=fonte + ", dívida consolidada bruta",
             fatias=_fatias(partes, c.total - sum(v or 0 for _, v in partes)),
@@ -429,10 +419,7 @@ def _blocos_divida(c: siconfi.ComposicaoDivida, ref: str) -> list[BlocoDeConta]:
             BlocoDeConta(
                 id="deducoes",
                 titulo="O que se desconta da dívida",
-                descricao=(
-                    "Do que o estado tem em caixa e em haveres financeiros, que se abate da dívida "
-                    "para chegar à dívida líquida, a que vale para o limite do Senado."
-                ),
+                descricao=("Caixa e haveres que se abatem para chegar à dívida líquida."),
                 referencia=ref,
                 fonte=fonte + ", deduções da dívida consolidada",
                 fatias=_fatias(
@@ -516,17 +503,17 @@ def _contas(
                     referencia=inicio_ano,
                     periodicidade="A",
                     detalhe=(
-                        f"R$ {br(a.despesa.investimentos / 1e9)} bi em obras e equipamentos em "
-                        f"{ano}. Mediana das UFs: {br(median(inv_rcl.values()))} % da RCL."
+                        f"R$ {br(a.despesa.investimentos / 1e9)} bi em obras; "
+                        f"mediana das UFs {br(median(inv_rcl.values()))} %"
                     ),
                     fonte=f"{fonte_dca} (Anexo I-D, investimentos) e RREO Anexo 03 (RCL)",
                 )
             )
         if comp and comp.uniao > 0:
             rcl = d.rcl if d else None
-            falas = [f"{br(comp.uniao / comp.total * 100)} % da dívida consolidada"]
+            falas = [f"{br(comp.uniao / comp.total * 100, 0)} % da dívida"]
             if rcl:
-                falas.append(f"{br(comp.uniao / rcl * 100)} % da RCL")
+                falas.append(f"{br(comp.uniao / rcl * 100, 0)} % da RCL")
             numeros.append(
                 Cartao(
                     id=f"{sigla.lower()}_divida_uniao",
@@ -536,11 +523,7 @@ def _contas(
                     casas=1 if comp.uniao >= 1e9 else 2,
                     referencia=inicio_q,
                     periodicidade="T",
-                    detalhe=(
-                        "Saldo da renegociação das dívidas dos estados (Lei 9.496/97): "
-                        + "; ".join(falas)
-                        + "."
-                    ),
+                    detalhe="; ".join(falas),
                     fonte=f"Tesouro Nacional, SICONFI, RGF, Anexo 02 ({ref_div})",
                 )
             )
@@ -557,10 +540,7 @@ def _contas(
                     casas=0,
                     referencia=inicio_ano,
                     periodicidade="A",
-                    detalhe=(
-                        f"{pos}º maior entre as {n} UFs com dado; a maior arrecada "
-                        f"R$ {br(max(valores.values()), 0)} por pessoa."
-                    ),
+                    detalhe=f"{pos}º maior de {n} UFs",
                     fonte=f"{fonte_dca} (Anexo I-C, receita bruta); população estimada do SICONFI",
                 )
             )
@@ -652,5 +632,6 @@ def montar(ctx: Contexto) -> Estados:
         ufs=[UF(sigla=s, nome=n, regiao=r) for _, s, n, r in UFS],  # type: ignore[arg-type]
         metricas=metricas,
         arquivo_contas=ARQUIVO_CONTAS if contas else "",
+        subcategorias=organizacao.partes_dos_estados(contas is not None),
         gerado_em=ctx.agora(),
     )

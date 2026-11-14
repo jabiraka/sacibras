@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (décima primeira sessão do dia: o efeito da Selic, o simulador com faixas de erro e o gancho da proposta de Lara Resende).
+Última atualização: 14/11/2026 (o efeito da Selic, o simulador dela com faixas de erro e o gancho da proposta de Lara Resende, juntos no `main` com Impostos, Estados em partes e tradução).
 
 ---
 
@@ -17,7 +17,7 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   buscado pelo navegador, o IPCA contra a meta, a busca) e onze assuntos — atividade,
   trabalho, inflação, juros e Copom, crédito, mercados, setor externo, contas públicas e
   dívida, estados (com a ficha de cada um), Brasil no mundo, previsões; e, desde 14/11,
-  demografia e riscos (treze ao todo).
+  demografia e riscos; e Impostos (catorze ao todo).
 - Feito na última sessão:
   - Do Econvitals ([PROPOSTAS](PROPOSTAS.md), tabela com o par brasileiro de cada métrica):
     juro e inflação implícita por prazo e a implícita de 5 a 10 anos à frente; o prefixado
@@ -44,7 +44,7 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
-## Décima primeira sessão (14/11/2026, na nuvem, branch `ccr-567b9de5-xode7j`)
+## Sessão da Selic (14/11/2026, na nuvem, branch `ccr-567b9de5-xode7j`, publicada no `main`)
 
 Pedido do Caio: *"senti também falta de uma sessão sobre o impacto da taxa selic na inflação, ou
 algum tipo de simulador, se reduzir a taxa oq acontece com as outras métricas (inflação,
@@ -77,8 +77,90 @@ câmbio, dívida)"*.
 - Busca ("se a selic cair", "corte de juros", "simulador", "lara resende") e quatro verbetes
   no glossário (93).
 - Conferido a 1280 e a 390 px, com tudo aberto e o toque no gráfico. A prévia privada foi
-  republicada com tudo (os treze assuntos e o glossário, que ela ainda não tinha). **Não
-  publicado no `main`**: espera o "pode" do Caio.
+  republicada com tudo (os treze assuntos e o glossário, que ela ainda não tinha). **Publicado
+  no `main`** em 14/11/2026, a pedido do Caio (*"pode juntar"*), junto com o que já estava lá
+  (Impostos, Estados em partes, tradução).
+
+## Sessão dos Impostos (14/11/2026, na nuvem, branch `ccr-d0c7a2f5-n0uby2`, publicada no `main`)
+
+- **Pedido do Caio**: *"estou sentindo falta de alguma sessão sobre impostos, ou impacto de
+  impostos no crescimento"*. Para o crescimento, ele escolheu as quatro peças oferecidas.
+- **Assunto novo "Impostos"** (`secoes/impostos.py`), em Contas públicas, entre Contas públicas
+  e Estados, com cinco partes:
+  - **Arrecadação federal**: o CSV da Receita por UF e tributo (`fontes/receita_arrecadacao.py`),
+    soma de 12 meses a preços de hoje (IPCA), crescimento real, % do PIB e a tabela por tributo.
+    Desde 2013 (antes, o arquivo não traz a previdência por estado; 2001–2002 têm números
+    ambíguos).
+  - **Carga tributária** e **sobre o que se cobra**: OCDE, Global Revenue Statistics
+    (`fontes/ocde_receita.py`): Brasil × média da OCDE × América Latina, quem arrecada, a
+    composição por base e a tabela com 12 países.
+  - **Impostos e crescimento**: gráfico de pontos novo (`Grafico.dispersao`,
+    `web/src/dispersao.ts`, o mesmo desenho de Brasil no mundo) com a carga média e o
+    crescimento médio do PIB por habitante (FMI) em dez anos, a correlação dita em palavras e
+    o aviso de que andar junto não é causa; e a tabela dos estudos oficiais lidos
+    (`relatorios.EFEITOS_DE_IMPOSTO`: FMI WP 16/79, Ipea TD 1377, Ipea Carta 60, Prêmio
+    Tesouro 2024), cada um com o trecho original e a página.
+  - **Gasto tributário**: o DGT da Receita, bases efetivas (`fontes/receita_gastos.py`), 2014 a
+    2023 juntando quatro edições, e os maiores itens do último ano.
+- Glossário (+9 termos), sinônimos da busca, teste de fumaça das três fontes novas.
+- **Esperando decisão do Caio**: a lista "Impostos: o que mais cabe" no
+  [PROPOSTAS](PROPOSTAS.md) (dez sugestões).
+## 11ª sessão (14/11/2026, na nuvem, branch `claude/ui-refinements-glossary-v417zq`)
+
+Pedidos do Caio: *"diminua a tela ao abrir por estado"*, *"adicione RCL e outros termos na aba
+de Estados para o glossário"*, *"não encontrei o número do grau de investimento do Brasil"*,
+*"os textos estão se confundindo com as linhas"* e *"se for apresentar o resultado, escreva só
+o essencial"*.
+
+- **Estados em partes** (`organizacao.PARTES_ESTADOS`, `web/src/estados.ts`): a visão geral
+  só com o mapa (menor); "Mapa e ranking"; "Um estado por dentro" (`#estados/uf-SP`), com os
+  números e as contas **um bloco de cada vez, em abas** (Receita, Gasto por tipo, Gasto por
+  área, Dívida, Descontos da dívida); "Duas métricas"; "Tabela completa". Tocar num estado do
+  ranking dá o atalho "Ver as contas de …". Descrições dos blocos encurtadas.
+- **Glossário em Estados**: a ficha (rótulos, detalhes, nomes das linhas da tabela) agora é
+  lida pelo glossário, e o texto da métrica trocada na lista é marcado de novo
+  (`remarcar`). 24 verbetes novos: despesa com pessoal, limites máximo, prudencial e de
+  alerta, dívida consolidada (e a líquida), dívida com a União, haveres, caixa, custeio,
+  inversões, amortização, encargos especiais, Fundeb, transferências da União, RPPS, acima da
+  linha, RGF, RREO, DCA, SICONFI, quadrimestre, hiato de crédito e serviço da dívida (113 ao
+  todo).
+- **Nota de crédito em letras**: o cartão mostra "BB" (campo `texto` do `Cartao`), com "2
+  degraus abaixo do grau de investimento; Moody's Ba1"; o gráfico tem o eixo com as notas
+  (`marcas_y`: BBB/Baa2 … B/B2) e a dica diz a nota. A busca acha por "rating", "grau de
+  investimento", "S&P"…
+- **Linhas de referência** (meta, média, limite, grau de investimento) com o nome na legenda,
+  não mais escrito no desenho por cima das séries (e cortado no celular).
+- **Cartões enxutos**: `detalhe` até 60 letras (o builder avisa "detalhe longo"); 25 textos
+  encurtados (Riscos, Demografia, Inflação, Juros, meta de primário, ficha dos estados). Regra
+  no `CLAUDE.md`.
+- **Crédito privado contra outros países** (item 0 de antes, parte): serviço da dívida do setor
+  privado (BIS `WS_DSR`; o BIS não separa as famílias para o Brasil, dito na linha) e hiato de
+  crédito (BIS `WS_CREDIT_GAP`) entram em Brasil no mundo (tema "Crédito") e na vista "outros
+  países" do painel de alerta, em "Fora do painel".
+- **Inflação no simulador da dívida** (Caio: *"na simulação dá pra colocar também a
+  inflação?"*): quarto controle, ±3 pp sobre o IPCA do Focus. Na conta o juro não reage à
+  inflação (dito no controle e na nota: na vida real parte dos títulos é corrigida pelo IPCA
+  e o BC sobe a Selic, então é para mexer no juro junto). +2 pp de inflação levam a dívida de
+  2034 de 104,8 % para 89,8 % do PIB, com o juro parado.
+- **Tradução automática** (Caio: *"a página pelo idioma de quem entra pra visitar, pelo
+  país"*; `web/src/traducao.ts`): o navegador em outro idioma abre a página traduzida pelo
+  Google Tradutor (o cookie `googtrans`, sem a faixa do Google); a variante do país vale
+  quando muda a escrita (zh-TW/zh-HK tradicional), e português de qualquer país fica no
+  original. Lista "Idioma" no menu (no celular, no alto do menu aberto) com 13 idiomas mais o
+  do navegador; a escolha fica no navegador. Em português, nada é baixado do Google.
+  Conferido com navegador en-US, es-AR e pt-BR. Limites: o país pelo IP não é usado (pediria
+  serviço de terceiros); o tradutor às vezes estraga nomes próprios ("Copom" virou "Cocom" no
+  espanhol) e traduz "Desocupação" por "Eviction" no inglês.
+- **Busca em outras línguas** (Caio: *"arrume a busca"*): `OUTRAS_LINGUAS` em `busca.py` põe
+  no índice as palavras em inglês, espanhol e francês de cada assunto (unemployment,
+  desempleo, chômage; credit rating; GDP…); a que vem do título (`lt`) pesa mais que a do
+  resumo, para "unemployment" trazer a Desocupação antes de Estados. Em outra língua (japonês,
+  chinês…), o aviso diz que a busca entende português, inglês, espanhol e francês. Coisa nova
+  que um estrangeiro procuraria ganha a palavra em `OUTRAS_LINGUAS`.
+- **Publicado no `main`** em 14/11/2026, a pedido do Caio (*"pode juntar no main"*).
+- Conferido a 390 e a 1280 px (Estados nas cinco telas, Riscos › Mercado e contas externas, a
+  vista por países, o simulador, a página traduzida). A prévia privada não foi republicada
+  nesta sessão.
 
 ## Décima sessão (14/11/2026, na nuvem, branch `ccr-3122c6b7-8l15l1`)
 
@@ -159,13 +241,13 @@ câmbio, dívida)"*.
 0. **O que falta do efeito da Selic** ([PROPOSTAS](PROPOSTAS.md)): atividade e crédito (boxe
    do RPM de mar/2026, a ler inteiro), o atalho para a parte em Inflação e em Contas públicas,
    e o gráfico dos ciclos alinhados pelo primeiro corte.
-0. **Mais pares internacionais no painel de alerta**: serviço da dívida das famílias e hiato
-   de crédito (BIS `WS_DSR` e `WS_CREDIT_GAP`, já testados), reservas (FMI), volatilidade do
-   câmbio dos emergentes (BIS, câmbio diário). Cada par novo entra em `PARES` com a frase do
-   conceito.
+0. **Mais pares internacionais no painel de alerta**: reservas (FMI), volatilidade do câmbio
+   dos emergentes (BIS, câmbio diário). Cada par novo entra em `PARES` com a frase do
+   conceito. (Serviço da dívida privada e hiato de crédito: feitos, em "Fora do painel".)
 0. **O que falta dos Riscos**: juro real do Brasil menos o dos EUA (fonte americana
-   testada; falta a história do juro real brasileiro de 10 anos), hiato de crédito do BIS no
-   painel, a taxa implícita oficial da DBGG (planilha mensal da nota fiscal do BC), o bloco
+   testada; falta a história do juro real brasileiro de 10 anos), o hiato de crédito do BIS
+   como linha do painel na régua da própria história (o número já está na comparação com
+   outros países), a taxa implícita oficial da DBGG (planilha mensal da nota fiscal do BC), o bloco
    jurídico (Anexo de Riscos Fiscais da LDO, precatórios, governança do Banco Mundial) e os
    estados perto dos limites com a nota CAPAG.
 
@@ -183,7 +265,13 @@ câmbio, dívida)"*.
 3. **Estados no tempo.** A ficha é uma foto. Faltam a série de cada estado contra o Brasil, a
    nota CAPAG, a previdência do estado (RREO Anexo 04). Cuidado com o custo: cada período a
    mais são 54 chamadas ao SICONFI; usar só o 3º quadrimestre de cada ano.
-4. **Arrecadação federal por tributo** (RTN aba 1.1 ou o CSV da Receita) e **carga tributária**.
+4. **O que falta de Impostos** (lista no [PROPOSTAS](PROPOSTAS.md)): a linha do tempo da
+   reforma do consumo (CBS/IBS de 2026 a 2033) depende de **ler a EC 132/2023 e a LC 214/2025
+   no Planalto, do PC** (a nuvem não alcança); a carga como métrica em Brasil no mundo (a OCDE
+   já está lida); arrecadação federal e ICMS na ficha do estado; o PLOA ao lado do gasto
+   tributário. **Reler** o DGT quando sair a edição 2024 (prevista para 2027) e o
+   multiplicador de receita da SPE, se a nota metodológica do Boletim Impulso Estrutural do
+   Gasto for publicada.
 5. **Previsões próprias que faltam:** IPCA e desocupação com modelo sazonal; "o que mudou desde a
    última leitura" no PIB agora; PIB agora com indústria, varejo e serviços além do IBC-Br.
    Sempre ao lado do Focus, com barra de erro e o método numa frase.
@@ -210,6 +298,11 @@ câmbio, dívida)"*.
 - A projeção da população é a do IBGE, sem faixa de erro (o IBGE não publica). O PIB por
   ocupado é por pessoa, não por hora; de 2020 a 2022 a pandemia distorce a decomposição (dito
   na tela). O déficit do INSS é só o Regime Geral (sem servidores e militares).
+- Impostos: a carga é a da OCDE (33,7 % do PIB em 2024), não a da Receita (outro método); a
+  arrecadação soma as UFs do CSV da Receita, que fica perto do total oficial mas não igual; o
+  gasto tributário é só o federal e sai com dois anos de atraso. O gráfico carga ×
+  crescimento não mede efeito de imposto: o efeito está só nos estudos lidos, e nenhum é do
+  BC, do Tesouro ou da SPE (não publicaram multiplicador de receita).
 - No celular, as tabelas de quatro colunas rolam de lado com a primeira coluna parada (é a
   regra do CSS para toda tabela do site).
 - O calendário mostra só o dia da divulgação: a API traz a hora sem dizer o fuso. Se a API do

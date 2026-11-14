@@ -35,7 +35,9 @@ CATEGORIAS: list[Categoria] = [
         titulo="Mercados e exterior",
         secoes=["mercados", "externo", "mundo"],
     ),
-    Categoria(id="contas-publicas", titulo="Contas públicas", secoes=["fiscal", "estados"]),
+    Categoria(
+        id="contas-publicas", titulo="Contas públicas", secoes=["fiscal", "impostos", "estados"]
+    ),
     Categoria(id="adiante", titulo="O que vem pela frente", secoes=["previsoes", "riscos"]),
 ]
 
@@ -323,6 +325,46 @@ PARTES: dict[str, list[Parte]] = {
             graficos=["receita-despesa", "despesa-composicao"],
         ),
     ],
+    "impostos": [
+        Parte(
+            "arrecadacao",
+            "Arrecadação federal",
+            "Quanto a Receita arrecada mês a mês e de quais tributos, descontada a inflação.",
+            cartoes=["arrecadacao-12m", "arrecadacao-real", "arrecadacao-pib"],
+            graficos=["arrecadacao-12m", "arrecadacao-tributos"],
+            tabelas=["arrecadacao-tributos"],
+        ),
+        Parte(
+            "carga",
+            "Carga tributária",
+            "Quanto do PIB vai para impostos, quem arrecada e como o Brasil se compara.",
+            cartoes=["carga-tributaria"],
+            graficos=["carga-tributaria", "carga-esferas"],
+        ),
+        Parte(
+            "composicao",
+            "Sobre o que se cobra",
+            "Consumo, renda, salários e patrimônio: o Brasil ao lado de outros países.",
+            cartoes=["carga-consumo"],
+            graficos=["carga-composicao"],
+            tabelas=["carga-paises"],
+        ),
+        Parte(
+            "crescimento",
+            "Impostos e crescimento",
+            "A carga contra o crescimento, país a país, e o que os estudos oficiais estimam.",
+            graficos=["carga-crescimento"],
+            tabelas=["impostos-estudos"],
+        ),
+        Parte(
+            "gasto-tributario",
+            "Gasto tributário",
+            "O que a União deixa de arrecadar com isenções e regimes especiais.",
+            cartoes=["gasto-tributario"],
+            graficos=["gasto-tributario"],
+            tabelas=["gasto-tributario"],
+        ),
+    ],
     "previsoes": [
         Parte(
             "pib",
@@ -347,7 +389,7 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "simulador",
             "Simulador da dívida",
-            "Mexa no juro, no crescimento e no primário e veja para onde a dívida vai.",
+            "Mexa no juro, no crescimento, na inflação e no primário e veja a dívida.",
             extras=["simulador"],
         ),
     ],
@@ -417,6 +459,30 @@ PARTES: dict[str, list[Parte]] = {
         ),
     ],
 }
+
+
+# Estados tem peças próprias (mapa, ranking, ficha, duas métricas), montadas no navegador:
+# as partes dizem só o nome e o resumo, e o site sabe o que vai em cada uma (Caio,
+# 14/11/2026: "diminua a tela ao abrir por estado, também não precisa mostrar tudo em uma
+# página só").
+PARTES_ESTADOS: list[Parte] = [
+    Parte("mapa", "Mapa e ranking", "Uma métrica nos 27 estados, do maior ao menor."),
+    Parte(
+        "estado",
+        "Um estado por dentro",
+        "Receita, despesa e dívida de um estado, uma parte de cada vez.",
+    ),
+    Parte("duas-metricas", "Duas métricas", "Um ponto por estado, com duas métricas juntas."),
+    Parte("tabela", "Tabela completa", "Todas as métricas, estado por estado."),
+]
+
+
+def partes_dos_estados(tem_contas: bool) -> list[Subcategoria]:
+    return [
+        Subcategoria(id=p.id, titulo=p.titulo, resumo=p.resumo)
+        for p in PARTES_ESTADOS
+        if tem_contas or p.id != "estado"
+    ]
 
 
 def aplicar(secao: Secao) -> list[str]:

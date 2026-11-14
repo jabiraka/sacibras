@@ -564,7 +564,7 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
                 periodicidade="D",
                 casas=2,
                 detalhe=(
-                    f"a inflação que os títulos embutem para depois de {meio} anos; meta "
+                    f"a dos títulos para depois de {meio} anos; meta "
                     f"{br(leis.META_CONTINUA.centro, 0)} %"
                 ),
                 fonte=fonte,
@@ -793,10 +793,7 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
             unidade="pp",
             periodicidade="M",
             casas=2,
-            detalhe=(
-                f"o maior efeito, {pico} trimestres depois; faixa de 90 % do BC: de "
-                f"{_br(mais, 2)} a {_br(menos, 2)} (da versão de {versao_da_faixa} do modelo)"
-            ),
+            detalhe=f"um ano depois; faixa de 90 % do BC: {_br(mais, 2)} a {_br(menos, 2)}",
             fonte=f"{r.FONTE_EFEITO_SELIC}; {r.FONTE_FAIXA_DO_IPCA}",
             secao="juros",
         ),
@@ -807,10 +804,7 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
             unidade="%",
             periodicidade="M",
             casas=1,
-            detalhe=(
-                f"faixa de 90 % do BC: de {_br(piso_dolar, 1)} % a {_br(teto_dolar, 1)} %; com o "
-                "juro de fora e o risco do país parados"
-            ),
+            detalhe=f"faixa de 90 % do BC: {_br(piso_dolar, 1)} % a {_br(teto_dolar, 1)} %",
             fonte=r.FONTE_EFEITO_SELIC,
             secao="juros",
         ),
@@ -821,10 +815,7 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
             unidade="pp do PIB",
             periodicidade="M",
             casas=2,
-            detalhe=(
-                f"{em_reais}em 12 meses; conta de estoque, sem faixa publicada; na dívida "
-                f"líquida, {br(liquida, 2)} pp"
-            ),
+            detalhe=f"{em_reais}em 12 meses; sem faixa publicada",
             fonte=fonte_divida,
             secao="juros",
         ),

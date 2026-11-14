@@ -21,6 +21,9 @@ from sacibras.fontes import (
     bis,
     fmi,
     ibge_sidra,
+    ocde_receita,
+    receita_arrecadacao,
+    receita_gastos,
     tesouro_direto,
 )
 
@@ -92,6 +95,16 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     (
         "Tesouro Direto (CSV)",
         _texto(tesouro_direto.URL, tempo_limite=180),
+    ),
+    ("Receita, arrecadação por estado (CSV)", _texto(receita_arrecadacao.URL, tempo_limite=120)),
+    ("Receita, gastos tributários (lista)", _texto(receita_gastos.LISTAGEM)),
+    (
+        "OCDE, Global Revenue Statistics",
+        _texto(
+            ocde_receita.BASE + "/BRA.TAX_REV.S13._T._T.PT_B1GQ.A",
+            params={"startPeriod": "2022", "format": "csvfile"},
+            tempo_limite=120,
+        ),
     ),
     ("Comex Stat", _texto("https://api-comexstat.mdic.gov.br/general/dates/updated")),
     (

@@ -78,6 +78,24 @@ export const EXTRAS: (Par & { id: string; explica: string })[] = [
     explica: "Juro real alto encarece a dívida do governo, o crédito e o investimento.",
   },
   {
+    id: "servico-divida",
+    metrica: "servico_divida",
+    nome: "Serviço da dívida privada",
+    pior_quando: "alto",
+    conceito:
+      "Juros e amortizações de famílias e empresas sobre a renda (BIS). O painel mede só as " +
+      "famílias, pelo Banco Central; o BIS não separa as famílias para o Brasil.",
+    explica: "Quanto mais da renda vai para pagar dívida, menos sobra para gastar e investir.",
+  },
+  {
+    id: "hiato-credito",
+    metrica: "hiato_credito",
+    nome: "Hiato de crédito",
+    pior_quando: "alto",
+    conceito: "Crédito ao setor privado em % do PIB menos a tendência de longo prazo (BIS).",
+    explica: "Crédito que cresce muito acima da tendência costuma vir antes de crise bancária.",
+  },
+  {
     id: "crescimento",
     metrica: "pib",
     nome: "Crescimento do PIB",

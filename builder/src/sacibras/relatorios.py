@@ -317,3 +317,97 @@ LARA_RESENDE_TITULO = "Eu Acuso: uma proposta para eliminar os juros absurdos"
 LARA_RESENDE_ENDERECO = (
     "https://andrelararesende.substack.com/p/eu-acuso-uma-proposta-para-eliminar"
 )
+
+# ------------------------------------------------------------------ imposto e crescimento
+
+
+@dataclass(frozen=True)
+class EfeitoDeImposto:
+    """Um número de estudo oficial sobre o efeito de imposto no PIB, com o trecho lido."""
+
+    rotulo: str
+    valor: float
+    unidade: str
+    casas: int
+    fonte: str
+    leitura: str
+    """O que o estudo diz, em palavras de todo dia, com o trecho original e a página."""
+
+
+# Lidos em 14/11/2026 nos PDFs (texto extraído e conferido contra a frase citada). Pedido do
+# Caio no mesmo dia: "multiplicadores lidos". Não há multiplicador de receita publicado pelo
+# BC, pelo Tesouro ou pela SPE (a SPE estimou um no Boletim Impulso Estrutural do Gasto,
+# dez/2025, mas publicou só os de despesa): RELER quando sair a nota metodológica da SPE. O
+# estudo do CCiF (Bráulio Borges, 2020) está no site da Fazenda, mas não é do governo: fica
+# de fora pela regra de fonte oficial.
+EFEITOS_DE_IMPOSTO: list[EfeitoDeImposto] = [
+    EfeitoDeImposto(
+        rotulo="Corte de imposto: PIB a mais no pico, um ano depois (FMI)",
+        valor=0.5,
+        unidade="R$ por R$ 1 de imposto",
+        casas=1,
+        fonte="FMI, Working Paper 16/79, Fiscal Multipliers for Brazil (2016)",
+        leitura=(
+            "FMI (Matheson e Pereira, 2016, dados de 1999 a 2014): R$ 1 a menos de imposto "
+            "rende uns R$ 0,50 a mais de PIB um ano depois; no médio prazo, somado, uns "
+            'R$ 2. "The revenue multiplier peaks at around 0.5 one year after a tax cut '
+            "[...] the medium-run (accumulated) multiplier of tax cuts is positive, at about "
+            '2" (p. 7). Vale também ao contrário: imposto a mais tira PIB.'
+        ),
+    ),
+    EfeitoDeImposto(
+        rotulo="Corte de imposto: PIB a mais, somado no médio prazo (FMI)",
+        valor=2.0,
+        unidade="R$ por R$ 1 de imposto",
+        casas=1,
+        fonte="FMI, Working Paper 16/79, Fiscal Multipliers for Brazil (2016)",
+        leitura=(
+            "O mesmo estudo diz que o efeito da receita ficou estável depois da crise de 2008, "
+            'ao contrário do efeito do gasto, que caiu para perto de zero: "the revenue '
+            'multiplier has remained broadly stable" (p. 9).'
+        ),
+    ),
+    EfeitoDeImposto(
+        rotulo="Receita a mais sem aviso: chance de o PIB cair logo depois (Ipea)",
+        valor=56.6,
+        unidade="% de chance",
+        casas=1,
+        fonte="Ipea, Texto para Discussão 1377 (2009)",
+        leitura=(
+            'Ipea (Mendonça, Medrano e Sachsida, 2009): "Com 56,6% de probabilidade o PIB '
+            "decresce após um aumento inesperado nas receitas do governo. Apesar de a "
+            "resposta inicial do PIB ser negativa, ela pode se tornar positiva no longo "
+            'prazo" (p. 13): o mercado pode ler a receita a mais como contas em ordem.'
+        ),
+    ),
+    EfeitoDeImposto(
+        rotulo="Reforma do consumo (texto da Câmara, 2023): PIB a mais até 2032 (Ipea)",
+        valor=2.39,
+        unidade="%",
+        casas=2,
+        fonte="Ipea, Carta de Conjuntura nº 60, Nota 1 (2023)",
+        leitura=(
+            "Ipea (João Maria de Oliveira, jul/2023), sobre o substitutivo da PEC 45 aprovado "
+            'na Câmara, que virou a reforma de 2023: "para o substitutivo da PEC no 45/2019, '
+            'também até 2032, cresce 2,39%" (p. 13), contra um cenário sem reforma. O texto '
+            "original da PEC 45 dava 5,75 % até 2036; a diferença vem dos regimes especiais e "
+            "das exceções mantidos."
+        ),
+    ),
+    EfeitoDeImposto(
+        rotulo="Reforma do consumo aprovada: PIB a mais no longo prazo, no máximo (Prêmio Tesouro)",
+        valor=4.5,
+        unidade="%",
+        casas=1,
+        fonte=(
+            "Tesouro Nacional, Cadernos de Finanças Públicas, edição especial do 29º Prêmio "
+            "Tesouro (2025)"
+        ),
+        leitura=(
+            "Araujo, Martinez e Navarro, trabalho premiado e publicado pelo Tesouro (não é "
+            'estimativa do próprio Tesouro): "estimamos um aumento de até 4,5% no PIB, com '
+            "2,7% devidos à aproximação das alíquotas entre os setores e até 1,8% em razão da "
+            'simplificação do sistema tributário" (resumo, p. 2).'
+        ),
+    ),
+]

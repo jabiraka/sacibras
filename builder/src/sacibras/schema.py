@@ -77,6 +77,29 @@ class Piramide(Modelo):
     """Do ano em diante é projeção da fonte."""
 
 
+class EixoDispersao(Modelo):
+    nome: str
+    unidade: str
+    casas: int = 1
+
+
+class PontoDispersao(Modelo):
+    chave: str
+    """ISO3 do país (ou sigla da UF)."""
+    nome: str
+    x: float
+    y: float
+
+
+class Dispersao(Modelo):
+    """Um ponto por país: uma métrica em cada eixo. O Brasil (BRA) sai em destaque."""
+
+    eixo_x: EixoDispersao
+    eixo_y: EixoDispersao
+    pontos: list[PontoDispersao]
+    correlacao: float | None = None
+
+
 class Grafico(Modelo):
     id: str
     titulo: str
@@ -89,6 +112,8 @@ class Grafico(Modelo):
     faixa: Faixa | None = None
     intervalos: list[Intervalo] = Field(default_factory=list)
     linhas: list[LinhaRef] = Field(default_factory=list)
+    marcas_y: list[LinhaRef] = Field(default_factory=list)
+    """Eixo vertical com nome em vez de número (a nota de crédito: 0 = "BBB−/Baa3")."""
     janela_anos: float | None = None
     """Quanto de história abre na tela (o resto fica atrás do botão "máx")."""
     fonte: str
@@ -97,6 +122,8 @@ class Grafico(Modelo):
     largura: Literal["meia", "inteira"] = "meia"
     piramide: Piramide | None = None
     """Com ela, o site desenha a pirâmide etária no lugar das séries."""
+    dispersao: Dispersao | None = None
+    """Com ela, o site desenha um ponto por país no lugar das séries."""
 
 
 class Meta(Modelo):
@@ -132,6 +159,8 @@ class Cartao(Modelo):
     referencia: date
     periodicidade: Periodicidade
     detalhe: str = ""
+    texto: str = ""
+    """Mostrado no lugar do número quando o resultado é um nome (a nota de crédito: "BB")."""
     anterior: float | None = None
     anterior_rotulo: str = ""
     fonte: str
@@ -443,6 +472,8 @@ class Estados(Modelo):
     metricas: list[MetricaEstados]
     arquivo_contas: str = ""
     """O JSON com `EstadosContas`, quando houver."""
+    subcategorias: list[Subcategoria] = Field(default_factory=list)
+    """As partes da tela (`organizacao.PARTES_ESTADOS`): o site monta cada uma sozinha."""
     gerado_em: datetime
 
 

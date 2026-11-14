@@ -19,6 +19,7 @@ data. Pedido novo vira linha aqui antes de virar código. A ordem do que fazer a
 | Painel de alerta: comparar com outros países, sobretudo os parecidos, e outras formas de ver além da régua da história | ✅ lista "Ver os alertas": contra a própria história; contra outros países (emergentes por padrão, América Latina, os 22 de Brasil no mundo, avançados, mundo; FMI e BIS, mesmo número e ano para todos; dívida, primário, nominal, juros, conta corrente, inflação, e fora do painel juro real, crescimento e desemprego); o que mudou em um ano; e o quadro-resumo. Falta par internacional para crédito (BIS: serviço da dívida das famílias, hiato de crédito), reservas (FMI, IFS), volatilidade do câmbio (BIS, câmbio diário) e previdência. |
 | Melhorar as faixas das projeções (a barra azul) | ✅ traço fino em tinta neutra com as pontas marcadas; no leque, a parte de 50 % mais grossa. Regra no `CLAUDE.md`. |
 | Riscos: faixa e "sorteio" mais intuitivos | ✅ "como ler" em palavras de todo dia no leque e nas previsões ("8 em cada 10 futuros sorteados ficam entre as pontas"), nomes da legenda e do cartão reescritos, verbetes no glossário. |
+| Uma seção sobre impostos, ou o impacto dos impostos no crescimento | ✅ Assunto "Impostos" em Contas públicas, cinco partes: arrecadação federal por tributo (Receita, mês a mês, a preços de hoje), carga tributária e quem arrecada (OCDE), sobre o que se cobra com outros países, impostos e crescimento (carga × crescimento por habitante, um ponto por país, com o aviso de que andar junto não é causa; e os estudos oficiais lidos, `relatorios.EFEITOS_DE_IMPOSTO`), gasto tributário (Receita, 2014–2023). Escolha do Caio: as quatro peças do crescimento. Falta: a linha do tempo da reforma do consumo (CBS/IBS, EC 132 e LC 214 lidas no Planalto, do PC), a carga como métrica em Brasil no mundo, ICMS e arrecadação federal por estado na ficha do estado, o gasto tributário de antes de 2014 (só em PDF) e a previsão do PLOA ao lado, o multiplicador de receita da SPE quando sair a nota metodológica. |
 | O primário do Brasil no mundo e o de Contas públicas se conversam? | Conversam, mas não são a mesma conta (FMI: governo geral, receitas menos despesas; BC: setor público com estatais, variação da dívida). ✅ Tabela lado a lado em Contas públicas › Primário e juros, e a diferença dita na descrição da métrica em Brasil no mundo. |
 | Uma seção sobre o impacto da Selic na inflação, ou um simulador: se reduzir a taxa, o que acontece com inflação, câmbio e dívida | ✅ Juros › Efeito da Selic: o simulador "E se a Selic mudar?" (a Selic até 3 pp abaixo ou acima do Focus durante o ano seguinte; IPCA, dólar e dívida bruta contra o Focus, e o caminho do IPCA por trimestre), três números, a tabela com as contas do BC e duas com o que veio depois de cada ciclo de corte e de alta desde 2003. Tudo do boxe dos modelos do BC (jun/2024) e da nota fiscal, lidos à mão (`relatorios.py`). Falta: o efeito na atividade e no desemprego (o boxe não traz a resposta do hiato à Selic), no crédito (o RPM de mar/2026 tem um boxe: 1 pp de Selic tira 3,7 % das concessões de crédito livre de longo prazo às famílias em 12 meses), um atalho em Inflação e em Contas públicas para esta parte, e o gráfico dos ciclos alinhados pelo mês do primeiro corte (o gráfico de hoje só sabe eixo de datas). |
 | Faixas de erro claras, principalmente no simulador da Selic | ✅ cada efeito com a faixa de 90 % do BC logo abaixo do número (IPCA: a do Relatório de Inflação de dez/2021, a última que o BC publicou; dólar: a do coeficiente; dívida: as pontas do dólar e da inflação somadas); cada nível numa régua com o Focus e o erro típico dele (IPCA 1,3 pp, dólar 13 %, dívida 7,8 pp) e a frase "mais do que este efeito"; barras de erro no gráfico por trimestre; os números e a tabela das contas do BC com a faixa. Falta: a faixa da versão de 2024 do modelo se o BC a publicar, e a faixa do efeito por grupo de preços. |
@@ -116,6 +117,21 @@ crescimento entre ocupação e produtividade; déficit do INSS (RTN).
 | Envelhecimento contra outros países (idosos por 100, fecundidade) | Banco Mundial (lento) ou ONU | ligaria com "Brasil no mundo" |
 | Ficha do estado com a pirâmide e o ano do pico da população | a mesma projeção do IBGE, por UF | dado já baixado |
 
+## Impostos: o que mais cabe (sugestões de 14/11/2026, esperando o "sim" do Caio)
+
+| Ideia | De onde viria | Observação |
+|-------|---------------|------------|
+| Linha do tempo da reforma do consumo (CBS/IBS, 2026 a 2033) | EC 132/2023 e LC 214/2025, lidas no Planalto | Só do PC (a nuvem não alcança o Planalto). |
+| Quem paga: imposto em % da renda, por faixa de renda | Receita, Grandes Números do IRPF (planilha); estudos do Ipea para o imposto sobre consumo | O IRPF é dado; o do consumo é estudo lido à mão. |
+| Alíquotas do Brasil contra outros países (IRPJ + CSLL, IRPF máximo, imposto sobre consumo, sobre salário) | OCDE (Tax Database, Taxing Wages), mesma API | Brasil nem sempre está nas bases da OCDE: conferir cobertura. |
+| Imposto por estado: arrecadação federal e ICMS por habitante, e quanto volta em FPE/FPM | CSV da Receita (já lido por UF), SICONFI, IBGE | Entra na ficha do estado e num ranking em Impostos. |
+| Previsto × realizado da arrecadação no ano | Relatório bimestral (já lido para a meta) e o CSV da Receita | Liga com a parte Meta fiscal. |
+| Gasto tributário: previsto no orçamento ao lado do realizado, e por região | DGT do PLOA (mesmo formato de planilha), aba Q IV | O PLOA 2026 está no ar; o de 2027 ainda não. |
+| Arrecadação por setor da economia | Receita, arrecadação por CNAE (dados abertos) | A testar. |
+| Carga tributária como métrica em Brasil no mundo | OCDE, já lida | Rápido: uma métrica a mais. |
+| Custo de pagar imposto e dívida ativa (o que a União tem a receber) | PGFN (dados abertos) | A testar. |
+| Calendário: o dia da divulgação mensal da arrecadação | Receita | Hoje o calendário só tem o IBGE. |
+
 ## Outras
 
 - Previsões próprias de IPCA e desocupação (modelo sazonal), sempre ao lado do Focus.
@@ -126,3 +142,12 @@ crescimento entre ocupação e produtividade; déficit do INSS (RTN).
   de como tratar os descontos da apuração oficial ([PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)).
 - **Agenda na entrada**: as divulgações da semana (IBGE, já buscado pelo navegador), guardada
   atrás de um clique. O Copom não tem API com as reuniões futuras (ver [FONTES](FONTES.md)).
+
+## Tradução (14/11/2026)
+
+- Busca em outros idiomas: feita para inglês, espanhol e francês (`OUTRAS_LINGUAS`). Falta
+  para línguas de outra escrita (chinês, japonês, árabe…).
+- Nomes próprios protegidos do tradutor (Copom, Focus, IPCA, Selic): marcar com
+  `translate="no"` onde aparecem nos títulos e no menu.
+- Simulador: inflação com efeito no juro da parte da dívida corrigida pelo IPCA (falta a
+  participação por indexador com o IPCA numa fonte com API; ver "Limites conhecidos").

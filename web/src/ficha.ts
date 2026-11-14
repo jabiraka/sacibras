@@ -110,6 +110,15 @@ function montarBloco(b: BlocoDeConta, todas: EstadosContas): HTMLElement {
   return caixa;
 }
 
+/** O nome curto de cada bloco, na aba. */
+const ABA: Record<string, string> = {
+  receita: "Receita",
+  despesa_grupo: "Gasto por tipo",
+  despesa_funcao: "Gasto por área",
+  divida: "Dívida",
+  deducoes: "Descontos da dívida",
+};
+
 export function montarFicha(c: ContasEstado, todas: EstadosContas): HTMLElement[] {
   const saida: HTMLElement[] = [];
   if (c.numeros.length) {
@@ -126,6 +135,33 @@ export function montarFicha(c: ContasEstado, todas: EstadosContas): HTMLElement[
     }
     saida.push(grade);
   }
-  for (const b of c.blocos) if (b.fatias.length) saida.push(montarBloco(b, todas));
+  // Um bloco de cada vez (Caio, 14/11/2026: "não precisa mostrar tudo em uma página só"):
+  // as abas em cima, o bloco escolhido embaixo.
+  const blocos = c.blocos.filter((b) => b.fatias.length);
+  if (!blocos.length) return saida;
+  const abas = el("div", "ficha-abas");
+  abas.setAttribute("role", "tablist");
+  abas.setAttribute("aria-label", `As contas de ${c.nome}`);
+  const palco = el("div", "ficha-palco");
+  palco.setAttribute("role", "tabpanel");
+  const botoes = blocos.map((b, i) => {
+    const botao = el("button", "pilula", ABA[b.id] ?? b.titulo);
+    botao.type = "button";
+    botao.setAttribute("role", "tab");
+    botao.addEventListener("click", () => mostrar(i));
+    abas.append(botao);
+    return botao;
+  });
+  const mostrar = (i: number): void => {
+    const b = blocos[i];
+    if (!b) return;
+    botoes.forEach((x, k) => {
+      x.setAttribute("aria-selected", String(k === i));
+      x.classList.toggle("atual", k === i);
+    });
+    palco.replaceChildren(montarBloco(b, todas));
+  };
+  mostrar(0);
+  saida.push(abas, palco);
   return saida;
 }

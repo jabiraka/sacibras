@@ -211,3 +211,12 @@ def test_ha_um_ano_e_a_posicao_dele_na_historia() -> None:
     assert risco.pior_que(23.0, pontos, "baixo") == 12 / 36 * 100
     curto = [(date(2026, 1, 1), 1.0), (date(2026, 6, 1), 2.0)]
     assert risco.ha_um_ano(curto) is None
+
+
+def test_toda_nota_da_historia_tem_nome_no_eixo() -> None:
+    from sacibras import relatorios
+    from sacibras.secoes.riscos import NOMES_DOS_DEGRAUS
+
+    usados = {relatorios.DEGRAU[n] for h in relatorios.NOTAS.values() for _, n in h}
+    assert usados <= set(NOMES_DOS_DEGRAUS)
+    assert NOMES_DOS_DEGRAUS[0] == "BBB−/Baa3"

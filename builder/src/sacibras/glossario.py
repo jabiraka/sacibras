@@ -442,6 +442,20 @@ TERMOS: list[Termo] = [
         "bancos. Serve de termômetro do preço das casas.",
         ("IVG-R",),
     ),
+    Termo(
+        "hiato-de-credito",
+        "Hiato de crédito",
+        "Quanto o crédito a famílias e empresas, em % do PIB, está acima ou abaixo da "
+        "tendência de longo prazo. Muito acima de zero, o crédito cresceu rápido demais, o "
+        "que costuma vir antes de crise bancária.",
+        ("hiato de crédito",),
+    ),
+    Termo(
+        "servico-da-divida",
+        "Serviço da dívida",
+        "O que se paga num período para a dívida: juros mais a parte do principal (amortização).",
+        ("serviço da dívida",),
+    ),
     # ---------------------------------------------------------------- mercados
     Termo(
         "ibovespa",
@@ -659,6 +673,74 @@ TERMOS: list[Termo] = [
         "orçamento para ser pagas.",
         ("precatórios", "precatório"),
     ),
+    # ---------------------------------------------------------------- impostos
+    Termo(
+        "carga-tributaria",
+        "Carga tributária",
+        "Quanto do PIB o governo inteiro (União, estados, municípios e previdência) arrecada "
+        "em impostos e contribuições num ano.",
+        ("carga tributária",),
+        "#impostos/carga",
+    ),
+    Termo(
+        "gasto-tributario",
+        "Gasto tributário",
+        "O que o governo deixa de arrecadar por isenção, desconto ou regime especial de "
+        "imposto (Simples Nacional, Zona Franca de Manaus, deduções do Imposto de Renda). "
+        "Funciona como um gasto, só que sem passar pelo orçamento.",
+        ("gasto tributário", "gastos tributários"),
+        "#impostos/gasto-tributario",
+    ),
+    Termo(
+        "multiplicador",
+        "Multiplicador",
+        "Quanto o PIB muda para cada real a mais ou a menos de gasto ou de imposto. Um "
+        "multiplicador de 0,5 num corte de imposto quer dizer R$ 0,50 a mais de PIB para cada "
+        "R$ 1 a menos de imposto.",
+        ("multiplicador", "multiplicadores"),
+        "#impostos/crescimento",
+    ),
+    Termo(
+        "simples-nacional",
+        "Simples Nacional",
+        "O regime de imposto das empresas pequenas: uma guia só, com alíquota menor que a das "
+        "regras gerais. É o maior gasto tributário da União.",
+        ("Simples Nacional",),
+    ),
+    Termo(
+        "cofins",
+        "Cofins e PIS",
+        "Contribuições federais cobradas sobre o faturamento das empresas, que pagam a "
+        "seguridade social e o seguro-desemprego.",
+        ("Cofins", "PIS/Pasep"),
+    ),
+    Termo(
+        "csll",
+        "CSLL",
+        "Contribuição Social sobre o Lucro Líquido: um segundo imposto sobre o lucro das "
+        "empresas, ao lado do Imposto de Renda.",
+        ("CSLL",),
+    ),
+    Termo(
+        "ipi",
+        "IPI",
+        "Imposto sobre Produtos Industrializados: federal, cobrado de fábricas e importadores.",
+        ("IPI",),
+    ),
+    Termo(
+        "iof",
+        "IOF",
+        "Imposto sobre Operações Financeiras: federal, cobrado em crédito, câmbio, seguro e "
+        "algumas aplicações.",
+        ("IOF",),
+    ),
+    Termo(
+        "correlacao",
+        "Correlação",
+        "Mede de -1 a 1 o quanto duas coisas andam juntas. Perto de zero, não andam; andar "
+        "junto não quer dizer que uma cause a outra.",
+        ("correlação",),
+    ),
     # ---------------------------------------------------------------- estados
     Termo(
         "icms",
@@ -675,6 +757,163 @@ TERMOS: list[Termo] = [
         "Fundo de Participação dos Estados: a parte do Imposto de Renda e do IPI que a União "
         "reparte com os estados, mais para os mais pobres.",
         ("FPE",),
+    ),
+    Termo(
+        "fundeb",
+        "Fundeb",
+        "O fundo da educação básica: estados e municípios põem nele parte dos impostos, e o "
+        "dinheiro volta repartido pelo número de alunos de cada rede.",
+        ("Fundeb", "FUNDEB"),
+    ),
+    Termo(
+        "transferencias-uniao",
+        "Transferências da União",
+        "Dinheiro que o governo federal repassa aos estados: o FPE, a parte de outros tributos "
+        "federais e os repasses para saúde e educação.",
+        ("transferências da União", "repasses da União"),
+    ),
+    Termo(
+        "despesa-pessoal",
+        "Despesa com pessoal",
+        "Salários, aposentadorias, pensões e encargos dos servidores. A LRF limita esse gasto "
+        "a uma parte da receita corrente líquida.",
+        ("despesa com pessoal", "gasto com pessoal", "gastam com pessoal", "Pessoal e encargos"),
+        "#estados/mapa",
+    ),
+    Termo(
+        "limite-maximo-pessoal",
+        "Limite máximo de pessoal",
+        "O teto da LRF para o gasto com pessoal do Poder Executivo de um estado: 49 % da "
+        "receita corrente líquida (art. 20). Acima dele, o estado tem de cortar o excesso.",
+        ("limite máximo",),
+        "#estados/mapa",
+    ),
+    Termo(
+        "limite-prudencial",
+        "Limite prudencial",
+        "95 % do limite máximo de gasto com pessoal (LRF, art. 22). Passou dele, o estado fica "
+        "proibido, entre outras coisas, de dar aumento e de criar cargos.",
+        ("limite prudencial",),
+        "#estados/mapa",
+    ),
+    Termo(
+        "limite-de-alerta",
+        "Limite de alerta",
+        "90 % do limite da lei (LRF, art. 59). Ao passar dele, o Tribunal de Contas avisa o "
+        "estado. Vale para o gasto com pessoal e para a dívida.",
+        ("limite de alerta",),
+        "#estados/mapa",
+    ),
+    Termo(
+        "dcl",
+        "Dívida consolidada líquida",
+        "A dívida do estado menos o que ele tem em caixa e em haveres financeiros, em proporção "
+        "da receita corrente líquida. O limite para os estados é 200 % da RCL (Resolução do "
+        "Senado 40/2001).",
+        ("dívida consolidada líquida", "DCL"),
+        "#estados/mapa",
+    ),
+    Termo(
+        "divida-consolidada",
+        "Dívida consolidada",
+        "Tudo o que o estado deve com prazo de mais de um ano (empréstimos, a dívida com a "
+        "União, precatórios vencidos), antes de descontar o caixa.",
+        ("dívida consolidada",),
+    ),
+    Termo(
+        "divida-com-a-uniao",
+        "Dívida com a União",
+        "Nos anos 1990 a União assumiu dívidas dos estados e passou a cobrá-las deles em "
+        "parcelas de longo prazo. Para vários estados, é a maior parte da dívida.",
+        ("Dívida com a União", "renegociação da dívida dos estados"),
+    ),
+    Termo(
+        "haveres",
+        "Haveres financeiros",
+        "O que outros devem ao estado e que ele pode cobrar, como empréstimos que concedeu. "
+        "Junto com o caixa, é descontado da dívida para chegar à dívida líquida.",
+        ("haveres financeiros", "haveres"),
+    ),
+    Termo(
+        "disponibilidade-de-caixa",
+        "Disponibilidade de caixa",
+        "O dinheiro que o estado tem no banco, livre para pagar contas.",
+        ("disponibilidade de caixa",),
+    ),
+    Termo(
+        "custeio",
+        "Custeio",
+        "O gasto para manter a máquina funcionando, fora salários e juros: compras, serviços, "
+        'aluguel, contas de luz, repasses. Na contabilidade, "outras despesas correntes".',
+        ("outras despesas correntes", "custeio"),
+    ),
+    Termo(
+        "inversoes",
+        "Inversões financeiras",
+        "Gasto que vira um bem financeiro: comprar participação em empresa, pôr capital numa "
+        "estatal ou emprestar dinheiro.",
+        ("inversões financeiras", "inversão financeira"),
+    ),
+    Termo(
+        "amortizacao",
+        "Amortização",
+        "A parte da prestação que paga o principal da dívida, não os juros. Diminui o que se deve.",
+        ("amortização da dívida", "amortização"),
+    ),
+    Termo(
+        "encargos-especiais",
+        "Encargos especiais",
+        "Despesa que não é de uma área de governo: juros e amortização da dívida e o que o "
+        "estado repassa aos municípios.",
+        ("encargos especiais",),
+    ),
+    Termo(
+        "rpps",
+        "RPPS",
+        "Regime Próprio de Previdência Social: a previdência dos servidores do estado, "
+        "separada do INSS.",
+        ("RPPS", "regimes próprios", "regime próprio", "fundos de previdência próprios"),
+    ),
+    Termo(
+        "acima-da-linha",
+        "Acima da linha",
+        "Resultado apurado pelas receitas e despesas do próprio governo. O outro jeito, "
+        '"abaixo da linha", olha quanto a dívida mudou; os dois deviam dar parecido.',
+        ("acima da linha", "abaixo da linha"),
+    ),
+    Termo(
+        "rgf",
+        "RGF",
+        "Relatório de Gestão Fiscal: sai a cada quadrimestre e mostra o gasto com pessoal e a "
+        "dívida do estado contra os limites da LRF.",
+        ("Relatório de Gestão Fiscal", "RGF"),
+    ),
+    Termo(
+        "rreo",
+        "RREO",
+        "Relatório Resumido da Execução Orçamentária: sai a cada bimestre com a receita, a "
+        "despesa e o resultado primário do estado.",
+        ("Relatório Resumido da Execução Orçamentária", "RREO"),
+    ),
+    Termo(
+        "dca",
+        "DCA",
+        "Declaração de Contas Anuais: o balanço do ano fechado que cada estado manda ao "
+        "Tesouro Nacional, com a receita e a despesa abertas por tipo e por área.",
+        ("Declaração de Contas Anuais", "DCA"),
+    ),
+    Termo(
+        "siconfi",
+        "SICONFI",
+        "O sistema do Tesouro Nacional onde estados e municípios entregam as contas (RGF, "
+        "RREO e DCA). É de onde vêm os números desta aba.",
+        ("SICONFI",),
+    ),
+    Termo(
+        "quadrimestre",
+        "Quadrimestre",
+        "Um terço do ano: jan–abr, mai–ago ou set–dez. O RGF sai a cada quadrimestre.",
+        ("quadrimestre",),
     ),
     # ---------------------------------------------------------------- mundo
     Termo(

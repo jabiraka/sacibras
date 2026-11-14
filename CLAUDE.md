@@ -60,8 +60,10 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   numa visão geral (quatro números, a lista das partes e o gráfico principal); cada parte abre
   numa tela só dela (`#inflacao/nucleos`), com a trilha em cima e as outras partes embaixo.
   **Cartão, gráfico ou tabela novo ganha lugar numa parte** em `PARTES`: o que não estiver lá
-  cai em "Outros" e o builder avisa ("sem parte em organizacao.py"). Estados e Brasil no mundo
-  têm tela própria, sem partes.
+  cai em "Outros" e o builder avisa ("sem parte em organizacao.py"). Estados tem partes
+  próprias (`PARTES_ESTADOS`: mapa e ranking, um estado por dentro, duas métricas, tabela;
+  Caio, 14/11/2026: *"diminua a tela ao abrir por estado"*), e a ficha do estado mostra um
+  bloco de cada vez, em abas. Brasil no mundo tem tela própria, sem partes.
 - **Menu lateral** (Caio, 14/11/2026: *"usar um pouco o espaço ao lado esquerdo para colocar
   as abas, e também quem sabe deixar a pesquisa lá"*): na tela larga (≥ 1024 px), uma coluna
   fixa com a marca, a busca e as categorias, e as partes do assunto aberto; no celular, a faixa
@@ -89,10 +91,26 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   `builder/src/sacibras/glossario.py` (até três frases, sem jargão; número de lei só de norma
   lida). A tela sublinha a palavra e põe "?" nos rótulos sozinha. Indicador novo no painel de
   alerta ganha "o que é / por que é alerta / pode levar a" em `alertas.py`.
+- **Resultado: só o essencial** (Caio, 14/11/2026: *"se for apresentar o resultado, escreva
+  só o essencial, sem muitos detalhes e contextos"*). O texto embaixo do número no cartão
+  (`detalhe`) tem até 60 letras (o builder avisa: "detalhe longo"); explicação vai para a nota
+  do gráfico ou para o glossário. Resultado que é um nome (a nota de crédito, "BB") vai em
+  `texto` no cartão, não como número.
+- **Rótulo de linha de referência** (meta, média, limite) fica na legenda, não escrito no
+  desenho (Caio, 14/11/2026: *"os textos estão se confundindo com as linhas"*). Eixo com
+  nomes no lugar de números (a nota de crédito) usa `marcas_y`.
+- **Idioma de quem visita** (Caio, 14/11/2026: *"coloque também a página pelo idioma de quem
+  entra pra visitar, pelo país, deixe alguma forma de tradução automática"*): o texto é
+  escrito em português; quem chega com o navegador em outro idioma recebe a página traduzida
+  pelo Google Tradutor (`web/src/traducao.ts`), e a lista "Idioma" no menu troca ou volta ao
+  original. Em português nada é baixado do Google. Nome próprio ou símbolo que o tradutor
+  estraga ganha `translate="no"` (o "?" do glossário, a marca). A busca entende também
+  inglês, espanhol e francês: assunto novo ganha as palavras em `OUTRAS_LINGUAS` (`busca.py`).
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,
-  *"deixe o simulador da dívida, acho legal"*). **O da Selic também** (Caio, 14/11/2026:
+  *"deixe o simulador da dívida, acho legal"*), com quatro controles: juro, crescimento,
+  inflação (pedida no mesmo dia) e primário. **O da Selic também** (Caio, 14/11/2026:
   *"algum tipo de simulador, se reduzir a taxa oq acontece com as outras métricas (inflação,
   câmbio, dívida)"*), em Juros › Efeito da Selic: só com número que o Banco Central publica
   para 1 pp de Selic (`relatorios.py`), ao lado do Focus, e separado do que aconteceu de fato

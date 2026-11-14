@@ -204,10 +204,8 @@ def montar(ctx: Contexto) -> Secao:
         unidade="%",
         periodicidade="M",
         casas=2,
-        detalhe=(
-            f"{br(abs(distancia), 2)} pp {lado} da meta de {br(meta.centro)} % "
-            f"(intervalo de {br(piso)} % a {br(teto)} %)"
-        ),
+        # O intervalo da meta já está na régua do cartão: aqui, só a distância.
+        detalhe=f"{br(abs(distancia), 2)} pp {lado} do centro da meta ({br(meta.centro)} %)",
         fonte=f"{ctx.fonte_sgs('IPCA_12M')}; meta: {meta.referencia}",
         secao="inflacao",
         mini=60,

@@ -140,3 +140,11 @@ def test_meta_do_primario_em_reais_com_o_desconto_ao_lado() -> None:
     ultima = leis.AVALIACOES_2026[-1]
     assert tabela.linhas[2].valores[-1] == round(ultima.resultado + ultima.deducao, 1) == -13.6
     assert "abaixo do piso" in tabela.nota
+
+
+def test_partes_dos_estados_sem_a_ficha_quando_nao_ha_contas() -> None:
+    com = [p.id for p in organizacao.partes_dos_estados(True)]
+    sem = [p.id for p in organizacao.partes_dos_estados(False)]
+    assert com == ["mapa", "estado", "duas-metricas", "tabela"]
+    assert "estado" not in sem
+    assert all(not re.match(r"^(c|g|t|m|p|uf)-", i) for i in com)

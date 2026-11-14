@@ -33,6 +33,7 @@ from sacibras.secoes import (
     estados,
     externo,
     fiscal,
+    impostos,
     inflacao,
     juros,
     mercados,
@@ -53,6 +54,7 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("mercados", "Mercados", mercados.montar),
     ("externo", "Setor externo", externo.montar),
     ("fiscal", "Contas públicas e dívida", fiscal.montar),
+    ("impostos", "Impostos", impostos.montar),
     ("estados", "Estados", estados.montar),
     ("demografia", "Demografia", demografia.montar),
     ("mundo", "Brasil no mundo", mundo.montar),
@@ -92,12 +94,19 @@ FONTES = {
     "mercados": "IPEADATA e Banco Central (bolsa e câmbio)",
     "externo": "Banco Central (setor externo)",
     "fiscal": "Banco Central (estatísticas fiscais) e Tesouro Nacional (RTN)",
+    "impostos": "Receita Federal (arrecadação e gastos tributários), OCDE e FMI (impostos)",
     "estados": "Tesouro Nacional (SICONFI) e IBGE (PNAD Contínua)",
     "mundo": "FMI (WEO) e BIS",
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",
     "demografia": "IBGE (Projeções da População e PNAD) e Tesouro Nacional (RTN)",
 }
+
+
+DETALHE_MAXIMO = 60
+"""O texto embaixo do número: só o essencial (Caio, 14/11/2026: "se for apresentar o
+resultado, escreva só o essencial, sem muitos detalhes e contextos"). O resto vai na nota do
+gráfico ou no glossário."""
 
 
 def _partes(dados: object) -> list[ItemSubcategoria]:
@@ -159,6 +168,9 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 sem_lugar = organizacao.aplicar(secao)
                 if sem_lugar:
                     print(f"  aviso: {id}: sem parte em organizacao.py: {', '.join(sem_lugar)}")
+                for c in secao.cartoes:
+                    if len(c.detalhe) > DETALHE_MAXIMO:
+                        print(f"  aviso: {id}: detalhe longo em {c.id} ({len(c.detalhe)} letras)")
             _gravar(saida, arquivo, secao)
             extra = ctx.memo.pop(f"{id}_paises", None)  # o arquivo à parte da seção, se houver
             if extra is not None:
