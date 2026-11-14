@@ -44,8 +44,8 @@ MEDIDAS: list[tuple[str, list[str]]] = [
 ]
 
 SEM_AJUSTE = (
-    "Os anualizados de 1 e 3 meses são sem ajuste sazonal (o Banco Central não publica essas "
-    "medidas dessazonalizadas no SGS) e por isso sobem e descem com a época do ano, com "
+    "O anualizado de 3 meses é sem ajuste sazonal (o Banco Central não publica essas "
+    "medidas dessazonalizadas no SGS) e por isso sobe e desce com a época do ano, com "
     "alimentos e serviços: compare com o mesmo período do ano anterior, e não só com a meta."
 )
 
@@ -89,17 +89,20 @@ def tabela_medidas(medidas: list[tuple[str, list[list[Ponto]], str]], fonte: str
     return Tabela(
         id="ipca-medidas",
         titulo="Medidas de inflação: 1, 3 e 12 meses",
-        subtitulo=f"Até {periodo(quando, 'M')}, em %",
+        subtitulo=(
+            f"Até {periodo(quando, 'M')}. Um ano antes: os 3 meses até {periodo(antes, 'M')}, "
+            "anualizados"
+        ),
         colunas=[
             "No mês (%)",
-            f"3 meses até {periodo(quando, 'M')}, anualizado (%)",
-            f"3 meses até {periodo(antes, 'M')}, anualizado (%)",
+            "3 meses, anualizado (%)",
+            "Um ano antes (%)",
             "12 meses (%)",
         ],
         linhas=linhas,
         fonte=fonte,
         nota=(
-            "Anualizado: a variação composta dos 3 meses levada a 12, (1 + v)^4 − 1. "
+            "Anualizado: a variação composta dos 3 meses levada a 12, (1 + v)⁴ − 1. "
             "Média dos núcleos: a média simples de EX0, EX3, MS, DP e P55, conta nossa. "
             + SEM_AJUSTE
         ),
@@ -264,7 +267,6 @@ def montar(ctx: Contexto) -> Secao:
     ]
     mensais_nucleos = [ctx.sgs(n) for n in NUCLEOS]
     nucleos3 = ritmo(mensais_nucleos, 3)
-    nucleos1 = ritmo(mensais_nucleos, 1)
     nucleos3_antes = dict(nucleos3).get(nucleos3[-1][0].replace(year=nucleos3[-1][0].year - 1))
     cartoes.append(
         cartao(
@@ -389,21 +391,20 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "nucleos-ritmo",
-            "Média dos núcleos: o ritmo do mês, de 3 meses e de 12 meses",
+            "Média dos núcleos: o ritmo de 3 meses e de 12 meses",
             [
                 serie("doze", "12 meses", nucleos12, desde=inicio),
                 serie("tres", "3 meses, anualizado", nucleos3, desde=inicio),
-                serie("um", "1 mês, anualizado", nucleos1, desde=inicio),
             ],
             unidade="% ao ano",
             casas=2,
             periodicidade="M",
             linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
-            janela_anos=3,
+            janela_anos=5,
             fonte=ctx.fonte_sgs(*NUCLEOS),
             nota=(
                 "Média simples dos cinco núcleos (EX0, EX3, MS, DP e P55), conta nossa. "
-                "Anualizado: a variação composta do período levada a 12 meses. "
+                "Anualizado: a variação composta dos 3 meses levada a 12, (1 + v)⁴ − 1. "
                 f"Meta: {meta.referencia}. " + SEM_AJUSTE
             ),
         ),
