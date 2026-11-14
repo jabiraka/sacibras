@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o simulador da reforma do consumo em Impostos; antes, no mesmo dia, o efeito da Selic com faixas de erro e o gancho de Lara Resende; tudo no `main`).
+Última atualização: 14/11/2026 (o simulador da reforma do consumo em Impostos; antes, no mesmo dia, o efeito da Selic com faixas de erro e o gancho de Lara Resende, estes já no `main`; o da reforma espera o "pode").
 
 ---
 
@@ -44,7 +44,7 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
-## Reforma do consumo (14/11/2026, mesma sessão e branch da Selic, publicada no `main`)
+## Reforma do consumo (14/11/2026, mesma sessão e branch da Selic; **ainda não está no `main`**)
 
 Pedido do Caio: *"dá pra fazer simulador de impostos? A reforma tributária vai chegar"*.
 
@@ -63,7 +63,9 @@ Pedido do Caio: *"dá pra fazer simulador de impostos? A reforma tributária vai
   ler no PC. A cada ano, as alíquotas do ano seguinte; o IBS de referência só sai em 2028.
 - Busca ("simulador de impostos", "cashback", "ibs", e em inglês, espanhol e francês) e seis
   verbetes (IBS, CBS, ISS, alíquota cheia, cashback, Imposto Seletivo).
-- Conferido a 1280 e a 390 px. Prévia privada republicada.
+- Conferido a 1280 e a 390 px. Prévia privada republicada. **Espera o "pode" do Caio para ir
+  ao `main`** (o "pode juntar" dele foi para a Selic, antes de este simulador existir): está
+  no branch `ccr-567b9de5-xode7j`, um commit à frente do `main`.
 
 ## Sessão da Selic (14/11/2026, na nuvem, branch `ccr-567b9de5-xode7j`, publicada no `main`)
 
