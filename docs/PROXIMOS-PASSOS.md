@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (11ª sessão do dia: Estados em partes, nota de crédito em letras, cartões enxutos, crédito do BIS).
+Última atualização: 14/11/2026 (11ª sessão do dia: Estados em partes, nota de crédito em letras, cartões enxutos, crédito do BIS, inflação no simulador, tradução automática).
 
 ---
 
@@ -76,8 +76,23 @@ o essencial"*.
   privado (BIS `WS_DSR`; o BIS não separa as famílias para o Brasil, dito na linha) e hiato de
   crédito (BIS `WS_CREDIT_GAP`) entram em Brasil no mundo (tema "Crédito") e na vista "outros
   países" do painel de alerta, em "Fora do painel".
+- **Inflação no simulador da dívida** (Caio: *"na simulação dá pra colocar também a
+  inflação?"*): quarto controle, ±3 pp sobre o IPCA do Focus. Na conta o juro não reage à
+  inflação (dito no controle e na nota: na vida real parte dos títulos é corrigida pelo IPCA
+  e o BC sobe a Selic, então é para mexer no juro junto). +2 pp de inflação levam a dívida de
+  2034 de 104,8 % para 89,8 % do PIB, com o juro parado.
+- **Tradução automática** (Caio: *"a página pelo idioma de quem entra pra visitar, pelo
+  país"*; `web/src/traducao.ts`): o navegador em outro idioma abre a página traduzida pelo
+  Google Tradutor (o cookie `googtrans`, sem a faixa do Google); a variante do país vale
+  quando muda a escrita (zh-TW/zh-HK tradicional), e português de qualquer país fica no
+  original. Lista "Idioma" no menu (no celular, no alto do menu aberto) com 13 idiomas mais o
+  do navegador; a escolha fica no navegador. Em português, nada é baixado do Google.
+  Conferido com navegador en-US, es-AR e pt-BR. Limites: o país pelo IP não é usado (pediria
+  serviço de terceiros); a busca só acha palavras em português; o tradutor às vezes estraga
+  nomes próprios ("Copom" virou "Cocom" no espanhol).
 - Conferido a 390 e a 1280 px (Estados nas cinco telas, Riscos › Mercado e contas externas, a
-  vista por países). A prévia privada não foi republicada nesta sessão.
+  vista por países, o simulador, a página traduzida). A prévia privada não foi republicada
+  nesta sessão.
 
 ## Décima sessão (14/11/2026, na nuvem, branch `ccr-3122c6b7-8l15l1`)
 

@@ -339,7 +339,7 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "simulador",
             "Simulador da dívida",
-            "Mexa no juro, no crescimento e no primário e veja para onde a dívida vai.",
+            "Mexa no juro, no crescimento, na inflação e no primário e veja a dívida.",
             extras=["simulador"],
         ),
     ],

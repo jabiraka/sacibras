@@ -14,6 +14,7 @@ import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDoAssunto } from "./calendario";
 import { ligarGlossario } from "./glossario";
+import { ligarTraducao } from "./traducao";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
@@ -207,7 +208,7 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
     alvo.append(
       guardar(
         "Simule a dívida pública",
-        "Mexa no juro, no crescimento e no resultado primário e veja para onde ela vai",
+        "Mexa no juro, no crescimento, na inflação e no primário e veja para onde ela vai",
         () => montarSimulador(simulador),
       ),
     );
@@ -495,7 +496,7 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   if (p.extras.includes("simulador") && simulador) {
     const caixa = guardar(
       "Simule a dívida pública",
-      "Mexa no juro, no crescimento e no resultado primário e veja para onde ela vai",
+      "Mexa no juro, no crescimento, na inflação e no primário e veja para onde ela vai",
       () => montarSimulador(simulador),
     );
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;
@@ -665,6 +666,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
 
 async function iniciar(): Promise<void> {
   const conteudo = document.getElementById("conteudo") as HTMLElement;
+  ligarTraducao();
   ligarBusca();
   ligarGlossario(conteudo);
   document.querySelector(".menu-botao")?.addEventListener("click", () => {

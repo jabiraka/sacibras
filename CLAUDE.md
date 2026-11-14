@@ -99,10 +99,17 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - **Rótulo de linha de referência** (meta, média, limite) fica na legenda, não escrito no
   desenho (Caio, 14/11/2026: *"os textos estão se confundindo com as linhas"*). Eixo com
   nomes no lugar de números (a nota de crédito) usa `marcas_y`.
+- **Idioma de quem visita** (Caio, 14/11/2026: *"coloque também a página pelo idioma de quem
+  entra pra visitar, pelo país, deixe alguma forma de tradução automática"*): o texto é
+  escrito em português; quem chega com o navegador em outro idioma recebe a página traduzida
+  pelo Google Tradutor (`web/src/traducao.ts`), e a lista "Idioma" no menu troca ou volta ao
+  original. Em português nada é baixado do Google. Nome próprio ou símbolo que o tradutor
+  estraga ganha `translate="no"` (o "?" do glossário, a marca).
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,
-  *"deixe o simulador da dívida, acho legal"*). Fora ele, cenário montado pela pessoa não
+  *"deixe o simulador da dívida, acho legal"*), com quatro controles: juro, crescimento,
+  inflação (pedida no mesmo dia) e primário. Fora ele, cenário montado pela pessoa não
   entra sem o "sim" do Caio.
 - **Riscos** (Caio, 14/11/2026): a palavra na tela é *sustentabilidade da dívida*, não
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)

@@ -93,8 +93,11 @@ def _simulador(
             f"÷ dívida bruta = {br(implicito)} % ao ano); a parte atrelada à Selic "
             f"({br(atrelada * 100, 0)} % dos títulos) acompanha a Selic esperada pelo Focus. "
             "Crescimento, inflação e primário: medianas do Focus, com a última repetida nos "
-            "anos que o Focus não cobre. É conta de ordem de grandeza: não separa a dívida "
-            "atrelada ao câmbio nem o que entra na dívida sem passar pelo primário."
+            "anos que o Focus não cobre. Inflação: na conta, o juro não reage a ela; na vida "
+            "real, parte dos títulos é corrigida pelo IPCA e o Banco Central sobe a Selic "
+            "quando a inflação sobe, então mexa no juro junto. É conta de ordem de grandeza: "
+            "não separa a dívida atrelada ao câmbio nem o que entra na dívida sem passar pelo "
+            "primário."
         ),
     )
 

@@ -335,6 +335,70 @@ button {
   box-shadow: inset 2px 0 0 var(--verde);
 }
 
+/* Idioma: no celular, aparece com o menu aberto; na tela larga, no pé da coluna. */
+.idioma {
+  grid-area: idioma;
+  display: none;
+  padding: 12px 10px 10px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.lateral.aberta .idioma {
+  display: block;
+}
+
+/* No celular, o idioma fica no alto do menu aberto, à vista sem rolar. */
+.lateral {
+  grid-template-areas: "marca busca botao" "idioma idioma idioma" "menu menu menu";
+}
+
+.lateral.aberta .menu {
+  max-height: calc(100vh - 190px);
+}
+
+.idioma-rotulo {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta-3);
+}
+
+.idioma .escolha {
+  width: 100%;
+}
+
+.idioma-aviso {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--tinta-3);
+}
+
+/* O que o Google Tradutor põe na página: a faixa do topo, o balão do texto original e o
+   realce ao passar o mouse. A lista "Idioma" já faz o papel da faixa. */
+body > .skiptranslate,
+iframe.skiptranslate,
+.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+#gt-caixa {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+.goog-text-highlight,
+font[style] {
+  background: none !important;
+  box-shadow: none !important;
+}
+
 /* A página ao lado do menu. */
 .pagina {
   min-width: 0;
@@ -374,6 +438,18 @@ button {
 
   .menu-grupo {
     margin-top: 18px;
+  }
+
+  .idioma {
+    display: block;
+    order: 3;
+    padding: 12px 6px 0;
+    border-bottom: 0;
+    border-top: 1px solid var(--borda);
+  }
+
+  .lateral.aberta .menu {
+    max-height: none;
   }
 
   .pagina {

@@ -185,6 +185,11 @@ function gatilho(v: Verbete, texto: string, classe: string): HTMLElement {
   const ajuda = classe.includes("ajuda");
   const b = ajuda ? el("button", classe, texto) : el("span", classe, texto);
   if (b instanceof HTMLButtonElement) b.type = "button";
+  // O "?" não se traduz (o tradutor fazia dele "¿" em espanhol).
+  if (ajuda) {
+    b.classList.add("notranslate");
+    b.setAttribute("translate", "no");
+  }
   else {
     b.setAttribute("role", "button");
     b.tabIndex = 0;
