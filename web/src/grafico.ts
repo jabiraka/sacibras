@@ -323,18 +323,12 @@ export function montarGrafico(g: Grafico): HTMLElement {
         ponta("b"),
       );
     }
+    // A linha de referência (meta, média, limite) vai pontilhada e o nome dela fica na
+    // legenda: escrito no desenho, ele se misturava com as séries e cortava no celular
+    // (Caio, 14/11/2026).
     for (const linha of g.linhas) {
       marcas.push(
-        Plot.ruleY([linha.valor], { stroke: t.tinta3, strokeDasharray: "2,4", strokeWidth: 1 }),
-        Plot.text([linha], {
-          x: new Date(xMin),
-          y: "valor",
-          text: "rotulo",
-          textAnchor: "start",
-          dy: -7,
-          fill: t.tinta3,
-          fontSize: 11,
-        }),
+        Plot.ruleY([linha.valor], { stroke: t.tinta2, strokeDasharray: "2,4", strokeWidth: 1.2 }),
       );
     }
 
@@ -428,7 +422,7 @@ export function montarGrafico(g: Grafico): HTMLElement {
           Plot.text(pontas, {
             x: "t",
             y: "v",
-            text: (d: Linha) => numero(d.v, g.casas),
+            text: (d: Linha) => valorNoEixo(g, d.v, numero(d.v, g.casas)),
             dx: 8,
             textAnchor: "start",
             fill: t.tinta,
@@ -441,6 +435,9 @@ export function montarGrafico(g: Grafico): HTMLElement {
 
     const dias = (xMax - xMin) / DIA;
     const estreito = largura < 480;
+    const marcasY = (g.marcas_y ?? []).map((m) => m.valor);
+    const dominioY = dominioDasMarcas(todas);
+    const rotuloLongo = Math.max(0, ...(g.marcas_y ?? []).map((m) => m.rotulo.length));
     const umaSerie = !barras && g.series.length === 1;
     const grafico = Plot.plot({
       width: largura,
@@ -449,7 +446,7 @@ export function montarGrafico(g: Grafico): HTMLElement {
       height: Math.round(
         estreito ? Math.min(300, Math.max(240, largura * 0.72)) : Math.min(340, Math.max(220, largura * 0.5)),
       ),
-      marginLeft: estreito ? 38 : 46,
+      marginLeft: Math.max(estreito ? 38 : 46, rotuloLongo * 6.4 + 8),
       marginRight: umaSerie ? 52 : 18,
       marginTop: 14,
       marginBottom: 28,
@@ -479,12 +476,13 @@ export function montarGrafico(g: Grafico): HTMLElement {
       y: {
         label: null,
         grid: true,
-        ticks: 5,
+        ticks: marcasY.length ? marcasY.filter((m) => m >= dominioY[0] && m <= dominioY[1]) : 5,
         tickSize: 0,
         tickPadding: 6,
-        nice: true,
+        nice: !marcasY.length,
         zero: barras ? true : undefined,
-        tickFormat: (v: number) => eixo(v, g.unidade, g.casas),
+        domain: marcasY.length ? dominioY : undefined,
+        tickFormat: (v: number) => valorNoEixo(g, v, eixo(v, g.unidade, g.casas)),
       },
       marks: marcas,
     });
@@ -507,6 +505,17 @@ export function montarGrafico(g: Grafico): HTMLElement {
   }).observe(tela);
   document.addEventListener("tema", desenhar);
   return artigo;
+}
+
+/** O nome do valor quando o eixo tem nomes (a nota de crédito); senão, o número. */
+function valorNoEixo(g: Grafico, v: number, numeral: string): string {
+  return g.marcas_y?.find((m) => Math.abs(m.valor - v) < 1e-9)?.rotulo ?? numeral;
+}
+
+/** O vão dos dados com meio degrau de folga, para a escada não colar na borda. */
+function dominioDasMarcas(todas: Linha[]): [number, number] {
+  const vs = todas.map((l) => l.v);
+  return [Math.min(...vs) - 0.5, Math.max(...vs) + 0.5];
 }
 
 function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => string): void {
@@ -542,6 +551,11 @@ function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => str
       meio.append(el("i", "chave intervalo-meio"), document.createTextNode(intervalo.nome_meio));
       itens.push(meio);
     }
+  }
+  for (const linha of g.linhas) {
+    const item = el("span", "legenda-item");
+    item.append(el("i", "chave referencia"), document.createTextNode(linha.rotulo));
+    itens.push(item);
   }
   legenda.append(...itens);
   legenda.hidden = itens.length === 0;
@@ -625,7 +639,7 @@ function pairar(
       const linha = el("div", "dica-linha");
       const chave = el("i", "chave");
       chave.style.setProperty("--cor", cor(k));
-      const valor = el("b", "", comUnidade(ponto.v, g.unidade, g.casas));
+      const valor = el("b", "", valorNoEixo(g, ponto.v, comUnidade(ponto.v, g.unidade, g.casas)));
       linha.append(chave, el("span", "", s.nome), valor);
       linhas.push(linha);
       // Se a série tem barra de erro nesta data, a faixa vai escrita logo abaixo.

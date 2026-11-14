@@ -93,6 +93,15 @@ SINONIMOS: dict[str, list[str]] = {
     "pessoal": ["folha", "servidores", "funcionalismo", "salarios do governo"],
     "icms": ["imposto estadual", "arrecadacao dos estados", "imposto"],
     "rcl": ["receita corrente liquida"],
+    "nota de credito": [
+        "rating",
+        "grau de investimento",
+        "classificacao de risco",
+        "s&p",
+        "moody's",
+        "fitch",
+        "agencia de risco",
+    ],
     "estado": ["estados", "uf", "unidade da federacao", "governo estadual", "regioes"],
     "exporta": ["exportacoes", "vendas ao exterior", "comercio exterior", "balanca comercial"],
     "importa": ["importacoes", "compras do exterior", "comercio exterior", "balanca comercial"],
@@ -137,6 +146,302 @@ SINONIMOS: dict[str, list[str]] = {
 }
 
 
+# A página traduzida (traducao.ts) busca no mesmo índice: quem lê em inglês, espanhol ou
+# francês procura com as palavras da própria língua (Caio, 14/11/2026: "arrume a busca").
+# Termo em português, sem acento, como em SINONIMOS → as palavras nas outras línguas, também
+# sem acento e em minúsculas.
+OUTRAS_LINGUAS: dict[str, list[str]] = {
+    # assuntos e partes
+    "atividade": ["economic activity", "economy", "actividad economica", "economia", "activite"],
+    "pib": [
+        "gdp",
+        "gross domestic product",
+        "growth",
+        "output",
+        "producto interno bruto",
+        "crecimiento",
+        "croissance",
+        "produit interieur brut",
+    ],
+    "ibc-br": ["monthly gdp", "economic activity index", "indice de actividad"],
+    "industria": [
+        "industry",
+        "industrial production",
+        "manufacturing",
+        "produccion industrial",
+        "production industrielle",
+    ],
+    "varejo": [
+        "retail",
+        "retail sales",
+        "ventas minoristas",
+        "comercio minorista",
+        "commerce de detail",
+    ],
+    "servicos": ["services", "servicios"],
+    "investimento": ["investment", "inversion", "fixed capital"],
+    "poupanca": ["savings", "saving", "ahorro", "epargne"],
+    "confianca": ["confidence", "sentiment", "confianza"],
+    "capacidade": ["capacity utilization", "capacidad instalada", "capacite"],
+    "trabalho": ["labor", "labour", "jobs", "employment", "empleo", "trabajo", "emploi", "travail"],
+    "desocupacao": ["unemployment", "jobless", "unemployment rate", "desempleo", "paro", "chomage"],
+    "desemprego": ["unemployment", "desempleo", "chomage"],
+    "subutiliz": ["underemployment", "subempleo", "sous-emploi"],
+    "informal": ["informality", "informal jobs", "informalidad", "travail informel"],
+    "desalent": ["discouraged workers", "desalentados", "decourages"],
+    "renda": ["income", "wages", "earnings", "ingreso", "salarios", "revenu", "salaires"],
+    "rendimento": ["income", "wages", "earnings", "ingreso", "revenu"],
+    "caged": ["formal jobs", "payrolls", "job creation", "empleo formal"],
+    "inflacao": ["inflation", "consumer prices", "cpi", "prices", "inflacion", "precios", "prix"],
+    "ipca": [
+        "cpi",
+        "consumer price index",
+        "inflation",
+        "indice de precios",
+        "prix a la consommation",
+    ],
+    "nucleo": [
+        "core inflation",
+        "underlying inflation",
+        "inflacion subyacente",
+        "inflation sous-jacente",
+    ],
+    "meta": ["target", "inflation target", "objetivo", "meta de inflacion", "cible"],
+    "preco": ["prices", "precios", "prix"],
+    "igp": ["wholesale prices", "general price index", "precios mayoristas"],
+    "juro": [
+        "interest rate",
+        "interest rates",
+        "rates",
+        "tasa de interes",
+        "tipos de interes",
+        "taux d'interet",
+    ],
+    "selic": [
+        "policy rate",
+        "central bank rate",
+        "interest rate",
+        "tasa de politica monetaria",
+        "taux directeur",
+    ],
+    "copom": [
+        "monetary policy committee",
+        "central bank meeting",
+        "comite de politica monetaria",
+        "comite de politique monetaire",
+    ],
+    "juro real": ["real interest rate", "tasa real", "taux reel"],
+    "titulos": [
+        "bonds",
+        "treasury bonds",
+        "government bonds",
+        "yield curve",
+        "bonos",
+        "obligations",
+    ],
+    "curva": ["yield curve", "term structure", "curva de rendimiento", "courbe des taux"],
+    "implicita": [
+        "breakeven inflation",
+        "inflation expectations",
+        "inflacion implicita",
+        "point mort d'inflation",
+    ],
+    "credito": ["credit", "loans", "lending", "prestamos", "creditos", "prets"],
+    "inadimplencia": [
+        "defaults",
+        "non-performing loans",
+        "npl",
+        "delinquency",
+        "morosidad",
+        "impayes",
+    ],
+    "spread": ["lending spread", "diferencial de tasas"],
+    "familias": ["households", "household debt", "hogares", "deuda de los hogares", "menages"],
+    "endividamento": ["household debt", "indebtedness", "endeudamiento", "endettement"],
+    "comprometimento": [
+        "debt service",
+        "debt burden",
+        "servicio de la deuda",
+        "service de la dette",
+    ],
+    "imove": [
+        "housing",
+        "real estate",
+        "house prices",
+        "mortgage",
+        "vivienda",
+        "inmuebles",
+        "hipoteca",
+        "immobilier",
+    ],
+    "mercados": ["markets", "financial markets", "mercados financieros", "marches"],
+    "bolsa": [
+        "stock market",
+        "stocks",
+        "equities",
+        "mercado de valores",
+        "acciones",
+        "bourse",
+        "actions",
+    ],
+    "ibovespa": ["stock index", "brazil stocks", "indice bursatil", "indice boursier"],
+    "cambio": ["exchange rate", "currency", "fx", "tipo de cambio", "taux de change"],
+    "dolar": ["dollar", "usd", "exchange rate", "dolar", "dollar americain"],
+    "euro": ["euro"],
+    "rendeu": ["returns", "performance", "rentabilidad", "rendement"],
+    "setor externo": [
+        "external sector",
+        "balance of payments",
+        "sector externo",
+        "balanza de pagos",
+        "balance des paiements",
+    ],
+    "conta corrente": ["current account", "cuenta corriente", "compte courant"],
+    "transac": ["current account", "cuenta corriente", "compte courant"],
+    "comercio exterior": [
+        "trade",
+        "foreign trade",
+        "exports",
+        "imports",
+        "comercio exterior",
+        "commerce exterieur",
+    ],
+    "exporta": ["exports", "exportaciones", "exportations"],
+    "importa": ["imports", "importaciones", "importations"],
+    "balanca": ["trade balance", "balanza comercial", "balance commerciale"],
+    "investimento direto": [
+        "fdi",
+        "foreign direct investment",
+        "inversion extranjera directa",
+        "investissement direct etranger",
+    ],
+    "reservas": [
+        "reserves",
+        "international reserves",
+        "fx reserves",
+        "reservas internacionales",
+        "reserves de change",
+    ],
+    "cambio real": ["real exchange rate", "reer", "tipo de cambio real", "taux de change reel"],
+    "contas publicas": [
+        "public finances",
+        "fiscal",
+        "budget",
+        "finanzas publicas",
+        "presupuesto",
+        "finances publiques",
+    ],
+    "fiscal": ["fiscal", "budget", "fiscal policy", "politica fiscal", "politique budgetaire"],
+    "divida": [
+        "debt",
+        "public debt",
+        "government debt",
+        "deuda",
+        "deuda publica",
+        "dette",
+        "dette publique",
+    ],
+    "primario": [
+        "primary balance",
+        "primary deficit",
+        "primary surplus",
+        "fiscal balance",
+        "resultado primario",
+        "deficit primario",
+        "solde primaire",
+    ],
+    "nominal": ["overall balance", "fiscal deficit", "deficit fiscal", "deficit public"],
+    "receita": ["revenue", "tax revenue", "taxes", "ingresos", "impuestos", "recettes", "impots"],
+    "despesa": ["spending", "expenditure", "gasto publico", "depenses"],
+    "previdencia": ["pensions", "social security", "pensiones", "seguridad social", "retraites"],
+    "inss": ["pensions", "social security", "pensiones", "retraites"],
+    "estados": ["states", "brazilian states", "regions", "estados de brasil", "etats"],
+    "estado": ["state", "regional government", "gobierno estatal", "etat"],
+    "pessoal": [
+        "payroll",
+        "public wages",
+        "civil servants",
+        "gasto en personal",
+        "masse salariale",
+    ],
+    "icms": ["state sales tax", "vat", "impuesto estatal"],
+    "rcl": ["net current revenue", "ingreso corriente neto"],
+    "demografia": [
+        "demographics",
+        "population",
+        "aging",
+        "demografia",
+        "poblacion",
+        "envejecimiento",
+        "demographie",
+        "vieillissement",
+    ],
+    "populacao": ["population", "poblacion"],
+    "idosos": [
+        "elderly",
+        "aging",
+        "old-age dependency",
+        "ancianos",
+        "personas mayores",
+        "personnes agees",
+    ],
+    "fecundidade": ["fertility", "birth rate", "fecundidad", "natalidad", "fecondite"],
+    "nascimentos": ["births", "deaths", "nacimientos", "naissances"],
+    "esperanca de vida": ["life expectancy", "esperanza de vida", "esperance de vie"],
+    "piramide": ["population pyramid", "age pyramid", "piramide de poblacion", "pyramide des ages"],
+    "produtividade": ["productivity", "labor productivity", "productividad", "productivite"],
+    "mundo": [
+        "world",
+        "countries",
+        "international comparison",
+        "imf",
+        "mundo",
+        "paises",
+        "fmi",
+        "monde",
+        "pays",
+    ],
+    "emergentes": [
+        "emerging markets",
+        "emerging economies",
+        "mercados emergentes",
+        "pays emergents",
+    ],
+    "previs": [
+        "forecast",
+        "forecasts",
+        "projections",
+        "outlook",
+        "expectations",
+        "pronostico",
+        "proyecciones",
+        "previsions",
+    ],
+    "focus": ["market expectations", "consensus", "survey", "expectativas del mercado"],
+    "simul": ["simulator", "scenario", "what if", "simulador", "escenario", "simulateur"],
+    "risco": ["risk", "risks", "riesgo", "riesgos", "risque"],
+    "alerta": ["warning", "early warning", "alert", "dashboard", "alerta temprana", "alerte"],
+    "sustenta": ["debt sustainability", "sostenibilidad de la deuda", "soutenabilite"],
+    "estresse": ["stress test", "crisis scenario", "prueba de estres", "test de resistance"],
+    "nota de credito": [
+        "credit rating",
+        "rating",
+        "sovereign rating",
+        "investment grade",
+        "calificacion crediticia",
+        "grado de inversion",
+        "notation",
+    ],
+    "bancos": ["banks", "banking", "capital adequacy", "bancos", "banques"],
+    "basileia": ["basel", "capital ratio", "basilea", "bale"],
+    "energia": ["energy", "electricity", "hydropower", "energia", "energie"],
+    "reservatorios": ["reservoirs", "hydro reservoirs", "embalses", "reservoirs"],
+    "volatilidade": ["volatility", "volatilidad", "volatilite"],
+    "hiato de credito": ["credit gap", "credit-to-gdp gap", "brecha de credito"],
+    "servico da divida": ["debt service ratio", "dsr", "servicio de la deuda"],
+}
+
+
 class Item(BaseModel):
     t: str
     """O que aparece no resultado (título do gráfico, rótulo do número...)."""
@@ -146,6 +451,9 @@ class Item(BaseModel):
     """O endereço: `#assunto` ou `#assunto/alvo` (o id do elemento na página)."""
     p: str = ""
     """As palavras a mais da busca (sinônimos, sem acento, em minúsculas)."""
+    lt: str = ""
+    """O título em outras línguas (OUTRAS_LINGUAS só do título): vale mais que `p`, para
+    "unemployment" trazer a Desocupação antes do assunto que só a cita no resumo."""
 
 
 def normalizar(texto: str) -> str:
@@ -154,16 +462,27 @@ def normalizar(texto: str) -> str:
 
 
 def sinonimos_de(texto: str) -> str:
+    """Os sinônimos em português e as palavras em inglês, espanhol e francês do texto."""
     base = normalizar(texto)
     extras: list[str] = []
-    for termo, palavras in SINONIMOS.items():
-        if termo in base:
-            extras.extend(p for p in palavras if p not in base and p not in extras)
+    for dicionario in (SINONIMOS, OUTRAS_LINGUAS):
+        for termo, palavras in dicionario.items():
+            if termo in base:
+                extras.extend(p for p in palavras if p not in base and p not in extras)
     return " ".join(extras)
 
 
+def _no_titulo(titulo: str) -> str:
+    base = normalizar(titulo)
+    achadas: list[str] = []
+    for termo, palavras in OUTRAS_LINGUAS.items():
+        if termo in base:
+            achadas.extend(p for p in palavras if p not in achadas)
+    return " ".join(achadas)
+
+
 def _item(t: str, o: str, h: str, extra: str = "") -> Item:
-    return Item(t=t, o=o, h=h, p=sinonimos_de(f"{t} {extra}"))
+    return Item(t=t, o=o, h=h, p=sinonimos_de(f"{t} {extra}"), lt=_no_titulo(t))
 
 
 def montar(saida: Path) -> list[Item]:

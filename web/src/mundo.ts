@@ -42,8 +42,16 @@ const TEMAS: Record<string, string> = {
   primario: "Contas públicas",
   nominal: "Contas públicas",
   conta_corrente: "Contas externas",
+  servico_divida: "Crédito",
+  hiato_credito: "Crédito",
 };
-const ORDEM_DOS_TEMAS = ["Atividade e emprego", "Preços e juros", "Contas públicas", "Contas externas"];
+const ORDEM_DOS_TEMAS = [
+  "Atividade e emprego",
+  "Preços e juros",
+  "Crédito",
+  "Contas públicas",
+  "Contas externas",
+];
 /** Os países que se comparam: os principais, as médias dos grupos ou um grupo do FMI. */
 const PRINCIPAIS = "principais";
 const MEDIAS = "medias";

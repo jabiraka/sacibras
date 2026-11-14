@@ -533,7 +533,8 @@ def test_contas_de_sp_numeros_e_posicao() -> None:
     inv = next(n for n in sp.numeros if n.id == "sp_investimento")
     assert inv.valor == pytest.approx(11.939 / 266.2 * 100, abs=0.05) and inv.unidade == "% da RCL"
     icms = next(n for n in sp.numeros if n.id == "sp_icms_por_habitante")
-    assert "º maior entre as" in icms.detalhe and icms.casas == 0
+    assert "º maior de" in icms.detalhe and icms.casas == 0
+    assert all(len(n.detalhe) <= 60 for n in sp.numeros)
 
 
 def test_estado_sem_dca_ou_sem_uma_conta_sai_com_o_que_tem() -> None:

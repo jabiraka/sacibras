@@ -6,6 +6,7 @@ juro real: BIS. Cada métrica guarda a fonte; projeção é sempre a da própria
 
 from __future__ import annotations
 
+import contextlib
 import gettext
 from datetime import date
 
@@ -265,6 +266,68 @@ def _juros(
     return v_juro, v_real, ultimo_mes
 
 
+def _credito(
+    desde: date, anos: list[int], so_estes: list[str] | None
+) -> tuple[dict[str, list[float | None]], dict[str, list[float | None]], date]:
+    """Serviço da dívida do setor privado e hiato de crédito (BIS, trimestrais) por ISO3, no
+    último trimestre de cada ano (no ano corrente, o último publicado)."""
+    pedir = [] if so_estes is None else so_estes
+    saida: list[dict[str, list[float | None]]] = []
+    ultimo = desde
+    for ler in (bis.servico_da_divida, bis.hiato_de_credito):
+        por_iso3: dict[str, list[float | None]] = {}
+        for iso2, pontos in ler(pedir, desde).items():
+            iso3 = _iso2_do_bis(iso2)
+            if iso3 and pontos:
+                por_iso3[iso3] = _fim_de_ano(pontos, anos)
+                ultimo = max(ultimo, pontos[-1][0])
+        saida.append(por_iso3)
+    return saida[0], saida[1], ultimo
+
+
+def _metricas_de_credito(
+    v_dsr: dict[str, list[float | None]],
+    v_hiato: dict[str, list[float | None]],
+    anos: list[int],
+    ultimo: date,
+) -> list[MetricaMundo]:
+    tri = f"{(ultimo.month - 1) // 3 + 1}º tri/{ultimo.year}"
+    return [
+        MetricaMundo(
+            id="servico_divida",
+            nome="Serviço da dívida privada",
+            descricao=(
+                "Juros e amortizações que famílias e empresas pagam sobre a renda delas, no "
+                f"último trimestre de cada ano (em {ultimo.year}, o {tri}). O BIS não separa "
+                "as famílias para o Brasil."
+            ),
+            unidade="% da renda",
+            casas=1,
+            maior_e_melhor=False,
+            fonte="BIS, serviço da dívida do setor privado não financeiro (WS_DSR)",
+            anos=anos,
+            primeiro_ano_projetado=None,
+            valores=v_dsr,
+        ),
+        MetricaMundo(
+            id="hiato_credito",
+            nome="Hiato de crédito",
+            descricao=(
+                "Crédito ao setor privado em % do PIB menos a tendência de longo prazo, no "
+                f"último trimestre de cada ano (em {ultimo.year}, o {tri}). Muito acima de "
+                "zero, o crédito cresceu rápido demais."
+            ),
+            unidade="pp do PIB",
+            casas=1,
+            maior_e_melhor=False,
+            fonte="BIS, hiato de crédito sobre o PIB (WS_CREDIT_GAP)",
+            anos=anos,
+            primeiro_ano_projetado=None,
+            valores=v_hiato,
+        ),
+    ]
+
+
 def _todos_os_paises(
     ctx: Contexto,
     ano: int,
@@ -281,6 +344,10 @@ def _todos_os_paises(
     # A chave de país vazia traz todos os países numa chamada só.
     weo = fmi.weo([], [m[1] for m in WEO], a0, a1)
     v_juro, v_real, ultimo_mes = _juros(date(a0, 1, 1), anos_bis, None, zona_do_euro)
+    credito: dict[str, dict[str, list[float | None]]] = {}
+    with contextlib.suppress(Exception):  # sem o BIS trimestral, essas duas ficam de fora
+        v_dsr, v_hiato, _ = _credito(date(a0, 1, 1), anos_bis, None)
+        credito = {"servico_divida": v_dsr, "hiato_credito": v_hiato}
     quando = f"{MESES[ultimo_mes.month - 1]} de {ultimo_mes.year}"
     manter = set(paises)
     saida: list[MetricaMundo] = []
@@ -293,7 +360,12 @@ def _todos_os_paises(
             }
             anos = anos_weo
         else:
-            bruto = v_juro if m.id == "juro" else v_real
+            if m.id in ("servico_divida", "hiato_credito"):
+                if m.id not in credito:
+                    continue
+                bruto = credito[m.id]
+            else:
+                bruto = v_juro if m.id == "juro" else v_real
             valores = {iso: bruto[iso] for iso in sorted(manter) if iso in bruto}
             anos = anos_bis
         descricao = m.descricao
@@ -384,6 +456,15 @@ def montar(ctx: Contexto) -> Mundo:
             valores=v_real,
         ),
     )
+
+    # Crédito privado (BIS, trimestral): serviço da dívida e hiato. Sem eles, segue o resto.
+    try:
+        v_dsr, v_hiato, ultimo_tri = _credito(
+            desde, anos_bis, sorted({p[1] for p in PAISES if p[1]})
+        )
+        metricas += _metricas_de_credito(v_dsr, v_hiato, anos_bis, ultimo_tri)
+    except Exception as erro:
+        print(f"  aviso: mundo: crédito do BIS indisponível ({str(erro)[:120]})")
 
     def do_brasil(id: str, a: int) -> float | None:
         m = next(x for x in metricas if x.id == id)

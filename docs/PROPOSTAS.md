@@ -139,3 +139,12 @@ crescimento entre ocupação e produtividade; déficit do INSS (RTN).
   de como tratar os descontos da apuração oficial ([PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)).
 - **Agenda na entrada**: as divulgações da semana (IBGE, já buscado pelo navegador), guardada
   atrás de um clique. O Copom não tem API com as reuniões futuras (ver [FONTES](FONTES.md)).
+
+## Tradução (14/11/2026)
+
+- Busca em outros idiomas: feita para inglês, espanhol e francês (`OUTRAS_LINGUAS`). Falta
+  para línguas de outra escrita (chinês, japonês, árabe…).
+- Nomes próprios protegidos do tradutor (Copom, Focus, IPCA, Selic): marcar com
+  `translate="no"` onde aparecem nos títulos e no menu.
+- Simulador: inflação com efeito no juro da parte da dívida corrigida pelo IPCA (falta a
+  participação por indexador com o IPCA numa fonte com API; ver "Limites conhecidos").

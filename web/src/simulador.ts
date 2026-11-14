@@ -1,5 +1,6 @@
 // O simulador da dívida: a linha de base vem do builder (hipóteses do Focus) e a conta é
-// refeita aqui quando a pessoa mexe nos três controles.
+// refeita aqui quando a pessoa mexe nos quatro controles (a inflação entrou a pedido do Caio,
+// 14/11/2026: "na simulação dá pra colocar também a inflação?").
 //   dívida seguinte = dívida × (1 + juro) ÷ ((1 + crescimento) × (1 + inflação)) − primário
 
 import { numero, sinal } from "./formato";
@@ -8,7 +9,7 @@ import { el } from "./pecas";
 import type { Grafico, SimuladorDivida } from "./tipos";
 
 interface Controle {
-  id: "juro" | "crescimento" | "primario";
+  id: "juro" | "crescimento" | "inflacao" | "primario";
   rotulo: string;
   ajuda: string;
 }
@@ -16,18 +17,23 @@ interface Controle {
 const CONTROLES: Controle[] = [
   { id: "juro", rotulo: "Juro da dívida", ajuda: "quanto a dívida paga por ano" },
   { id: "crescimento", rotulo: "Crescimento do PIB", ajuda: "acima da inflação" },
+  {
+    id: "inflacao",
+    rotulo: "Inflação (IPCA)",
+    ajuda: "com o juro parado, mais inflação encolhe a dívida em % do PIB",
+  },
   { id: "primario", rotulo: "Resultado primário", ajuda: "receitas menos despesas, sem os juros" },
 ];
 
 export function trajetoria(
   s: SimuladorDivida,
-  d: { juro: number; crescimento: number; primario: number },
+  d: { juro: number; crescimento: number; inflacao: number; primario: number },
 ): number[] {
   let divida = s.divida_inicial;
   return s.anos.map((_, i) => {
     const juro = (s.juro[i] ?? 0) + d.juro;
     const crescimento = (s.crescimento[i] ?? 0) + d.crescimento;
-    const inflacao = s.inflacao[i] ?? 0;
+    const inflacao = (s.inflacao[i] ?? 0) + d.inflacao;
     const primario = (s.primario[i] ?? 0) + d.primario;
     divida = (divida * (1 + juro / 100)) / ((1 + crescimento / 100) * (1 + inflacao / 100)) - primario;
     return divida;
@@ -35,7 +41,7 @@ export function trajetoria(
 }
 
 export function montarSimulador(s: SimuladorDivida): HTMLElement[] {
-  const desvios = { juro: 0, crescimento: 0, primario: 0 };
+  const desvios = { juro: 0, crescimento: 0, inflacao: 0, primario: 0 };
   const painel = el("div", "simulador");
   const resultado = el("p", "posicao");
   const tela = el("div");
@@ -67,7 +73,7 @@ export function montarSimulador(s: SimuladorDivida): HTMLElement[] {
   const zerar = el("button", "botao", "Voltar à linha de base");
   zerar.type = "button";
   zerar.addEventListener("click", () => {
-    desvios.juro = desvios.crescimento = desvios.primario = 0;
+    desvios.juro = desvios.crescimento = desvios.inflacao = desvios.primario = 0;
     entradas.forEach((e) => (e.value = "0"));
     pintar();
   });
@@ -75,7 +81,12 @@ export function montarSimulador(s: SimuladorDivida): HTMLElement[] {
   let pendente = 0;
   function pintar(): void {
     const primeiro = s.anos[0] ?? s.ano_inicial + 1;
-    const base = { juro: s.juro[0] ?? 0, crescimento: s.crescimento[0] ?? 0, primario: s.primario[0] ?? 0 };
+    const base = {
+      juro: s.juro[0] ?? 0,
+      crescimento: s.crescimento[0] ?? 0,
+      inflacao: s.inflacao[0] ?? 0,
+      primario: s.primario[0] ?? 0,
+    };
     for (const c of CONTROLES) {
       const d = desvios[c.id];
       const alvo = valores.get(c.id);

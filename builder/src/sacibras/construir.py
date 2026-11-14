@@ -103,6 +103,12 @@ FONTES = {
 }
 
 
+DETALHE_MAXIMO = 60
+"""O texto embaixo do número: só o essencial (Caio, 14/11/2026: "se for apresentar o
+resultado, escreva só o essencial, sem muitos detalhes e contextos"). O resto vai na nota do
+gráfico ou no glossário."""
+
+
 def _partes(dados: object) -> list[ItemSubcategoria]:
     """As subcategorias de uma seção (modelo ou JSON antigo), só id e título, para o menu."""
     lista = (
@@ -162,6 +168,9 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 sem_lugar = organizacao.aplicar(secao)
                 if sem_lugar:
                     print(f"  aviso: {id}: sem parte em organizacao.py: {', '.join(sem_lugar)}")
+                for c in secao.cartoes:
+                    if len(c.detalhe) > DETALHE_MAXIMO:
+                        print(f"  aviso: {id}: detalhe longo em {c.id} ({len(c.detalhe)} letras)")
             _gravar(saida, arquivo, secao)
             extra = ctx.memo.pop(f"{id}_paises", None)  # o arquivo à parte da seção, se houver
             if extra is not None:

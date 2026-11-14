@@ -14,6 +14,7 @@ import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDoAssunto } from "./calendario";
 import { ligarGlossario } from "./glossario";
+import { ligarTraducao } from "./traducao";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
@@ -53,6 +54,11 @@ function ler<T>(arquivo: string): Promise<T> {
 
 /** O número grande e a unidade pequena: "13,75" + "% a.a.", "R$" + "5,65". */
 function valorComUnidade(c: Cartao, alvo: HTMLElement): void {
+  if (c.texto) {
+    // O resultado é um nome (a nota de crédito: "BB"), não um número.
+    alvo.textContent = c.texto;
+    return;
+  }
   const texto = comUnidade(c.valor, c.unidade, c.casas);
   const n = numero(c.valor, c.casas);
   const [antes, depois] = texto.split(n);
@@ -204,7 +210,7 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
     alvo.append(
       guardar(
         "Simule a dívida pública",
-        "Mexa no juro, no crescimento e no resultado primário e veja para onde ela vai",
+        "Mexa no juro, no crescimento, na inflação e no primário e veja para onde ela vai",
         () => montarSimulador(simulador),
       ),
     );
@@ -492,7 +498,7 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   if (p.extras.includes("simulador") && simulador) {
     const caixa = guardar(
       "Simule a dívida pública",
-      "Mexa no juro, no crescimento e no resultado primário e veja para onde ela vai",
+      "Mexa no juro, no crescimento, na inflação e no primário e veja para onde ela vai",
       () => montarSimulador(simulador),
     );
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;
@@ -510,6 +516,44 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
     if (p.tabelas.length === 1 && caixa instanceof HTMLDetailsElement) caixa.open = true;
     alvo.append(caixa);
   }
+}
+
+/** As partes do assunto, em cartões, na visão geral. */
+function listaDePartes(id: string, titulo: string, partes: Subcategoria[]): HTMLElement {
+  const bloco = el("section", "partes");
+  bloco.append(el("h3", "partes-titulo", `${partes.length} partes de ${titulo}`));
+  const lista = el("ul", "partes-lista");
+  for (const p of partes) {
+    const li = el("li");
+    const a = el("a", "vidro parte");
+    a.href = `#${id}/${p.id}`;
+    const nome = el("span", "parte-titulo", p.titulo);
+    nome.append(el("span", "seta", "→"));
+    a.append(nome, el("span", "parte-resumo", p.resumo));
+    const conta = contagem(p);
+    if (conta) a.append(el("span", "parte-conta", conta));
+    li.append(a);
+    lista.append(li);
+  }
+  bloco.append(lista);
+  return bloco;
+}
+
+/** Embaixo de uma parte: a visão geral e as vizinhas. */
+function outrasPartes(id: string, titulo: string, partes: Subcategoria[], atual: string): HTMLElement {
+  const outras = el("nav", "outras-partes");
+  outras.setAttribute("aria-label", `Outras partes de ${titulo}`);
+  outras.append(el("span", "outras-titulo", `Mais em ${titulo}`));
+  const geral = el("a", "pilula", "Visão geral");
+  geral.href = `#${id}`;
+  outras.append(geral);
+  for (const p of partes) {
+    const a = el("a", p.id === atual ? "pilula atual" : "pilula", p.titulo);
+    a.href = `#${id}/${p.id}`;
+    if (p.id === atual) a.setAttribute("aria-current", "page");
+    outras.append(a);
+  }
+  return outras;
 }
 
 function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLElement): void {
@@ -553,9 +597,26 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
     return;
   }
   if (id === "estados") {
-    topo.append(agendaDoAssunto(id));
     void ler<Estados>(item.arquivo)
-      .then((e) => corpo.append(el("p", "secao-resumo", e.resumo), montarEstados(e)))
+      .then((e) => {
+        const partes = e.subcategorias ?? [];
+        // "#estados/uf-SP" abre as contas de SP; "#estados/m-divida", o mapa nessa métrica.
+        const uf = peca.startsWith("uf-") ? peca.slice(3) : "";
+        const alvo = uf ? "estado" : peca.startsWith("m-") ? "mapa" : peca;
+        const parte = partes.find((p) => p.id === alvo);
+        if (parte) {
+          cabecalho(parte.titulo, true);
+          marcarMenu(id, parte.id);
+          corpo.classList.add("parte-corpo");
+          if (parte.resumo) corpo.append(el("p", "secao-resumo", parte.resumo));
+          corpo.append(montarEstados(e, parte.id, uf), outrasPartes(id, item.titulo, partes, parte.id));
+          return;
+        }
+        topo.append(agendaDoAssunto(id));
+        corpo.append(el("p", "secao-resumo", e.resumo));
+        if (partes.length) corpo.append(listaDePartes(id, item.titulo, partes));
+        corpo.append(montarEstados(e, "", ""));
+      })
       .catch(falhou);
     return;
   }
@@ -580,19 +641,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
         corpo.classList.add("parte-corpo");
         if (parte.resumo) corpo.append(el("p", "secao-resumo", parte.resumo));
         montarParte(s, parte, corpo);
-        const outras = el("nav", "outras-partes");
-        outras.setAttribute("aria-label", `Outras partes de ${item.titulo}`);
-        outras.append(el("span", "outras-titulo", `Mais em ${item.titulo}`));
-        const geral = el("a", "pilula", "Visão geral");
-        geral.href = `#${id}`;
-        outras.append(geral);
-        for (const p of partes) {
-          const a = el("a", p.id === parte.id ? "pilula atual" : "pilula", p.titulo);
-          a.href = `#${id}/${p.id}`;
-          if (p.id === parte.id) a.setAttribute("aria-current", "page");
-          outras.append(a);
-        }
-        corpo.append(outras);
+        corpo.append(outrasPartes(id, item.titulo, partes, parte.id));
         return;
       }
 
@@ -604,21 +653,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
         s.cartoes.slice(0, NUMEROS_A_VISTA).forEach((c) => grade.append(montarCartao(c)));
         corpo.append(grade);
       }
-      const bloco = el("section", "partes");
-      bloco.append(el("h3", "partes-titulo", `${partes.length} partes de ${item.titulo}`));
-      const lista = el("ul", "partes-lista");
-      for (const p of partes) {
-        const li = el("li");
-        const a = el("a", "vidro parte");
-        a.href = `#${id}/${p.id}`;
-        const nome = el("span", "parte-titulo", p.titulo);
-        nome.append(el("span", "seta", "→"));
-        a.append(nome, el("span", "parte-resumo", p.resumo), el("span", "parte-conta", contagem(p)));
-        li.append(a);
-        lista.append(li);
-      }
-      bloco.append(lista);
-      corpo.append(bloco);
+      corpo.append(listaDePartes(id, item.titulo, partes));
       const principal = s.graficos[0];
       if (principal) {
         const grade = el("div", "graficos");
@@ -633,6 +668,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
 
 async function iniciar(): Promise<void> {
   const conteudo = document.getElementById("conteudo") as HTMLElement;
+  ligarTraducao();
   ligarBusca();
   ligarGlossario(conteudo);
   document.querySelector(".menu-botao")?.addEventListener("click", () => {
@@ -700,7 +736,7 @@ async function iniciar(): Promise<void> {
 /** O assunto monta o conteúdo depois de ler o JSON dele: espera aparecer e então age. */
 function esperarEDepois(fazer: () => void, tentativas = 40): void {
   const pronto = document.querySelector(
-    "#conteudo .cartoes, #conteudo .graficos, #conteudo .mapa, #conteudo .parte-corpo details",
+    "#conteudo .cartoes, #conteudo .graficos, #conteudo .mapa, #conteudo .ficha-corpo, #conteudo .parte-corpo details",
   );
   if (pronto || tentativas <= 0) window.setTimeout(fazer, 60);
   else window.setTimeout(() => esperarEDepois(fazer, tentativas - 1), 100);

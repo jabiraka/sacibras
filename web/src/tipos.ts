@@ -33,6 +33,7 @@ export interface Grafico {
     nome_meio?: string;
   }[];
   linhas: { valor: number; rotulo: string }[];
+  marcas_y?: { valor: number; rotulo: string }[];
   janela_anos: number | null;
   fonte: string;
   nota: string;
@@ -69,6 +70,7 @@ export interface Cartao {
   referencia: string;
   periodicidade: Periodicidade;
   detalhe: string;
+  texto?: string;
   anterior: number | null;
   anterior_rotulo: string;
   fonte: string;
@@ -251,6 +253,7 @@ export interface Estados {
   ufs: UF[];
   metricas: MetricaEstados[];
   arquivo_contas: string;
+  subcategorias?: Subcategoria[];
   gerado_em: string;
 }
 
