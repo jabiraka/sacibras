@@ -86,18 +86,56 @@ def test_pib_recusa_planilha_sem_um_estado(monkeypatch: pytest.MonkeyPatch) -> N
         estados_economia.pib(UFS)
 
 
-def test_ibcr_so_tem_os_13_estados_e_o_ano_fechado_e_o_anterior() -> None:
+def test_sem_o_pib_oficial_a_previa_fica_so_com_os_13_estados_e_sem_faixa() -> None:
     serie = _meses(date(2023, 1, 1), [100.0] * 12 + [100.0] * 12 + [103.0] * 12 + [104.0] * 8)
 
     def sgs(chave: str) -> list[Ponto]:
         return serie
 
     doze, ano = estados_economia.ibcr(UFS, sgs)
-    assert ano.nome == "Prévia do PIB de 2025 (IBC-R)" and ano.referencia == "2025"
+    assert ano.nome == "Prévia do PIB de 2025" and ano.referencia == "2025"
     assert ano.valores["SP"] == pytest.approx(3.0) and ano.brasil == pytest.approx(3.0)
     assert ano.valores["MT"] is None and "MT" in ano.descricao
+    assert not ano.intervalos and not ano.estimados and ano.como_ler == ""
     assert doze.referencia == "12 meses até ago/2026"
     assert sum(v is not None for v in doze.valores.values()) == 13
+
+
+def test_estado_sem_ibcr_cresce_como_a_regiao_com_a_faixa_do_teste() -> None:
+    # Índices que crescem 2 % ao ano (estados) e 3 % (regiões), de 2010 a ago/2026.
+    def indice(taxa: float) -> list[Ponto]:
+        valores = [100.0 * (1 + taxa) ** (i // 12) for i in range(12 * 16 + 8)]
+        return _meses(date(2010, 1, 1), valores)
+
+    def sgs(chave: str) -> list[Ponto]:
+        return indice(0.03 if chave.startswith("IBCR_REGIAO_") else 0.02)
+
+    # O PIB oficial: 2,5 % ao ano em quem tem IBC-R; 4 % em quem não tem, 5 % nos anos pares.
+    volume: dict[str, dict[int, float]] = {}
+    for _, sigla, nome, _ in UFS:
+        nivel, serie = 100.0, {2010: 100.0}
+        for a in range(2011, 2025):
+            taxa = 0.025 if sigla in IBCR_UF else (0.05 if a % 2 == 0 else 0.04)
+            nivel *= 1 + taxa
+            serie[a] = nivel
+        volume[nome] = serie
+
+    _, previa = estados_economia.ibcr(UFS, sgs, volume)
+    assert all(v is not None for v in previa.valores.values())
+    assert len(previa.estimados) == 14 and "MT" in previa.estimados and "SP" not in previa.estimados
+    assert previa.valores["MT"] == pytest.approx(3.0) and previa.valores["SP"] == pytest.approx(2.0)
+    # Erro = oficial − prévia: +0,5 em quem tem índice; de +1 a +2 em quem não tem.
+    de, ate = previa.intervalos["SP"]
+    assert de == pytest.approx(2.5) and ate == pytest.approx(2.5)
+    de, ate = previa.intervalos["MT"]
+    assert de == pytest.approx(4.0) and ate == pytest.approx(5.0)
+    assert "8 de cada 10" in previa.como_ler and "2011 a 2024" in previa.como_ler
+    assert "cresce como a região" in previa.descricao
+
+
+def test_crescimento_anual_ignora_ano_incompleto() -> None:
+    pontos = _meses(date(2024, 1, 1), [100.0] * 12 + [105.0] * 12 + [110.0] * 8)
+    assert estados_economia.crescimento_anual(pontos) == {2025: pytest.approx(5.0)}
 
 
 def test_ipca_de_cada_area_vai_ao_estado_dela(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -536,6 +536,9 @@ IBCR_UF: dict[str, int] = {
     "SC": 25402,
     "SP": 25392,
 }
+# "Índice de Atividade Econômica Regional - Região <nome> - IBCR-<sigla>", sem ajuste, índice
+# (CKAN, package_search?q=IBCR, 14/11/2026). Servem à prévia do PIB dos estados sem IBC-R.
+IBCR_REGIAO: dict[str, int] = {"N": 25406, "NE": 25388, "SE": 25393, "S": 25400, "CO": 25381}
 
 for _uf, _c in CREDITO_SALDO_UF.items():
     SGS[f"CREDITO_SALDO_{_uf}"] = SerieSGS(
@@ -547,3 +550,5 @@ for _uf, _c in CREDITO_INADIMPLENCIA_UF.items():
     )
 for _uf, _c in IBCR_UF.items():
     SGS[f"IBCR_{_uf}"] = SerieSGS(_c, f"IBC-R {_uf}", "índice", "M", "14/11/2026")
+for _r, _c in IBCR_REGIAO.items():
+    SGS[f"IBCR_REGIAO_{_r}"] = SerieSGS(_c, f"IBC-R, região {_r}", "índice", "M", "14/11/2026")

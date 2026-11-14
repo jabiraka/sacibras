@@ -240,6 +240,7 @@ def _sem_economia(monkeypatch: pytest.MonkeyPatch) -> None:
 
     for nome in ("pib", "ibcr", "inflacao", "exportacoes", "concentracao", "trabalho", "credito"):
         monkeypatch.setattr(estados.estados_economia, nome, cai)
+    monkeypatch.setattr(estados.ibge_contas_regionais, "pib", cai)
 
 
 def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:

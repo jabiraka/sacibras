@@ -23,7 +23,7 @@ from datetime import date, datetime
 from statistics import median
 
 from sacibras import leis, organizacao
-from sacibras.fontes import ibge_sidra, receita_arrecadacao, siconfi
+from sacibras.fontes import ibge_contas_regionais, ibge_sidra, receita_arrecadacao, siconfi
 from sacibras.schema import (
     UF,
     BlocoDeConta,
@@ -599,12 +599,18 @@ def _economia(ctx: Contexto) -> list[MetricaEstados]:
     """PIB, prévia do PIB, inflação, exportações e concentração; cada fonte por conta própria."""
     saida: list[MetricaEstados] = []
 
-    def sgs(chave: str) -> list[tuple[date, float]]:
-        return ctx.sgs(chave, 4)
+    def previa() -> list[MetricaEstados]:
+        # A história inteira do IBC-R (desde 2003) e o PIB oficial, para medir o erro.
+        try:
+            volume = ibge_contas_regionais.pib()[2]
+        except Exception as erro:
+            print(f"  aviso: prévia do PIB sem a faixa de erro: {str(erro)[:120]}")
+            volume = None
+        return estados_economia.ibcr(UFS, lambda k: ctx.sgs(k, 24), volume)
 
     passos: list[tuple[str, Callable[[], list[MetricaEstados]]]] = [
         ("PIB por UF (Contas Regionais)", lambda: estados_economia.pib(UFS)),
-        ("IBC-R", lambda: estados_economia.ibcr(UFS, sgs)),
+        ("IBC-R", previa),
         ("IPCA por área", lambda: [estados_economia.inflacao(UFS)]),
         (
             "exportações por UF",

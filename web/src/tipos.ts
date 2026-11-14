@@ -309,6 +309,12 @@ export interface MetricaEstados {
   limites: { valor: number; rotulo: string }[];
   /** O assunto da métrica: junta as opções na lista e as colunas na tabela completa. */
   grupo?: string;
+  /** Só em previsão: a faixa onde o número oficial costuma cair, por UF. */
+  intervalos?: Record<string, [number, number]>;
+  /** UFs cujo valor é estimativa por regra nossa. */
+  estimados?: string[];
+  /** A faixa de erro em palavras. */
+  como_ler?: string;
 }
 
 export interface BlocoDeConta {

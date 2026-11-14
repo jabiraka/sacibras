@@ -60,12 +60,15 @@ Contas do governo do estado, Impostos federais):
   **crédito por habitante** e **inadimplência** (SGS por UF) e **concentração do PIB nos
   municípios** (Gini, SIDRA 5939).
 
+- **Prévia do PIB dos 14 estados sem IBC-R** (Caio, 14/11/2026: *"faça a nossa conta...
+  uma regra simples é preferível, isso é previsão"*): o estado cresce como a região dele (o
+  IBC-R da região). Com a faixa de erro do teste contra o PIB oficial de 2011 a 2024, refeito
+  a cada rodada; ponto vazado no ranking.
+
 Ideias que ficam:
 
 - **Emprego formal (Novo Caged) por estado**: o site do Ministério do Trabalho deu 403 da
   nuvem; testar do PC (FONTES, "Não funcionam daqui").
-- **PIB dos 14 estados sem IBC-R**: uma prévia própria (por exemplo, com ICMS real, energia
-  do ONS e emprego) só com o "sim" do Caio, por ser modelo nosso.
 - **PIB por setor em cada estado** (tab05 das Contas Regionais: agro, indústria, serviços) na
   ficha do estado.
 

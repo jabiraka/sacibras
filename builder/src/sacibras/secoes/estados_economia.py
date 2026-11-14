@@ -19,7 +19,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import date
 
-from sacibras.catalogo import CREDITO_INADIMPLENCIA_UF, CREDITO_SALDO_UF, IBCR_UF, SGS
+from sacibras.catalogo import (
+    CREDITO_INADIMPLENCIA_UF,
+    CREDITO_SALDO_UF,
+    IBCR_REGIAO,
+    IBCR_UF,
+    SGS,
+)
 from sacibras.fontes import comexstat, ibge_contas_regionais, ibge_projecao, ibge_sidra
 from sacibras.schema import MetricaEstados
 from sacibras.secoes.base import br, periodo
@@ -31,6 +37,9 @@ UFs = list[tuple[int, str, str, str]]
 ECONOMIA = "Economia"
 TRABALHO = "Trabalho e renda"
 CREDITO = "Crédito"
+REGIOES = {"Norte": "N", "Nordeste": "NE", "Sudeste": "SE", "Sul": "S", "Centro-Oeste": "CO"}
+"""Nome da região em `UFs` → a sigla dela no IBC-R (`catalogo.IBCR_REGIAO`)."""
+assert set(REGIOES.values()) == set(IBCR_REGIAO)
 
 
 def _por_nome(ufs: UFs) -> dict[str, str]:
@@ -169,8 +178,64 @@ def crescimento_12_meses(pontos: list[Ponto], fim: date) -> float | None:
     return (atual / antes - 1) * 100 if atual and antes else None
 
 
-def ibcr(ufs: UFs, sgs: Callable[[str], list[Ponto]]) -> list[MetricaEstados]:
-    """Prévia do PIB pelo IBC-R: os 12 meses mais recentes e o último ano fechado."""
+def crescimento_anual(pontos: list[Ponto]) -> dict[int, float]:
+    """{ano: crescimento da média do ano sobre a do anterior, em %}, só com anos inteiros."""
+    por_ano: dict[int, list[float]] = {}
+    for d, v in pontos:
+        por_ano.setdefault(d.year, []).append(v)
+    media = {a: sum(v) / 12 for a, v in por_ano.items() if len(v) == 12}
+    return {a: (media[a] / media[a - 1] - 1) * 100 for a in media if a - 1 in media}
+
+
+def _quantil(valores: list[float], p: float) -> float:
+    ordenados = sorted(valores)
+    i = p * (len(ordenados) - 1)
+    baixo = int(i)
+    alto = min(baixo + 1, len(ordenados) - 1)
+    return ordenados[baixo] + (ordenados[alto] - ordenados[baixo]) * (i - baixo)
+
+
+MINIMO_DE_ERROS = 40
+"""Com menos pares (previsão, oficial) que isso, a faixa de erro não se publica."""
+
+
+def erros_da_previa(
+    ufs: UFs,
+    por_uf: dict[str, dict[int, float]],
+    por_regiao: dict[str, dict[int, float]],
+    volume: dict[str, dict[int, float]],
+) -> tuple[list[float], list[float], int, int]:
+    """O teste da prévia contra o PIB oficial, ano a ano: (oficial − IBC-R do próprio estado,
+    oficial − IBC-R da região para quem não tem índice, primeiro ano, último ano)."""
+    proprio: list[float] = []
+    pela_regiao: list[float] = []
+    anos: list[int] = []
+    for _, sigla, nome, regiao in ufs:
+        v = volume.get(nome, {})
+        previa = por_uf.get(sigla) or por_regiao.get(regiao, {})
+        for ano in sorted(v):
+            if ano - 1 not in v or ano not in previa:
+                continue
+            erro = (v[ano] / v[ano - 1] - 1) * 100 - previa[ano]
+            (proprio if sigla in por_uf else pela_regiao).append(erro)
+            anos.append(ano)
+    return proprio, pela_regiao, min(anos, default=0), max(anos, default=0)
+
+
+def ibcr(
+    ufs: UFs, sgs: Callable[[str], list[Ponto]], volume: dict[str, dict[int, float]] | None = None
+) -> list[MetricaEstados]:
+    """Prévia do PIB pelo IBC-R: os 12 meses mais recentes e o último ano fechado.
+
+    A prévia do ano é previsão do PIB oficial e sai para os 27 estados por uma regra só:
+    quem tem IBC-R usa o próprio índice; quem não tem cresce como a região dele (o IBC-R da
+    região). Testada contra as Contas Regionais de 2011 a 2024 (14/11/2026), a regra da região
+    errou menos que as duas alternativas: descontar da região os estados que têm índice
+    (erro médio de 2,2 pp contra 2,0) e somar a folga histórica do estado sobre a região
+    (igual, com faixa mais larga). A faixa de erro sai do mesmo teste, refeito a cada rodada
+    com `volume` (a série encadeada das Contas Regionais): onde ficaram 8 de cada 10 erros.
+    Sem `volume` não há faixa, e a previsão dos estados sem índice não se publica.
+    """
     series = {s: sgs(f"IBCR_{s}") for s in IBCR_UF}
     brasil = sgs("IBCBR")
     # O último mês que todos os 13 têm (o BC publica todos juntos, mas por garantia).
@@ -185,51 +250,90 @@ def ibcr(ufs: UFs, sgs: Callable[[str], list[Ponto]]) -> list[MetricaEstados]:
     codigos = ", ".join(str(SGS[f"IBCR_{s}"].codigo) for s in sorted(IBCR_UF))
     fonte = f"Banco Central, IBC-R (SGS {codigos}); Brasil: IBC-Br (SGS {SGS['IBCBR'].codigo})"
 
-    def no_ano(p: list[Ponto]) -> float | None:
-        atual = _media(p, date(ano, 1, 1), date(ano, 12, 1))
-        antes = _media(p, date(ano - 1, 1, 1), date(ano - 1, 12, 1))
-        return (atual / antes - 1) * 100 if atual and antes else None
+    doze = MetricaEstados(
+        id="ibcr_12_meses",
+        nome="Atividade em 12 meses (IBC-R)",
+        descricao=(
+            "O índice de atividade do Banco Central para o estado, uma prévia mensal do "
+            "PIB: a média dos últimos 12 meses contra a dos 12 anteriores. Não é o PIB do "
+            "IBGE (usa menos dados e pode errar o tamanho), mas chega quase dois anos "
+            "antes." + nota_fora
+        ),
+        unidade="%",
+        casas=1,
+        referencia=f"12 meses até {periodo(fim, 'M')}",
+        maior_e_melhor=True,
+        fonte=fonte,
+        valores={s: crescimento_12_meses(series[s], fim) if s in series else None for s in siglas},
+        brasil=crescimento_12_meses(brasil, fim),
+        grupo=ECONOMIA,
+    )
 
-    return [
-        MetricaEstados(
-            id="ibcr_12_meses",
-            nome="Atividade em 12 meses (IBC-R)",
-            descricao=(
-                "O índice de atividade do Banco Central para o estado, uma prévia mensal do "
-                "PIB: a média dos últimos 12 meses contra a dos 12 anteriores. Não é o PIB do "
-                "IBGE (usa menos dados e pode errar o tamanho), mas chega quase dois anos "
-                "antes." + nota_fora
-            ),
-            unidade="%",
-            casas=1,
-            referencia=f"12 meses até {periodo(fim, 'M')}",
-            maior_e_melhor=True,
-            fonte=fonte,
-            valores={
-                s: crescimento_12_meses(series[s], fim) if s in series else None for s in siglas
-            },
-            brasil=crescimento_12_meses(brasil, fim),
-            grupo=ECONOMIA,
+    por_uf = {s: crescimento_anual(p) for s, p in series.items()}
+    por_regiao = {r: crescimento_anual(sgs(f"IBCR_REGIAO_{c}")) for r, c in REGIOES.items()}
+    proprio, pela_regiao, de, ate = erros_da_previa(ufs, por_uf, por_regiao, volume or {})
+    valores: dict[str, float | None] = {
+        s: por_uf[s].get(ano) if s in por_uf else None for s in siglas
+    }
+    intervalos: dict[str, tuple[float, float]] = {}
+    estimados: list[str] = []
+    como_ler = ""
+    if len(proprio) >= MINIMO_DE_ERROS:
+        baixo, alto = _quantil(proprio, 0.1), _quantil(proprio, 0.9)
+        for s in por_uf:
+            v = valores[s]
+            if v is not None:
+                intervalos[s] = (v + baixo, v + alto)
+        como_ler = (
+            f"O traço é a faixa de erro: de {de} a {ate}, em 8 de cada 10 vezes o PIB oficial "
+            f"ficou entre {br(abs(baixo))} ponto abaixo e {br(alto)} acima do IBC-R do estado"
+        )
+    if len(pela_regiao) >= MINIMO_DE_ERROS:
+        baixo, alto = _quantil(pela_regiao, 0.1), _quantil(pela_regiao, 0.9)
+        for _, s, _, regiao in ufs:
+            v = por_regiao.get(regiao, {}).get(ano)
+            if s not in por_uf and v is not None:
+                valores[s] = v
+                intervalos[s] = (v + baixo, v + alto)
+                estimados.append(s)
+        como_ler += (
+            f"; nos estados sem índice (ponto vazado), entre {br(abs(baixo))} abaixo e "
+            f"{br(alto)} acima do número da região. A faixa é mais larga para cima porque "
+            "esses estados costumam crescer mais que a região."
+        )
+    elif como_ler:
+        como_ler += "."
+    if estimados:
+        regra = (
+            f" Para os {len(estimados)} estados sem IBC-R ({', '.join(sorted(estimados))}), "
+            "a regra é simples: o estado cresce como a região dele (o IBC-R da região). "
+            "É previsão: erra bastante, e a faixa mostra quanto."
+        )
+        cods = ", ".join(str(SGS[f"IBCR_REGIAO_{c}"].codigo) for c in REGIOES.values())
+        fonte_ano = f"{fonte}; IBC-R das regiões (SGS {cods}); teste: IBGE, Contas Regionais"
+    else:
+        regra, fonte_ano = nota_fora, fonte
+    previa = MetricaEstados(
+        id="ibcr_ano",
+        nome=f"Prévia do PIB de {ano}",
+        descricao=(
+            f"Previsão nossa para o crescimento de {ano}, que o IBGE só publica nas Contas "
+            f"Regionais de {ano} (em novembro de {ano + 2}). Para os estados com IBC-R, é o "
+            f"crescimento da média do índice no ano. Não é número oficial do PIB." + regra
         ),
-        MetricaEstados(
-            id="ibcr_ano",
-            nome=f"Prévia do PIB de {ano} (IBC-R)",
-            descricao=(
-                f"Crescimento de {ano} sobre {ano - 1} pela média do IBC-R no ano: o número "
-                f"que o IBGE só vai publicar nas Contas Regionais de {ano} (em novembro de "
-                f"{ano + 2}). Conta nossa com o índice do Banco Central, não número oficial "
-                "do PIB." + nota_fora
-            ),
-            unidade="%",
-            casas=1,
-            referencia=str(ano),
-            maior_e_melhor=True,
-            fonte=fonte,
-            valores={s: no_ano(series[s]) if s in series else None for s in siglas},
-            brasil=no_ano(brasil),
-            grupo=ECONOMIA,
-        ),
-    ]
+        unidade="%",
+        casas=1,
+        referencia=str(ano),
+        maior_e_melhor=True,
+        fonte=fonte_ano,
+        valores=valores,
+        brasil=crescimento_anual(brasil).get(ano),
+        grupo=ECONOMIA,
+        intervalos=intervalos,
+        estimados=sorted(estimados),
+        como_ler=como_ler,
+    )
+    return [doze, previa]
 
 
 # ------------------------------------------------------------------ PNAD por UF

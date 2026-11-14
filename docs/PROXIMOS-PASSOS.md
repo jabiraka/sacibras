@@ -9,7 +9,7 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 
 ---
 
-## Estados: PIB e mais doze métricas (14/11/2026, branch `ccr-b41d9ce1-hd022f`)
+## Estados: PIB e mais treze métricas (14/11/2026, branch `ccr-b41d9ce1-hd022f`)
 
 Pedido do Caio: *"Não vi o crescimento do PIB por Estado"*, *"pode fazer todas que vc
 sugeriu, veja se tem algum número de PIB por estado, nem que seja pra calcular por conta
@@ -26,8 +26,13 @@ própria"*.
 - Conferido a 390 e a 1280 px (mapa, ranking, tabela, duas métricas). Falta publicar no
   `main` (pedir ao Caio) e reler o PIB quando sair a edição de 2025 (nov/2027): o builder
   acha a pasta nova sozinho.
-- Ficou de fora: o Caged por UF (403 da nuvem) e a prévia do PIB dos 14 estados sem IBC-R
-  (seria modelo nosso; ver PROPOSTAS).
+- **Prévia do PIB para os 27** (Caio: *"uma regra simples é preferível, isso é previsão"*):
+  quem não tem IBC-R cresce como a região (`estados_economia.ibcr`, o porquê da regra na
+  docstring: no teste de 2011 a 2024 errou menos que descontar os estados com índice e que
+  corrigir pela folga histórica). Faixa de 80 % do mesmo teste, refeito a cada rodada:
+  −1,2/+1,5 pp com IBC-R próprio, −1,8/+3,6 pp pela região. `MetricaEstados` ganhou
+  `intervalos`, `estimados` e `como_ler`; no ranking, traço neutro e ponto vazado.
+- Ficou de fora: o Caged por UF (403 da nuvem; ver PROPOSTAS).
 
 ## Onde paramos
 
