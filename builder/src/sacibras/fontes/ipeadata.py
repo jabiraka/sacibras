@@ -24,3 +24,21 @@ def serie(codigo: str, desde: date) -> list[Ponto]:
         if quando >= desde:
             pontos.append((quando, float(linha["VALVALOR"])))
     return sorted(pontos)
+
+
+def por_territorio(codigo: str, desde: date) -> dict[str, list[Ponto]]:
+    """A série de cada território: {TERCODIGO: pontos}. No Ipeadata, "0" é o Brasil, 1 a 5
+    as regiões e os códigos do IBGE de dois dígitos, os estados (vêm misturados; o nível
+    está em NIVNOME)."""
+    bruto = baixar_json(URL.format(codigo=codigo), tempo_limite=90)
+    saida: dict[str, list[Ponto]] = {}
+    for linha in bruto["value"]:
+        if linha.get("VALVALOR") is None:
+            continue
+        quando = date.fromisoformat(linha["VALDATA"][:10])
+        if quando >= desde:
+            chave = str(linha.get("TERCODIGO") or "0")
+            saida.setdefault(chave, []).append((quando, float(linha["VALVALOR"])))
+    for pontos in saida.values():
+        pontos.sort()
+    return saida

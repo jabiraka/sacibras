@@ -1015,14 +1015,47 @@ TERMOS: list[Termo] = [
         "Unido, Canadá, Austrália, Coreia do Sul e outros países ricos.",
         ("avançados", "economias avançadas"),
     ),
-    # ---------------------------------------------------------------- desigualdade
+    # ---------------------------------------------------------------- pobreza
+    Termo(
+        "inseguranca-alimentar",
+        "Insegurança alimentar",
+        "Medida pela escala do IBGE, com oito perguntas sobre os últimos três meses. Leve: "
+        "medo de faltar comida ou comida pior; moderada: menos comida para os adultos; grave: "
+        "alguém da casa, até criança, ficou sem comer por falta de dinheiro, a fome.",
+        ("insegurança alimentar", "insegurança grave"),
+        "#pobreza/fome",
+    ),
+    Termo(
+        "mapa-da-fome",
+        "Mapa da Fome",
+        "A lista da FAO, a agência da ONU para a alimentação, dos países com mais de 2,5 % da "
+        "população sem comer o bastante, na média de três anos.",
+        ("Mapa da Fome",),
+        "#pobreza/fome",
+    ),
+    Termo(
+        "subalimentacao",
+        "Subalimentação",
+        "Pela conta da FAO, a parte da população que não come calorias suficientes para as "
+        "necessidades mínimas de uma vida normal. É o critério do Mapa da Fome.",
+        ("subalimentação", "subalimentada"),
+        "#pobreza/fome",
+    ),
+    Termo(
+        "esgoto-na-rede",
+        "Esgoto ligado à rede",
+        "A casa cujo esgoto vai para a rede geral (ou para a rede de chuva, ou para uma fossa "
+        "ligada à rede). Fossa sem ligação, vala, rio ou mar ficam de fora.",
+        ("esgoto ligado à rede", "esgoto na rede"),
+        "#pobreza/saneamento",
+    ),
     Termo(
         "gini",
         "Índice de Gini",
         "Mede a desigualdade da renda numa só conta: 0 seria todos com a mesma renda, e 1, uma "
         "pessoa com toda a renda. O Brasil fica perto de 0,5; países europeus, perto de 0,3.",
         ("índice de Gini", "coeficiente de Gini", "Gini"),
-        "#desigualdade/gini",
+        "#pobreza/desigualdade",
     ),
     Termo(
         "renda-por-pessoa",
@@ -1031,7 +1064,7 @@ TERMOS: list[Termo] = [
         "sociais) dividida pelo número de moradores. É a medida que o IBGE usa para a "
         "desigualdade e a pobreza.",
         ("renda domiciliar por pessoa", "renda domiciliar per capita", "renda por pessoa"),
-        "#desigualdade/concentracao",
+        "#pobreza/desigualdade",
     ),
     Termo(
         "razao-10-40",
@@ -1039,7 +1072,7 @@ TERMOS: list[Termo] = [
         "Quantas vezes a fatia da renda dos 10 % mais ricos é maior que a dos 40 % mais pobres "
         "juntos. Também chamada de razão de Palma.",
         ("razão 10/40", "razão de Palma"),
-        "#desigualdade/concentracao",
+        "#pobreza/desigualdade",
     ),
     Termo(
         "linha-de-pobreza",
@@ -1048,7 +1081,7 @@ TERMOS: list[Termo] = [
         "são em dólares por dia, corrigidos pela diferença de preços entre os países: US$ "
         "8,30 para pobreza num país como o Brasil e US$ 3,00 para extrema pobreza.",
         ("linha de pobreza", "linhas de pobreza", "extrema pobreza"),
-        "#desigualdade/pobreza",
+        "#pobreza/linha-de-pobreza",
     ),
     Termo(
         "lucros-e-dividendos",
@@ -1056,7 +1089,7 @@ TERMOS: list[Termo] = [
         "O que a empresa paga aos sócios e acionistas do lucro que teve. No Brasil, quem recebe "
         "não paga Imposto de Renda sobre eles na declaração.",
         ("lucros e dividendos", "dividendos"),
-        "#desigualdade/topo",
+        "#pobreza/quem-ganha-mais",
     ),
     # ---------------------------------------------------------------- demografia
     Termo(

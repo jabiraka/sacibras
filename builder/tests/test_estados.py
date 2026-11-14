@@ -232,10 +232,23 @@ def test_montagem_do_rreo_divide_por_populacao_e_por_rcl() -> None:
     assert icms.brasil is not None and primario.brasil is not None
 
 
+def _pobreza_uf() -> dict[str, list[tuple[date, float]]]:
+    pobreza = {str(c): [(date(2025, 1, 1), 20.0 + c / 10)] for c, *_ in estados.UFS}
+    return pobreza | {"0": [(date(2025, 1, 1), 25.0)], "1": [(date(2025, 1, 1), 40.0)]}
+
+
+def test_pobreza_por_uf_fica_so_com_os_estados(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(estados.ipeadata, "por_territorio", lambda *a, **k: _pobreza_uf())
+    m = estados._pobreza()
+    assert len(m.valores) == 27 and m.valores["SP"] == pytest.approx(23.5)
+    assert m.brasil == 25.0 and m.referencia == "2025" and m.maior_e_melhor is False
+
+
 def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
     deso = {str(c): [(date(2026, 4, 1), 5.0 + c / 100)] for c, *_ in estados.UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    monkeypatch.setattr(estados.ipeadata, "por_territorio", lambda *a, **k: _pobreza_uf())
     monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_anual", lambda *a, **k: None)
@@ -244,6 +257,7 @@ def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
     assert len(e.ufs) == 27
     assert [m.id for m in e.metricas] == [
         "desocupacao",
+        "pobreza",
         "gini",
         "pessoal",
         "divida",
@@ -262,6 +276,7 @@ def test_rreo_fora_do_ar_nao_derruba_as_outras_metricas(monkeypatch: pytest.Monk
     deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in estados.UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    monkeypatch.setattr(estados.ipeadata, "por_territorio", lambda *a, **k: _pobreza_uf())
     monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", cai)
     monkeypatch.setattr(estados.siconfi, "coletar_anual", cai)
@@ -269,6 +284,7 @@ def test_rreo_fora_do_ar_nao_derruba_as_outras_metricas(monkeypatch: pytest.Monk
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert [m.id for m in e.metricas] == [
         "desocupacao",
+        "pobreza",
         "gini",
         "pessoal",
         "divida",
@@ -558,6 +574,7 @@ def test_montar_poe_as_contas_no_memo_e_aponta_o_arquivo(monkeypatch: pytest.Mon
     deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in estados.UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    monkeypatch.setattr(estados.ipeadata, "por_territorio", lambda *a, **k: _pobreza_uf())
     monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
@@ -580,6 +597,7 @@ def test_sem_dca_o_estados_json_sai_sem_o_arquivo_de_contas(
     deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in estados.UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    monkeypatch.setattr(estados.ipeadata, "por_territorio", lambda *a, **k: _pobreza_uf())
     monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})

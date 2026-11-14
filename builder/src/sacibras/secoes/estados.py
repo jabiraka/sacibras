@@ -22,7 +22,7 @@ from datetime import date, datetime
 from statistics import median
 
 from sacibras import leis, organizacao
-from sacibras.fontes import ibge_sidra, receita_arrecadacao, siconfi
+from sacibras.fontes import ibge_sidra, ipeadata, receita_arrecadacao, siconfi
 from sacibras.schema import (
     UF,
     BlocoDeConta,
@@ -133,6 +133,37 @@ def _gini() -> MetricaEstados:
         fonte="IBGE, PNAD Contínua anual (SIDRA, tabela 7435)",
         valores=valores,
         brasil=pais[-1][1] if pais and pais[-1][0] == quando else None,
+    )
+
+
+def _pobreza() -> MetricaEstados:
+    # Ipeadata PNADCA_TXPNUF: % abaixo de US$ 8,30 por dia (PPC de 2021), da Síntese de
+    # Indicadores Sociais do IBGE; o ano mais novo é estimado pelo Ipea com a PNAD anual
+    # (conferido em 14/11/2026; a mesma de Pobreza › Estados e países).
+    por_ter = ipeadata.por_territorio("PNADCA_TXPNUF", date(2012, 1, 1))
+    valores: dict[str, float | None] = {s: None for s in SIGLA.values()}
+    quando: date | None = None
+    for cod, pontos in por_ter.items():
+        if len(cod) == 2 and int(cod) in SIGLA and pontos:
+            quando, valores[SIGLA[int(cod)]] = pontos[-1][0], round(pontos[-1][1], 2)
+    if quando is None:
+        raise RuntimeError("Ipeadata sem pobreza por UF")
+    pais = por_ter.get("0", [])
+    return MetricaEstados(
+        id="pobreza",
+        nome="Pobreza",
+        descricao=(
+            "Parte das pessoas com renda domiciliar por pessoa abaixo de US$ 8,30 por dia, em "
+            "dólares de paridade do poder de compra de 2021: a linha do Banco Mundial que o "
+            "IBGE usa para a pobreza."
+        ),
+        unidade="% das pessoas",
+        casas=1,
+        referencia=str(quando.year),
+        maior_e_melhor=False,
+        fonte="IBGE, Síntese de Indicadores Sociais, pelo Ipeadata (PNADCA_TXPNUF)",
+        valores=valores,
+        brasil=round(pais[-1][1], 2) if pais and pais[-1][0] == quando else None,
     )
 
 
@@ -625,6 +656,10 @@ def montar(ctx: Contexto) -> Estados:
         metricas.append(deso)
     except Exception as erro:  # uma fonte fora do ar não derruba a seção
         print(f"  aviso: desocupação por UF indisponível: {erro}")
+    try:
+        metricas.append(_pobreza())
+    except Exception as erro:
+        print(f"  aviso: pobreza por UF indisponível: {erro}")
     try:
         metricas.append(_gini())
     except Exception as erro:

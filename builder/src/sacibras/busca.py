@@ -199,6 +199,11 @@ SINONIMOS: dict[str, list[str]] = {
     "produtividade": ["pib por trabalhador", "eficiencia", "produto por ocupado"],
     "por pessoa ocupada": ["produtividade", "pib por trabalhador"],
     "crescimento do pib": ["de onde veio o crescimento", "produtividade", "emprego"],
+    "pobreza": ["pobres", "miseria", "linha de pobreza", "condicoes de vida", "vulnerabilidade"],
+    "fome": ["inseguranca alimentar", "mapa da fome", "comida", "desnutricao", "passar fome"],
+    "saneamento": ["esgoto", "agua encanada", "saneamento basico", "lixo", "coleta de lixo"],
+    "esgoto": ["saneamento", "saneamento basico", "fossa", "rede de esgoto"],
+    "agua": ["agua encanada", "abastecimento de agua", "saneamento"],
     "desigualdade": [
         "concentracao de renda",
         "distribuicao de renda",
@@ -215,7 +220,6 @@ SINONIMOS: dict[str, list[str]] = {
         "super-ricos",
     ],
     "40 % mais pobres": ["os mais pobres", "base da piramide", "baixa renda"],
-    "pobreza": ["pobres", "miseria", "fome", "extrema pobreza", "linha de pobreza"],
     "dividendos": ["lucros e dividendos", "super-ricos", "taxacao dos ricos", "imposto dos ricos"],
     "mulheres": ["diferenca salarial", "genero", "desigualdade de genero", "salario das mulheres"],
     "pretos": ["negros", "racismo", "desigualdade racial", "cor ou raca"],
@@ -476,6 +480,8 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
     ],
     "gini": ["gini index", "gini coefficient", "indice de gini", "coeficiente de gini"],
     "pobreza": ["poverty", "extreme poverty", "pobreza extrema", "pauvrete", "extreme pauvrete"],
+    "fome": ["hunger", "food insecurity", "hambre", "inseguridad alimentaria", "faim"],
+    "saneamento": ["sanitation", "sewage", "water supply", "saneamiento", "assainissement"],
     "idosos": [
         "elderly",
         "aging",

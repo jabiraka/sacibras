@@ -18,6 +18,11 @@ from sacibras.rede import FonteForaDoArError, baixar_json
 BASE = "https://api.worldbank.org/v2"
 GINI = "SI.POV.GINI"
 PIB_POR_HABITANTE_PPC = "NY.GDP.PCAP.PP.KD"
+SUBALIMENTACAO = "SN.ITK.DEFC.ZS"
+"""Prevalência de subalimentação (% da população), da FAO; média de três anos. Quando a FAO
+publica "menos de 2,5 %", o Banco Mundial grava 2,5."""
+INSEGURANCA_GRAVE = "SN.ITK.SVFI.ZS"
+"""Insegurança alimentar grave (% da população), escala FIES da FAO; média de três anos."""
 FONTE = "Banco Mundial, World Development Indicators"
 VALIDADE = 7 * 24 * 3600
 """O Gini dos países muda poucas vezes por ano; a API às vezes demora ou recusa."""
@@ -61,3 +66,16 @@ def indicador(codigo: str, desde: int, ate: int) -> list[dict[str, Any]]:
     if not isinstance(bruto, list) or len(bruto) < 2 or not bruto[1]:
         raise FonteForaDoArError(f"Banco Mundial {codigo}: sem dados: {str(bruto)[:200]}")
     return list(bruto[1])
+
+
+def serie_do_pais(pais: str, codigo: str, desde: int, ate: int) -> list[tuple[int, float]]:
+    """(ano, valor) de um indicador para um país, do mais velho ao mais novo."""
+    bruto = baixar_json(
+        f"{BASE}/country/{pais}/indicator/{codigo}",
+        params={"format": "json", "date": f"{desde}:{ate}", "per_page": "200"},
+        validade=VALIDADE,
+        tempo_limite=120,
+    )
+    if not isinstance(bruto, list) or len(bruto) < 2 or not bruto[1]:
+        raise FonteForaDoArError(f"Banco Mundial {codigo} ({pais}): sem dados")
+    return sorted((int(x["date"]), float(x["value"])) for x in bruto[1] if x["value"] is not None)

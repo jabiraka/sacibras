@@ -30,7 +30,6 @@ from sacibras.secoes import (
     atividade,
     credito,
     demografia,
-    desigualdade,
     estados,
     externo,
     fiscal,
@@ -39,6 +38,7 @@ from sacibras.secoes import (
     juros,
     mercados,
     mundo,
+    pobreza,
     previsoes,
     riscos,
     trabalho,
@@ -58,7 +58,7 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("impostos", "Impostos", impostos.montar),
     ("estados", "Estados", estados.montar),
     ("demografia", "Demografia", demografia.montar),
-    ("desigualdade", "Desigualdade", desigualdade.montar),
+    ("pobreza", "Pobreza e condições de vida", pobreza.montar),
     ("mundo", "Brasil no mundo", mundo.montar),
     ("previsoes", "Previsões", previsoes.montar),
     ("riscos", "Riscos", riscos.montar),
@@ -102,7 +102,7 @@ FONTES = {
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",
     "demografia": "IBGE (Projeções da População e PNAD) e Tesouro Nacional (RTN)",
-    "desigualdade": "IBGE (PNAD Contínua anual), Ipea, Receita Federal (IRPF) e Banco Mundial",
+    "pobreza": "IBGE (PNAD Contínua anual), Ipea, Receita Federal (IRPF), FAO e Banco Mundial",
 }
 
 

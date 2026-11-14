@@ -1,22 +1,29 @@
-"""Desigualdade: o Gini, quem fica com quanto da renda, o topo pelo Imposto de Renda, a
-pobreza, as diferenças por sexo e cor, e a comparação entre estados e países.
+"""Pobreza e condições de vida: a pobreza, a fome, água, esgoto e lixo, a desigualdade (o
+Gini e quem fica com quanto da renda), o topo e as diferenças por sexo e cor, e a comparação
+entre estados e países.
 
-Pedido do Caio (14/11/2026): *"Coloque uma aba de Desigualdade no Sacibras [...] tem gini,
-concentração de renda?"*.
+Pedidos do Caio (14/11/2026): *"Coloque uma aba de Desigualdade no Sacibras [...] tem gini,
+concentração de renda?"*; e depois *"Na verdade coloque algo como Pobreza, onde a
+desigualdade vai ser um campo, tbm coloque índices de saneamento básico lá, fome, etc"*.
 
 De onde vem cada coisa (tudo conferido em 14/11/2026):
 
-- **IBGE, PNAD Contínua anual, "rendimento de todas as fontes"** (SIDRA; sai em maio, com o
+- **IBGE, PNAD Contínua anual** (SIDRA). "Rendimento de todas as fontes" (sai em maio, com o
   ano anterior): o Gini da renda domiciliar por pessoa (7435) e o da renda do trabalho
   (7453); a fatia da renda de cada grupo de 10 % das pessoas, do 1 % e dos 5 % do topo
-  (7527); a renda média por pessoa de cada grupo, a preços do último ano (7533); a renda do
-  trabalho por cor ou raça (7441) e por sexo (7444), também a preços do último ano.
+  (7527); a renda média por pessoa de cada grupo (7533); a renda do trabalho por cor (7441) e
+  por sexo (7444). "Características dos domicílios": água (6731), esgoto (7192, desde 2019;
+  antes a classificação era outra) e lixo (6736). "Segurança alimentar" (2023 e 2024, escala
+  EBIA): 9552 (por situação do domicílio) e 9751 (por idade).
 - **Ipea (Ipeadata)**: o Gini e a pobreza desde 1995, com a PNAD antiga emendada à
-  Contínua (Souza e Hecksher, 2025): `PNADS_GINI` e as linhas de pobreza do Banco Mundial
-  (US$ 3,00 e US$ 8,30 por dia, PPC de 2021).
-- **Receita Federal, Grandes Números do IRPF** (o mesmo arquivo de Impostos › Quem paga):
-  quanto da renda declarada e dos lucros e dividendos vai para cada faixa de quem declara.
-- **Banco Mundial**: o Gini dos outros países, contra o PIB por habitante.
+  Contínua (Souza e Hecksher, 2025), e a pobreza por estado (SIS do IBGE).
+- **Receita Federal, Grandes Números do IRPF** (o mesmo arquivo de Impostos › Quem paga).
+- **Banco Mundial**: o Gini dos outros países e as séries da FAO para o Brasil
+  (subalimentação, o critério do Mapa da Fome, e insegurança alimentar grave).
+
+Os códigos das classificações do SIDRA (825 água, 11558 esgoto, 67 lixo, 12404 segurança
+alimentar, 58 idade, 1 situação) saíram tentando cada número contra a tabela: o catálogo do
+IBGE não responde de fora do Brasil.
 """
 
 from __future__ import annotations
@@ -30,6 +37,7 @@ from sacibras.schema import (
     Dispersao,
     EixoDispersao,
     Grafico,
+    LinhaRef,
     LinhaTabela,
     PontoDispersao,
     Secao,
@@ -56,6 +64,30 @@ POR_COR = (7441, 10774, "c86/all")
 último ano, por cor ou raça (classificação 86)."""
 POR_SEXO = (7444, 10774, "c2/all")
 """O mesmo, por sexo (classificação 2)."""
+
+AGUA = (6731, 10117, "c1/6795/c825/46285")
+"""% dos moradores em domicílios com água da rede geral de distribuição (classificação 825,
+categoria 46285), Brasil urbano e rural (classificação 1, 6795)."""
+ESGOTO = (7192, 10133, "c11558/47930,47931")
+"""% dos moradores em domicílios com banheiro ligados à rede geral de esgoto ou pluvial
+(47930) ou com fossa séptica ligada à rede (47931): somadas, o esgoto adequado."""
+LIXO = (6736, 10117, "c67/4661,92864")
+"""% dos moradores em domicílios com lixo coletado na porta (4661) ou em caçamba (92864)."""
+SITUACAO = {"6795": "Brasil", "1": "Urbana", "2": "Rural"}
+FOME = (9552, 10117, "c12404/109102,109101")
+"""% dos moradores em domicílios com insegurança alimentar grave (109102) e moderada (109101),
+escala EBIA. A grave é a fome: alguém da casa passou um dia sem comer por falta de dinheiro."""
+FOME_GRAVE, FOME_MODERADA = "109102", "109101"
+FOME_IDADE = (9751, 10117, "c58/1140,100448,109110,104871,6798/c12404/109102")
+IDADES = {
+    "1140": "0 a 4 anos",
+    "100448": "5 a 17 anos",
+    "109110": "18 a 49 anos",
+    "104871": "50 a 64 anos",
+    "6798": "65 anos ou mais",
+}
+POBREZA_UF = "PNADCA_TXPNUF"
+"""Ipea: % das pessoas abaixo de US$ 8,30 por dia, por estado (SIS do IBGE)."""
 
 # Categorias da classificação 1019, da resposta do SIDRA em 14/11/2026.
 DECIMOS = [
@@ -90,6 +122,12 @@ EXTREMA_IPEA = "PNADS_PERCPOBRE300"
 """Ipea: % das pessoas abaixo de US$ 3,00 por dia (PPC de 2021), a linha internacional de
 extrema pobreza."""
 IPEA = "Ipea (Ipeadata), com a PNAD e a PNAD Contínua do IBGE"
+MAPA_DA_FOME = 2.5
+"""A FAO põe no Mapa da Fome o país com mais de 2,5 % da população subalimentada."""
+
+A_VISTA_CARTOES = ["pobreza", "fome", "esgoto", "gini"]
+"""Os números da visão geral do assunto, um de cada parte principal."""
+A_VISTA_GRAFICOS = ["pobreza"]
 
 # Faixas de quem declara, em salários mínimos (piso de cada grupo), da menor para a maior.
 GRUPOS_IRPF = [(0.0, "Até 5"), (5.0, "De 5 a 20"), (20.0, "De 20 a 80"), (80.0, "De 80 a 320")]
@@ -166,7 +204,7 @@ def _cartao_anual(
         casas=casas,
         detalhe=detalhe,
         fonte=fonte,
-        secao="desigualdade",
+        secao="pobreza",
         mini=40,
     )
 
@@ -205,18 +243,6 @@ def montar(ctx: Contexto) -> Secao:
             3,
         )
     )
-    if gini_trab:
-        cartoes.append(
-            _cartao_anual(
-                "gini-trabalho",
-                "Gini da renda do trabalho",
-                gini_trab,
-                "",
-                f"{PNADA} (SIDRA 7453)",
-                f"{gini_trab[0][0].year}: {br(gini_trab[0][1], 3)}",
-                3,
-            )
-        )
     series_gini = [serie("pnadc", "Renda por pessoa (PNAD Contínua)", gini, casas=3)]
     if gini_antigo:
         series_gini.append(
@@ -360,7 +386,7 @@ def montar(ctx: Contexto) -> Secao:
 
     tabelas.append(
         Tabela(
-            id="desigualdade-decimos",
+            id="pobreza-decimos",
             titulo="A renda de cada grupo de 10 %",
             subtitulo=f"as pessoas em fila, da menor renda por pessoa para a maior; {ultimo.year}",
             colunas=[
@@ -409,7 +435,7 @@ def montar(ctx: Contexto) -> Secao:
                 ),
                 fonte=fonte_irpf,
                 procedencia="calculado",
-                secao="desigualdade",
+                secao="pobreza",
             ),
             Cartao(
                 id="irpf-topo-dividendos",
@@ -422,12 +448,12 @@ def montar(ctx: Contexto) -> Secao:
                 detalhe=f"{br(topo.declarantes / tot.declarantes * 100, 2)} % de quem declara",
                 fonte=fonte_irpf,
                 procedencia="calculado",
-                secao="desigualdade",
+                secao="pobreza",
             ),
         ]
         tabelas.append(
             Tabela(
-                id="desigualdade-irpf",
+                id="pobreza-irpf",
                 titulo="Quanto da renda declarada fica com cada faixa",
                 subtitulo=(
                     f"declarações de {ano_irpf + 1}, renda de {ano_irpf}; "
@@ -577,33 +603,66 @@ def montar(ctx: Contexto) -> Secao:
         ),
     ]
 
+    # ---------------------------------------------------------------- fome
+    fome_grave: list[Ponto] = []
+    try:
+        c_fome, g_fome, t_fome, fome_grave = fome(avisos)
+        cartoes += c_fome
+        graficos += g_fome
+        tabelas += t_fome
+    except Exception as erro:
+        avisos.append(f"fome: {erro}")
+
+    # ---------------------------------------------------------------- saneamento
+    esgoto: list[Ponto] = []
+    try:
+        c_san, g_san, t_san, esgoto = saneamento()
+        cartoes += c_san
+        graficos += g_san
+        tabelas += t_san
+    except Exception as erro:
+        avisos.append(f"saneamento: {erro}")
+
     # ---------------------------------------------------------------- estados e países
-    por_uf = ibge_sidra.series(GINI[0], GINI[1], nivel="n3/all", por="Unidade da Federação")
-    tabelas.append(tabela_estados(por_uf, gini))
+    try:
+        tabelas.append(tabela_estados(gini))
+    except Exception as erro:
+        avisos.append(f"estados: {erro}")
     try:
         graficos.append(dispersao_paises())
     except Exception as erro:
         avisos.append(f"Banco Mundial: {erro}")
 
     for aviso in avisos:
-        print(f"  aviso: desigualdade: {aviso}")
+        print(f"  aviso: pobreza: {aviso}")
 
-    resumo = (
-        f"O Gini da renda por pessoa foi de {br(gini[-1][1], 3)} em {ano}, entre os mais altos "
-        f"do mundo; os 10 % mais ricos ficaram com {br(ricos10[-1][1])} % da renda e os 40 % "
-        f"mais pobres, com {br(pobres40[-1][1])} %."
-    )
-    if gini[-1][1] < gini[0][1]:
-        resumo += f" Em {gini[0][0].year}, o Gini era {br(gini[0][1], 3)}."
-    if pobreza:
-        resumo += (
-            f" A pobreza (menos de US$ 8,30 por dia) atingiu {br(pobreza[-1][1], 1)} % das "
-            f"pessoas em {pobreza[-1][0].year}."
+    partes: list[str] = []
+    if pobreza and extrema:
+        partes.append(
+            f"Em {pobreza[-1][0].year}, {br(pobreza[-1][1])} % dos brasileiros viviam abaixo da "
+            f"linha de pobreza (US$ 8,30 por dia) e {br(extrema[-1][1])} %, na extrema pobreza."
         )
+    if fome_grave:
+        partes.append(
+            f"Em {fome_grave[-1][0].year}, {br(fome_grave[-1][1])} % moravam em casas com fome "
+            "(insegurança alimentar grave)."
+        )
+    if esgoto:
+        partes.append(
+            f"{br(100 - esgoto[-1][1], 0)} % não tinham esgoto ligado à rede em "
+            f"{esgoto[-1][0].year}."
+        )
+    partes.append(
+        f"O Gini da renda foi de {br(gini[-1][1], 3)} em {ano}, entre os mais altos do mundo: os "
+        f"10 % mais ricos ficaram com {br(ricos10[-1][1])} % da renda."
+    )
+    # A visão geral do assunto mostra os quatro primeiros números e o primeiro gráfico.
+    cartoes.sort(key=lambda c: _ordem(c.id, A_VISTA_CARTOES))
+    graficos.sort(key=lambda g: _ordem(g.id, A_VISTA_GRAFICOS))
     return Secao(
-        id="desigualdade",
-        titulo="Desigualdade",
-        resumo=resumo,
+        id="pobreza",
+        titulo="Pobreza e condições de vida",
+        resumo=" ".join(partes),
         cartoes=cartoes,
         graficos=graficos,
         tabelas=tabelas,
@@ -611,49 +670,311 @@ def montar(ctx: Contexto) -> Secao:
     )
 
 
-def tabela_estados(por_uf: dict[str, list[Ponto]], brasil: list[Ponto]) -> Tabela:
-    """O Gini de cada estado no primeiro ano, em 2019 e no último, do mais desigual ao menos."""
-    if not brasil:
-        raise RuntimeError("sem o Gini do Brasil")
-    primeiro, ultimo = brasil[0][0], brasil[-1][0]
-    meio = date(2019, 1, 1)
-    anos = [primeiro, meio, ultimo] if primeiro < meio < ultimo else [primeiro, ultimo]
-    linhas: list[tuple[float, LinhaTabela]] = []
-    for cod, pontos in por_uf.items():
-        if int(cod) not in SIGLA or not pontos:
-            continue
-        valores = dict(pontos)
-        nome = next(n for c, _, n, _ in UFS if c == int(cod))
-        ult = valores.get(ultimo)
-        linhas.append(
-            (
-                -(ult or 0),
-                LinhaTabela(
-                    rotulo=nome,
-                    valores=[valores.get(a) for a in anos],
-                    unidade="",
-                    casas=3,
+def _ordem(id: str, primeiros: list[str]) -> int:
+    return primeiros.index(id) if id in primeiros else len(primeiros)
+
+
+def _pct(tabela: tuple[int, int, str], por: str) -> dict[str, list[Ponto]]:
+    return ibge_sidra.series(tabela[0], tabela[1], classificacao=tabela[2], por=por)
+
+
+def fome(avisos: list[str]) -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]]:
+    """A insegurança alimentar da PNAD (2023 em diante) e a série da FAO para o Brasil."""
+    por_situacao = ibge_sidra.series(
+        FOME[0], FOME[1], classificacao=f"c1/all/{FOME[2].replace(',109101', '')}", por="Situação"
+    )
+    tipos = _pct(FOME, por="Situação de segurança")
+    grave = tipos.get(FOME_GRAVE, [])
+    if not grave:
+        raise RuntimeError("SIDRA 9552 sem a insegurança grave")
+    mod_ou_grave = soma(tipos, [FOME_GRAVE, FOME_MODERADA])
+    fonte = f"{PNADA}, segurança alimentar (SIDRA 9552)"
+    cartoes = [
+        _cartao_anual(
+            "fome",
+            "Fome (insegurança grave)",
+            grave,
+            "% das pessoas",
+            fonte,
+            f"{grave[-2][0].year}: {br(grave[-2][1])} %" if len(grave) > 1 else "",
+            1,
+        ),
+        _cartao_anual(
+            "inseguranca-moderada-grave",
+            "Comida faltando (moderada ou grave)",
+            mod_ou_grave,
+            "% das pessoas",
+            fonte,
+            f"{mod_ou_grave[-2][0].year}: {br(mod_ou_grave[-2][1])} %"
+            if len(mod_ou_grave) > 1
+            else "",
+            1,
+        ),
+    ]
+    graficos: list[Grafico] = []
+    try:
+        hoje = date.today().year
+        fao = banco_mundial.serie_do_pais("BRA", banco_mundial.SUBALIMENTACAO, 2000, hoje)
+        grave_fao = banco_mundial.serie_do_pais("BRA", banco_mundial.INSEGURANCA_GRAVE, 2000, hoje)
+        sub = [(date(a, 1, 1), v) for a, v in fao]
+        ano_sub, valor_sub = fao[-1]
+        cartoes.append(
+            Cartao(
+                id="subalimentacao",
+                rotulo="Subalimentação (FAO)",
+                valor=valor_sub,
+                unidade="% das pessoas",
+                casas=1,
+                referencia=date(ano_sub, 1, 1),
+                periodicidade="A",
+                texto="menos de 2,5 %" if valor_sub <= MAPA_DA_FOME else "",
+                detalhe=(
+                    "fora do Mapa da Fome"
+                    if valor_sub <= MAPA_DA_FOME
+                    else "no Mapa da Fome (acima de 2,5 %)"
                 ),
+                fonte=f"FAO, pelo {banco_mundial.FONTE} ({banco_mundial.SUBALIMENTACAO})",
+                mini=[(d, round(v, 2)) for d, v in sub],
+                secao="pobreza",
             )
         )
-    linhas.sort(key=lambda x: x[0])
-    vb = dict(brasil)
-    return Tabela(
-        id="desigualdade-estados",
-        titulo="Gini por estado",
-        subtitulo=f"renda domiciliar por pessoa; do mais desigual em {ultimo.year} ao menos",
-        colunas=[str(a.year) for a in anos],
-        linhas=[
-            LinhaTabela(rotulo="Brasil", valores=[vb.get(a) for a in anos], unidade="", casas=3),
-            *(lin for _, lin in linhas),
-        ],
-        fonte=f"{PNADA} (SIDRA 7435)",
+        graficos.append(
+            grafico(
+                "fome-fao",
+                "Fome pela FAO, média de três anos",
+                [
+                    serie("sub", "Subalimentação", sub, casas=1),
+                    serie(
+                        "grave",
+                        "Insegurança alimentar grave",
+                        [(date(a, 1, 1), v) for a, v in grave_fao],
+                        casas=1,
+                    ),
+                ],
+                unidade="% das pessoas",
+                periodicidade="A",
+                fonte=(
+                    f"FAO, pelo {banco_mundial.FONTE} ({banco_mundial.SUBALIMENTACAO} e "
+                    f"{banco_mundial.INSEGURANCA_GRAVE})"
+                ),
+                linhas=[LinhaRef(valor=MAPA_DA_FOME, rotulo="Mapa da Fome")],
+                nota=(
+                    "Subalimentação: a parte da população que não come o bastante para as "
+                    "necessidades mínimas de energia, pela conta da FAO. Acima de 2,5 % o país "
+                    'entra no Mapa da Fome; quando a FAO publica "menos de 2,5 %", a série '
+                    "mostra 2,5. Cada ano é a média dos três anos que terminam nele. A "
+                    "insegurança grave é a da escala da FAO, outra pesquisa que a do IBGE."
+                ),
+                largura="inteira",
+            )
+        )
+    except Exception as erro:
+        avisos.append(f"FAO pelo Banco Mundial: {erro}")
+
+    ultimo = grave[-1][0]
+    idade = ibge_sidra.series(
+        FOME_IDADE[0], FOME_IDADE[1], classificacao=FOME_IDADE[2], por="Grupo de idade"
+    )
+    linhas = [
+        LinhaTabela(
+            rotulo=nome,
+            valores=[dict(por_situacao.get(cod, [])).get(d) for d in (ultimo, grave[0][0])],
+            unidade="",
+            casas=1,
+        )
+        for cod, nome in SITUACAO.items()
+    ] + [
+        LinhaTabela(
+            rotulo=nome,
+            valores=[dict(idade.get(cod, [])).get(d) for d in (ultimo, grave[0][0])],
+            unidade="",
+            casas=1,
+        )
+        for cod, nome in IDADES.items()
+    ]
+    tabela = Tabela(
+        id="pobreza-fome",
+        titulo="Fome por lugar e idade",
+        subtitulo="% das pessoas em casas com insegurança alimentar grave",
+        colunas=[str(ultimo.year), str(grave[0][0].year)],
+        linhas=linhas,
+        fonte=f"{PNADA}, segurança alimentar (SIDRA 9552 e 9751)",
         nota=(
-            "O Gini de cada estado mede a desigualdade dentro dele; o do Brasil é maior que o "
-            "da maioria dos estados porque soma também a distância entre eles. O mapa está em "
-            "Estados."
+            "Escala Brasileira de Insegurança Alimentar (EBIA): oito perguntas sobre os últimos "
+            "três meses. Grave é quando alguém da casa, adulto ou criança, ficou sem comer ou "
+            "passou fome por falta de dinheiro. A PNAD Contínua mede desde 2023; as pesquisas "
+            "de antes (PNAD 2004, 2009 e 2013, POF 2018) não se comparam direto."
         ),
     )
+    return cartoes, graficos, [tabela], grave
+
+
+def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]]:
+    """Água da rede, esgoto ligado à rede e lixo coletado, em % dos moradores."""
+    agua = {
+        c: pts
+        for c, pts in ibge_sidra.series(
+            AGUA[0], AGUA[1], classificacao=AGUA[2].replace("c1/6795", "c1/all"), por="Situação"
+        ).items()
+    }
+    esgoto_sit = ibge_sidra.series(
+        ESGOTO[0], ESGOTO[1], classificacao=f"c1/all/{ESGOTO[2]}", por="Situação"
+    )
+    # Com "por" na situação, o SIDRA devolve as duas categorias de esgoto como linhas da mesma
+    # situação: somar por situação e ano.
+    esgoto = {c: _somar_por_ano(pts) for c, pts in esgoto_sit.items()}
+    lixo_sit = ibge_sidra.series(
+        LIXO[0], LIXO[1], classificacao=f"c1/all/{LIXO[2]}", por="Situação"
+    )
+    lixo = {c: _somar_por_ano(pts) for c, pts in lixo_sit.items()}
+    a, e, li = agua.get("6795", []), esgoto.get("6795", []), lixo.get("6795", [])
+    if not (a and e and li):
+        raise RuntimeError("SIDRA sem água, esgoto ou lixo do Brasil")
+    fonte = f"{PNADA}, características dos domicílios"
+
+    def det(pts: list[Ponto]) -> str:
+        return f"{pts[0][0].year}: {br(pts[0][1])} %"
+
+    cartoes = [
+        _cartao_anual(
+            "agua", "Água da rede", a, "% das pessoas", f"{fonte} (SIDRA 6731)", det(a), 1
+        ),
+        _cartao_anual(
+            "esgoto", "Esgoto ligado à rede", e, "% das pessoas", f"{fonte} (SIDRA 7192)", det(e), 1
+        ),
+        _cartao_anual(
+            "lixo", "Lixo coletado", li, "% das pessoas", f"{fonte} (SIDRA 6736)", det(li), 1
+        ),
+    ]
+    grafico_san = grafico(
+        "saneamento",
+        "Água, esgoto e lixo",
+        [
+            serie("agua", "Água da rede geral", a, casas=1),
+            serie("esgoto", "Esgoto ligado à rede", e, casas=1),
+            serie("lixo", "Lixo coletado", li, casas=1),
+        ],
+        unidade="% das pessoas",
+        periodicidade="A",
+        fonte=f"{fonte} (SIDRA 6731, 7192 e 6736)",
+        nota=(
+            "Parte dos moradores que tem cada serviço em casa. Esgoto ligado à rede: rede geral "
+            "de esgoto ou pluvial, ou fossa séptica ligada a ela; fossa não ligada, vala ou "
+            "rio ficam de fora. O esgoto começa em 2019, quando o IBGE mudou as categorias. Em "
+            "2020 e 2021 a pesquisa não perguntou sobre a casa."
+        ),
+    )
+    ultimo = a[-1][0]
+    tabela = Tabela(
+        id="pobreza-saneamento",
+        titulo="Na cidade e no campo",
+        subtitulo=f"% das pessoas com cada serviço em casa, {ultimo.year}",
+        colunas=["Brasil", "Urbana", "Rural"],
+        linhas=[
+            LinhaTabela(
+                rotulo=nome,
+                valores=[dict(dados.get(c, [])).get(ultimo) for c in ("6795", "1", "2")],
+                unidade="",
+                casas=1,
+            )
+            for nome, dados in (
+                ("Água da rede geral", agua),
+                ("Esgoto ligado à rede", esgoto),
+                ("Lixo coletado", lixo),
+            )
+        ],
+        fonte=f"{fonte} (SIDRA 6731, 7192 e 6736)",
+        nota="No campo, poço e fossa são comuns e nem sempre ruins; a rede é o que a meta mede.",
+    )
+    return cartoes, [grafico_san], [tabela], e
+
+
+def _somar_por_ano(pontos: list[Ponto]) -> list[Ponto]:
+    por_ano: dict[date, float] = {}
+    for d, v in pontos:
+        por_ano[d] = por_ano.get(d, 0.0) + v
+    return sorted(por_ano.items())
+
+
+def _por_uf(series: dict[str, list[Ponto]]) -> dict[str, float]:
+    """{sigla: valor mais novo} das séries por código de UF do IBGE."""
+    return {SIGLA[int(c)]: pts[-1][1] for c, pts in series.items() if int(c) in SIGLA and pts}
+
+
+def tabela_estados(gini_brasil: list[Ponto]) -> Tabela:
+    """Uma linha por estado: pobreza, fome, esgoto e água, do mais pobre ao menos."""
+    ufs = "n3/all"
+    fome_uf = _por_uf(
+        ibge_sidra.series(
+            FOME[0],
+            FOME[1],
+            classificacao="c1/6795/c12404/109102",
+            nivel=ufs,
+            periodos="last 1",
+            por="Unidade",
+        )
+    )
+    esgoto_por_uf = ibge_sidra.series(
+        ESGOTO[0],
+        ESGOTO[1],
+        classificacao=f"c1/6795/{ESGOTO[2]}",
+        nivel=ufs,
+        periodos="last 1",
+        por="Unidade",
+    )
+    esgoto_uf = _por_uf({c: _somar_por_ano(p) for c, p in esgoto_por_uf.items()})
+    agua_uf = _por_uf(
+        ibge_sidra.series(
+            AGUA[0], AGUA[1], classificacao=AGUA[2], nivel=ufs, periodos="last 1", por="Unidade"
+        )
+    )
+    try:
+        pobreza_uf = _por_uf(
+            {
+                c: p
+                for c, p in ipeadata.por_territorio(POBREZA_UF, date(2012, 1, 1)).items()
+                if len(c) == 2
+            }
+        )
+    except Exception:
+        pobreza_uf = {}
+    linhas = []
+    for _, sigla, nome, _ in UFS:
+        linhas.append(
+            LinhaTabela(
+                rotulo=nome,
+                valores=[
+                    _arred(pobreza_uf.get(sigla), 1),
+                    fome_uf.get(sigla),
+                    _arred(esgoto_uf.get(sigla), 1),
+                    agua_uf.get(sigla),
+                ],
+                unidade="",
+                casas=1,
+            )
+        )
+    linhas.sort(key=lambda li: -(li.valores[0] or 0))
+    return Tabela(
+        id="pobreza-estados",
+        titulo="Os estados lado a lado",
+        subtitulo="% das pessoas; em ordem de pobreza, da maior para a menor",
+        colunas=["pobreza", "fome", "esgoto", "água"],
+        linhas=linhas,
+        fonte=(
+            f"{PNADA} (SIDRA 9552, 7192 e 6731); pobreza: {IPEA}, a partir da Síntese de "
+            f"Indicadores Sociais do IBGE ({POBREZA_UF})"
+        ),
+        nota=(
+            "O ano mais novo de cada fonte. Pobreza: abaixo de US$ 8,30 por dia. Fome: "
+            "insegurança alimentar grave. Esgoto: ligado à rede; água: da rede geral. O Gini de "
+            "cada estado (o do Brasil é "
+            f"{br(gini_brasil[-1][1], 3)}) e a pobreza também estão no mapa de Estados."
+        ),
+    )
+
+
+def _arred(v: float | None, casas: int) -> float | None:
+    return None if v is None else round(v, casas)
 
 
 def dispersao_paises() -> Grafico:
