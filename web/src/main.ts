@@ -14,7 +14,7 @@ import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDoAssunto } from "./calendario";
 import { ligarGlossario } from "./glossario";
-import { ligarTraducao } from "./traducao";
+import { ligarTraducao, protegerNomeDeEstado } from "./traducao";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
@@ -143,6 +143,7 @@ function montarTabela(t: Tabela): HTMLElement {
     for (const l of t.linhas) {
       const tr = corpo.insertRow();
       const th = el("th", "", l.rotulo);
+      protegerNomeDeEstado(th, l.rotulo);
       if (l.unidade) th.append(el("span", "sub", ` ${l.unidade}`));
       tr.append(th);
       if (l.textos?.length) for (const x of l.textos) tr.append(el("td", "texto", x));

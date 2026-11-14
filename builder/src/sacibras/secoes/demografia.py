@@ -350,6 +350,14 @@ def montar(ctx: Contexto) -> Secao:
             fonte=fonte_tab4,
         ),
         cartao_proj(
+            "mortalidade-infantil",
+            "Mortalidade infantil",
+            ind["TMI_T"],
+            unidade="por mil nascidos",
+            detalhe=f"era {br(ind['TMI_T'][2000])} em 2000",
+            fonte=fonte_tab4,
+        ),
+        cartao_proj(
             "idade-mediana",
             "Idade mediana",
             mediana,
@@ -486,6 +494,20 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="A",
             fonte=fonte_tab4,
             nota=NOTA_PROJECAO,
+        ),
+        grafico(
+            "mortalidade-infantil",
+            "Mortalidade infantil",
+            [proj("total", "Mortes antes de 1 ano por mil nascidos vivos", ind["TMI_T"])],
+            unidade="por mil nascidos",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte_tab4,
+            nota=(
+                "Quantas crianças, em cada mil nascidas vivas, morrem antes de fazer um ano. "
+                "Cai com saneamento, vacina, pré-natal e renda; é uma das medidas mais usadas "
+                f"de condição de vida. {NOTA_PROJECAO}"
+            ),
         ),
         grafico(
             "idosos",

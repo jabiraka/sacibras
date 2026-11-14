@@ -23,6 +23,7 @@ import io
 import re
 import warnings
 from dataclasses import dataclass
+from functools import cache
 
 import openpyxl  # type: ignore[import-untyped]
 
@@ -123,8 +124,10 @@ def piso(nome: str) -> float:
     return valor + 0.5 if nome.lower().startswith("mais") else valor
 
 
+@cache
 def grandes_numeros() -> tuple[int, list[Faixa]]:
-    """(ano-calendário, faixas) da planilha mais nova."""
+    """(ano-calendário, faixas) da planilha mais nova. Guardado na rodada: Impostos e
+    Desigualdade leem o mesmo arquivo de ~20 MB."""
     html = baixar(LISTAGEM, validade=24 * 3600).decode("utf-8", "replace")
     ano, url = mais_nova(html)
     return ano, ler_planilha(baixar(url, validade=30 * 24 * 3600, tempo_limite=300))

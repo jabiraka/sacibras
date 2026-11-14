@@ -5,9 +5,34 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (Setor externo por setor, produto e parceiro, do Comex Stat; antes, no mesmo dia, o simulador da reforma do consumo em Impostos).
+Última atualização: 14/11/2026 (Setor externo por setor, produto e parceiro, do Comex Stat, publicado no `main`; antes, no mesmo dia, Pobreza e condições de vida e Estados com PIB).
 
 ---
+
+## Estados: PIB e mais treze métricas (14/11/2026, branch `ccr-b41d9ce1-hd022f`)
+
+Pedido do Caio: *"Não vi o crescimento do PIB por Estado"*, *"pode fazer todas que vc
+sugeriu, veja se tem algum número de PIB por estado, nem que seja pra calcular por conta
+própria"*.
+
+- `secoes/estados_economia.py` e duas fontes novas (`fontes/ibge_contas_regionais.py`, com
+  `xlrd`; `fontes/comexstat.py`, que pede `corpo_json` novo em `rede.baixar`). Os códigos por
+  UF do SGS ficam em `catalogo.py` (`CREDITO_SALDO_UF`, `CREDITO_INADIMPLENCIA_UF`, `IBCR_UF`).
+- `MetricaEstados.grupo`: a lista suspensa agrupa (optgroup) e a tabela completa ganha uma
+  linha com o assunto de cada bloco de colunas. A métrica que abre o mapa agora é o
+  crescimento do PIB.
+- Glossário (IBC-R, Contas Regionais, Gini) e sinônimos na busca ("pib estadual", "pib per
+  capita", "ipca regional"...).
+- Conferido a 390 e a 1280 px (mapa, ranking, tabela, duas métricas). **Publicado no `main`**
+  em 14/11/2026, a pedido do Caio (*"junte ao main"*). Reler o PIB quando sair a edição de
+  2025 (nov/2027): o builder acha a pasta nova sozinho.
+- **Prévia do PIB para os 27** (Caio: *"uma regra simples é preferível, isso é previsão"*):
+  quem não tem IBC-R cresce como a região (`estados_economia.ibcr`, o porquê da regra na
+  docstring: no teste de 2011 a 2024 errou menos que descontar os estados com índice e que
+  corrigir pela folga histórica). Faixa de 80 % do mesmo teste, refeito a cada rodada:
+  −1,2/+1,5 pp com IBC-R próprio, −1,8/+3,6 pp pela região. `MetricaEstados` ganhou
+  `intervalos`, `estimados` e `como_ler`; no ranking, traço neutro e ponto vazado.
+- Ficou de fora: o Caged por UF (403 da nuvem; ver PROPOSTAS).
 
 ## Onde paramos
 
@@ -44,7 +69,7 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
-## Comércio por setor, produto e parceiro (14/11/2026, na nuvem, branch `ccr-29b41d1c-2en3yg`)
+## Comércio por setor, produto e parceiro (14/11/2026, na nuvem, branch `ccr-29b41d1c-2en3yg`, publicado no `main`)
 
 Pergunta do Caio: *"Nas contas externas, tem como fazer a atribuição do que é exportado e
 importado? Qual nosso maior setor de exportação?"*; pedido: *"pode seguir"*.
@@ -64,7 +89,40 @@ importado? Qual nosso maior setor de exportação?"*; pedido: *"pode seguir"*.
   bruto (12,8 %), à frente da soja (12,5 %), e em 2026 com mais folga.
 - Busca (soja, petróleo, China, parceiros, em outras línguas) e dois verbetes (commodities,
   FOB). Conferido a 390 e 1280 px (com o navegador em inglês, pela tradução).
-- **Não está no `main`**: espera o "pode publicar" do Caio.
+- **Publicado no `main`** em 14/11/2026, a pedido do Caio (*"Pode juntar no main"*). O
+  `fontes/comexstat.py` junta este leitor com o das exportações por estado (Estados).
+
+## Pobreza e condições de vida (14/11/2026, na nuvem, branch `ccr-ffc705ee-tjym93`, publicada no `main`)
+
+Pedidos do Caio: *"Coloque uma aba de Desigualdade [...] tem gini, concentração de renda?"*;
+depois, *"Na verdade coloque algo como Pobreza, onde a desigualdade vai ser um campo, tbm
+coloque índices de saneamento básico lá, fome, etc"*.
+
+- **Assunto novo** (`secoes/pobreza.py`, `#pobreza`), em Atividade e emprego, depois de
+  Trabalho, seis partes: Pobreza, Fome, Água esgoto e lixo, Desigualdade, Quem ganha mais,
+  Estados e países. Números: pobreza (US$ 8,30) 25,2 % e extrema 4,6 % em 2025; fome
+  (insegurança grave) 3,1 % das pessoas em 2024 (4,0 % em 2023); subalimentação da FAO
+  "menos de 2,5 %", fora do Mapa da Fome; água da rede 85,3 %, esgoto ligado à rede 69,7 %,
+  lixo coletado 92,5 % (2025); Gini 0,511; os 10 % mais ricos com 40,3 % da renda; quem
+  declara mais de 320 salários mínimos fica com 42,4 % dos lucros e dividendos.
+- **Fontes** (todas por API, nada lido à mão; [FONTES](FONTES.md)): SIDRA da PNAD Contínua
+  anual (rendimentos, domicílios, segurança alimentar), Ipeadata (séries desde 1995 e
+  pobreza por UF), a planilha do IRPF que Impostos já baixa (guardada na rodada) e o Banco
+  Mundial (Gini dos países e as séries da FAO).
+- **Estados**: métricas novas "Pobreza" e "Desigualdade da renda (Gini)" no mapa e no
+  ranking.
+- Glossário (Gini, renda por pessoa, razão 10/40, linha de pobreza, lucros e dividendos,
+  insegurança alimentar, Mapa da Fome, subalimentação, esgoto ligado à rede) e busca
+  ("fome", "saneamento", "esgoto", "concentração de renda", em quatro línguas).
+- Depois (*"Faça oq der e depois leve pro main"*): Bolsa Família (17,2 % das casas; renda por
+  pessoa de quem recebe R$ 774, de quem não recebe R$ 2.682), BPC e algum programa; internet
+  (96,8 %), luz o tempo todo (98,2 %) e fogão a lenha (14,6 %); a meta do Marco do Saneamento
+  (`leis.META_SANEAMENTO`, 99 % água e 90 % esgoto até 31/12/2033, lida na Câmara; prazo em
+  `leituras.py`); mortalidade infantil em Demografia › Nascimentos e vida (11,8 por mil); e os
+  nomes dos estados com `translate="no"` (`traducao.protegerNomeDeEstado`).
+- Conferido a 1280 e 390 px. **Publicado no `main`** em 14/11/2026, a pedido do Caio. O que
+  ficou (moradia, SINISA, fome antiga, educação, topo pelo IR por centil) está no
+  [PROPOSTAS](PROPOSTAS.md), seção Pobreza.
 
 ## Reforma do consumo (14/11/2026, mesma sessão e branch da Selic, publicada no `main`)
 

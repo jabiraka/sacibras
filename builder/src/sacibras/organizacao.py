@@ -23,7 +23,7 @@ CATEGORIAS: list[Categoria] = [
     Categoria(
         id="atividade-emprego",
         titulo="Atividade e emprego",
-        secoes=["atividade", "trabalho", "demografia"],
+        secoes=["atividade", "trabalho", "pobreza", "demografia"],
     ),
     Categoria(
         id="precos-juros",
@@ -122,9 +122,14 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "nascimentos",
             "Nascimentos e vida",
-            "Filhos por mulher, nascimentos, óbitos e esperança de vida.",
-            cartoes=["fecundidade", "esperanca-de-vida"],
-            graficos=["nascimentos-obitos", "fecundidade", "esperanca-de-vida"],
+            "Filhos por mulher, nascimentos, óbitos, esperança de vida e mortalidade infantil.",
+            cartoes=["fecundidade", "esperanca-de-vida", "mortalidade-infantil"],
+            graficos=[
+                "nascimentos-obitos",
+                "fecundidade",
+                "esperanca-de-vida",
+                "mortalidade-infantil",
+            ],
         ),
         Parte(
             "envelhecimento",
@@ -140,6 +145,60 @@ PARTES: dict[str, list[Parte]] = {
             "PIB por pessoa ocupada e de onde veio o crescimento.",
             cartoes=["produtividade"],
             graficos=["produtividade", "crescimento-decomposto"],
+        ),
+    ],
+    "pobreza": [
+        Parte(
+            "linha-de-pobreza",
+            "Pobreza",
+            "Quantos vivem abaixo das linhas de pobreza e quantas casas recebem Bolsa Família.",
+            cartoes=["pobreza", "extrema-pobreza", "bolsa-familia"],
+            graficos=["pobreza", "programas-sociais"],
+        ),
+        Parte(
+            "fome",
+            "Fome",
+            "Quantos moram em casas onde falta comida, e se o Brasil está no Mapa da Fome.",
+            cartoes=["fome", "inseguranca-moderada-grave", "subalimentacao"],
+            graficos=["fome-fao"],
+            tabelas=["pobreza-fome"],
+        ),
+        Parte(
+            "saneamento",
+            "A casa: água, esgoto, luz",
+            "Água, esgoto e lixo contra a meta de 2033, luz, internet e fogão a lenha.",
+            cartoes=["agua", "esgoto", "lixo", "internet", "lenha"],
+            graficos=["saneamento", "internet-lenha"],
+            tabelas=["pobreza-saneamento"],
+        ),
+        Parte(
+            "desigualdade",
+            "Desigualdade",
+            "O Gini e quem fica com quanto da renda: os mais pobres, o meio e os mais ricos.",
+            cartoes=["gini", "fatia-10-ricos", "fatia-1-rico", "fatia-40-pobres", "razao-10-40"],
+            graficos=["gini", "fatias", "renda-por-grupo"],
+            tabelas=["pobreza-decimos"],
+        ),
+        Parte(
+            "quem-ganha-mais",
+            "Quem ganha mais",
+            "O topo pelo Imposto de Renda e a renda do trabalho por sexo e cor.",
+            cartoes=[
+                "irpf-topo-renda",
+                "irpf-topo-dividendos",
+                "mulheres-homens",
+                "pretos-brancos",
+                "pardos-brancos",
+            ],
+            graficos=["diferencas", "renda-trabalho-grupos"],
+            tabelas=["pobreza-irpf"],
+        ),
+        Parte(
+            "estados-e-paises",
+            "Estados e países",
+            "Pobreza, fome, esgoto e água por estado, e o Gini do Brasil no mundo.",
+            graficos=["gini-paises"],
+            tabelas=["pobreza-estados"],
         ),
     ],
     "inflacao": [

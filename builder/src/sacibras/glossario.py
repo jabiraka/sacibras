@@ -52,6 +52,23 @@ TERMOS: list[Termo] = [
         "#atividade",
     ),
     Termo(
+        "ibc-r",
+        "IBC-R",
+        "O IBC-Br feito para um estado: a prévia mensal do PIB que o Banco Central publica "
+        "para 13 estados. O PIB oficial de cada estado, do IBGE, sai quase dois anos depois.",
+        ("IBC-R",),
+        "#estados/mapa",
+    ),
+    Termo(
+        "contas-regionais",
+        "Contas Regionais",
+        "O PIB de cada estado, calculado pelo IBGE com os órgãos de estatística estaduais. "
+        "Sai uma vez por ano, com quase dois anos de atraso: o de 2024 saiu em novembro de "
+        "2026.",
+        ("Contas Regionais",),
+        "#estados/mapa",
+    ),
+    Termo(
         "ajuste-sazonal",
         "Ajuste sazonal",
         "Correção do que se repete todo ano na mesma época (Natal, safra, férias), para "
@@ -1031,6 +1048,100 @@ TERMOS: list[Termo] = [
         "Na lista do FMI, as economias avançadas: Estados Unidos, zona do euro, Japão, Reino "
         "Unido, Canadá, Austrália, Coreia do Sul e outros países ricos.",
         ("avançados", "economias avançadas"),
+    ),
+    # ---------------------------------------------------------------- pobreza
+    Termo(
+        "inseguranca-alimentar",
+        "Insegurança alimentar",
+        "Medida pela escala do IBGE, com oito perguntas sobre os últimos três meses. Leve: "
+        "medo de faltar comida ou comida pior; moderada: menos comida para os adultos; grave: "
+        "alguém da casa, até criança, ficou sem comer por falta de dinheiro, a fome.",
+        ("insegurança alimentar", "insegurança grave"),
+        "#pobreza/fome",
+    ),
+    Termo(
+        "mapa-da-fome",
+        "Mapa da Fome",
+        "A lista da FAO, a agência da ONU para a alimentação, dos países com mais de 2,5 % da "
+        "população sem comer o bastante, na média de três anos.",
+        ("Mapa da Fome",),
+        "#pobreza/fome",
+    ),
+    Termo(
+        "subalimentacao",
+        "Subalimentação",
+        "Pela conta da FAO, a parte da população que não come calorias suficientes para as "
+        "necessidades mínimas de uma vida normal. É o critério do Mapa da Fome.",
+        ("subalimentação", "subalimentada"),
+        "#pobreza/fome",
+    ),
+    Termo(
+        "bpc",
+        "BPC",
+        "Benefício de Prestação Continuada: um salário mínimo por mês para idosos de 65 anos "
+        "ou mais e pessoas com deficiência de famílias de baixa renda. Não é aposentadoria: "
+        "não exige ter contribuído.",
+        ("BPC", "BPC-LOAS"),
+        "#pobreza/linha-de-pobreza",
+    ),
+    Termo(
+        "marco-do-saneamento",
+        "Marco Legal do Saneamento",
+        "A lei de 2020 que mudou as regras do saneamento e fixou a meta de 99 % da população "
+        "com água potável e 90 % com coleta e tratamento de esgoto até o fim de 2033.",
+        ("Marco Legal do Saneamento", "Marco do Saneamento"),
+        "#pobreza/saneamento",
+    ),
+    Termo(
+        "esgoto-na-rede",
+        "Esgoto ligado à rede",
+        "A casa cujo esgoto vai para a rede geral (ou para a rede de chuva, ou para uma fossa "
+        "ligada à rede). Fossa sem ligação, vala, rio ou mar ficam de fora.",
+        ("esgoto ligado à rede", "esgoto na rede"),
+        "#pobreza/saneamento",
+    ),
+    Termo(
+        "gini",
+        "Índice de Gini",
+        "Mede a desigualdade numa só conta: 0 é tudo dividido por igual, 1 é tudo nas mãos de "
+        "um só (uma pessoa, ou um município, no PIB dos estados). Na renda, o Brasil fica perto "
+        "de 0,5; países europeus, perto de 0,3.",
+        ("índice de Gini", "coeficiente de Gini", "Gini"),
+        "#pobreza/desigualdade",
+    ),
+    Termo(
+        "renda-por-pessoa",
+        "Renda domiciliar por pessoa",
+        "Toda a renda de quem mora na casa (trabalho, aposentadoria, aluguel, programas "
+        "sociais) dividida pelo número de moradores. É a medida que o IBGE usa para a "
+        "desigualdade e a pobreza.",
+        ("renda domiciliar por pessoa", "renda domiciliar per capita", "renda por pessoa"),
+        "#pobreza/desigualdade",
+    ),
+    Termo(
+        "razao-10-40",
+        "Razão 10/40",
+        "Quantas vezes a fatia da renda dos 10 % mais ricos é maior que a dos 40 % mais pobres "
+        "juntos. Também chamada de razão de Palma.",
+        ("razão 10/40", "razão de Palma"),
+        "#pobreza/desigualdade",
+    ),
+    Termo(
+        "linha-de-pobreza",
+        "Linha de pobreza",
+        "A renda por pessoa abaixo da qual alguém é contado como pobre. As do Banco Mundial "
+        "são em dólares por dia, corrigidos pela diferença de preços entre os países: US$ "
+        "8,30 para pobreza num país como o Brasil e US$ 3,00 para extrema pobreza.",
+        ("linha de pobreza", "linhas de pobreza", "extrema pobreza"),
+        "#pobreza/linha-de-pobreza",
+    ),
+    Termo(
+        "lucros-e-dividendos",
+        "Lucros e dividendos",
+        "O que a empresa paga aos sócios e acionistas do lucro que teve. No Brasil, quem recebe "
+        "não paga Imposto de Renda sobre eles na declaração.",
+        ("lucros e dividendos", "dividendos"),
+        "#pobreza/quem-ganha-mais",
     ),
     # ---------------------------------------------------------------- demografia
     Termo(

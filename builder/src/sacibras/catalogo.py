@@ -452,3 +452,103 @@ SGS: dict[str, SerieSGS] = {
         29663, "Índice de Capital Principal no Sistema Financeiro Nacional", "%", "M", "14/11/2026"
     ),
 }
+
+# ---- estados. Conferidas uma a uma em 14/11/2026 no serviço de metadados do próprio SGS
+# (FachadaWSSGS, getUltimoValorXML: nome com o estado, unidade e periodicidade M); o CKAN não
+# lista as de crédito por UF. Os códigos seguem a ordem alfabética do nome do estado.
+# "Saldo das operações de crédito do Sistema Financeiro Nacional - <UF> - Total", R$ (milhões),
+# último ponto set/2026 (SP: 2.144.269).
+CREDITO_SALDO_UF: dict[str, int] = {
+    "AC": 14056,
+    "AL": 14057,
+    "AP": 14058,
+    "AM": 14059,
+    "BA": 14060,
+    "CE": 14061,
+    "DF": 14062,
+    "ES": 14063,
+    "GO": 14064,
+    "MA": 14065,
+    "MT": 14066,
+    "MS": 14067,
+    "MG": 14068,
+    "PA": 14069,
+    "PB": 14070,
+    "PR": 14071,
+    "PE": 14072,
+    "PI": 14073,
+    "RJ": 14074,
+    "RN": 14075,
+    "RS": 14076,
+    "RO": 14077,
+    "RR": 14078,
+    "SC": 14079,
+    "SP": 14080,
+    "SE": 14081,
+    "TO": 14082,
+}
+# "Taxa de inadimplência das operações de crédito do Sistema Financeiro Nacional - <UF> -
+# Total", %, último ponto set/2026 (SP: 4,03).
+CREDITO_INADIMPLENCIA_UF: dict[str, int] = {
+    "AC": 15925,
+    "AL": 15926,
+    "AP": 15927,
+    "AM": 15928,
+    "BA": 15929,
+    "CE": 15930,
+    "DF": 15931,
+    "ES": 15932,
+    "GO": 15933,
+    "MA": 15934,
+    "MT": 15935,
+    "MS": 15936,
+    "MG": 15937,
+    "PA": 15938,
+    "PB": 15939,
+    "PR": 15940,
+    "PE": 15941,
+    "PI": 15942,
+    "RJ": 15943,
+    "RN": 15944,
+    "RS": 15945,
+    "RO": 15946,
+    "RR": 15947,
+    "SC": 15948,
+    "SP": 15949,
+    "SE": 15950,
+    "TO": 15951,
+}
+# "Índice de Atividade Econômica Regional - <UF> - IBCR-<UF>", sem ajuste sazonal, índice,
+# último ponto ago/2026 (SP: 113,34). O BC só publica o IBC-R destes 13 estados (CKAN,
+# package_search?q=IBCR, 36 séries: os 13 e as 5 regiões, com e sem ajuste).
+IBCR_UF: dict[str, int] = {
+    "AM": 25411,
+    "BA": 25415,
+    "CE": 25390,
+    "ES": 25398,
+    "GO": 25383,
+    "MG": 25379,
+    "PA": 25409,
+    "PE": 25417,
+    "PR": 25408,
+    "RJ": 25396,
+    "RS": 25401,
+    "SC": 25402,
+    "SP": 25392,
+}
+# "Índice de Atividade Econômica Regional - Região <nome> - IBCR-<sigla>", sem ajuste, índice
+# (CKAN, package_search?q=IBCR, 14/11/2026). Servem à prévia do PIB dos estados sem IBC-R.
+IBCR_REGIAO: dict[str, int] = {"N": 25406, "NE": 25388, "SE": 25393, "S": 25400, "CO": 25381}
+
+for _uf, _c in CREDITO_SALDO_UF.items():
+    SGS[f"CREDITO_SALDO_{_uf}"] = SerieSGS(
+        _c, f"Saldo das operações de crédito do SFN, {_uf}", "R$ milhões", "M", "14/11/2026"
+    )
+for _uf, _c in CREDITO_INADIMPLENCIA_UF.items():
+    SGS[f"CREDITO_INADIMPLENCIA_{_uf}"] = SerieSGS(
+        _c, f"Inadimplência das operações de crédito do SFN, {_uf}", "%", "M", "14/11/2026"
+    )
+for _uf, _c in IBCR_UF.items():
+    SGS[f"IBCR_{_uf}"] = SerieSGS(_c, f"IBC-R {_uf}", "índice", "M", "14/11/2026")
+for _r, _c in IBCR_REGIAO.items():
+    SGS[f"IBCR_REGIAO_{_r}"] = SerieSGS(_c, f"IBC-R, região {_r}", "índice", "M", "14/11/2026")

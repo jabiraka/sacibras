@@ -298,3 +298,30 @@ REFORMA_NORMAS = (
     "Emenda Constitucional nº 132/2023 (ADCT, arts. 125 a 130) e Lei Complementar nº 214/2025 "
     "(arts. 12, 118, 123, 125, 127, 128, 343 a 349 e 475)"
 )
+
+
+# ---- Meta de universalização do saneamento (o Marco Legal do Saneamento).
+@dataclass(frozen=True)
+class MetaDeSaneamento:
+    agua: float
+    """% da população com água potável."""
+    esgoto: float
+    """% da população com coleta e tratamento de esgotos."""
+    prazo: date
+    referencia: str
+
+
+# Lida em 14/11/2026 na Câmara (www2.camara.leg.br/legin/fed/lei/2007/
+# lei-11445-5-janeiro-2007-549031-normaatualizada-pl.html, o texto já com as alterações; o
+# Planalto não abre da nuvem). Lei 11.445/2007, art. 11-B, acrescido pela Lei 14.026/2020:
+# "Os contratos de prestação dos serviços públicos de saneamento básico deverão definir metas
+# de universalização que garantam o atendimento de 99% (noventa e nove por cento) da
+# população com água potável e de 90% (noventa por cento) da população com coleta e
+# tratamento de esgotos até 31 de dezembro de 2033". A meta é dos contratos e de cada
+# município (§ 6º), medida pela agência reguladora; não é uma pesquisa do IBGE.
+META_SANEAMENTO = MetaDeSaneamento(
+    agua=99.0,
+    esgoto=90.0,
+    prazo=date(2033, 12, 31),
+    referencia="Lei 11.445/2007, art. 11-B (Lei 14.026/2020)",
+)

@@ -67,6 +67,10 @@ export interface LinhaDoRanking {
   abre?: { aberto: boolean; quantos: number };
   /** Texto que aparece ao passar o dedo/mouse. */
   dica?: string;
+  /** Previsão: a faixa de erro (de, até), um traço em tinta neutra com as pontas marcadas. */
+  faixa?: [number, number];
+  /** Valor estimado por regra, não medido: o ponto sai vazado. */
+  estimado?: boolean;
 }
 
 export interface Regua {
@@ -123,8 +127,16 @@ export function linhaDoRanking(
     traco.style.left = `${posicaoNaRegua(m.valor, r).pct}%`;
     trilho.append(traco);
   }
+  if (l.faixa) {
+    const de = posicaoNaRegua(l.faixa[0], r).pct;
+    const ate = posicaoNaRegua(l.faixa[1], r).pct;
+    const faixa = el("i", "ponto-faixa");
+    faixa.style.left = `${de}%`;
+    faixa.style.width = `${ate - de}%`;
+    trilho.append(faixa);
+  }
   const lugar = posicaoNaRegua(l.valor, r);
-  const ponto = el("i", `ponto ${lugar.fora ? `fora-${lugar.fora}` : ""}`);
+  const ponto = el("i", `ponto ${lugar.fora ? `fora-${lugar.fora}` : ""}${l.estimado ? " estimado" : ""}`);
   ponto.style.left = `${lugar.pct}%`;
   trilho.append(ponto);
   linha.append(
@@ -133,7 +145,11 @@ export function linhaDoRanking(
     trilho,
     el("span", "ponto-valor", numero(l.valor, casas)),
   );
-  linha.title = l.dica ?? `${l.nome}: ${numero(l.valor, casas)}`;
+  linha.title =
+    l.dica ??
+    `${l.nome}: ${numero(l.valor, casas)}` +
+      (l.faixa ? ` (de ${numero(l.faixa[0], casas)} a ${numero(l.faixa[1], casas)})` : "") +
+      (l.estimado ? ", estimado pela região" : "");
   return linha;
 }
 

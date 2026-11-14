@@ -484,6 +484,15 @@ class MetricaEstados(Modelo):
     """O número do país (ou a soma/média dos estados), quando a fonte o dá."""
     limites: list[LinhaRef] = Field(default_factory=list)
     """Linhas de referência que a própria fonte publica (ex.: o limite que consta do RGF)."""
+    grupo: str = ""
+    """O assunto da métrica ("Economia", "Trabalho e renda"…): junta as opções na lista e as
+    colunas na tabela completa."""
+    intervalos: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    """Só em previsão: {sigla: (de, até)}, a faixa onde o número oficial costuma cair."""
+    estimados: list[str] = Field(default_factory=list)
+    """UFs cujo valor é estimativa por regra nossa (a tela marca o ponto e diz no mapa)."""
+    como_ler: str = ""
+    """A faixa de erro em palavras de todo dia, quando há `intervalos`."""
 
 
 class Fatia(Modelo):
