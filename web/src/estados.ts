@@ -25,6 +25,7 @@ import {
 import { montarFicha } from "./ficha";
 import { remarcar } from "./glossario";
 import type { Estados, EstadosContas, MetricaEstados } from "./tipos";
+import { protegerNomeDeEstado } from "./traducao";
 
 type PropriedadesUF = { uf: string; area: number };
 type UFNoMapa = Feature<Geometry, PropriedadesUF>;
@@ -432,7 +433,9 @@ function tabelaCompleta(e: Estados): HTMLElement {
     tr.append(th);
     for (const u of e.ufs.filter((x) => x.regiao === regiao)) {
       const linha = corpo.insertRow();
-      linha.append(el("th", "", u.nome));
+      const nome = el("th", "", u.nome);
+      protegerNomeDeEstado(nome, u.nome);
+      linha.append(nome);
       for (const m of e.metricas) {
         const v = m.valores[u.sigla] ?? null;
         linha.append(el("td", "", v === null ? "–" : numero(v, m.casas)));

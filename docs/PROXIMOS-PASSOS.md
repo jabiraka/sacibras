@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o assunto Pobreza e condições de vida, no branch `ccr-ffc705ee-tjym93`, ainda fora do `main`).
+Última atualização: 14/11/2026 (o assunto Pobreza e condições de vida, publicado no `main`).
 
 ---
 
@@ -44,7 +44,7 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
-## Pobreza e condições de vida (14/11/2026, na nuvem, branch `ccr-ffc705ee-tjym93`, **fora do `main`**)
+## Pobreza e condições de vida (14/11/2026, na nuvem, branch `ccr-ffc705ee-tjym93`, publicada no `main`)
 
 Pedidos do Caio: *"Coloque uma aba de Desigualdade [...] tem gini, concentração de renda?"*;
 depois, *"Na verdade coloque algo como Pobreza, onde a desigualdade vai ser um campo, tbm
@@ -66,8 +66,14 @@ coloque índices de saneamento básico lá, fome, etc"*.
 - Glossário (Gini, renda por pessoa, razão 10/40, linha de pobreza, lucros e dividendos,
   insegurança alimentar, Mapa da Fome, subalimentação, esgoto ligado à rede) e busca
   ("fome", "saneamento", "esgoto", "concentração de renda", em quatro línguas).
-- Conferido a 1280 e 390 px. **Falta**: o Caio olhar e dizer se vai ao `main`; as ideias que
-  ficaram (moradia, Bolsa Família, SINISA, meta do Marco do Saneamento…) estão no
+- Depois (*"Faça oq der e depois leve pro main"*): Bolsa Família (17,2 % das casas; renda por
+  pessoa de quem recebe R$ 774, de quem não recebe R$ 2.682), BPC e algum programa; internet
+  (96,8 %), luz o tempo todo (98,2 %) e fogão a lenha (14,6 %); a meta do Marco do Saneamento
+  (`leis.META_SANEAMENTO`, 99 % água e 90 % esgoto até 31/12/2033, lida na Câmara; prazo em
+  `leituras.py`); mortalidade infantil em Demografia › Nascimentos e vida (11,8 por mil); e os
+  nomes dos estados com `translate="no"` (`traducao.protegerNomeDeEstado`).
+- Conferido a 1280 e 390 px. **Publicado no `main`** em 14/11/2026, a pedido do Caio. O que
+  ficou (moradia, SINISA, fome antiga, educação, topo pelo IR por centil) está no
   [PROPOSTAS](PROPOSTAS.md), seção Pobreza.
 
 ## Reforma do consumo (14/11/2026, mesma sessão e branch da Selic, publicada no `main`)

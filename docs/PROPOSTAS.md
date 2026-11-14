@@ -41,21 +41,21 @@ idade; subalimentação da FAO e o Mapa da Fome), Água, esgoto e lixo (2016–2
 campo), Desigualdade (Gini desde 1995, fatias da renda, a renda de cada décimo), Quem ganha
 mais (o topo pelo IRPF, renda do trabalho por sexo e cor), Estados e países (pobreza, fome,
 esgoto, água e Gini por UF; Gini × PIB por habitante dos países). Pobreza e Gini também no
-mapa de Estados. O que fica:
+mapa de Estados. Depois, no mesmo dia (*"Faça oq der e depois leve pro main"*): Bolsa
+Família, BPC e algum programa social (desde 2012, com a renda de quem recebe), internet, luz e
+fogão a lenha, a meta do Marco do Saneamento (lida na Lei 11.445/2007, art. 11-B) nas linhas do
+gráfico e nos cartões, a mortalidade infantil em Demografia (projeção do IBGE) e os nomes dos
+estados protegidos do tradutor automático. O que fica:
 
 | Ideia | Fonte | Situação |
 |-------|-------|----------|
 | Moradia: casas precárias, adensamento, déficit habitacional | PNAD anual (SIDRA, a achar) e Fundação João Pinheiro (déficit, oficial para o MCidades) | a conferir |
-| Bolsa Família e BPC: quantas casas recebem e quanto pesam na renda dos mais pobres | SIDRA 7457, 7458 (PNAD anual) e MDS (beneficiários mês a mês) | possível |
 | Saneamento pelo SINISA (o antigo SNIS, das empresas de saneamento): esgoto tratado, perdas de água, por município | Ministério das Cidades | a conferir o arquivo aberto |
-| Meta do Marco do Saneamento (99 % com água e 90 % com esgoto até 2033) contra o número de hoje | Lei 14.026/2020 (ler na fonte oficial, do PC) | possível, depois de ler a lei |
 | Fome nas pesquisas de antes (PNAD 2004, 2009, 2013, POF 2018), para a série longa | SIDRA (tabelas a achar) | a conferir se são comparáveis |
-| Energia elétrica, internet, combustível de cozinha (lenha) | SIDRA 6737, 6738, 6739 | possível |
-| Saúde e educação básicas: mortalidade infantil, analfabetismo, crianças fora da escola | DataSUS, PNAD Educação | a conferir |
+| Educação: analfabetismo, crianças fora da escola, anos de estudo (talvez um assunto próprio) | PNAD Contínua, educação (SIDRA, a achar) | a conferir |
 | Concentração no topo com dado de imposto (1 % e 0,1 % dos adultos, não só dos declarantes) | Receita (DIRPF por centil, só em estudos avulsos) ou WID (não oficial) | a conferir se há arquivo aberto |
 | Riqueza: bens e direitos declarados por faixa | Receita, Grandes Números (outras abas) | a conferir as abas |
 | Renda por escolaridade e idade | SIDRA 7442, 7443 | possível |
-| Nomes dos estados com `translate="no"` nas tabelas (o tradutor fez "To" de Tocantins e "Holy Spirit") | `web/` | pequeno, vale para todas as tabelas por estado |
 
 ## Por estado
 

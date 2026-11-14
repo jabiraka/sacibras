@@ -74,6 +74,14 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
             return {"1140": [(A24, 3.0)], "6798": [(A24, 2.0)]}
         if tabela == 7192:  # duas categorias de esgoto por situação, somadas depois
             return {"6795": [(A24, 60.0), (A24, 6.0)], "1": [(A24, 70.0), (A24, 6.0)]}
+        if tabela == 7457:
+            return {"49238": _anos(16.6, 17.0), "49239": _anos(2.5, 4.0), "82225": _anos(19, 22)}
+        if tabela == 7458:
+            return {"49238": [(A25, 774.0)], "49240": [(A25, 2682.0)]}
+        if tabela in (6738, 7307):
+            return {"6795": [(A23, 95.0), (A24, 96.0)], "1": [(A24, 99.0)], "2": [(A24, 80.0)]}
+        if tabela == 6739:
+            return {"": [(A23, 15.0), (A24, 14.6)]}
         if tabela in (6731, 6736):
             return {"6795": [(A23, 85.0), (A24, 86.0)], "2": [(A24, 30.0)]}
         return {"": _anos(0.54, 0.511)}
@@ -128,6 +136,12 @@ def test_montar_poe_tudo_numa_parte(ctx: Contexto) -> None:
     assert cartoes["inseguranca-moderada-grave"].valor == pytest.approx(7.7)
     assert cartoes["esgoto"].valor == pytest.approx(66.0)  # as duas categorias somadas
     assert cartoes["subalimentacao"].texto == "menos de 2,5 %"
+    assert cartoes["bolsa-familia"].detalhe == "R$ 774 por pessoa; sem ele, R$ 2.682"
+    assert cartoes["internet"].valor == pytest.approx(96.0)
+    assert cartoes["lenha"].valor == pytest.approx(14.6)
+    assert "meta: 90 % até 2033" in cartoes["esgoto"].detalhe
+    san = next(g for g in secao.graficos if g.id == "saneamento")
+    assert [li.valor for li in san.linhas] == [99.0, 90.0]
     assert all(len(c.detalhe) <= 60 for c in secao.cartoes)
     gini = next(g for g in secao.graficos if g.id == "gini")
     antiga = next(s for s in gini.series if s.id == "pnad")
@@ -137,6 +151,7 @@ def test_montar_poe_tudo_numa_parte(ctx: Contexto) -> None:
     assert [li.rotulo for li in estados.linhas[:2]] == ["Rio de Janeiro", "Santa Catarina"]
     saneamento = next(t for t in secao.tabelas if t.id == "pobreza-saneamento")
     assert saneamento.linhas[1].valores == [66.0, 76.0, None]
+    assert saneamento.linhas[-1].valores == [14.6, None, None]  # a lenha, sem cidade e campo
     assert (
         secao.resumo.startswith("Em 2025, ") and "3,1 % moravam em casas com fome" in secao.resumo
     )

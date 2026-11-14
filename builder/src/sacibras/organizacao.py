@@ -122,9 +122,14 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "nascimentos",
             "Nascimentos e vida",
-            "Filhos por mulher, nascimentos, óbitos e esperança de vida.",
-            cartoes=["fecundidade", "esperanca-de-vida"],
-            graficos=["nascimentos-obitos", "fecundidade", "esperanca-de-vida"],
+            "Filhos por mulher, nascimentos, óbitos, esperança de vida e mortalidade infantil.",
+            cartoes=["fecundidade", "esperanca-de-vida", "mortalidade-infantil"],
+            graficos=[
+                "nascimentos-obitos",
+                "fecundidade",
+                "esperanca-de-vida",
+                "mortalidade-infantil",
+            ],
         ),
         Parte(
             "envelhecimento",
@@ -146,9 +151,9 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "linha-de-pobreza",
             "Pobreza",
-            "Quantos vivem abaixo das linhas de pobreza do Banco Mundial, desde 1995.",
-            cartoes=["pobreza", "extrema-pobreza"],
-            graficos=["pobreza"],
+            "Quantos vivem abaixo das linhas de pobreza e quantas casas recebem Bolsa Família.",
+            cartoes=["pobreza", "extrema-pobreza", "bolsa-familia"],
+            graficos=["pobreza", "programas-sociais"],
         ),
         Parte(
             "fome",
@@ -160,10 +165,10 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "saneamento",
-            "Água, esgoto e lixo",
-            "Quem tem água da rede, esgoto ligado à rede e lixo coletado, na cidade e no campo.",
-            cartoes=["agua", "esgoto", "lixo"],
-            graficos=["saneamento"],
+            "A casa: água, esgoto, luz",
+            "Água, esgoto e lixo contra a meta de 2033, luz, internet e fogão a lenha.",
+            cartoes=["agua", "esgoto", "lixo", "internet", "lenha"],
+            graficos=["saneamento", "internet-lenha"],
             tabelas=["pobreza-saneamento"],
         ),
         Parte(

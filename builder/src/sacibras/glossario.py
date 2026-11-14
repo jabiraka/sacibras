@@ -1042,6 +1042,23 @@ TERMOS: list[Termo] = [
         "#pobreza/fome",
     ),
     Termo(
+        "bpc",
+        "BPC",
+        "Benefício de Prestação Continuada: um salário mínimo por mês para idosos de 65 anos "
+        "ou mais e pessoas com deficiência de famílias de baixa renda. Não é aposentadoria: "
+        "não exige ter contribuído.",
+        ("BPC", "BPC-LOAS"),
+        "#pobreza/linha-de-pobreza",
+    ),
+    Termo(
+        "marco-do-saneamento",
+        "Marco Legal do Saneamento",
+        "A lei de 2020 que mudou as regras do saneamento e fixou a meta de 99 % da população "
+        "com água potável e 90 % com coleta e tratamento de esgoto até o fim de 2033.",
+        ("Marco Legal do Saneamento", "Marco do Saneamento"),
+        "#pobreza/saneamento",
+    ),
+    Termo(
         "esgoto-na-rede",
         "Esgoto ligado à rede",
         "A casa cujo esgoto vai para a rede geral (ou para a rede de chuva, ou para uma fossa "

@@ -155,3 +155,18 @@ export function ligarTraducao(): void {
   cookie(alvo);
   carregarTradutor();
 }
+
+/** Os nomes dos estados, que o tradutor estraga ("To" de Tocantins, "Holy Spirit"). */
+const ESTADOS = new Set([
+  "Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal", "Espírito Santo",
+  "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul", "Minas Gerais", "Pará", "Paraíba",
+  "Paraná", "Pernambuco", "Piauí", "Rio de Janeiro", "Rio Grande do Norte", "Rio Grande do Sul",
+  "Rondônia", "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins",
+]);
+
+/** Marca o nó para o Google Tradutor não mexer, se o texto for o nome de um estado. */
+export function protegerNomeDeEstado(no: HTMLElement, texto: string): void {
+  if (!ESTADOS.has(texto)) return;
+  no.classList.add("notranslate");
+  no.setAttribute("translate", "no");
+}

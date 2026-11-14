@@ -31,6 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
+from sacibras import leis
 from sacibras.fontes import banco_mundial, ibge_sidra, ipeadata, receita_irpf
 from sacibras.schema import (
     Cartao,
@@ -74,6 +75,21 @@ ESGOTO = (7192, 10133, "c11558/47930,47931")
 LIXO = (6736, 10117, "c67/4661,92864")
 """% dos moradores em domicílios com lixo coletado na porta (4661) ou em caçamba (92864)."""
 SITUACAO = {"6795": "Brasil", "1": "Urbana", "2": "Rural"}
+LUZ = (6738, 10141, "c1/all")
+"""% dos moradores em domicílios com energia da rede geral em tempo integral."""
+INTERNET = (7307, 10117, "c1/all/c688/48534")
+"""% dos moradores em domicílios em que havia uso de internet (classificação 688)."""
+LENHA = (6739, 10252, "c828/46299")
+"""% dos moradores em domicílios que cozinham com lenha ou carvão, mesmo que também com gás
+(classificação 828; um domicílio pode usar mais de um combustível). Sem abertura por
+situação."""
+PROGRAMAS = (7457, 9784, "c1035/49238,49239,82225")
+"""% dos domicílios em que alguém recebe Bolsa Família (49238), BPC (49239) ou algum programa
+social (82225), classificação 1035."""
+RENDA_PROGRAMAS = (7458, 10816, "c1035/49238,49240")
+"""Renda domiciliar por pessoa (R$, preços do último ano) de quem recebe Bolsa Família
+(49238) e de quem não recebe (49240)."""
+BOLSA, BPC, ALGUM_PROGRAMA, SEM_BOLSA = "49238", "49239", "82225", "49240"
 FOME = (9552, 10117, "c12404/109102,109101")
 """% dos moradores em domicílios com insegurança alimentar grave (109102) e moderada (109101),
 escala EBIA. A grave é a fome: alguém da casa passou um dia sem comer por falta de dinheiro."""
@@ -128,6 +144,7 @@ MAPA_DA_FOME = 2.5
 A_VISTA_CARTOES = ["pobreza", "fome", "esgoto", "gini"]
 """Os números da visão geral do assunto, um de cada parte principal."""
 A_VISTA_GRAFICOS = ["pobreza"]
+"""O gráfico da visão geral."""
 
 # Faixas de quem declara, em salários mínimos (piso de cada grupo), da menor para a maior.
 GRUPOS_IRPF = [(0.0, "Até 5"), (5.0, "De 5 a 20"), (20.0, "De 20 a 80"), (80.0, "De 80 a 320")]
@@ -542,6 +559,14 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
 
+    # ---------------------------------------------------------------- programas sociais
+    try:
+        c_prog, g_prog = programas_sociais()
+        cartoes += c_prog
+        graficos += g_prog
+    except Exception as erro:
+        avisos.append(f"programas sociais: {erro}")
+
     # ---------------------------------------------------------------- sexo e cor
     cor = ibge_sidra.series(POR_COR[0], POR_COR[1], classificacao=POR_COR[2], por="Cor")
     sexo = ibge_sidra.series(POR_SEXO[0], POR_SEXO[1], classificacao=POR_SEXO[2], por="Sexo")
@@ -827,6 +852,11 @@ def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]
         LIXO[0], LIXO[1], classificacao=f"c1/all/{LIXO[2]}", por="Situação"
     )
     lixo = {c: _somar_por_ano(pts) for c, pts in lixo_sit.items()}
+    luz = ibge_sidra.series(LUZ[0], LUZ[1], classificacao=LUZ[2], por="Situação")
+    internet = ibge_sidra.series(
+        INTERNET[0], INTERNET[1], classificacao=INTERNET[2], por="Situação"
+    )
+    lenha = ibge_sidra.serie(LENHA[0], LENHA[1], classificacao=LENHA[2])
     a, e, li = agua.get("6795", []), esgoto.get("6795", []), lixo.get("6795", [])
     if not (a and e and li):
         raise RuntimeError("SIDRA sem água, esgoto ou lixo do Brasil")
@@ -835,17 +865,59 @@ def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]
     def det(pts: list[Ponto]) -> str:
         return f"{pts[0][0].year}: {br(pts[0][1])} %"
 
+    meta = leis.META_SANEAMENTO
+    net = internet.get("6795", [])
+
+    def ate(valor: float) -> str:
+        return f"meta: {br(valor, 0)} % até {meta.prazo.year}"
+
     cartoes = [
         _cartao_anual(
-            "agua", "Água da rede", a, "% das pessoas", f"{fonte} (SIDRA 6731)", det(a), 1
+            "agua",
+            "Água da rede",
+            a,
+            "% das pessoas",
+            f"{fonte} (SIDRA 6731)",
+            f"{det(a)}; {ate(meta.agua)}",
+            1,
         ),
         _cartao_anual(
-            "esgoto", "Esgoto ligado à rede", e, "% das pessoas", f"{fonte} (SIDRA 7192)", det(e), 1
+            "esgoto",
+            "Esgoto ligado à rede",
+            e,
+            "% das pessoas",
+            f"{fonte} (SIDRA 7192)",
+            f"{det(e)}; {ate(meta.esgoto)}",
+            1,
         ),
         _cartao_anual(
             "lixo", "Lixo coletado", li, "% das pessoas", f"{fonte} (SIDRA 6736)", det(li), 1
         ),
     ]
+    if net:
+        cartoes.append(
+            _cartao_anual(
+                "internet",
+                "Internet em casa",
+                net,
+                "% das pessoas",
+                f"{fonte} (SIDRA 7307)",
+                det(net),
+                1,
+            )
+        )
+    if lenha:
+        cartoes.append(
+            _cartao_anual(
+                "lenha",
+                "Cozinha com lenha ou carvão",
+                lenha,
+                "% das pessoas",
+                f"{fonte} (SIDRA 6739)",
+                det(lenha),
+                1,
+            )
+        )
     grafico_san = grafico(
         "saneamento",
         "Água, esgoto e lixo",
@@ -856,12 +928,37 @@ def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]
         ],
         unidade="% das pessoas",
         periodicidade="A",
-        fonte=f"{fonte} (SIDRA 6731, 7192 e 6736)",
+        fonte=f"{fonte} (SIDRA 6731, 7192 e 6736); metas: {meta.referencia}",
+        linhas=[
+            LinhaRef(valor=meta.agua, rotulo=f"meta de água para {meta.prazo.year}"),
+            LinhaRef(valor=meta.esgoto, rotulo=f"meta de esgoto para {meta.prazo.year}"),
+        ],
         nota=(
             "Parte dos moradores que tem cada serviço em casa. Esgoto ligado à rede: rede geral "
             "de esgoto ou pluvial, ou fossa séptica ligada a ela; fossa não ligada, vala ou "
             "rio ficam de fora. O esgoto começa em 2019, quando o IBGE mudou as categorias. Em "
-            "2020 e 2021 a pesquisa não perguntou sobre a casa."
+            "2020 e 2021 a pesquisa não perguntou sobre a casa. As metas são as do Marco Legal "
+            f"do Saneamento ({meta.referencia}): {br(meta.agua, 0)} % da população com água "
+            f"potável e {br(meta.esgoto, 0)} % com coleta e tratamento de esgoto até "
+            f"{meta.prazo.strftime('%d/%m/%Y')}. A PNAD vê se o esgoto sai pela rede, não se é "
+            "tratado: a parte tratada é menor que a linha do esgoto."
+        ),
+    )
+    grafico_casa = grafico(
+        "internet-lenha",
+        "Internet, luz e fogão a lenha",
+        [
+            serie("internet", "Internet em casa", net, casas=1),
+            serie("luz", "Luz da rede o tempo todo", luz.get("6795", []), casas=1),
+            serie("lenha", "Cozinha com lenha ou carvão", lenha, casas=1),
+        ],
+        unidade="% das pessoas",
+        periodicidade="A",
+        fonte=f"{fonte} (SIDRA 7307, 6738 e 6739)",
+        nota=(
+            "Lenha ou carvão: a casa usa para cozinhar, mesmo que tenha gás também. A fumaça "
+            "dentro de casa faz mal à saúde, e quem volta à lenha costuma ser quem não consegue "
+            "pagar o botijão."
         ),
     )
     ultimo = a[-1][0]
@@ -881,12 +978,64 @@ def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]
                 ("Água da rede geral", agua),
                 ("Esgoto ligado à rede", esgoto),
                 ("Lixo coletado", lixo),
+                ("Luz da rede o tempo todo", luz),
+                ("Internet em casa", internet),
+                ("Cozinha com lenha ou carvão", {"6795": lenha}),
             )
         ],
-        fonte=f"{fonte} (SIDRA 6731, 7192 e 6736)",
-        nota="No campo, poço e fossa são comuns e nem sempre ruins; a rede é o que a meta mede.",
+        fonte=f"{fonte} (SIDRA 6731, 7192, 6736, 6738, 7307 e 6739)",
+        nota=(
+            "No campo, poço e fossa são comuns e nem sempre ruins. A lenha não sai aberta entre "
+            "cidade e campo."
+        ),
     )
-    return cartoes, [grafico_san], [tabela], e
+    return cartoes, [grafico_san, grafico_casa], [tabela], e
+
+
+def programas_sociais() -> tuple[list[Cartao], list[Grafico]]:
+    """Bolsa Família, BPC e algum programa social, em % das casas, e a renda de quem recebe."""
+    programas = _pct(PROGRAMAS, por="Recebimento")
+    renda = _pct(RENDA_PROGRAMAS, por="Recebimento")
+    bolsa = programas.get(BOLSA, [])
+    if not bolsa:
+        raise RuntimeError("SIDRA 7457 sem o Bolsa Família")
+    com, sem = renda.get(BOLSA, []), renda.get(SEM_BOLSA, [])
+    rendas = (
+        f"R$ {br(com[-1][1], 0)} por pessoa; sem ele, R$ {br(sem[-1][1], 0)}" if com and sem else ""
+    )
+    cartao_bolsa = _cartao_anual(
+        "bolsa-familia",
+        "Casas com Bolsa Família",
+        bolsa,
+        "% das casas",
+        f"{PNADA} (SIDRA 7457 e 7458)",
+        rendas,
+        1,
+    )
+    grafico_prog = grafico(
+        "programas-sociais",
+        "Casas que recebem programas sociais",
+        [
+            serie("algum", "Algum programa", programas.get(ALGUM_PROGRAMA, []), casas=1),
+            serie("bolsa", "Bolsa Família", bolsa, casas=1),
+            serie("bpc", "BPC", programas.get(BPC, []), casas=1),
+        ],
+        unidade="% das casas",
+        periodicidade="A",
+        fonte=f"{PNADA} (SIDRA 7457 e 7458)",
+        nota=(
+            "Parte dos domicílios em que algum morador recebeu o programa. BPC: o benefício de "
+            "um salário mínimo a idosos e pessoas com deficiência de baixa renda. "
+            + (
+                f"Em {com[-1][0].year}, a renda por pessoa de quem recebe o Bolsa Família, já "
+                f"com o benefício, era R$ {br(com[-1][1], 0)} por mês; a de quem não recebe, "
+                f"R$ {br(sem[-1][1], 0)}."
+                if com and sem
+                else ""
+            )
+        ),
+    )
+    return [cartao_bolsa], [grafico_prog]
 
 
 def _somar_por_ano(pontos: list[Ponto]) -> list[Ponto]:

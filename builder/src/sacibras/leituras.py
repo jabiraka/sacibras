@@ -51,6 +51,14 @@ LEITURAS: list[Leitura] = [
         "ou a nota da Conorf no site do Senado. A cada bimestre.",
     ),
     Leitura(
+        "Meta do Marco do Saneamento (99 % água, 90 % esgoto até 2033)",
+        "leis.META_SANEAMENTO",
+        date(2026, 11, 14),
+        date(2027, 11, 14),
+        "Câmara, Lei 11.445/2007 em texto atualizado (legin, normaatualizada), art. 11-B; ou o "
+        "Planalto, do PC. Conferir se lei nova mudou a meta ou o prazo. Uma vez por ano.",
+    ),
+    Leitura(
         "Meta de inflação (CMN)",
         "leis.META_CONTINUA",
         date(2026, 11, 14),

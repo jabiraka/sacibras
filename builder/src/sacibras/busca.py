@@ -204,6 +204,10 @@ SINONIMOS: dict[str, list[str]] = {
     "saneamento": ["esgoto", "agua encanada", "saneamento basico", "lixo", "coleta de lixo"],
     "esgoto": ["saneamento", "saneamento basico", "fossa", "rede de esgoto"],
     "agua": ["agua encanada", "abastecimento de agua", "saneamento"],
+    "bolsa familia": ["programa social", "auxilio", "transferencia de renda", "bpc", "cadunico"],
+    "internet": ["inclusao digital", "banda larga", "acesso a internet"],
+    "lenha": ["fogao a lenha", "gas de cozinha", "botijao", "carvao"],
+    "mortalidade infantil": ["mortes de bebes", "saude infantil", "obitos infantis"],
     "desigualdade": [
         "concentracao de renda",
         "distribuicao de renda",
@@ -482,6 +486,7 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
     "pobreza": ["poverty", "extreme poverty", "pobreza extrema", "pauvrete", "extreme pauvrete"],
     "fome": ["hunger", "food insecurity", "hambre", "inseguridad alimentaria", "faim"],
     "saneamento": ["sanitation", "sewage", "water supply", "saneamiento", "assainissement"],
+    "mortalidade infantil": ["infant mortality", "mortalidad infantil", "mortalite infantile"],
     "idosos": [
         "elderly",
         "aging",
