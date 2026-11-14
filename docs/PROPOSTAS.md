@@ -70,6 +70,42 @@ fonte aberta:
 | VIX, NFCI, petróleo, metais | risco-país, Brent, minério | sem fonte aberta estável (EMBI parou em 2024) | fora por ora |
 | UMich, Cleveland | expectativa do consumidor (FGV) | FGV cobra | fora |
 
+## Aba "Riscos" (Caio, 14/11/2026: *"me proponha algo que dê pra colocar numa aba só de riscos"*)
+
+No ar desde 14/11/2026 (`secoes/riscos.py`, `modelos/risco.py`, `relatorios.py`,
+`web/src/alertas.ts`). Decisões do Caio no mesmo dia: a palavra na tela é **sustentabilidade
+da dívida**, não "calote"; os **cenários de estresse entram** (fixos, tirados da história);
+**fonte não oficial fica de fora**; e pediu a mais risco de crédito, câmbio, juros sobre a
+dívida e o risco demográfico (*"de ficarmos sem grana pra previdência"*).
+
+| Bloco | Situação |
+|-------|----------|
+| 1. A dívida se sustenta? | ✅ primário que estabiliza a dívida contra o de hoje, juro da dívida menos crescimento, juros em reais (SGS 5045), prazo médio (10618), leque de trajetórias (4.000 sorteios com os choques de 2006 a 2025, cápsulas de 80 %) ao lado do Focus, e as elasticidades que o BC publica (lidas à mão). Falta: a taxa implícita oficial da DBGG e o vencimento em 12 meses (só na planilha mensal da nota fiscal do BC, tabelas 24 e 25: um arquivo por mês), o FMI no leque, juros sobre a receita. |
+| 2. O que o mercado cobra | ✅ volatilidade do dólar e do Ibovespa, distância do pico, câmbio real efetivo. Falta: juro real de 10 anos do Brasil menos o dos EUA (a fonte americana foi testada e responde, ver [FONTES](FONTES.md); pede a história do juro real brasileiro de 10 anos, que `juros.py` só calcula para hoje), inflação implícita longa contra a meta no painel. EMBI+ e CDS seguem sem fonte aberta. |
+| 3. Nota de crédito | ✅ escada das três agências desde 1994 e o cartão com a distância do grau de investimento, lidos à mão (`relatorios.py`). O sistema do Tesouro (sisweb) estava fora do ar: reler quando voltar e a cada ato de agência. |
+| 4. Painel de alerta | ✅ 32 indicadores em seis grupos, cada um na régua da própria história, com o lado ruim à direita; "aceso" = pior que 80 % da história; limite oficial onde há (teto da meta, mínimo de Basileia). Sem nota única. Falta: hiato de crédito do BIS (testado, ver FONTES), liquidez dos bancos (SGS 29407/29408, trimestrais), expectativa de inflação contra a meta. |
+| 5. Testes de estresse | ✅ cinco episódios (2002, 2008, 2015–16, 2020, fim de 2024): o que dólar, bolsa, Selic e PIB fizeram e o mesmo tranco na escala de hoje; a dívida com os choques de 2008, 2015–16 e 2020 somados à linha de base do Focus; o teste dos bancos do REF de out/2026 na nota (lido à mão). 2002 fica fora da conta da dívida (a DBGG atual começa em dez/2006). |
+| 6. Risco jurídico e institucional | ⬜ ações contra a União com perda provável e possível (Anexo de Riscos Fiscais da LDO), precatórios, indicadores de governança do Banco Mundial. Tudo lido à mão ou de API lenta: próximo passo. |
+| 7. Estados | ⬜ quem está perto do limite de pessoal e de dívida (os limites da lei já estão em `leis.py`), nota CAPAG. |
+| Longo prazo e energia (pedido a mais) | ✅ déficit e benefícios do INSS no painel, idosos por 100 em idade ativa (projeção do IBGE, com o resto em Demografia), reservatórios das hidrelétricas (ONS) contra o mesmo mês dos outros anos. Ideias: dependência de commodities nas exportações (Comex Stat), projeção atuarial do RGPS (LDO). |
+
+## Demografia (Caio, 14/11/2026: *"resultados demográficos… riscos demográficos, algo que envolve a produtividade, trabalho e previdência"*)
+
+Pronto em 14/11/2026 (assunto "Demografia"): população, fecundidade, esperança de vida, idade
+mediana, idosos e jovens por 100 de 15 a 64, pirâmide etária por ano, nascimentos × óbitos,
+idosos por estado (projeção do IBGE, revisão 2024); PIB por pessoa ocupada e a divisão do
+crescimento entre ocupação e produtividade; déficit do INSS (RTN).
+
+| Ideia | Fonte | Situação |
+|-------|-------|----------|
+| Contribuintes da previdência por beneficiário | PNAD Contínua (contribuintes) e boletim da Previdência (benefícios) | a tabela do SIDRA não foi achada sem o catálogo (`sidra.ibge.gov.br` dá 403 de fora); tentar no PC |
+| A projeção da ONU (WPP 2024) ao lado da do IBGE, com a faixa de 80 % e 95 % | ONU, World Population Prospects | o portal pede chave; ver o CSV de download. Daria a faixa de erro que o IBGE não publica |
+| Produtividade por hora trabalhada | PNAD (horas habituais) | a conferir |
+| Projeção atuarial do RGPS (despesa e receita em % do PIB até 2100) | anexo da LDO, lido à mão como as leis | a conferir |
+| Previdência dos servidores da União e dos militares | RTN (outras abas) | a conferir |
+| Envelhecimento contra outros países (idosos por 100, fecundidade) | Banco Mundial (lento) ou ONU | ligaria com "Brasil no mundo" |
+| Ficha do estado com a pirâmide e o ano do pico da população | a mesma projeção do IBGE, por UF | dado já baixado |
+
 ## Outras
 
 - Previsões próprias de IPCA e desocupação (modelo sazonal), sempre ao lado do Focus.

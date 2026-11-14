@@ -54,6 +54,24 @@ class LinhaRef(Modelo):
     rotulo: str
 
 
+class Piramide(Modelo):
+    """A pirâmide etária: pessoas por sexo e grupo de idade, um ano escolhido em lista.
+
+    `homens[i][k]` é o grupo `grupos[k]` no ano `anos[i]`, em mil pessoas."""
+
+    grupos: list[str]
+    """Do mais novo ao mais velho: "0 a 4", "5 a 9"… "90 ou mais"."""
+    anos: list[int]
+    homens: list[list[float]]
+    mulheres: list[list[float]]
+    ano_inicial: int
+    """O ano que abre escolhido (o corrente)."""
+    ano_contorno: int
+    """O ano desenhado só em contorno, para comparar (o primeiro da série)."""
+    primeiro_ano_projetado: int
+    """Do ano em diante é projeção da fonte."""
+
+
 class Grafico(Modelo):
     id: str
     titulo: str
@@ -72,6 +90,8 @@ class Grafico(Modelo):
     nota: str = ""
     """O método em uma frase, quando há conta nossa ou previsão."""
     largura: Literal["meia", "inteira"] = "meia"
+    piramide: Piramide | None = None
+    """Com ela, o site desenha a pirâmide etária no lugar das séries."""
 
 
 class Meta(Modelo):
@@ -155,14 +175,60 @@ class SimuladorDivida(Modelo):
     nota: str
 
 
+class Alerta(Modelo):
+    """Um indicador do painel de alerta: o valor de hoje na régua da própria história.
+
+    Não é previsão de crise: diz só em que parte da história o indicador esteve melhor."""
+
+    id: str
+    grupo: str
+    """O título do grupo em que aparece: "Contas públicas", "Câmbio e contas externas"…"""
+    nome: str
+    valor: float
+    unidade: str
+    casas: int = 1
+    referencia: date
+    periodicidade: Periodicidade
+    pior_quando: Literal["alto", "baixo"]
+    pior_que: float
+    """% das observações desde `desde` em que o indicador esteve em situação melhor."""
+    minimo: float
+    maximo: float
+    mediana: float
+    desde: date
+    limite: LinhaRef | None = None
+    """O limite oficial, quando existe (o teto da meta de inflação)."""
+    fonte: str
+    procedencia: Procedencia = "oficial"
+
+
+class Subcategoria(Modelo):
+    """Uma parte do assunto ("Núcleos e o ritmo", na Inflação): o que abre junto, numa tela só.
+
+    As listas guardam os ids dos cartões, gráficos e tabelas do próprio assunto, na ordem em
+    que aparecem. `extras` são as peças próprias que o assunto traz fora dessas listas."""
+
+    id: str
+    titulo: str
+    resumo: str = ""
+    """Uma frase: o que a pessoa acha aqui dentro."""
+    cartoes: list[str] = Field(default_factory=list)
+    graficos: list[str] = Field(default_factory=list)
+    tabelas: list[str] = Field(default_factory=list)
+    extras: list[Literal["simulador", "alertas"]] = Field(default_factory=list)
+
+
 class Secao(Modelo):
     id: str
     titulo: str
     resumo: str = ""
+    subcategorias: list[Subcategoria] = Field(default_factory=list)
+    """Vazia: o assunto abre inteiro, numa tela só (como antes)."""
     cartoes: list[Cartao] = Field(default_factory=list)
     graficos: list[Grafico] = Field(default_factory=list)
     tabelas: list[Tabela] = Field(default_factory=list)
     simulador: SimuladorDivida | None = None
+    alertas: list[Alerta] = Field(default_factory=list)
     gerado_em: datetime
 
 
@@ -313,19 +379,35 @@ class EstadoFonte(Modelo):
     detalhe: str = ""
 
 
+class ItemSubcategoria(Modelo):
+    id: str
+    titulo: str
+
+
 class ItemSecao(Modelo):
     id: str
     titulo: str
     arquivo: str
+    subcategorias: list[ItemSubcategoria] = Field(default_factory=list)
+    """Para o menu lateral, que não baixa a seção."""
     resumo: str = ""
     """A manchete do assunto, para o cartão da página inicial (que não baixa a seção)."""
     ok: bool
     erro: str = ""
 
 
+class Categoria(Modelo):
+    """Um grupo de assuntos no menu e na entrada ("Preços, juros e crédito")."""
+
+    id: str
+    titulo: str
+    secoes: list[str]
+
+
 class Painel(Modelo):
     gerado_em: datetime
     secoes: list[ItemSecao]
+    categorias: list[Categoria] = Field(default_factory=list)
     fontes: list[EstadoFonte] = Field(default_factory=list)
 
 

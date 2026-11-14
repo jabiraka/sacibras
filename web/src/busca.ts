@@ -1,5 +1,5 @@
-// A busca: a lupa no cabeçalho (e a caixa no início) abre um painel com o campo e os
-// resultados. O índice (`busca.json`) vem do builder, com os sinônimos de cada item; aqui só
+// A busca: o campo fica fixo no menu lateral (no celular, na faixa do topo) e os resultados
+// aparecem logo abaixo dele. O índice (`busca.json`) vem do builder, com os sinônimos de cada item; aqui só
 // se compara sem acento e por começo de palavra.
 
 import { el } from "./pecas";
@@ -61,50 +61,53 @@ export function buscar(itens: Indexado[], texto: string, limite = 12): Indexado[
     .map((x) => x.i);
 }
 
-let painel: HTMLDialogElement | null = null;
-let fechadoEm = 0;
-
+/** Põe o cursor no campo da busca, que fica sempre à vista no menu lateral (no celular, no
+ *  topo). Atalho: a tecla "/". */
 export function abrirBusca(inicial = ""): void {
-  // O Enter que escolhe um resultado devolve o foco ao botão que abriu a busca, e o mesmo
-  // Enter o "clica" de novo: logo depois de fechar, não reabre.
-  if (Date.now() - fechadoEm < 400) return;
-  painel ??= montarPainel();
-  const campo = painel.querySelector("input") as HTMLInputElement;
-  campo.value = inicial;
-  campo.dispatchEvent(new Event("input"));
-  if (!painel.open) painel.showModal();
+  const campo = document.getElementById("busca-campo") as HTMLInputElement | null;
+  if (!campo) return;
+  if (inicial) {
+    campo.value = inicial;
+    campo.dispatchEvent(new Event("input"));
+  }
   campo.focus();
 }
 
-function montarPainel(): HTMLDialogElement {
-  const dialogo = el("dialog", "busca vidro");
-  dialogo.setAttribute("aria-label", "Buscar no painel");
-  const linha = el("div", "busca-linha");
-  const campo = el("input", "busca-campo");
-  campo.type = "search";
-  campo.placeholder = "Buscar: inflação, dólar, desemprego, dívida dos estados…";
-  campo.setAttribute("aria-label", "O que você quer ver?");
-  campo.autocomplete = "off";
-  campo.enterKeyHint = "go";
-  const fechar = el("button", "busca-fechar", "Fechar");
-  fechar.type = "button";
-  fechar.addEventListener("click", () => dialogo.close());
-  linha.append(campo, fechar);
-  const lista = el("ol", "busca-resultados");
-  const aviso = el("p", "busca-aviso");
-  dialogo.append(linha, aviso, lista);
+/** Liga o campo fixo aos resultados logo abaixo dele (sem janela por cima da página:
+ *  Caio, 14/11/2026, "a pesquisa não precisa abrir um outro negócio, pode manter fixo"). */
+export function ligarBusca(): void {
+  const campo = document.getElementById("busca-campo") as HTMLInputElement | null;
+  const saida = document.getElementById("busca-saida");
+  if (!campo || !saida) return;
+  const lista = saida.querySelector("ol") as HTMLOListElement;
+  const aviso = saida.querySelector("p") as HTMLParagraphElement;
 
+  const fechar = (): void => {
+    saida.hidden = true;
+    campo.setAttribute("aria-expanded", "false");
+  };
   const ir = (h: string): void => {
-    dialogo.close();
+    fechar();
+    campo.value = "";
+    campo.blur();
     if (location.hash === h) window.dispatchEvent(new HashChangeEvent("hashchange"));
     else location.hash = h;
   };
+  const itens = (): HTMLAnchorElement[] => [...lista.querySelectorAll<HTMLAnchorElement>("a")];
+
   let pedido = 0;
   campo.addEventListener("input", () => {
     const meu = ++pedido;
-    void carregar().then((itens) => {
+    const texto = campo.value;
+    if (!texto.trim()) {
+      lista.replaceChildren();
+      aviso.textContent = "";
+      fechar();
+      return;
+    }
+    void carregar().then((todos) => {
       if (meu !== pedido) return;
-      const achados = buscar(itens, campo.value);
+      const achados = buscar(todos, texto);
       lista.replaceChildren(
         ...achados.map((a) => {
           const li = el("li");
@@ -119,28 +122,49 @@ function montarPainel(): HTMLDialogElement {
           return li;
         }),
       );
-      aviso.textContent =
-        campo.value.trim() && !achados.length
-          ? "Nada com esse nome. Tente outra palavra (\"juros\", \"emprego\", \"bolsa\")."
-          : "";
+      aviso.textContent = achados.length
+        ? ""
+        : 'Nada com esse nome. Tente outra palavra ("juros", "emprego", "bolsa").';
+      saida.hidden = false;
+      campo.setAttribute("aria-expanded", "true");
     });
+  });
+  campo.addEventListener("focus", () => {
+    if (campo.value.trim() && (lista.children.length || aviso.textContent)) saida.hidden = false;
   });
   campo.addEventListener("keydown", (ev) => {
     if (ev.key === "Enter") {
       ev.preventDefault();
-      const primeiro = lista.querySelector("a");
+      const primeiro = itens()[0];
       if (primeiro) ir(primeiro.getAttribute("href") ?? "#");
+    } else if (ev.key === "ArrowDown") {
+      ev.preventDefault();
+      itens()[0]?.focus();
+    } else if (ev.key === "Escape") {
+      campo.value = "";
+      campo.dispatchEvent(new Event("input"));
     }
   });
-  // Toque fora do painel fecha.
-  dialogo.addEventListener("click", (ev) => {
-    if (ev.target === dialogo) dialogo.close();
+  // Setas entre os resultados; Esc volta ao campo.
+  lista.addEventListener("keydown", (ev) => {
+    const todos = itens();
+    const i = todos.indexOf(document.activeElement as HTMLAnchorElement);
+    if (ev.key === "ArrowDown") {
+      ev.preventDefault();
+      todos[Math.min(i + 1, todos.length - 1)]?.focus();
+    } else if (ev.key === "ArrowUp") {
+      ev.preventDefault();
+      if (i <= 0) campo.focus();
+      else todos[i - 1]?.focus();
+    } else if (ev.key === "Escape") {
+      campo.focus();
+      fechar();
+    }
   });
-  dialogo.addEventListener("close", () => {
-    fechadoEm = Date.now();
+  // Toque fora da busca fecha a lista (o texto fica, e volta ao focar o campo).
+  document.addEventListener("pointerdown", (ev) => {
+    if (!(ev.target as HTMLElement).closest(".busca-fixa")) fechar();
   });
-  document.body.append(dialogo);
-  return dialogo;
 }
 
 /** Depois de abrir o assunto: mostra o elemento pedido, abrindo o que estiver guardado. */

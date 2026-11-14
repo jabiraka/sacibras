@@ -15,11 +15,21 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from sacibras import organizacao
 from sacibras.catalogo import SGS
-from sacibras.schema import AoVivo, Cartao, EstadoFonte, ItemSecao, Painel, Secao
+from sacibras.schema import (
+    AoVivo,
+    Cartao,
+    EstadoFonte,
+    ItemSecao,
+    ItemSubcategoria,
+    Painel,
+    Secao,
+)
 from sacibras.secoes import (
     atividade,
     credito,
+    demografia,
     estados,
     externo,
     fiscal,
@@ -28,6 +38,7 @@ from sacibras.secoes import (
     mercados,
     mundo,
     previsoes,
+    riscos,
     trabalho,
 )
 from sacibras.secoes.base import Contexto
@@ -43,8 +54,10 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("externo", "Setor externo", externo.montar),
     ("fiscal", "Contas públicas e dívida", fiscal.montar),
     ("estados", "Estados", estados.montar),
+    ("demografia", "Demografia", demografia.montar),
     ("mundo", "Brasil no mundo", mundo.montar),
     ("previsoes", "Previsões", previsoes.montar),
+    ("riscos", "Riscos", riscos.montar),
 ]
 
 # Os seis números da página inicial, na ordem; cada um nasce no assunto que o explica.
@@ -82,7 +95,24 @@ FONTES = {
     "estados": "Tesouro Nacional (SICONFI) e IBGE (PNAD Contínua)",
     "mundo": "FMI (WEO) e BIS",
     "previsoes": "Banco Central (Focus)",
+    "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",
+    "demografia": "IBGE (Projeções da População e PNAD) e Tesouro Nacional (RTN)",
 }
+
+
+def _partes(dados: object) -> list[ItemSubcategoria]:
+    """As subcategorias de uma seção (modelo ou JSON antigo), só id e título, para o menu."""
+    lista = (
+        dados.get("subcategorias", [])
+        if isinstance(dados, dict)
+        else getattr(dados, "subcategorias", [])
+    )
+    return [
+        ItemSubcategoria(id=s["id"], titulo=s["titulo"])
+        if isinstance(s, dict)
+        else ItemSubcategoria(id=s.id, titulo=s.titulo)
+        for s in lista
+    ]
 
 
 def _gravar(pasta: Path, nome: str, modelo: BaseModel) -> None:
@@ -108,6 +138,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                         titulo=titulo,
                         arquivo=arquivo,
                         resumo=manchete(antigo.get("resumo", "")),
+                        subcategorias=_partes(antigo),
                         ok=True,
                     )
                 )
@@ -124,6 +155,10 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 except Exception as erro:  # sem o arquivo, a seção sai sem apontar para ele
                     setattr(secao, "arquivo_contas", "")  # noqa: B010
                     print(f"  aviso: {id}: contas não gravadas ({erro})")
+            if isinstance(secao, Secao):
+                sem_lugar = organizacao.aplicar(secao)
+                if sem_lugar:
+                    print(f"  aviso: {id}: sem parte em organizacao.py: {', '.join(sem_lugar)}")
             _gravar(saida, arquivo, secao)
             extra = ctx.memo.pop(f"{id}_paises", None)  # o arquivo à parte da seção, se houver
             if extra is not None:
@@ -136,6 +171,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     titulo=titulo,
                     arquivo=arquivo,
                     resumo=manchete(getattr(secao, "resumo", "")),
+                    subcategorias=_partes(secao),
                     ok=True,
                 )
             )
@@ -144,6 +180,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
         except Exception as erro:
             traceback.print_exc()
             sobrou = (saida / arquivo).exists()
+            partes: list[ItemSubcategoria] = []
             if sobrou:
                 # O JSON bom da rodada anterior continua valendo, e os números dele também
                 # entram na página inicial.
@@ -151,10 +188,18 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     antigo = json.loads((saida / arquivo).read_text(encoding="utf-8"))
                     for c in antigo.get("cartoes", []):
                         cartoes[c["id"]] = Cartao.model_validate(c)
+                    partes = _partes(antigo)
                 except (OSError, ValueError):
                     pass
             itens.append(
-                ItemSecao(id=id, titulo=titulo, arquivo=arquivo, ok=sobrou, erro=str(erro)[:300])
+                ItemSecao(
+                    id=id,
+                    titulo=titulo,
+                    arquivo=arquivo,
+                    subcategorias=partes,
+                    ok=sobrou,
+                    erro=str(erro)[:300],
+                )
             )
             fontes.append(EstadoFonte(fonte=FONTES[id], ok=False, detalhe=str(erro)[:300]))
             print(f"  FALHA {id}: {str(erro)[:160]}")
@@ -176,6 +221,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
         gerado_em=agora,
         secoes=[ItemSecao(id="resumo", titulo="Resumo", arquivo="resumo.json", ok=True), *itens],
         fontes=fontes,
+        categorias=organizacao.CATEGORIAS,
     )
     _gravar(saida, "painel.json", painel)
     return painel

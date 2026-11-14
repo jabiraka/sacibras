@@ -86,8 +86,23 @@ function tracos(g: Grafico, desde: number): Traco[] {
   return saida;
 }
 
+/** Anos de projeção à frente do último ponto realizado (o trecho tracejado mais longo). */
+function anosProjetados(g: Grafico): number {
+  let maior = 0;
+  for (const s of g.series) {
+    if (!s.tracejado_desde) continue;
+    const corte = data(s.tracejado_desde).getTime();
+    const fim = Math.max(...s.pontos.filter((p) => p[1] !== null).map(([iso]) => data(iso).getTime()));
+    maior = Math.max(maior, (fim - corte) / (365.25 * DIA));
+  }
+  return maior;
+}
+
 function janelas(g: Grafico): { rotulo: string; anos: number | null }[] {
   if (g.tipo === "curva") return [];
+  // Projeção longa (a da população vai até 2070): o gráfico é a trajetória inteira, e uma
+  // janela contada do fim mostraria só o futuro.
+  if (anosProjetados(g) > 10) return [];
   let min = Infinity;
   let max = -Infinity;
   for (const s of g.series) {

@@ -1,0 +1,185 @@
+/* O painel de alerta (aba de riscos). Usa os tokens de estilo.css; o selo é o .situacao. */
+
+.alerta-legenda {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 0.6875rem;
+  color: var(--tinta-2);
+}
+
+.alerta-legenda-meio {
+  color: var(--tinta-3);
+}
+
+.alerta-grupo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 18px 0 2px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.alerta-grupo small {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--tinta-3);
+  white-space: nowrap;
+}
+
+.alerta-lista {
+  display: grid;
+}
+
+.alerta {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) minmax(0, 11.5rem);
+  align-items: center;
+  gap: 4px 16px;
+  padding: 9px 6px;
+  border-top: 1px solid var(--fio);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+}
+
+.alerta.achado {
+  background: var(--verde-claro);
+}
+
+.alerta-nome {
+  display: grid;
+  gap: 1px;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.alerta-nome span {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.alerta-nome small {
+  font-size: 0.6875rem;
+  color: var(--tinta-3);
+  overflow-wrap: anywhere;
+}
+
+.alerta-regua {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 7px;
+}
+
+.alerta-nome .alerta-limite-texto {
+  color: var(--tinta-2);
+}
+
+.alerta-limite-texto i {
+  display: inline-block;
+  width: 0;
+  height: 0.75em;
+  margin-right: 5px;
+  vertical-align: -1px;
+  border-left: 2px dashed var(--faixa);
+}
+
+.alerta-trilho {
+  position: relative;
+  display: block;
+  height: 14px;
+}
+
+.alerta-trilho::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  right: -7px;
+  top: 6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--neutro-barra);
+}
+
+.alerta-trilho i {
+  position: absolute;
+}
+
+.alerta-mediana {
+  top: 2px;
+  bottom: 2px;
+  width: 0;
+  border-left: 1.5px solid var(--tinta-3);
+}
+
+.alerta-limite {
+  top: -1px;
+  bottom: -1px;
+  width: 0;
+  border-left: 2px dashed var(--faixa);
+}
+
+.alerta-ponto {
+  top: 1px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 0 2px var(--superficie);
+}
+
+.alerta.aceso .alerta-ponto {
+  background: var(--alerta);
+}
+
+.alerta-pontas {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 -7px;
+  font-size: 0.625rem;
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.alerta-valor {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  min-width: 0;
+  text-align: right;
+}
+
+.alerta-valor strong {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.alerta-valor .situacao {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+/* No celular: nome e valor na primeira linha, a régua inteira embaixo. */
+@media (max-width: 640px) {
+  .alerta {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-inline: 0;
+  }
+
+  .alerta-regua {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .alerta-valor .situacao {
+    white-space: normal;
+    text-align: right;
+  }
+}

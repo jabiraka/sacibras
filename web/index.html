@@ -6,7 +6,7 @@
     <title>sacibras — status da economia brasileira</title>
     <meta
       name="description"
-      content="PIB, inflação, juros, emprego, dólar e dívida do Brasil em uma tela, com fonte oficial e data. O resto abre no clique."
+      content="PIB, inflação, juros, emprego, dólar e dívida do Brasil, por assunto, com fonte oficial e data."
     />
     <meta name="theme-color" content="#f4f2e8" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
@@ -14,29 +14,53 @@
   <body>
     <div class="luz" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="pontos" aria-hidden="true"></div>
-    <header class="topo">
-      <a class="marca" href="#" aria-label="sacibras, início">
-        <svg viewBox="0 0 48 48" aria-hidden="true">
-          <polygon points="24,3 45,24 24,45 3,24" fill="#ffd400" />
-          <circle cx="24" cy="24" r="10.5" fill="#0b2a6f" />
-          <polyline
-            points="15.5,27.5 20.5,24 24.5,26 32.5,19.5"
-            fill="none"
-            stroke="#fff"
-            stroke-width="2.3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        sacibras
-      </a>
-      <button class="lupa" type="button" aria-label="Buscar no painel">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
+    <!-- Menu lateral (Caio, 14/11/2026): a marca, a busca sempre à vista e os assuntos por
+         categoria. No celular vira a faixa do topo, e o menu abre no botão "Assuntos". -->
+    <aside class="lateral" id="lateral">
+      <div class="lateral-topo">
+        <a class="marca" href="#" aria-label="sacibras, início">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <polygon points="24,3 45,24 24,45 3,24" fill="#ffd400" />
+            <circle cx="24" cy="24" r="10.5" fill="#0b2a6f" />
+            <polyline
+              points="15.5,27.5 20.5,24 24.5,26 32.5,19.5"
+              fill="none"
+              stroke="#fff"
+              stroke-width="2.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span>sacibras</span>
+        </a>
+        <button class="menu-botao" type="button" aria-expanded="false" aria-controls="menu">
+          <span class="menu-icone" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Assuntos</span>
+        </button>
+      </div>
+      <div class="busca-fixa" role="search">
+        <svg class="busca-lupa" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2" />
           <line x1="15.5" y1="15.5" x2="20.5" y2="20.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
-      </button>
-    </header>
+        <input
+          id="busca-campo"
+          class="busca-campo"
+          type="search"
+          placeholder="Buscar: inflação, dólar…"
+          aria-label="Buscar no painel"
+          aria-controls="busca-saida"
+          autocomplete="off"
+          enterkeyhint="go"
+        />
+        <div class="busca-saida" id="busca-saida" hidden>
+          <p class="busca-aviso"></p>
+          <ol class="busca-resultados"></ol>
+        </div>
+      </div>
+      <nav class="menu" id="menu" aria-label="Assuntos"></nav>
+    </aside>
+    <div class="pagina">
     <main class="miolo" id="conteudo"></main>
     <footer class="rodape">
       <div class="miolo">
@@ -49,6 +73,7 @@
         </p>
       </div>
     </footer>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

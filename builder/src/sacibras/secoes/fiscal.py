@@ -8,9 +8,18 @@ from __future__ import annotations
 
 from datetime import date
 
-from sacibras import contas
+from sacibras import contas, leis
 from sacibras.fontes import bcb_focus, tesouro_rtn
-from sacibras.schema import Secao
+from sacibras.schema import (
+    Cartao,
+    Faixa,
+    Grafico,
+    LinhaRef,
+    LinhaTabela,
+    Meta,
+    Secao,
+    Tabela,
+)
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -19,20 +28,118 @@ def _resultado(nfsp: list[Ponto]) -> list[Ponto]:
     return contas.escalar(nfsp, -1)
 
 
-def _em_pct_do_pib(mensal: list[Ponto], pib_12m: list[Ponto]) -> list[Ponto]:
-    """Soma de 12 meses de um fluxo mensal (R$ milhões) em % do PIB de 12 meses, por mês.
+def _bi(valor_em_milhoes: float) -> float:
+    return valor_em_milhoes / 1000
 
-    Só vale a janela com os 12 meses seguidos (mês vazio na fonte não vira soma curta) e
-    só nos meses em que há PIB.
+
+def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
+    """O primário do Governo Central em 12 meses, pelo BC, contra a meta da LDO.
+
+    Decisão do Caio (14/11/2026, opção "b"): o número de quem apura (o BC, LC 200/2023, art.
+    2º, § 4º) contra a meta da lei, com o desconto que a apuração oficial faz dito ao lado,
+    tirado do relatório bimestral do governo. A meta vale para o ano fechado; a soma de 12
+    meses mostra o caminho.
     """
-    por_mes = dict(mensal)
-    pib = dict(pib_12m)
-    saida: list[Ponto] = []
-    for d, denominador in sorted(pib.items()):
-        meses = [date(d.year - (d.month <= k), (d.month - k - 1) % 12 + 1, 1) for k in range(12)]
-        if d in por_mes and denominador and all(m in por_mes for m in meses):
-            saida.append((d, sum(por_mes[m] for m in meses) / denominador * 100))
-    return saida
+    meta = leis.META_PRIMARIA_2026
+    centro, piso, teto = _bi(meta.centro), _bi(meta.inferior), _bi(meta.superior)
+    doze = contas.escalar(
+        contas.soma_movel(_resultado(ctx.sgs("NFSP_PRIMARIO_GC_MES", 12))), 1 / 1000
+    )
+    ultima = leis.AVALIACOES_2026[-1]
+    apos = ultima.resultado + ultima.deducao
+    fonte_bc = ctx.fonte_sgs("NFSP_PRIMARIO_GC_MES")
+
+    c = cartao(
+        "meta-primario",
+        "Primário do Governo Central, 12 meses",
+        doze,
+        unidade="R$ bilhões",
+        periodicidade="M",
+        casas=1,
+        detalhe=(
+            f"a meta vale para o ano de {meta.ano}; na conta da meta, o governo desconta "
+            f"R$ {br(ultima.deducao)} bi (relatório do {ultima.bimestre})"
+        ),
+        fonte=f"{fonte_bc}; meta: {meta.referencia}",
+        secao="fiscal",
+        mini=60,
+    )
+    c.meta = Meta(centro=centro, inferior=piso, superior=teto, norma=meta.referencia)
+
+    inicio_meta = date(meta.ano, 1, 1)
+    meses_da_meta = [date(meta.ano, m, 1) for m in range(1, 13)]
+    g = grafico(
+        "meta-primario",
+        f"O primário do Governo Central e a meta de {meta.ano}",
+        [serie("gc", "Governo Federal e Banco Central, 12 meses", doze, casas=1)],
+        unidade="R$ bilhões (superávit +, déficit −)",
+        casas=1,
+        periodicidade="M",
+        janela_anos=5,
+        fonte=f"{fonte_bc}; meta: {meta.referencia}, § 1º",
+        faixa=Faixa(
+            nome=f"intervalo da meta de {meta.ano} (R$ {br(piso, 0)} a R$ {br(teto)} bi)",
+            pontos=[(d, piso, teto) for d in meses_da_meta if d >= inicio_meta],
+        ),
+        linhas=[LinhaRef(valor=centro, rotulo=f"meta R$ {br(centro)} bi")],
+        nota=(
+            "Soma de 12 meses do resultado que o Banco Central apura (quem apura a meta, "
+            "pela LC 200/2023). A meta vale para o ano fechado. Na verificação, o governo "
+            f"desconta despesas que outras normas tiram da conta: R$ {br(ultima.deducao)} bi "
+            f"previstos para {meta.ano} no relatório do {ultima.bimestre}."
+        ),
+    )
+
+    colunas = [a.bimestre for a in leis.AVALIACOES_2026]
+    t = Tabela(
+        id="meta-primario",
+        titulo=f"A meta de {meta.ano} pela conta do governo",
+        subtitulo="Projeção para o ano inteiro, em cada relatório bimestral",
+        colunas=colunas,
+        linhas=[
+            LinhaTabela(
+                rotulo="Resultado primário projetado",
+                valores=[a.resultado for a in leis.AVALIACOES_2026],
+                unidade="R$ bi",
+            ),
+            LinhaTabela(
+                rotulo="Descontos da apuração",
+                valores=[a.deducao for a in leis.AVALIACOES_2026],
+                unidade="R$ bi",
+            ),
+            LinhaTabela(
+                rotulo="Resultado para a meta",
+                valores=[round(a.resultado + a.deducao, 1) for a in leis.AVALIACOES_2026],
+                unidade="R$ bi",
+            ),
+            LinhaTabela(
+                rotulo="Piso da meta",
+                valores=[piso for _ in colunas],
+                unidade="R$ bi",
+            ),
+            LinhaTabela(
+                rotulo="Centro da meta",
+                valores=[round(centro, 1) for _ in colunas],
+                unidade="R$ bi",
+            ),
+        ],
+        fonte=(
+            "Relatórios de Avaliação de Receitas e Despesas Primárias do Poder Executivo, "
+            "pela Nota Informativa da Consultoria de Orçamentos do Senado de 25/9/2026; "
+            f"meta: {meta.referencia}"
+        ),
+        nota=(
+            "Os descontos vêm da EC 136, da ADPF 1236 e das LCs 221, 223 e 235 (precatórios, "
+            "defesa, saúde). "
+            + (
+                f"No {ultima.bimestre}, o resultado para a meta fica R$ {br(abs(apos - piso))} "
+                "bi abaixo do piso, e o relatório manda contingenciar esse valor."
+                if apos < piso
+                else f"No {ultima.bimestre}, o resultado para a meta fica dentro do intervalo."
+            )
+        ),
+    )
+    return c, g, t
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -202,15 +309,21 @@ def montar(ctx: Contexto) -> Secao:
         ),
     ]
 
+    tabelas: list[Tabela] = []
+    c_meta, g_meta, t_meta = meta_do_primario(ctx)
+    cartoes.append(c_meta)
+    graficos.append(g_meta)
+    tabelas.append(t_meta)
+
     # --- Receitas e despesas do Governo Central (RTN, em R$ milhões correntes) ---
     # O site do Tesouro cai de vez em quando: sem o RTN, a seção sai com o resto.
     try:
         rtn = tesouro_rtn.serie_historica()
         pib = ctx.sgs("PIB_12M", anos)
-        receita_pib = _em_pct_do_pib(rtn["receita_liquida"], pib)
-        despesa_pib = _em_pct_do_pib(rtn["despesa_total"], pib)
-        rgps_pib = _em_pct_do_pib(rtn["rgps"], pib)
-        pessoal_pib = _em_pct_do_pib(rtn["pessoal"], pib)
+        receita_pib = contas.em_pct_do_pib(rtn["receita_liquida"], pib)
+        despesa_pib = contas.em_pct_do_pib(rtn["despesa_total"], pib)
+        rgps_pib = contas.em_pct_do_pib(rtn["rgps"], pib)
+        pessoal_pib = contas.em_pct_do_pib(rtn["pessoal"], pib)
         demais_pib = contas.subtrair(contas.subtrair(despesa_pib, rgps_pib), pessoal_pib)
         fonte_rtn = (
             "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, tabela 1.1); "
@@ -367,5 +480,6 @@ def montar(ctx: Contexto) -> Secao:
         resumo=resumo,
         cartoes=cartoes,
         graficos=graficos,
+        tabelas=tabelas,
         gerado_em=ctx.agora(),
     )

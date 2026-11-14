@@ -88,10 +88,37 @@ SINONIMOS: dict[str, list[str]] = {
     "focus": ["previsao", "projecao", "expectativa", "mercado espera", "consenso", "boletim focus"],
     "previs": ["projecao", "expectativa", "futuro", "focus", "o que vem"],
     "simul": ["simulador", "cenario", "e se"],
+    "risco": ["perigo", "crise", "risco pais", "risco brasil", "vulnerabilidade", "alerta"],
+    "alerta": ["sinal de alerta", "risco", "termometro", "indicadores de alerta"],
+    "estabiliza": ["sustentabilidade da divida", "calote", "divida explode", "trajetoria"],
+    "leque": ["trajetoria da divida", "cenarios", "probabilidade", "divida vai subir"],
+    "sorteios": ["probabilidade", "chance", "monte carlo", "trajetoria da divida"],
+    "se acontecesse de novo": ["teste de estresse", "stress", "crise", "choque", "2008"],
+    "se cada crise": ["teste de estresse", "stress", "choque", "cenario de crise"],
+    "volatilidade": ["oscilacao", "nervosismo", "turbulencia", "risco de mercado"],
+    "distancia do pico": ["queda da bolsa", "drawdown", "tombo"],
+    "cambio real": ["real caro", "real barato", "valorizado", "desvalorizado"],
+    "reservatorios": ["energia", "apagao", "racionamento", "hidreletricas", "seca hidrica"],
+    "juro que a divida paga": ["custo da divida", "taxa implicita", "juros sobre a divida"],
+    "juros pagos": ["custo da divida", "juros sobre a divida", "quanto o governo paga de juros"],
     "mundo": ["paises", "exterior", "internacional", "comparacao internacional", "fmi"],
     "pais": ["paises", "mundo", "exterior", "internacional"],
     "emergentes": ["paises emergentes", "brics"],
     "per capita": ["por habitante", "por pessoa"],
+    "demografia": ["populacao", "envelhecimento", "censo", "idosos", "habitantes"],
+    "populacao": ["habitantes", "demografia", "censo", "quantos somos", "projecao do ibge"],
+    "piramide": ["piramide etaria", "idades", "faixa etaria", "estrutura etaria"],
+    "idosos": ["envelhecimento", "terceira idade", "velhice", "aposentados", "65 anos"],
+    "para cada 100": ["razao de dependencia", "dependentes", "bonus demografico"],
+    "15 a 64": ["idade de trabalhar", "idade ativa", "pia", "bonus demografico"],
+    "filhos por mulher": ["fecundidade", "natalidade", "taxa de fecundidade", "bebes"],
+    "nascimentos": ["natalidade", "bebes", "mortes", "obitos"],
+    "esperanca de vida": ["expectativa de vida", "longevidade", "quanto se vive"],
+    "idade mediana": ["idade media", "envelhecimento"],
+    "inss": ["previdencia", "aposentadoria", "rgps", "deficit da previdencia", "reforma"],
+    "produtividade": ["pib por trabalhador", "eficiencia", "produto por ocupado"],
+    "por pessoa ocupada": ["produtividade", "pib por trabalhador"],
+    "crescimento do pib": ["de onde veio o crescimento", "produtividade", "emprego"],
 }
 
 
@@ -133,12 +160,28 @@ def montar(saida: Path) -> list[Item]:
         dados = json.loads((saida / s["arquivo"]).read_text(encoding="utf-8"))
         nome, h = s["titulo"], f"#{s['id']}"
         itens.append(_item(nome, "Assunto", h, s.get("resumo", "")))
+        # Em que parte do assunto cada peça mora: "Inflação › Núcleos e o ritmo".
+        onde: dict[str, str] = {}
+        for sub in dados.get("subcategorias", []):
+            itens.append(_item(sub["titulo"], f"{nome} · parte", f"{h}/{sub['id']}", sub["resumo"]))
+            for tipo, prefixo in (("cartoes", "c"), ("graficos", "g"), ("tabelas", "t")):
+                for i in sub.get(tipo, []):
+                    onde[f"{prefixo}-{i}"] = f"{nome} › {sub['titulo']}"
         for c in dados.get("cartoes", []):
-            itens.append(_item(c["rotulo"], f"{nome} · número", f"{h}/c-{c['id']}", c["detalhe"]))
+            alvo = f"c-{c['id']}"
+            local = onde.get(alvo, nome)
+            itens.append(_item(c["rotulo"], f"{local} · número", f"{h}/{alvo}", c["detalhe"]))
         for g in dados.get("graficos", []):
-            itens.append(_item(g["titulo"], f"{nome} · gráfico", f"{h}/g-{g['id']}"))
+            alvo = f"g-{g['id']}"
+            itens.append(_item(g["titulo"], f"{onde.get(alvo, nome)} · gráfico", f"{h}/{alvo}"))
         for t in dados.get("tabelas", []):
-            itens.append(_item(t["titulo"], f"{nome} · tabela", f"{h}/t-{t['id']}"))
+            alvo = f"t-{t['id']}"
+            itens.append(_item(t["titulo"], f"{onde.get(alvo, nome)} · tabela", f"{h}/{alvo}"))
+        if dados.get("alertas"):
+            # O painel fica guardado e é montado no clique: o resultado leva a ele.
+            itens.append(_item("Painel de alerta", f"{nome} · painel", f"{h}/t-alertas"))
+            for a in dados["alertas"]:
+                itens.append(_item(a["nome"], f"{nome} · alerta", f"{h}/t-alertas", a["grupo"]))
         for m in dados.get("metricas", []):
             itens.append(_item(m["nome"], f"{nome} · comparação", f"{h}/m-{m['id']}"))
         for pais in dados.get("paises", []):

@@ -56,7 +56,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 96px;
+  scroll-padding-top: 84px;
   -webkit-text-size-adjust: 100%;
   /* A escala acompanha a tela grande, como no finjabs. */
   font-size: clamp(100%, calc(100% + (100vw - 1536px) / 256), 125%);
@@ -181,28 +181,36 @@ button {
   margin-inline: auto;
 }
 
-/* ------------------------------------------------------------------ cabeçalho */
+/* ------------------------------------------------------------------ menu lateral */
 
-.topo {
-  position: fixed;
-  left: 50%;
-  top: 14px;
+/* Caio, 14/11/2026: as abas no espaço da esquerda e a busca fixa nelas. Na tela larga, uma
+   coluna fixa; no celular, a faixa do topo (marca, busca e o botão "Assuntos"). */
+:root {
+  --lateral: 17rem;
+}
+
+.lateral {
+  position: sticky;
+  top: 0;
   z-index: 40;
-  transform: translateX(-50%);
-  /* Só a marca e a lupa da busca (Caio, 14/11/2026): a pílula fica do tamanho delas. */
-  width: auto;
-  border-radius: 999px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "marca busca botao" "menu menu menu";
+  align-items: center;
+  gap: 0 10px;
+  padding: 10px 16px;
   background: var(--vidro-forte);
-  border: 1px solid var(--borda-forte);
+  border-bottom: 1px solid var(--borda);
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px 8px 14px;
+}
+
+.lateral-topo {
+  display: contents;
 }
 
 .marca {
+  grid-area: marca;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -210,44 +218,189 @@ button {
   font-weight: 500;
   font-size: 1rem;
   letter-spacing: -0.02em;
-  margin-right: auto;
 }
 
 .marca svg {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   flex: none;
 }
 
-.topo a.elo,
-.topo button {
-  flex: none;
-  text-decoration: none;
+.menu-botao {
+  grid-area: botao;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
   font-size: 0.875rem;
-  color: var(--tinta-2);
-  padding: 7px 13px;
+  color: var(--tinta);
+  padding: 8px 12px;
   border-radius: 999px;
-  border: 0;
-  background: none;
+  border: 1px solid var(--borda-forte);
+  background: var(--vidro);
+  cursor: pointer;
+}
+
+.menu-icone {
+  display: grid;
+  gap: 3px;
+  width: 14px;
+}
+
+.menu-icone i {
+  height: 1.5px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.menu {
+  grid-area: menu;
+  display: none;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding: 12px 2px 8px;
+}
+
+.lateral.aberta .menu {
+  display: block;
+}
+
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu a {
+  display: block;
+  text-decoration: none;
+  color: var(--tinta-2);
+  border-radius: 10px;
   transition:
     background 0.2s,
     color 0.2s;
 }
 
-.topo a.elo:hover,
-.topo button:hover {
+.menu a:hover {
   background: var(--vidro);
   color: var(--tinta);
 }
 
-.topo button {
-  border: 1px solid var(--borda);
+.menu-inicio,
+.menu-assunto {
+  padding: 7px 10px;
+  font-size: 0.9375rem;
+}
+
+.menu a.ativo {
+  color: var(--tinta);
+  font-weight: 500;
+}
+
+.menu-assunto.ativo {
+  background: var(--verde-claro);
+}
+
+.menu-grupo {
+  margin-top: 16px;
+}
+
+.menu-categoria {
+  margin: 0 0 4px;
+  padding: 0 10px;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta-3);
+}
+
+/* As partes só do assunto aberto, com um fio à esquerda. */
+.menu-partes {
+  display: none;
+  margin: 2px 0 6px 18px !important;
+  border-left: 1px solid var(--borda-forte);
+}
+
+.menu-partes.aberto {
+  display: block;
+}
+
+.menu-parte {
+  padding: 5px 10px 5px 12px;
+  font-size: 0.875rem;
+  border-radius: 0 10px 10px 0 !important;
+}
+
+.menu-parte.ativo {
+  box-shadow: inset 2px 0 0 var(--verde);
+}
+
+/* A página ao lado do menu. */
+.pagina {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .lateral {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--lateral);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 22px 14px 18px;
+    border-bottom: 0;
+    border-right: 1px solid var(--borda);
+  }
+
+  .lateral-topo {
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+  }
+
+  .menu-botao {
+    display: none;
+  }
+
+  .menu {
+    display: block;
+    flex: 1;
+    max-height: none;
+    margin: 0 -14px;
+    padding: 0 14px 12px;
+  }
+
+  .menu-grupo {
+    margin-top: 18px;
+  }
+
+  .pagina {
+    margin-left: var(--lateral);
+  }
+}
+
+@media (max-width: 520px) {
+  .marca span {
+    display: none;
+  }
+
+  .menu-botao span:last-child {
+    display: none;
+  }
 }
 
 /* ------------------------------------------------------------------ início */
 
 main {
-  padding: 104px 0 72px;
+  padding: 28px 0 72px;
+}
+
+@media (min-width: 1024px) {
+  main {
+    padding-top: 44px;
+  }
 }
 
 .entra {
@@ -502,17 +655,27 @@ main {
   text-wrap: balance;
 }
 
-/* Assuntos em duas colunas; se a conta for ímpar, o último ocupa a linha inteira. */
-.assuntos li:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
+/* Os assuntos por categoria (Caio, 14/11/2026: "classifique melhor em categorias"). */
+.categoria {
+  margin-top: 34px;
+}
+
+.categoria-titulo {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tinta-2);
 }
 
 .assuntos {
   list-style: none;
-  margin: 34px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Duas ou três por linha, conforme a categoria: cada uma cabe sem sobrar buraco. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: 12px;
 }
 
@@ -566,29 +729,149 @@ main {
   color: var(--tinta-2);
 }
 
+.assunto-partes {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--tinta-3);
+}
+
 /* ------------------------------------------------------------------ um assunto aberto */
 
 .secao {
   padding-top: 18px;
 }
 
-.voltar {
-  display: inline-flex;
+/* Onde a pessoa está: "Preços, juros e crédito › Inflação". */
+.trilha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tinta-3);
+}
+
+.trilha a {
+  color: var(--tinta-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--borda-forte);
+}
+
+.trilha a:hover {
+  color: var(--tinta);
+}
+
+.secao-topo h2 {
+  margin-top: 10px;
+}
+
+/* As partes do assunto, na visão geral. */
+.partes {
+  margin-top: 30px;
+}
+
+.partes-titulo {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tinta-2);
+}
+
+.partes-lista {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 10px;
+}
+
+.parte {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition:
+    border-color 0.3s,
+    transform 0.5s var(--suave);
+}
+
+.parte:hover {
+  border-color: var(--borda-forte);
+  transform: translateY(-2px);
+}
+
+.parte:hover .seta {
+  transform: translateX(4px);
+}
+
+.parte-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.parte-resumo {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--tinta-2);
+}
+
+.parte-conta {
+  margin-top: auto;
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+}
+
+/* Fim de uma parte: a visão geral e as outras partes do mesmo assunto. */
+.outras-partes {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  text-decoration: none;
-  font-size: 0.875rem;
-  color: var(--tinta-2);
-  padding: 6px 14px 6px 10px;
+  margin-top: 34px;
+  padding-top: 18px;
+  border-top: 1px solid var(--borda);
+}
+
+.outras-titulo {
+  flex-basis: 100%;
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+}
+
+.pilula {
+  padding: 6px 13px;
   border-radius: 999px;
   border: 1px solid var(--borda);
   background: var(--vidro-sutil);
-  margin-bottom: 26px;
+  font-size: 0.875rem;
+  text-decoration: none;
+  color: var(--tinta-2);
 }
 
-.voltar:hover {
-  color: var(--tinta);
+.pilula:hover {
   border-color: var(--borda-forte);
+  color: var(--tinta);
+}
+
+.pilula.atual {
+  background: var(--verde-claro);
+  border-color: transparent;
+  color: var(--tinta);
+  font-weight: 500;
 }
 
 /* Próximas divulgações do IBGE, lidas pelo navegador (calendario.ts). */
@@ -767,6 +1050,11 @@ main {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 12px;
+}
+
+/* Um gráfico sozinho (o principal do assunto, ou o único de uma parte) usa a largura toda. */
+.graficos > :only-child {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 860px) {
@@ -1854,10 +2142,6 @@ button.ponto-linha:hover {
 }
 
 @media (max-width: 520px) {
-  .topo a.elo.some-no-celular {
-    display: none;
-  }
-
   .heroi {
     padding-top: 12px;
   }
@@ -1962,7 +2246,7 @@ button.ponto-linha:hover {
 }
 
 @media print {
-  .topo,
+  .lateral,
   .acoes,
   .janelas,
   .luz,
@@ -1999,86 +2283,188 @@ button.ponto-linha:hover {
   }
 }
 
-/* ------------------------------------------------------------------ busca */
+/* ------------------------------------------------------------------ pirâmide etária */
 
-.topo button.lupa {
+.piramide .barra-controles {
+  margin: 14px 0 4px;
+}
+
+.chave.chave-homens,
+.chave.chave-mulheres {
+  width: 12px;
+  height: 10px;
+  border: 0;
+  border-radius: 2px;
+}
+
+.chave.chave-homens {
+  background: var(--cor-homens);
+}
+
+.chave.chave-mulheres {
+  background: var(--cor-mulheres);
+}
+
+.chave.chave-contorno {
+  width: 12px;
+  height: 10px;
+  border: 1.5px solid var(--tinta-2);
+  border-radius: 2px;
+}
+
+.piramide-corpo {
   display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  margin-left: 6px;
-  color: var(--tinta-2);
+  gap: 2px;
+  margin-top: 14px;
 }
 
-.lupa svg {
-  width: 18px;
-  height: 18px;
-}
-
-.procurar {
-  display: flex;
+.piramide-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.6rem minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  width: min(100%, 30rem);
-  margin: 22px auto 0;
-  padding: 12px 18px;
-  border-radius: 999px;
-  border: 1px solid var(--borda-forte);
-  background: var(--vidro-forte);
-  box-shadow: var(--brilho-topo);
-  color: var(--tinta-3);
-  font: inherit;
-  font-size: 0.95rem;
-  text-align: left;
-  cursor: text;
+  min-height: 15px;
+  border-radius: 3px;
+  outline: none;
 }
 
-.procurar span:last-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.piramide-linha.ativa,
+.piramide-linha:focus-visible {
+  background: var(--fio);
+}
+
+.piramide-lado {
+  position: relative;
+  height: 13px;
+}
+
+.piramide-barra,
+.piramide-contorno {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: width 0.35s ease;
+}
+
+.piramide-lado.homens > i {
+  right: 0;
+}
+
+.piramide-lado.mulheres > i {
+  left: 0;
+}
+
+.piramide-barra {
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+.homens > .piramide-barra {
+  background: var(--cor-homens);
+}
+
+.mulheres > .piramide-barra {
+  background: var(--cor-mulheres);
+}
+
+.piramide-contorno {
+  border: 1.5px solid var(--tinta-2);
+  border-radius: 2px;
+}
+
+.piramide-grupo {
+  text-align: center;
+  font-size: 0.6875rem;
+  color: var(--tinta-2);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.procurar-lupa {
-  font-size: 1.3rem;
-  line-height: 1;
-  color: var(--tinta-2);
+.piramide-regua {
+  min-height: 18px;
+  margin-top: 4px;
+  border-top: 1px solid var(--fio);
 }
 
-dialog.busca {
-  width: min(calc(100vw - 32px), 36rem);
-  max-height: min(80vh, 40rem);
-  margin: 72px auto auto;
-  padding: 14px;
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio);
-  background: var(--superficie);
+.piramide-regua .piramide-lado {
+  height: 16px;
+}
+
+.piramide-marca {
+  position: absolute;
+  top: 2px;
+  font-size: 0.6875rem;
+  color: var(--tinta-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.homens > .piramide-marca {
+  right: var(--pos);
+  transform: translateX(50%);
+}
+
+.mulheres > .piramide-marca {
+  left: var(--pos);
+  transform: translateX(-50%);
+}
+
+.piramide-dica {
+  min-height: 2.6em;
+  margin: 12px 0 0;
+  font-size: 0.8125rem;
   color: var(--tinta);
-  box-shadow: 0 24px 60px rgb(20 38 28 / 18%);
-  overflow: auto;
 }
 
-dialog.busca::backdrop {
-  background: rgb(20 38 28 / 22%);
-  backdrop-filter: blur(3px);
+.piramide .posicao {
+  margin-top: 6px;
 }
 
-.busca-linha {
-  display: flex;
-  gap: 8px;
+@media (max-width: 480px) {
+  .piramide-linha {
+    grid-template-columns: minmax(0, 1fr) 3.9rem minmax(0, 1fr);
+  }
+
+  .piramide-grupo {
+    font-size: 0.625rem;
+  }
+
+  .piramide-marca.impar {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ busca */
+
+.busca-fixa {
+  grid-area: busca;
+  position: relative;
+  min-width: 0;
+}
+
+.busca-lupa {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: var(--tinta-3);
+  pointer-events: none;
 }
 
 .busca-campo {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   font: inherit;
   font-size: 1rem; /* 16 px: o iPhone não dá zoom no campo */
-  padding: 11px 14px;
-  border-radius: 12px;
+  padding: 8px 12px 8px 34px;
+  border-radius: 999px;
   border: 1px solid var(--borda-forte);
   background: #fff;
   color: var(--tinta);
+}
+
+.busca-campo::placeholder {
+  color: var(--tinta-3);
 }
 
 .busca-campo:focus {
@@ -2086,15 +2472,35 @@ dialog.busca::backdrop {
   outline-offset: 1px;
 }
 
-.busca-fechar {
-  flex: none;
-  font: inherit;
-  font-size: 0.875rem;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid var(--borda);
-  background: none;
-  color: var(--tinta-2);
+/* Os resultados: no celular, a largura da tela logo abaixo da faixa; na tela larga, saem do
+   menu para a direita, por cima do conteúdo. */
+.busca-saida {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  top: 62px;
+  z-index: 60;
+  max-height: min(70vh, 34rem);
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--borda-forte);
+  border-radius: 16px;
+  background: var(--superficie);
+  box-shadow: 0 24px 60px rgb(20 38 28 / 18%);
+}
+
+.busca-saida[hidden] {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .busca-saida {
+    position: absolute;
+    left: 0;
+    right: auto;
+    top: calc(100% + 6px);
+    width: 27rem;
+  }
 }
 
 .busca-aviso:empty {
@@ -2109,7 +2515,7 @@ dialog.busca::backdrop {
 
 .busca-resultados {
   list-style: none;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
 }
 

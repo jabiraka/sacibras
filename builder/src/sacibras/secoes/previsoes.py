@@ -99,6 +99,16 @@ def _simulador(
     )
 
 
+def linha_de_base_da_divida(ctx: Contexto) -> SimuladorDivida | None:
+    """A mesma linha de base do simulador, para quem a usa fora daqui (a aba de riscos)."""
+    necessarios = ("PIB Total", "IPCA", "Selic", "Resultado primário")
+    medianas = {
+        indicador: bcb_focus.mediana_anual_hoje(indicador)
+        for indicador in (*necessarios, "Dívida bruta do governo geral")
+    }
+    return _simulador(ctx, medianas, bcb_focus.data_da_ultima_edicao())
+
+
 def montar(ctx: Contexto) -> Secao:
     ano = ctx.hoje.year
     anos = [ano, ano + 1, ano + 2, ano + 3]

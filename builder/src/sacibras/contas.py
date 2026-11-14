@@ -100,3 +100,19 @@ def anualizado(pontos: list[Ponto], n: int = 3, por_ano: int = 12) -> list[Ponto
     ((∏(1 + m))^(por_ano / n) − 1): com n = 3 e mensais, o ritmo dos últimos três meses
     como se durasse um ano. Com n = 1, o mês anualizado."""
     return [(d, ((1 + v / 100) ** (por_ano / n) - 1) * 100) for d, v in acumulado(pontos, n)]
+
+
+def em_pct_do_pib(mensal: list[Ponto], pib_12m: list[Ponto]) -> list[Ponto]:
+    """Soma de 12 meses de um fluxo mensal (R$ milhões) em % do PIB de 12 meses, por mês.
+
+    Só vale a janela com os 12 meses seguidos (mês vazio na fonte não vira soma curta) e
+    só nos meses em que há PIB.
+    """
+    por_mes = dict(mensal)
+    pib = dict(pib_12m)
+    saida: list[Ponto] = []
+    for d, denominador in sorted(pib.items()):
+        meses = [date(d.year - (d.month <= k), (d.month - k - 1) % 12 + 1, 1) for k in range(12)]
+        if d in por_mes and denominador and all(m in por_mes for m in meses):
+            saida.append((d, sum(por_mes[m] for m in meses) / denominador * 100))
+    return saida

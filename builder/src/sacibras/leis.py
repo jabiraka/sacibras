@@ -78,10 +78,8 @@ class MetaPrimaria:
 # primário de R$ 0,00". A banda vem da LC 101/2000, art. 4º, § 5º, IV (incluído pela LC
 # 200/2023): "menos 0,25 p.p. [...] e de mais 0,25 p.p. [...] do PIB previsto".
 # A LC 200/2023, art. 2º, § 4º, diz que a apuração é do Banco Central.
-# AINDA FORA DA TELA (decisão do Caio pendente): o relatório bimestral do governo desconta da
-# meta despesas que outras normas excluem (EC 136/2025, LCs 221, 223 e 235; R$ 67,3 bi no 4º
-# bimestre de 2026, segundo a nota da Consultoria de Orçamento do Senado). O número cru do BC
-# contra a meta diria "abaixo do piso" num ano em que a apuração oficial pode dizer "dentro".
+# Na tela (Caio, 14/11/2026, opção "b"): o número do BC contra a meta, com o desconto da
+# apuração dito ao lado (`AVALIACAO_2026`).
 META_PRIMARIA_2026 = MetaPrimaria(
     ano=2026,
     centro=34_264.603518,
@@ -89,6 +87,34 @@ META_PRIMARIA_2026 = MetaPrimaria(
     superior=68_529.207037,
     referencia="Lei nº 15.321/2025 (LDO 2026), art. 2º",
 )
+
+
+@dataclass(frozen=True)
+class AvaliacaoBimestral:
+    """O que o governo projeta para o primário do ano no Relatório de Avaliação de Receitas e
+    Despesas Primárias (o que a LDO 2026, art. 73, § 4º, manda publicar), em R$ bilhões.
+
+    Não é número de lei: é a conta oficial da meta, lida à mão, com a data."""
+
+    bimestre: str
+    resultado: float
+    """Resultado primário projetado para o ano, sem os descontos."""
+    deducao: float
+    """O que a apuração da meta desconta (abatimentos que outras normas autorizam)."""
+    fonte: str
+
+
+# Lido em 14/11/2026 na Nota Informativa da Consultoria de Orçamentos do Senado (Conorf) de
+# 25/9/2026 sobre o relatório do 4º bimestre de 2026 (www12.senado.leg.br/orcamento/documentos/
+# estudos/tipos-de-estudos/notas-tecnicas-e-informativos/ni_rardp_20260925.pdf), Tabela 1, que
+# reproduz o relatório do Executivo: "5. Resultado Primário -52,0 [3º bim.] -80,9 [4º bim.]";
+# "6. Dedução EC 136, ADPF 1236 e LCs 221, 223 e 235 62,8 67,3"; "7. Resultado Primário após
+# Dedução 10,8 -13,6". Nota 3: precatórios (R$ 54,7 bi), defesa (R$ 5,0 bi), saúde e a ADPF
+# 1236. LER DE NOVO a cada bimestre (o do 5º sai até 22/11).
+AVALIACOES_2026 = [
+    AvaliacaoBimestral("3º bimestre", -52.0, 62.8, "Relatório de Avaliação do 3º bimestre de 2026"),
+    AvaliacaoBimestral("4º bimestre", -80.9, 67.3, "Relatório de Avaliação do 4º bimestre de 2026"),
+]
 
 # Lidos em 14/11/2026, ainda sem uso na tela (pedem o RREO Anexo 12 e o Anexo 08 de cada
 # estado, que trazem a base de cálculo): saúde, no mínimo 12 % da arrecadação de impostos

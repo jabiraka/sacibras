@@ -29,6 +29,7 @@ LINHA_DO_CABECALHO = 5
 LINHAS = {
     "receita liquida (1-2)": "receita_liquida",
     "despesa total": "despesa_total",
+    "arrecadacao liquida para o rgps": "arrecadacao_rgps",
     "beneficios previdenciarios": "rgps",
     "pessoal e encargos sociais": "pessoal",
     "resultado primario governo central - acima da linha (3 - 4)": "primario",
@@ -40,11 +41,13 @@ class LinhaSumiuError(FonteForaDoArError):
 
 
 def normalizar(rotulo: str) -> str:
-    """'4.1  Benefícios Previdenciários ' -> 'beneficios previdenciarios'."""
+    """'4.1  Benefícios Previdenciários ' -> 'beneficios previdenciarios'; '1.3 -  Arrecadação
+    Líquida para o RGPS' -> 'arrecadacao liquida para o rgps'."""
     texto = unicodedata.normalize("NFKD", rotulo)
     texto = "".join(c for c in texto if not unicodedata.combining(c)).lower()
     texto = re.sub(r"\s+\d+/\s*$", "", texto.strip())  # nota de rodapé: "receita total 1/"
     texto = re.sub(r"^(?:[ivx]+|\d+)(?:\.\d+)*\.?\s+", "", texto)  # "IV.1", "4.1", "3."
+    texto = re.sub(r"^-\s+", "", texto)  # "1.3 -  Arrecadação Líquida para o RGPS"
     return re.sub(r"\s+", " ", texto).strip()
 
 

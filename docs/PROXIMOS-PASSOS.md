@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (quinta sessão do dia).
+Última atualização: 14/11/2026 (oitava sessão do dia: Riscos).
 
 ---
 
@@ -16,7 +16,8 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - O site: página inicial ("Status da economia brasileira", seis números com o ponto mais novo
   buscado pelo navegador, o IPCA contra a meta, a busca) e onze assuntos — atividade,
   trabalho, inflação, juros e Copom, crédito, mercados, setor externo, contas públicas e
-  dívida, estados (com a ficha de cada um), Brasil no mundo, previsões.
+  dívida, estados (com a ficha de cada um), Brasil no mundo, previsões; e, desde 14/11,
+  demografia e riscos (treze ao todo).
 - Feito na última sessão:
   - Do Econvitals ([PROPOSTAS](PROPOSTAS.md), tabela com o par brasileiro de cada métrica):
     juro e inflação implícita por prazo e a implícita de 5 a 10 anos à frente; o prefixado
@@ -27,6 +28,16 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   - Contas dos estados: o leitor da dívida não lia "Demais dívidas contratuais" (TO e PR);
     corrigido, as partes fecham nas 27 UFs. RR e AC (pouca dívida com a União) e o ITCMD do DF
     foram conferidos no dado bruto: é o dado mesmo.
+- **Demografia, novo assunto** (Caio, 14/11/2026: *"resultados demográficos… riscos
+  demográficos, algo que envolve a produtividade, trabalho e previdência"*), entre Estados e
+  Brasil no mundo. Da projeção do IBGE (revisão 2024, FTP, `fontes/ibge_projecao.py`):
+  população, fecundidade, idosos por 100 de 15 a 64, esperança de vida, idade mediana,
+  pirâmide etária com ano em lista e contorno de 2000 (`web/src/piramide.ts`), nascimentos ×
+  óbitos, crescimento da população de 15 a 64 e a tabela de idosos por estado. Produtividade:
+  PIB por ocupado (SIDRA 1620 + PNAD) e o crescimento de cada ano dividido entre mais gente
+  ocupada e mais produto por ocupado. Previdência: déficit do INSS em % do PIB (RTN, linha nova
+  "arrecadação líquida para o RGPS"). Gráfico com projeção de mais de 10 anos fica sem os
+  botões de janela (`grafico.ts`).
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
@@ -39,31 +50,68 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - **Normas lidas** no Planalto e no Senado (trechos em `leis.py`): os limites de pessoal (LRF,
   arts. 19, 20, 22 e 59) e de dívida (Resolução do Senado 40/2001) dos estados agora vêm da lei,
   com o artigo na descrição, e o estado cujo RGF traz outro limite é nomeado; a meta de primário
-  de 2026 (LDO, art. 2º) está registrada, fora da tela (abaixo); os mínimos de saúde (LC 141,
+  de 2026 (LDO, art. 2º) está registrada e na tela (abaixo); os mínimos de saúde (LC 141,
   art. 6º) e de educação (Constituição, art. 212) estão anotados.
 - **Calendário do IBGE**: do Brasil responde com CORS `*`. Cada assunto mostra a próxima
   divulgação das pesquisas dele (`web/src/calendario.ts`), buscada pelo navegador.
 
-## Esperando decisão do Caio
+## Navegação nova e meta fiscal (sétima sessão, 14/11/2026)
 
-1. **Meta de primário na tela: como mostrar.** A LDO 2026 foi lida: meta de R$ 34,3 bi, piso
-   R$ 0, teto R$ 68,5 bi (`leis.META_PRIMARIA_2026`); a LC 200 diz que quem apura é o BC. O
-   primário do Governo Central no BC (SGS 4639, ainda fora do catálogo) dá déficit de R$ 52,7 bi
-   em 12 meses até set/2026 e de R$ 93,6 bi no ano. Mas a apuração oficial desconta despesas que
-   outras normas tiram da meta (EC 136/2025, LCs 221, 223 e 235: R$ 67,3 bi no 4º bimestre,
-   segundo a nota da Consultoria de Orçamento do Senado de 25/09/2026). O número cru diria
-   "abaixo do piso". Opções: (a) a meta contra o resultado "para fins de meta" do relatório
-   bimestral, lido à mão a cada dois meses; (b) o número do BC contra a meta, com o desconto em
-   reais dito ao lado; (c) fora da tela.
+- **Categorias e partes** (`builder/src/sacibras/organizacao.py`): cinco categorias (Atividade e
+  emprego; Preços, juros e crédito; Mercados e exterior; Contas públicas; O que vem pela
+  frente) e cada assunto em 3 a 6 partes. O assunto abre numa visão geral (quatro números, as
+  partes, o gráfico principal) e cada parte numa tela só dela (`#inflacao/nucleos`), com
+  trilha em cima e as outras partes embaixo. Peça nova sem lugar em `PARTES` cai em "Outros" e
+  o builder avisa.
+- **Menu lateral** com a busca fixa (resultados logo abaixo do campo, sem janela); no celular,
+  faixa do topo com a busca e o botão "Assuntos". A busca indexa as partes e diz onde cada
+  resultado mora. Conferido a 1280 e 390 px (prints da sessão).
+- **Meta de primário na tela** (opção "b" do Caio): parte "Meta fiscal" em Contas públicas.
+  Cartão e gráfico com o primário do Governo Central em 12 meses (SGS 4639, no catálogo)
+  contra a meta da LDO 2026 em reais, e a tabela "A meta de 2026 pela conta do governo"
+  (relatórios do 3º e 4º bimestres: −R$ 80,9 bi projetados, R$ 67,3 bi de desconto,
+  −R$ 13,6 bi para a meta, abaixo do piso). **Ler de novo** o relatório do 5º bimestre (sai
+  até 22/11) e acrescentar em `leis.AVALIACOES_2026`.
+- Commitado e publicado no `main` em 14/11/2026, junto com Demografia e Riscos (as três
+  sessões mexeram nos mesmos arquivos; juntas, passam no teste e no build).
+
+## Riscos, novo assunto (14/11/2026)
+
+- **No ar**: "Riscos" na categoria "O que vem pela frente", em seis partes — painel de
+  alerta (32 indicadores na régua da própria história), a dívida se sustenta?, testes de
+  estresse, mercado e contas externas (com a nota de crédito), bancos e crédito, energia e
+  população. O que entrou e o que falta, bloco a bloco, está no [PROPOSTAS](PROPOSTAS.md).
+- **Lido à mão, com prazo para reler** (`builder/src/sacibras/relatorios.py`): as
+  elasticidades da dívida (nota fiscal do BC, **todo mês**; a próxima sai no fim de
+  novembro), o teste de estresse dos bancos (REF, maio e outubro) e a nota de crédito (a
+  cada ato de agência; o sistema do Tesouro estava fora do ar em 14/11 e o histórico veio
+  de cópias arquivadas das páginas dele: **reler em `sisweb.tesouro.gov.br/apex/f?p=2810:2`
+  quando voltar**, para confirmar que nada mudou depois de 30/05/2025).
+- Conferido a 1280 e a 390 px, com o painel e as tabelas abertos.
+- **Para rodar o builder neste PC sem Docker** (o OneDrive recusa o `.venv` e o caminho com
+  "Área" quebra o `.pth`): `UV_PROJECT_ENVIRONMENT="$LOCALAPPDATA/sacibras-venv"
+  UV_LINK_MODE=copy PYTHONUTF8=1 PYTHONPATH=src`, `uv sync --frozen --no-install-project` uma
+  vez e depois `uv run --frozen --no-sync …`.
 
 ## Próximos passos, em ordem (dá para fazer na nuvem)
+
+0. **O que falta dos Riscos**: juro real do Brasil menos o dos EUA (fonte americana
+   testada; falta a história do juro real brasileiro de 10 anos), hiato de crédito do BIS no
+   painel, a taxa implícita oficial da DBGG (planilha mensal da nota fiscal do BC), o bloco
+   jurídico (Anexo de Riscos Fiscais da LDO, precatórios, governança do Banco Mundial) e os
+   estados perto dos limites com a nota CAPAG.
 
 1. **Mínimos de saúde e educação dos estados**: o RREO Anexo 12 (saúde) e o Anexo 08
    (educação) trazem o percentual apurado sobre a base que a lei manda; as normas já estão
    lidas (`leis.py`). Na ficha do estado, contra 12 % e 25 %.
 2. **O que faltou do Econvitals:** serviços subjacentes (achar o código SGS), Caged por setor
    (achar fonte com nome legível), taxa de investimento e de poupança, consumo das famílias +
-   investimento (a "demanda privada"), PIB por pessoa ocupada. Lista no [PROPOSTAS](PROPOSTAS.md).
+   investimento (a "demanda privada"). (PIB por pessoa ocupada: feito, em Demografia.) Lista no
+   [PROPOSTAS](PROPOSTAS.md).
+2a. **O que falta da Demografia** (lista no [PROPOSTAS](PROPOSTAS.md)): contribuintes da
+   previdência na PNAD (achar a tabela do SIDRA), a projeção da ONU ao lado da do IBGE (com a
+   faixa de erro que o IBGE não publica), produtividade por hora trabalhada, a projeção
+   atuarial do RGPS (anexo da LDO, lido à mão) e o Brasil contra outros países.
 3. **Estados no tempo.** A ficha é uma foto. Faltam a série de cada estado contra o Brasil, a
    nota CAPAG, a previdência do estado (RREO Anexo 04). Cuidado com o custo: cada período a
    mais são 54 chamadas ao SICONFI; usar só o 3º quadrimestre de cada ano.
@@ -91,8 +139,20 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - No resultado primário dos estados, o numerador é o acumulado do ano (jan–ago) e o
   denominador é a RCL de 12 meses.
 - O build a frio leva perto de 3 minutos (SICONFI, DCA e Focus sem cache).
+- A projeção da população é a do IBGE, sem faixa de erro (o IBGE não publica). O PIB por
+  ocupado é por pessoa, não por hora; de 2020 a 2022 a pandemia distorce a decomposição (dito
+  na tela). O déficit do INSS é só o Regime Geral (sem servidores e militares).
+- No celular, as tabelas de quatro colunas rolam de lado com a primeira coluna parada (é a
+  regra do CSS para toda tabela do site).
 - O calendário mostra só o dia da divulgação: a API traz a hora sem dizer o fuso. Se a API do
   IBGE não responder em 6 s, a linha não aparece.
+
+- Riscos: o painel de alerta compara cada indicador com a própria história, não com um nível
+  perigoso (o capital dos bancos está "aceso" e bem acima do mínimo). O leque e os testes de
+  estresse usam a conta do simulador (ordem de grandeza, sem separar a dívida cambial); o
+  "juro que a dívida paga" são os juros do setor público sobre a dívida bruta, não a taxa
+  implícita oficial. As janelas dos episódios de crise são escolha nossa, dita na tabela.
+  A dívida externa de curto prazo (SGS 21519) não diz se o prazo é o original ou o residual.
 
 ## Para conferir antes de mostrar
 

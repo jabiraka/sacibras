@@ -36,6 +36,7 @@ Unidade = Literal[
     "mil pessoas",
     "milhões de pessoas",
     "pontos-base",
+    "meses",
 ]
 
 

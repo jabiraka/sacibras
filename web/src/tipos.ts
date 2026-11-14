@@ -30,6 +30,18 @@ export interface Grafico {
   fonte: string;
   nota: string;
   largura: "meia" | "inteira";
+  piramide?: Piramide | null;
+}
+
+/** Pessoas por sexo e grupo de idade (mil), um ano por linha de `homens`/`mulheres`. */
+export interface Piramide {
+  grupos: string[];
+  anos: number[];
+  homens: number[][];
+  mulheres: number[][];
+  ano_inicial: number;
+  ano_contorno: number;
+  primeiro_ano_projetado: number;
 }
 
 export interface Cartao {
@@ -75,15 +87,50 @@ export interface SimuladorDivida {
   nota: string;
 }
 
+/** Uma parte do assunto: os ids do que abre junto, numa tela só. */
+export interface Subcategoria {
+  id: string;
+  titulo: string;
+  resumo: string;
+  cartoes: string[];
+  graficos: string[];
+  tabelas: string[];
+  extras: ("simulador" | "alertas")[];
+}
+
 export interface Secao {
   id: string;
   titulo: string;
   resumo: string;
+  /** Vazia (ou ausente, num JSON antigo): o assunto abre inteiro. */
+  subcategorias?: Subcategoria[];
   cartoes: Cartao[];
   graficos: Grafico[];
   tabelas: Tabela[];
   simulador: SimuladorDivida | null;
+  alertas?: Alerta[];
   gerado_em: string;
+}
+
+/** Um indicador do painel de alerta: o valor de hoje na régua da própria história. */
+export interface Alerta {
+  id: string;
+  grupo: string;
+  nome: string;
+  valor: number;
+  unidade: string;
+  casas: number;
+  referencia: string;
+  periodicidade: Periodicidade;
+  pior_quando: "alto" | "baixo";
+  pior_que: number;
+  minimo: number;
+  maximo: number;
+  mediana: number;
+  desde: string;
+  limite: { valor: number; rotulo: string } | null;
+  fonte: string;
+  procedencia: Procedencia;
 }
 
 export interface Pais {
@@ -185,8 +232,25 @@ export interface Estados {
   gerado_em: string;
 }
 
+export interface ItemSecao {
+  id: string;
+  titulo: string;
+  arquivo: string;
+  resumo: string;
+  ok: boolean;
+  erro: string;
+  subcategorias?: { id: string; titulo: string }[];
+}
+
+export interface Categoria {
+  id: string;
+  titulo: string;
+  secoes: string[];
+}
+
 export interface Painel {
   gerado_em: string;
-  secoes: { id: string; titulo: string; arquivo: string; resumo: string; ok: boolean; erro: string }[];
+  secoes: ItemSecao[];
+  categorias?: Categoria[];
   fontes: { fonte: string; ok: boolean; detalhe: string }[];
 }

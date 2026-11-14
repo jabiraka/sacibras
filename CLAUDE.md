@@ -51,27 +51,51 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 
 - **Página inicial enxuta, o resto abre no clique** (Caio, 14/11/2026: *"muitas métricas na
   página inicial… deixar só as informações essenciais no início e deixar o usuário ir clicando
-  pra abrir"*). Na entrada: seis números (`RESUMO` em `construir.py`) e um cartão por assunto,
-  com a manchete dele. Dentro do assunto: quatro números e o primeiro gráfico; o resto fica
-  atrás de "Mais números", "Mais gráficos" e das tabelas guardadas. Coisa nova entra guardada,
-  não na entrada. Sem "Anterior"/"Próximo" entre assuntos: só o "Voltar" (Caio, 14/11/2026).
-- **O desenho segue o do finjabs** (Caio, 14/11/2026): cartões de vidro, cabeçalho em pílula,
+  pra abrir"*). Na entrada: seis números (`RESUMO` em `construir.py`) e os assuntos com a
+  manchete de cada um, agrupados por categoria.
+- **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
+  muitas informações em uma página [...] classifique melhor em categorias, crie
+  subcategorias"*). Tudo mora em `builder/src/sacibras/organizacao.py`: `CATEGORIAS` agrupa os
+  assuntos (menu e entrada) e `PARTES` divide cada assunto em 3 a 6 partes. O assunto abre
+  numa visão geral (quatro números, a lista das partes e o gráfico principal); cada parte abre
+  numa tela só dela (`#inflacao/nucleos`), com a trilha em cima e as outras partes embaixo.
+  **Cartão, gráfico ou tabela novo ganha lugar numa parte** em `PARTES`: o que não estiver lá
+  cai em "Outros" e o builder avisa ("sem parte em organizacao.py"). Estados e Brasil no mundo
+  têm tela própria, sem partes.
+- **Menu lateral** (Caio, 14/11/2026: *"usar um pouco o espaço ao lado esquerdo para colocar
+  as abas, e também quem sabe deixar a pesquisa lá"*): na tela larga (≥ 1024 px), uma coluna
+  fixa com a marca, a busca e as categorias, e as partes do assunto aberto; no celular, a faixa
+  do topo com a marca, a busca e o botão "Assuntos", que abre o mesmo menu.
+- **O desenho segue o do finjabs** (Caio, 14/11/2026): cartões de vidro,
   Geist, título grande com a segunda metade apagada. O que é só daqui: as luzes de fundo
   verde, amarela e azul e o losango da marca. **Só o tema claro, sem botão de tema** (Caio,
   14/11/2026: *"deixe sempre o tema claro sem opção de tema escuro"*).
 - **Número com meta se mostra contra a meta** (Caio, 14/11/2026, o IPCA na entrada): o
   cartão leva `meta` (centro e intervalo, da norma lida) e a tela diz em palavras e na régua
-  se está dentro, acima do teto ou abaixo do piso.
+  se está dentro, acima do teto ou abaixo do piso. A meta de primário (Caio, 14/11/2026,
+  opção "b"): o número de quem apura (BC) contra a meta da LDO, em reais, com o desconto da
+  apuração oficial dito ao lado, do relatório bimestral (`leis.AVALIACOES_2026`, ler de novo a
+  cada bimestre).
 - **Busca** (Caio, 14/11/2026: *"barra de pesquisa pras pessoas pesquisarem por nome ou
-  sinônimos"*): a lupa no cabeçalho e a caixa na entrada abrem a mesma busca; o índice
-  (`busca.json`) sai do builder (`busca.py`) com tudo o que a tela mostra, e o resultado leva
-  direto ao número, gráfico ou tabela, abrindo o que estiver guardado. Coisa nova que alguém
-  procuraria por outra palavra ganha o sinônimo em `SINONIMOS`.
+  sinônimos"*): o campo fica fixo no menu lateral (no celular, na faixa do topo) e os
+  resultados aparecem logo abaixo dele, sem janela por cima (Caio, 14/11/2026: *"a pesquisa
+  não precisa abrir um outro negócio, pode manter fixo"*); atalho "/". O índice
+  (`busca.json`) sai do builder (`busca.py`) com tudo o que a tela mostra, as partes inclusive,
+  e cada resultado diz onde mora ("Juros e Copom › Juro real · número"); o clique abre a parte
+  e vai até o número, gráfico ou tabela. Coisa nova que alguém procuraria por outra palavra
+  ganha o sinônimo em `SINONIMOS`.
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,
   *"deixe o simulador da dívida, acho legal"*). Fora ele, cenário montado pela pessoa não
   entra sem o "sim" do Caio.
+- **Riscos** (Caio, 14/11/2026): a palavra na tela é *sustentabilidade da dívida*, não
+  "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
+  Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de
+  alerta põe cada indicador na régua da própria história (`web/src/alertas.ts`, o lado ruim
+  sempre à direita, ▲ e frase junto da cor) e conta quantos estão no quinto pior. Número
+  lido em relatório sem API (nota de crédito, elasticidades do BC, teste dos bancos) mora
+  em `builder/src/sacibras/relatorios.py`, com a citação, a data da leitura e quando reler.
 - **Comparações** (Caio, 14/11/2026): escolha de ano e de métrica em lista suspensa, não em
   botões; ranking em pontos (`web/src/pontos.ts`), não em barras; e o gráfico de duas
   métricas, um ponto por país ou estado. Grupo de países abre por país (hierarquia do FMI).

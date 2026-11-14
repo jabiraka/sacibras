@@ -121,6 +121,14 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
         ),
     ),
     (
+        "IBGE projeção da população (FTP)",
+        _texto(
+            "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/"
+            "projecoes_2024_tab4_indicadores.xlsx",
+            tempo_limite=120,
+        ),
+    ),
+    (
         "SICONFI RREO",
         _texto(
             "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo",

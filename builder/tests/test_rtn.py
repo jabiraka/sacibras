@@ -14,6 +14,7 @@ MESES = [datetime(2026, 5, 1), datetime(2026, 6, 1), datetime(2026, 7, 1)]
 LINHAS = [
     ("1. RECEITA TOTAL 1/", [300.0, 310.0, 320.0]),
     ("1.1 -  Receita Administrada pela RFB", [1.0, 1.0, 1.0]),
+    ("1.3 -  Arrecadação Líquida para o RGPS", [60.0, 61.0, 62.0]),
     ("3. RECEITA LÍQUIDA  (1-2)", [200.0, 210.0, 220.0]),
     ("4. DESPESA TOTAL", [190.0, None, 215.0]),  # junho vazio
     ("4.1  Benefícios Previdenciários ", [80.0, 81.0, 82.0]),
@@ -45,11 +46,20 @@ def test_normalizar_tira_numeracao_acento_e_nota() -> None:
     assert normalizar("IV.1 Pessoal e Encargos Sociais") == "pessoal e encargos sociais"
     assert normalizar("1. RECEITA TOTAL 1/") == "receita total"
     assert normalizar("3. RECEITA LÍQUIDA  (1-2)") == "receita liquida (1-2)"
+    assert normalizar("1.3 -  Arrecadação Líquida para o RGPS") == "arrecadacao liquida para o rgps"
 
 
 def test_le_as_linhas_pelo_rotulo_e_pula_mes_vazio() -> None:
     dados = ler_aba(_planilha(LINHAS))
-    assert set(dados) == {"receita_liquida", "despesa_total", "rgps", "pessoal", "primario"}
+    assert set(dados) == {
+        "receita_liquida",
+        "despesa_total",
+        "arrecadacao_rgps",
+        "rgps",
+        "pessoal",
+        "primario",
+    }
+    assert dados["arrecadacao_rgps"][-1] == (date(2026, 7, 1), 62.0)
     assert dados["receita_liquida"][-1] == (date(2026, 7, 1), 220.0)
     assert dados["rgps"][0] == (date(2026, 5, 1), 80.0)
     assert dados["despesa_total"] == [(date(2026, 5, 1), 190.0), (date(2026, 7, 1), 215.0)]

@@ -307,6 +307,16 @@ SGS: dict[str, SerieSGS] = {
         "M",
         "14/11/2026",
     ),
+    # Conferida no package_search em 14/11/2026: "NFSP sem desvalorização cambial - Fluxo
+    # mensal corrente - Resultado primário - Total - Governo Federal e Banco Central" (o
+    # Governo Central, que é o da meta da LDO), mensal, mesma família e unidade da 4649.
+    "NFSP_PRIMARIO_GC_MES": SerieSGS(
+        4639,
+        "NFSP, resultado primário, fluxo mensal, Governo Federal e Banco Central",
+        "R$ milhões",
+        "M",
+        "14/11/2026",
+    ),
     # Dívida mobiliária federal, participação por indexador (Percentual, mensal, desde jan/2000).
     # Conferidas no package_search do BCB em 14/11/2026. A família não traz o IPCA (NTN-B):
     # as oito parcelas somam ~76 % em set/2026; o que falta para 100 % é o IPCA.
@@ -365,5 +375,80 @@ SGS: dict[str, SerieSGS] = {
         "%",
         "M",
         "14/11/2026",
+    ),
+    # ---- riscos. Conferidas em 14/11/2026. As marcadas "CKAN" no package_search do BCB
+    # (título, unidade, periodicidade); as outras o CKAN não lista (count 0) e foram
+    # conferidas no serviço de metadados do próprio SGS (FachadaWSSGS, getUltimoValorXML:
+    # nome, unidade e periodicidade) e no dado (último ponto entre parênteses).
+    # Juros em reais: o par do 5760 (% do PIB). SGS-meta (set/2026: 1.204.960,77).
+    "NFSP_JUROS_12M_RS": SerieSGS(
+        5045,
+        "NFSP, juros nominais em 12 meses, setor público consolidado",
+        "R$ milhões",
+        "M",
+        "14/11/2026",
+    ),
+    # CKAN (set/2026: 48,09 meses).
+    "DIVIDA_PRAZO_MEDIO": SerieSGS(
+        10618,
+        "Dívida mobiliária federal, títulos do Tesouro Nacional emitidos, prazo médio",
+        "meses",
+        "M",
+        "14/11/2026",
+    ),
+    # SGS-meta (set/2026: -3,34). Negativa = o setor público tem mais a receber do que a
+    # pagar em moeda estrangeira (as reservas passam a dívida externa).
+    "DLSP_EXTERNA": SerieSGS(
+        4535,
+        "Dívida líquida do setor público, externa, setor público consolidado",
+        "% do PIB",
+        "M",
+        "14/11/2026",
+    ),
+    # SGS-meta, trimestrais com a data no 1º mês do trimestre (2º tri/2026: 407.102,75 e
+    # 113.307,7). O título da 21519 não diz se o prazo é o original ou o residual; a única
+    # série "por vencimento residual" (12504) parou em 2018. Antes de 2000, um ponto por ano.
+    "DIVIDA_EXTERNA": SerieSGS(3684, "Dívida externa bruta", "US$ milhões", "T", "14/11/2026"),
+    "DIVIDA_EXTERNA_CURTO_PRAZO": SerieSGS(
+        21519, "Dívida externa bruta, curto prazo", "US$ milhões", "T", "14/11/2026"
+    ),
+    # CKAN (set/2026: 27.715,2).
+    "IMPORTACOES": SerieSGS(
+        22709,
+        "Importação de bens (balanço de pagamentos), mensal",
+        "US$ milhões",
+        "M",
+        "14/11/2026",
+    ),
+    # SGS-meta (13/11/2026: 90.250,00). Positivo = o Banco Central vendido em dólar (deu
+    # proteção cambial ao mercado). A mensal 29533 tem o sinal contrário e atrasa: não usar.
+    "SWAP_CAMBIAL": SerieSGS(
+        29723,
+        "Estoque de swap cambial do Banco Central, nocional",
+        "US$ milhões",
+        "D",
+        "14/11/2026",
+    ),
+    # CKAN (set/2026: 5,99; 3,28; 4,86).
+    "CREDITO_INADIMPLENCIA_PF": SerieSGS(
+        21084, "Inadimplência da carteira de crédito, pessoas físicas", "%", "M", "14/11/2026"
+    ),
+    "CREDITO_INADIMPLENCIA_PJ": SerieSGS(
+        21083, "Inadimplência da carteira de crédito, pessoas jurídicas", "%", "M", "14/11/2026"
+    ),
+    "CREDITO_ATRASO_15_90": SerieSGS(
+        21003,
+        "Percentual da carteira de crédito com atraso entre 15 e 90 dias, total",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    # SGS-meta (mar/2026: 16,6038 e 13,8438). Saem com meses de atraso. As antigas 21424 e
+    # 21802 pararam em jun/2023. Até set/2013 a 29663 repete o Nível 1 (não havia o conceito).
+    "BASILEIA": SerieSGS(
+        29661, "Índice de Basileia de todo o Sistema Financeiro Nacional", "%", "M", "14/11/2026"
+    ),
+    "CAPITAL_PRINCIPAL": SerieSGS(
+        29663, "Índice de Capital Principal no Sistema Financeiro Nacional", "%", "M", "14/11/2026"
     ),
 }
