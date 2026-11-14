@@ -199,6 +199,27 @@ SINONIMOS: dict[str, list[str]] = {
     "produtividade": ["pib por trabalhador", "eficiencia", "produto por ocupado"],
     "por pessoa ocupada": ["produtividade", "pib por trabalhador"],
     "crescimento do pib": ["de onde veio o crescimento", "produtividade", "emprego"],
+    "desigualdade": [
+        "concentracao de renda",
+        "distribuicao de renda",
+        "ricos e pobres",
+        "abismo social",
+        "injustica social",
+    ],
+    "gini": ["indice de gini", "coeficiente de gini", "desigualdade de renda"],
+    "10 % mais ricos": [
+        "os mais ricos",
+        "elite",
+        "topo da piramide",
+        "1% mais rico",
+        "super-ricos",
+    ],
+    "40 % mais pobres": ["os mais pobres", "base da piramide", "baixa renda"],
+    "pobreza": ["pobres", "miseria", "fome", "extrema pobreza", "linha de pobreza"],
+    "dividendos": ["lucros e dividendos", "super-ricos", "taxacao dos ricos", "imposto dos ricos"],
+    "mulheres": ["diferenca salarial", "genero", "desigualdade de genero", "salario das mulheres"],
+    "pretos": ["negros", "racismo", "desigualdade racial", "cor ou raca"],
+    "pardos": ["negros", "desigualdade racial", "cor ou raca"],
 }
 
 
@@ -444,6 +465,17 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
         "vieillissement",
     ],
     "populacao": ["population", "poblacion"],
+    "desigualdade": [
+        "inequality",
+        "income inequality",
+        "income distribution",
+        "desigualdad",
+        "distribucion del ingreso",
+        "inegalites",
+        "inegalite des revenus",
+    ],
+    "gini": ["gini index", "gini coefficient", "indice de gini", "coeficiente de gini"],
+    "pobreza": ["poverty", "extreme poverty", "pobreza extrema", "pauvrete", "extreme pauvrete"],
     "idosos": [
         "elderly",
         "aging",

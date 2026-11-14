@@ -1015,6 +1015,49 @@ TERMOS: list[Termo] = [
         "Unido, Canadá, Austrália, Coreia do Sul e outros países ricos.",
         ("avançados", "economias avançadas"),
     ),
+    # ---------------------------------------------------------------- desigualdade
+    Termo(
+        "gini",
+        "Índice de Gini",
+        "Mede a desigualdade da renda numa só conta: 0 seria todos com a mesma renda, e 1, uma "
+        "pessoa com toda a renda. O Brasil fica perto de 0,5; países europeus, perto de 0,3.",
+        ("índice de Gini", "coeficiente de Gini", "Gini"),
+        "#desigualdade/gini",
+    ),
+    Termo(
+        "renda-por-pessoa",
+        "Renda domiciliar por pessoa",
+        "Toda a renda de quem mora na casa (trabalho, aposentadoria, aluguel, programas "
+        "sociais) dividida pelo número de moradores. É a medida que o IBGE usa para a "
+        "desigualdade e a pobreza.",
+        ("renda domiciliar por pessoa", "renda domiciliar per capita", "renda por pessoa"),
+        "#desigualdade/concentracao",
+    ),
+    Termo(
+        "razao-10-40",
+        "Razão 10/40",
+        "Quantas vezes a fatia da renda dos 10 % mais ricos é maior que a dos 40 % mais pobres "
+        "juntos. Também chamada de razão de Palma.",
+        ("razão 10/40", "razão de Palma"),
+        "#desigualdade/concentracao",
+    ),
+    Termo(
+        "linha-de-pobreza",
+        "Linha de pobreza",
+        "A renda por pessoa abaixo da qual alguém é contado como pobre. As do Banco Mundial "
+        "são em dólares por dia, corrigidos pela diferença de preços entre os países: US$ "
+        "8,30 para pobreza num país como o Brasil e US$ 3,00 para extrema pobreza.",
+        ("linha de pobreza", "linhas de pobreza", "extrema pobreza"),
+        "#desigualdade/pobreza",
+    ),
+    Termo(
+        "lucros-e-dividendos",
+        "Lucros e dividendos",
+        "O que a empresa paga aos sócios e acionistas do lucro que teve. No Brasil, quem recebe "
+        "não paga Imposto de Renda sobre eles na declaração.",
+        ("lucros e dividendos", "dividendos"),
+        "#desigualdade/topo",
+    ),
     # ---------------------------------------------------------------- demografia
     Termo(
         "fecundidade",

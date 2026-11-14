@@ -29,6 +29,25 @@ data. Pedido novo vira linha aqui antes de virar código. A ordem do que fazer a
 | Como o site atualiza e quem cuida das leis e números lidos à mão | ✅ (14/11/2026) Prazo de releitura de cada número lido à mão em `leituras.py`; `sacibras leituras` lista o que venceu, o build avisa, e o workflow "Prazos de releitura" (dias úteis, 8h23) abre a issue "releitura" e fica vermelho com prazo vencido. Fonte que falha no build abre a issue "fonte fora do ar", que fecha sozinha quando ela volta. |
 | Tarefa agendada que relê sozinha os relatórios do BC e o bimestral (Caio, 14/11/2026: *"o 3 anote no propostas"*) | Em espera. Uma sessão do Claude agendada, disparada pela issue "releitura" ou por data (fim do mês para a nota fiscal do BC; até o dia 22 do mês par para o bimestral; fim de março, junho, setembro e dezembro para o RPM), lê o PDF, atualiza `relatorios.py`/`leis.py` e `leituras.py` e abre um PR para o Caio conferir. Não serve para o que só se lê do PC (Planalto, `servicodados` do IBGE): LDO, LRF, EC 132 e LC 214 continuam à mão. Cuidado: número de quadro que é imagem no PDF (as elasticidades) pede conferência humana. |
 
+## Desigualdade (Caio, 14/11/2026: *"Coloque uma aba de Desigualdade [...] tem gini, concentração de renda?"*)
+
+✅ Assunto "Desigualdade" em Atividade e emprego, seis partes: Gini (1995–2025, PNAD Contínua
+e Ipea, e o do trabalho), quem fica com quanto (fatia dos 40 % mais pobres, 50 % do meio, 10 %
+e 1 % mais ricos, razão 10/40, a renda de cada décimo e quanto cresceu desde 2012), o topo pelo
+IRPF (quanto da renda declarada e dos dividendos fica com cada faixa), pobreza (linhas do Banco
+Mundial desde 1995), mulheres, homens e cor (renda do trabalho), estados e países (Gini por UF,
+também no mapa de Estados, e o Gini × PIB por habitante dos países). O que fica:
+
+| Ideia | Fonte | Situação |
+|-------|-------|----------|
+| Concentração no topo com dado de imposto (1 % e 0,1 % dos adultos, não só dos declarantes) | Receita (DIRPF por centil, publicada só em estudos avulsos) ou WID (não oficial) | a conferir: achar se a Receita publica os centis em arquivo aberto |
+| Riqueza: bens e direitos declarados por faixa | Receita, Grandes Números (outras abas do mesmo arquivo) | a conferir as abas |
+| Bolsa Família e BPC: quantas casas recebem e quanto pesam na renda dos mais pobres | SIDRA 7457, 7458 (PNAD anual) e MDS (beneficiários mês a mês) | possível |
+| Pobreza por estado, cor e sexo | Ipeadata `PNADCA_TXPNUF` e as séries por cor e sexo (SIS/IBGE) | possível |
+| Renda por escolaridade e idade | SIDRA 7442, 7443 | possível |
+| Mobilidade (filhos de pais pobres que sobem) | só em estudos (PNAD 2014, suplemento) | sem série |
+| Nomes dos estados com `translate="no"` nas tabelas (o tradutor fez "To" de Tocantins e "Holy Spirit") | `web/` | pequeno, vale para todas as tabelas por estado |
+
 ## Por estado
 
 Pronto em 14/11/2026 (a ficha do estado: escolha na lista ou toque no ranking):

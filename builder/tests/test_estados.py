@@ -244,6 +244,7 @@ def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
     assert len(e.ufs) == 27
     assert [m.id for m in e.metricas] == [
         "desocupacao",
+        "gini",
         "pessoal",
         "divida",
         "primario",
@@ -266,7 +267,13 @@ def test_rreo_fora_do_ar_nao_derruba_as_outras_metricas(monkeypatch: pytest.Monk
     monkeypatch.setattr(estados.siconfi, "coletar_anual", cai)
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
-    assert [m.id for m in e.metricas] == ["desocupacao", "pessoal", "divida", "rcl_per_capita"]
+    assert [m.id for m in e.metricas] == [
+        "desocupacao",
+        "gini",
+        "pessoal",
+        "divida",
+        "rcl_per_capita",
+    ]
 
 
 # ---------------------------------------------------------------- contas de cada estado (DCA)

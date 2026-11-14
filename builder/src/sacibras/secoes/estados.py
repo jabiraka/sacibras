@@ -104,6 +104,38 @@ def _desocupacao() -> MetricaEstados:
     )
 
 
+def _gini() -> MetricaEstados:
+    # Tabela 7435 (PNAD Contínua anual, rendimento de todas as fontes), variável 10681: Gini do
+    # rendimento domiciliar per capita (conferida em 14/11/2026; a mesma de Desigualdade).
+    por_uf = ibge_sidra.series(
+        7435, 10681, periodos="last 1", nivel="n3/all", por="Unidade da Federação"
+    )
+    pais = ibge_sidra.serie(7435, 10681, periodos="last 1")
+    valores: dict[str, float | None] = {s: None for s in SIGLA.values()}
+    quando: date | None = None
+    for cod, pontos in por_uf.items():
+        if int(cod) in SIGLA and pontos:
+            quando, valores[SIGLA[int(cod)]] = pontos[-1]
+    if quando is None:
+        raise RuntimeError("SIDRA 7435 sem dado por UF")
+    return MetricaEstados(
+        id="gini",
+        nome="Desigualdade da renda (Gini)",
+        descricao=(
+            "Índice de Gini da renda domiciliar por pessoa: 0 é todos com a mesma renda, 1 é "
+            "uma pessoa com toda a renda. Mede a desigualdade dentro do estado; o do Brasil é "
+            "maior porque soma também a distância entre os estados."
+        ),
+        unidade="índice",
+        casas=3,
+        referencia=str(quando.year),
+        maior_e_melhor=False,
+        fonte="IBGE, PNAD Contínua anual (SIDRA, tabela 7435)",
+        valores=valores,
+        brasil=pais[-1][1] if pais and pais[-1][0] == quando else None,
+    )
+
+
 def _diferentes(limites: dict[str, float | None], da_lei: float, folga: float) -> str:
     """Quem registra no RGF limite diferente do da lei (`folga` absorve o arredondamento)."""
     fora = [
@@ -593,6 +625,10 @@ def montar(ctx: Contexto) -> Estados:
         metricas.append(deso)
     except Exception as erro:  # uma fonte fora do ar não derruba a seção
         print(f"  aviso: desocupação por UF indisponível: {erro}")
+    try:
+        metricas.append(_gini())
+    except Exception as erro:
+        print(f"  aviso: Gini por UF indisponível: {erro}")
 
     fiscal: tuple[MetricaEstados, MetricaEstados, MetricaEstados, dict[str, float | None]] | None
     fiscal = None

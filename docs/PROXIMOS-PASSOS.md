@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o simulador da reforma do consumo em Impostos, no `main` junto com os prazos de releitura e as dez sugestões de Impostos; antes, no mesmo dia, o efeito da Selic com faixas de erro).
+Última atualização: 14/11/2026 (o assunto Desigualdade, no branch `ccr-ffc705ee-tjym93`, ainda fora do `main`).
 
 ---
 
@@ -43,6 +43,27 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
+
+## Desigualdade (14/11/2026, na nuvem, branch `ccr-ffc705ee-tjym93`, **fora do `main`**)
+
+Pedido do Caio: *"Coloque uma aba de Desigualdade no Sacibras, proponha oq colocar e de onde
+vao vir os dados, tem gini, concentração de renda?"*.
+
+- **Assunto novo** (`secoes/desigualdade.py`), em Atividade e emprego, depois de Trabalho:
+  Gini, Quem fica com quanto, O topo pelo Imposto de Renda, Pobreza, Mulheres homens e cor,
+  Estados e países. Números de 2025: Gini 0,511 (0,540 em 2012); 10 % mais ricos com 40,3 %
+  da renda, 1 % com 11,0 %, 40 % mais pobres com 11,7 %; quem declara mais de 320 salários
+  mínimos (44,8 mil pessoas, 0,11 % dos declarantes) fica com 14,9 % da renda declarada e
+  42,4 % dos lucros e dividendos (IRPF de 2024); pobreza (US$ 8,30) 25,2 %, extrema 4,6 %.
+- **Fontes** (todas por API, nada lido à mão; [FONTES](FONTES.md)): SIDRA da PNAD Contínua
+  anual, Ipeadata (séries longas desde 1995), a planilha do IRPF que Impostos já baixa (agora
+  guardada na rodada, `functools.cache`) e o Banco Mundial (`fontes/banco_mundial.py`).
+- **Estados**: métrica nova "Desigualdade da renda (Gini)" no mapa e no ranking.
+- Glossário (Gini, renda domiciliar por pessoa, razão 10/40, linha de pobreza, lucros e
+  dividendos) e busca ("concentração de renda", "1% mais rico", "racismo", em inglês,
+  espanhol e francês).
+- Conferido a 1280 e 390 px. **Falta**: o Caio olhar e dizer se vai ao `main`; as ideias que
+  ficaram estão no [PROPOSTAS](PROPOSTAS.md), seção Desigualdade.
 
 ## Reforma do consumo (14/11/2026, mesma sessão e branch da Selic, publicada no `main`)
 

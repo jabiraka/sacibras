@@ -23,7 +23,7 @@ CATEGORIAS: list[Categoria] = [
     Categoria(
         id="atividade-emprego",
         titulo="Atividade e emprego",
-        secoes=["atividade", "trabalho", "demografia"],
+        secoes=["atividade", "trabalho", "desigualdade", "demografia"],
     ),
     Categoria(
         id="precos-juros",
@@ -140,6 +140,51 @@ PARTES: dict[str, list[Parte]] = {
             "PIB por pessoa ocupada e de onde veio o crescimento.",
             cartoes=["produtividade"],
             graficos=["produtividade", "crescimento-decomposto"],
+        ),
+    ],
+    "desigualdade": [
+        Parte(
+            "gini",
+            "Gini",
+            "O índice que resume a desigualdade da renda, de 1995 até hoje.",
+            cartoes=["gini", "gini-trabalho"],
+            graficos=["gini"],
+        ),
+        Parte(
+            "concentracao",
+            "Quem fica com quanto",
+            "A fatia da renda dos mais pobres, do meio e dos mais ricos, e quanto cada um ganha.",
+            cartoes=["fatia-10-ricos", "fatia-1-rico", "fatia-40-pobres", "razao-10-40"],
+            graficos=["fatias", "renda-por-grupo"],
+            tabelas=["desigualdade-decimos"],
+        ),
+        Parte(
+            "topo",
+            "O topo, pelo Imposto de Renda",
+            "Quanto da renda e dos dividendos fica com quem declara mais.",
+            cartoes=["irpf-topo-renda", "irpf-topo-dividendos"],
+            tabelas=["desigualdade-irpf"],
+        ),
+        Parte(
+            "pobreza",
+            "Pobreza",
+            "Quantos vivem abaixo das linhas de pobreza do Banco Mundial, desde 1995.",
+            cartoes=["pobreza", "extrema-pobreza"],
+            graficos=["pobreza"],
+        ),
+        Parte(
+            "sexo-e-cor",
+            "Mulheres, homens e cor",
+            "A renda do trabalho de mulheres, pretos e pardos contra a de homens e brancos.",
+            cartoes=["mulheres-homens", "pretos-brancos", "pardos-brancos"],
+            graficos=["diferencas", "renda-trabalho-grupos"],
+        ),
+        Parte(
+            "estados-e-paises",
+            "Estados e países",
+            "O Gini de cada estado e o do Brasil contra o dos outros países.",
+            graficos=["gini-paises"],
+            tabelas=["desigualdade-estados"],
         ),
     ],
     "inflacao": [
