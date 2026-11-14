@@ -126,9 +126,8 @@ crescimento entre ocupação e produtividade; déficit do INSS (RTN).
 
 ## Tradução (14/11/2026)
 
-- Busca em outros idiomas: hoje o índice (`busca.json`) só tem palavras em português; com a
-  página traduzida, quem busca "inflation" não acha. Saída possível: sinônimos em inglês e
-  espanhol em `SINONIMOS` para os assuntos principais.
+- Busca em outros idiomas: feita para inglês, espanhol e francês (`OUTRAS_LINGUAS`). Falta
+  para línguas de outra escrita (chinês, japonês, árabe…).
 - Nomes próprios protegidos do tradutor (Copom, Focus, IPCA, Selic): marcar com
   `translate="no"` onde aparecem nos títulos e no menu.
 - Simulador: inflação com efeito no juro da parte da dívida corrigida pelo IPCA (falta a

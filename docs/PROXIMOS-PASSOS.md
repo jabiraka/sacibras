@@ -88,8 +88,15 @@ o essencial"*.
   original. Lista "Idioma" no menu (no celular, no alto do menu aberto) com 13 idiomas mais o
   do navegador; a escolha fica no navegador. Em português, nada é baixado do Google.
   Conferido com navegador en-US, es-AR e pt-BR. Limites: o país pelo IP não é usado (pediria
-  serviço de terceiros); a busca só acha palavras em português; o tradutor às vezes estraga
-  nomes próprios ("Copom" virou "Cocom" no espanhol).
+  serviço de terceiros); o tradutor às vezes estraga nomes próprios ("Copom" virou "Cocom" no
+  espanhol) e traduz "Desocupação" por "Eviction" no inglês.
+- **Busca em outras línguas** (Caio: *"arrume a busca"*): `OUTRAS_LINGUAS` em `busca.py` põe
+  no índice as palavras em inglês, espanhol e francês de cada assunto (unemployment,
+  desempleo, chômage; credit rating; GDP…); a que vem do título (`lt`) pesa mais que a do
+  resumo, para "unemployment" trazer a Desocupação antes de Estados. Em outra língua (japonês,
+  chinês…), o aviso diz que a busca entende português, inglês, espanhol e francês. Coisa nova
+  que um estrangeiro procuraria ganha a palavra em `OUTRAS_LINGUAS`.
+- **Publicado no `main`** em 14/11/2026, a pedido do Caio (*"pode juntar no main"*).
 - Conferido a 390 e a 1280 px (Estados nas cinco telas, Riscos › Mercado e contas externas, a
   vista por países, o simulador, a página traduzida). A prévia privada não foi republicada
   nesta sessão.

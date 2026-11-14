@@ -3,16 +3,23 @@
 // se compara sem acento e por começo de palavra.
 
 import { el } from "./pecas";
+import { idiomaAtual } from "./traducao";
+
+/** As línguas que o índice entende (os sinônimos de `busca.py`). */
+const LINGUAS_DO_INDICE = ["pt", "en", "es", "fr"];
 
 interface Item {
   t: string;
   o: string;
   h: string;
   p?: string;
+  /** O título em inglês, espanhol e francês (vale mais que os sinônimos). */
+  lt?: string;
 }
 
 interface Indexado extends Item {
   titulo: string;
+  traducao: string;
   resto: string;
 }
 
@@ -29,7 +36,12 @@ function carregar(): Promise<Indexado[]> {
   indice ??= fetch("data/busca.json", { cache: "no-cache" })
     .then((r) => (r.ok ? (r.json() as Promise<Item[]>) : []))
     .then((itens) =>
-      itens.map((i) => ({ ...i, titulo: normalizar(i.t), resto: normalizar(`${i.o} ${i.p ?? ""}`) })),
+      itens.map((i) => ({
+        ...i,
+        titulo: normalizar(i.t),
+        traducao: normalizar(i.lt ?? ""),
+        resto: normalizar(`${i.o} ${i.p ?? ""}`),
+      })),
     )
     .catch(() => []);
   return indice;
@@ -37,11 +49,15 @@ function carregar(): Promise<Indexado[]> {
 
 /** Pontua o item: cada palavra da busca tem de aparecer (no começo de uma palavra do título,
  *  do lugar ou dos sinônimos); no título vale mais. */
-export function pontuar(item: { titulo: string; resto: string }, palavras: string[]): number {
+export function pontuar(
+  item: { titulo: string; traducao?: string; resto: string },
+  palavras: string[],
+): number {
   let total = 0;
   for (const p of palavras) {
     const noTitulo = new RegExp(`(^|[^a-z0-9])${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
     if (noTitulo.test(item.titulo)) total += item.titulo.startsWith(p) ? 4 : 3;
+    else if (item.traducao && noTitulo.test(item.traducao)) total += 2;
     else if (noTitulo.test(item.resto)) total += 1;
     else return 0;
   }
@@ -122,9 +138,12 @@ export function ligarBusca(): void {
           return li;
         }),
       );
+      const outraLingua = !LINGUAS_DO_INDICE.includes(idiomaAtual().slice(0, 2));
       aviso.textContent = achados.length
         ? ""
-        : 'Nada com esse nome. Tente outra palavra ("juros", "emprego", "bolsa").';
+        : outraLingua
+          ? "Nada com esse nome. A busca entende português, inglês, espanhol e francês: tente, por exemplo, \"inflation\" ou \"GDP\". Os assuntos também estão no menu."
+          : 'Nada com esse nome. Tente outra palavra ("juros", "emprego", "bolsa").';
       saida.hidden = false;
       campo.setAttribute("aria-expanded", "true");
     });

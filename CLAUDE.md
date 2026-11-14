@@ -104,7 +104,8 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   escrito em português; quem chega com o navegador em outro idioma recebe a página traduzida
   pelo Google Tradutor (`web/src/traducao.ts`), e a lista "Idioma" no menu troca ou volta ao
   original. Em português nada é baixado do Google. Nome próprio ou símbolo que o tradutor
-  estraga ganha `translate="no"` (o "?" do glossário, a marca).
+  estraga ganha `translate="no"` (o "?" do glossário, a marca). A busca entende também
+  inglês, espanhol e francês: assunto novo ganha as palavras em `OUTRAS_LINGUAS` (`busca.py`).
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,

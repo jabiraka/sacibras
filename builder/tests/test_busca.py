@@ -46,3 +46,22 @@ def test_indice_le_os_json_gravados(tmp_path: Path) -> None:
     }
     assert "copom" in itens["#juros/c-selic-meta"]["p"]
     assert itens["#estados/uf-RJ"]["o"] == "Estados · RJ"
+
+
+def test_palavras_em_ingles_espanhol_e_frances() -> None:
+    assert "unemployment" in busca.sinonimos_de("Taxa de desocupação")
+    assert "desempleo" in busca.sinonimos_de("Taxa de desocupação")
+    assert "chomage" in busca.sinonimos_de("Taxa de desocupação")
+    assert "credit rating" in busca.sinonimos_de("Nota de crédito do Brasil")
+    assert "exchange rate" in busca.sinonimos_de("Dólar")
+    assert "gdp" in busca.sinonimos_de("PIB no trimestre")
+    # Tudo sem acento e em minúsculas, como o navegador compara.
+    for palavras in busca.OUTRAS_LINGUAS.values():
+        assert all(p == busca.normalizar(p) for p in palavras)
+
+
+def test_titulo_em_outras_linguas_vai_a_parte() -> None:
+    item = busca._item("Desocupação", "Trabalho · número", "#trabalho/c-desocupacao")
+    assert "unemployment" in item.lt
+    assistido = busca._item("Estados", "Assunto", "#estados", "a desocupação vai de 2 a 10 %")
+    assert "unemployment" not in assistido.lt and "unemployment" in assistido.p

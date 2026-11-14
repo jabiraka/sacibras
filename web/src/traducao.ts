@@ -79,6 +79,12 @@ function cookie(codigo: string): void {
 }
 
 let carregado = false;
+let idiomaDaPagina = ORIGINAL;
+
+/** O idioma em que a página está sendo mostrada ("pt" quando é o original). */
+export function idiomaAtual(): string {
+  return idiomaDaPagina;
+}
 
 function carregarTradutor(): void {
   if (carregado) return;
@@ -116,6 +122,7 @@ function trocar(codigo: string): void {
 /** A lista "Idioma" no menu e, se for o caso, a tradução automática já na entrada. */
 export function ligarTraducao(): void {
   const alvo = codigoGoogle(idiomaDesejado());
+  idiomaDaPagina = alvo;
   const caixa = document.getElementById("idioma");
   if (caixa) {
     const codigos = LISTA.includes(alvo) ? LISTA : [...LISTA, alvo];
