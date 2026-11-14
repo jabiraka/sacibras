@@ -13,6 +13,12 @@ data. Pedido novo vira linha aqui antes de virar código. A ordem do que fazer a
 | Barra de busca por nome ou sinônimo | ✅ Lupa no cabeçalho e caixa na entrada; índice `busca.json` com sinônimos (`busca.py`). Falta: sugestões quando nada é achado, busca por número ("13,75"). |
 | Inflação implícita nos títulos (o Jabs tem uma curva) | ✅ Curva zero pelo método do Jabs (`curvas.py`). Falta: o trecho antes de mai/2029 (não há IPCA+ sem cupom mais curto; o cupom de IPCA da B3, DAP, depende do `SB_B3`). |
 | O que dá para abrir por estado | Ver abaixo. |
+| Glossário: tocar na palavra ou num "?" abre a definição num balão, sem sair da tela | ✅ 89 termos em `glossario.py` (`glossario.json`); o navegador sublinha a palavra no texto corrido e põe "?" no nome dos números, gráficos e alertas (`web/src/glossario.ts`). Falta: o glossário na busca ("o que é spread"), uma lista de todos os termos se alguém pedir. |
+| Painel de alerta: classificar, não mostrar tudo de uma vez, dizer o que significa, por que é alerta e no que pode dar | ✅ grupos que abrem no toque (o com mais acesos em cima, um ponto por indicador), atalho com os seis piores acesos, e cada linha abre "O que é / Por que é alerta / Pode levar a" (`alertas.py`) com a história do indicador. |
+| Brasil no mundo: os emergentes mudam só o gráfico ou a tabela também? Lista com muitas métricas | Mudavam só o ranking. ✅ Agora a lista "Países" (os 22 principais, médias dos grupos ou todos os países de um grupo do FMI) vale para ranking, duas métricas e tabela; métricas agrupadas por tema na lista; grupo inteiro rola numa caixa com o Brasil à vista. |
+| Melhorar as faixas das projeções (a barra azul) | ✅ traço fino em tinta neutra com as pontas marcadas; no leque, a parte de 50 % mais grossa. Regra no `CLAUDE.md`. |
+| Riscos: faixa e "sorteio" mais intuitivos | ✅ "como ler" em palavras de todo dia no leque e nas previsões ("8 em cada 10 futuros sorteados ficam entre as pontas"), nomes da legenda e do cartão reescritos, verbetes no glossário. |
+| O primário do Brasil no mundo e o de Contas públicas se conversam? | Conversam, mas não são a mesma conta (FMI: governo geral, receitas menos despesas; BC: setor público com estatais, variação da dívida). ✅ Tabela lado a lado em Contas públicas › Primário e juros, e a diferença dita na descrição da métrica em Brasil no mundo. |
 
 ## Por estado
 
@@ -63,9 +69,9 @@ fonte aberta:
 | Current e financial account em partes | balança, renda primária e secundária; investimento direto, carteira, outros, reservas | SGS (BPM6) | ✅ gráfico empilhado e tabela em US$ e % do PIB |
 | Mortgage rate, house prices | juro do financiamento imobiliário, IVG-R (preço dos imóveis financiados) | SGS | ✅ juro de mercado e regulado, concessões, IVG-R contra o IPCA |
 | Debt service, interest payments | comprometimento da renda só com juros, endividamento sem o imobiliário | SGS | ✅ |
-| Saving rate, investimento | taxa de investimento e de poupança (% do PIB) | SIDRA (contas trimestrais) | ideia |
+| Saving rate, investimento | taxa de investimento e de poupança (% do PIB) | SIDRA 6727 e 6726 | ✅ Atividade › Investimento e poupança |
 | Real final sales to private domestic purchasers | consumo das famílias + investimento, sem governo e estoques | SIDRA | ideia |
-| Productivity | PIB por pessoa ocupada | SIDRA | ideia |
+| Productivity | PIB por pessoa ocupada | SIDRA | ✅ em Demografia |
 | FedWatch (probabilidades da reunião) | probabilidade do Copom pelos DI curtos | B3 (desligada) | espera o `SB_B3` |
 | VIX, NFCI, petróleo, metais | risco-país, Brent, minério | sem fonte aberta estável (EMBI parou em 2024) | fora por ora |
 | UMich, Cleveland | expectativa do consumidor (FGV) | FGV cobra | fora |
@@ -83,7 +89,7 @@ dívida e o risco demográfico (*"de ficarmos sem grana pra previdência"*).
 | 1. A dívida se sustenta? | ✅ primário que estabiliza a dívida contra o de hoje, juro da dívida menos crescimento, juros em reais (SGS 5045), prazo médio (10618), leque de trajetórias (4.000 sorteios com os choques de 2006 a 2025, cápsulas de 80 %) ao lado do Focus, e as elasticidades que o BC publica (lidas à mão). Falta: a taxa implícita oficial da DBGG e o vencimento em 12 meses (só na planilha mensal da nota fiscal do BC, tabelas 24 e 25: um arquivo por mês), o FMI no leque, juros sobre a receita. |
 | 2. O que o mercado cobra | ✅ volatilidade do dólar e do Ibovespa, distância do pico, câmbio real efetivo. Falta: juro real de 10 anos do Brasil menos o dos EUA (a fonte americana foi testada e responde, ver [FONTES](FONTES.md); pede a história do juro real brasileiro de 10 anos, que `juros.py` só calcula para hoje), inflação implícita longa contra a meta no painel. EMBI+ e CDS seguem sem fonte aberta. |
 | 3. Nota de crédito | ✅ escada das três agências desde 1994 e o cartão com a distância do grau de investimento, lidos à mão (`relatorios.py`). O sistema do Tesouro (sisweb) estava fora do ar: reler quando voltar e a cada ato de agência. |
-| 4. Painel de alerta | ✅ 32 indicadores em seis grupos, cada um na régua da própria história, com o lado ruim à direita; "aceso" = pior que 80 % da história; limite oficial onde há (teto da meta, mínimo de Basileia). Sem nota única. Falta: hiato de crédito do BIS (testado, ver FONTES), liquidez dos bancos (SGS 29407/29408, trimestrais), expectativa de inflação contra a meta. |
+| 4. Painel de alerta | ✅ (classificado e explicado em 14/11/2026, ver acima) 32 indicadores em seis grupos, cada um na régua da própria história, com o lado ruim à direita; "aceso" = pior que 80 % da história; limite oficial onde há (teto da meta, mínimo de Basileia). Sem nota única. Falta: hiato de crédito do BIS (testado, ver FONTES), liquidez dos bancos (SGS 29407/29408, trimestrais), expectativa de inflação contra a meta. |
 | 5. Testes de estresse | ✅ cinco episódios (2002, 2008, 2015–16, 2020, fim de 2024): o que dólar, bolsa, Selic e PIB fizeram e o mesmo tranco na escala de hoje; a dívida com os choques de 2008, 2015–16 e 2020 somados à linha de base do Focus; o teste dos bancos do REF de out/2026 na nota (lido à mão). 2002 fica fora da conta da dívida (a DBGG atual começa em dez/2006). |
 | 6. Risco jurídico e institucional | ⬜ ações contra a União com perda provável e possível (Anexo de Riscos Fiscais da LDO), precatórios, indicadores de governança do Banco Mundial. Tudo lido à mão ou de API lenta: próximo passo. |
 | 7. Estados | ⬜ quem está perto do limite de pessoal e de dívida (os limites da lei já estão em `leis.py`), nota CAPAG. |

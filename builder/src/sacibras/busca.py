@@ -44,6 +44,8 @@ SINONIMOS: dict[str, list[str]] = {
     "pib": ["crescimento", "atividade", "economia", "produto interno bruto", "recessao"],
     "ibc-br": ["previa do pib", "atividade", "pib mensal"],
     "atividade": ["pib", "crescimento", "producao", "economia"],
+    "taxa de investimento": ["fbcf", "formacao bruta de capital", "investimento produtivo"],
+    "taxa de poupanca": ["poupanca do pais", "poupanca nacional", "saving rate", "poupanca bruta"],
     "industria": ["producao industrial", "fabricas", "pim"],
     "varejo": ["comercio", "vendas", "consumo", "lojas", "pmc"],
     "servicos": ["pms", "setor de servicos"],
@@ -181,7 +183,8 @@ def montar(saida: Path) -> list[Item]:
             # O painel fica guardado e é montado no clique: o resultado leva a ele.
             itens.append(_item("Painel de alerta", f"{nome} · painel", f"{h}/t-alertas"))
             for a in dados["alertas"]:
-                itens.append(_item(a["nome"], f"{nome} · alerta", f"{h}/t-alertas", a["grupo"]))
+                alvo = f"{h}/a-{a['id']}"
+                itens.append(_item(a["nome"], f"{nome} · alerta", alvo, a["grupo"]))
         for m in dados.get("metricas", []):
             itens.append(_item(m["nome"], f"{nome} · comparação", f"{h}/m-{m['id']}"))
         for pais in dados.get("paises", []):

@@ -11,6 +11,8 @@ import { el } from "./pecas";
 export interface Opcao {
   valor: string;
   rotulo: string;
+  /** Opções com o mesmo `grupo` vêm juntas, sob o título dele (optgroup). */
+  grupo?: string;
 }
 
 /** Um rótulo e uma lista suspensa nativa (no celular abre o seletor do sistema). */
@@ -27,13 +29,20 @@ export function listaSuspensa(
   const lista = el("select", "escolha");
   lista.id = id;
   const trocar = (novas: Opcao[], valor: string): void => {
-    lista.replaceChildren(
-      ...novas.map((o) => {
-        const item = el("option", "", o.rotulo);
-        item.value = o.valor;
-        return item;
-      }),
-    );
+    const itens: HTMLElement[] = [];
+    let titulo: HTMLOptGroupElement | null = null;
+    for (const o of novas) {
+      const item = el("option", "", o.rotulo);
+      item.value = o.valor;
+      if (o.grupo && titulo?.label !== o.grupo) {
+        titulo = el("optgroup");
+        titulo.label = o.grupo;
+        itens.push(titulo);
+      }
+      if (o.grupo && titulo) titulo.append(item);
+      else itens.push(item);
+    }
+    lista.replaceChildren(...itens);
     lista.value = valor;
   };
   trocar(opcoes, escolhido);

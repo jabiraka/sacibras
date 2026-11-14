@@ -42,11 +42,16 @@ class Faixa(Modelo):
 
 
 class Intervalo(Modelo):
-    """Barras de erro: em cada data, de `inferior` a `superior`, na cor da série `serie`."""
+    """Barras de erro: em cada data, de `inferior` a `superior`, em volta da série `serie`.
+
+    Desenho (Caio, 14/11/2026, "não gostei da barra azul"): traço fino em tinta neutra com
+    as pontas marcadas; `meio`, quando há, é a parte grossa (a faixa de 50 %)."""
 
     nome: str
     serie: str
     pontos: list[tuple[date, float, float]]
+    meio: list[tuple[date, float, float]] = []
+    nome_meio: str = ""
 
 
 class LinhaRef(Modelo):
@@ -200,6 +205,12 @@ class Alerta(Modelo):
     """O limite oficial, quando existe (o teto da meta de inflação)."""
     fonte: str
     procedencia: Procedencia = "oficial"
+    significa: str = ""
+    """O que o indicador mede, em palavras de todo dia (`alertas.EXPLICACOES`)."""
+    por_que: str = ""
+    """Por que ele é um sinal de alerta."""
+    pode_levar: str = ""
+    """No que costuma dar quando piora (o caminho que a história mostrou, não previsão)."""
 
 
 class Subcategoria(Modelo):

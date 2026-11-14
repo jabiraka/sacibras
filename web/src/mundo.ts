@@ -1,6 +1,8 @@
 // Brasil no mundo: a mesma métrica para vários países.
+//   0. três listas no alto: a métrica (por tema), o ano e os países. "Países" vale para tudo
+//      abaixo (Caio, 14/11/2026: escolher os emergentes mudava só o ranking, não a tabela);
 //   1. o ranking do ano, em pontos; tocar num país o põe no gráfico ao lado, tocar num grupo
-//      (Emergentes, Avançados…) abre os países dele;
+//      (na lista "Médias dos grupos") abre os países dele;
 //   2. a trajetória dos países escolhidos, com as projeções do FMI;
 //   3. duas métricas ao mesmo tempo, um ponto por país;
 //   4. a tabela com tudo, guardada.
@@ -17,6 +19,7 @@ import {
   type PontoDisperso,
 } from "./pontos";
 import type { Grafico, GrupoMundo, MetricaMundo, Mundo, MundoPaises, Pais } from "./tipos";
+import type { Marca } from "./pontos";
 
 const GRUPOS_DA_TABELA: [Pais["grupo"], string][] = [
   ["america_latina", "América Latina"],
@@ -26,6 +29,26 @@ const GRUPOS_DA_TABELA: [Pais["grupo"], string][] = [
 ];
 
 const INICIAIS = ["BRA", "MEX", "CHL", "USA"];
+/** As métricas por tema, para a lista não ser uma fila de onze nomes. */
+const TEMAS: Record<string, string> = {
+  pib: "Atividade e emprego",
+  pib_per_capita: "Atividade e emprego",
+  investimento: "Atividade e emprego",
+  desemprego: "Atividade e emprego",
+  inflacao: "Preços e juros",
+  juro: "Preços e juros",
+  juro_real: "Preços e juros",
+  divida: "Contas públicas",
+  primario: "Contas públicas",
+  nominal: "Contas públicas",
+  conta_corrente: "Contas externas",
+};
+const ORDEM_DOS_TEMAS = ["Atividade e emprego", "Preços e juros", "Contas públicas", "Contas externas"];
+/** Os países que se comparam: os principais, as médias dos grupos ou um grupo do FMI. */
+const PRINCIPAIS = "principais";
+const MEDIAS = "medias";
+/** Lista mais longa que isto rola dentro da caixa. */
+const LISTA_CURTA = 24;
 const MAXIMO = 6;
 // Os pares que abrem o gráfico de duas métricas.
 const EIXO_X = "inflacao";
@@ -42,7 +65,6 @@ export function montarMundo(m: Mundo): HTMLElement {
   const grupoDe = new Map<string, GrupoMundo>(m.grupos.map((g) => [g.iso3, g]));
   let metrica = m.metricas[0] as MetricaMundo;
   let ano = m.ano_corrente;
-  const abertos = new Set<string>();
   let todos: MundoPaises | null = null;
   let carregando: Promise<void> | null = null;
 
@@ -83,10 +105,21 @@ export function montarMundo(m: Mundo): HTMLElement {
       .reverse()
       .map((a) => ({ valor: String(a), rotulo: projetado(mt, a) ? `${a} (projeção do FMI)` : String(a) }));
   const barra = el("div", "barra-controles");
+  const temaDe = (mt: MetricaMundo): string => TEMAS[mt.id] ?? "Outras";
+  const porTema = [...m.metricas].sort(
+    (a, b) =>
+      (ORDEM_DOS_TEMAS.indexOf(temaDe(a)) + 1 || 99) - (ORDEM_DOS_TEMAS.indexOf(temaDe(b)) + 1 || 99),
+  );
+  const opcoesMetricas: Opcao[] = porTema.map((mt) => ({
+    valor: mt.id,
+    rotulo: mt.nome,
+    grupo: temaDe(mt),
+  }));
+  let conjunto = PRINCIPAIS;
   const escolhaMetrica = listaSuspensa(
     "mundo-metrica",
     "Métrica",
-    m.metricas.map((mt) => ({ valor: mt.id, rotulo: mt.nome })),
+    opcoesMetricas,
     metrica.id,
     (id) => {
       metrica = m.metricas.find((x) => x.id === id) ?? metrica;
@@ -99,7 +132,17 @@ export function montarMundo(m: Mundo): HTMLElement {
     ano = Number(a);
     pintar();
   });
-  barra.append(escolhaMetrica.caixa, escolhaAno.caixa);
+  const opcoesConjunto: Opcao[] = [
+    { valor: PRINCIPAIS, rotulo: `Os ${m.paises.filter((p) => p.grupo !== "agregado").length} principais` },
+    { valor: MEDIAS, rotulo: "Médias dos grupos do FMI" },
+    ...(m.arquivo_paises
+      ? m.grupos.map((g) => ({ valor: g.iso3, rotulo: `${g.nome} (${g.membros.length})`, grupo: "Todos os países de" }))
+      : []),
+  ];
+  const escolhaConjunto = listaSuspensa("mundo-paises", "Países", opcoesConjunto, conjunto, (c) => {
+    trocarConjunto(c);
+  });
+  barra.append(escolhaMetrica.caixa, escolhaAno.caixa, escolhaConjunto.caixa);
   const sobre = el("p", "secao-resumo");
 
   // ---------------------------------------------------------------- ranking e trajetória
@@ -109,20 +152,8 @@ export function montarMundo(m: Mundo): HTMLElement {
   const subRanking = el("p", "sub");
   const ranking = el("div", "ranking-pontos");
   const posicao = el("p", "posicao");
-  const tituloGrupos = el("h4", "subtitulo-lista", "Grupos de países");
-  const subGrupos = el("p", "sub", "Média do FMI para o grupo. Toque num grupo para ver os países dele.");
-  const rankingGrupos = el("div", "ranking-pontos");
   const fonteRanking = el("footer", "grafico-pe");
-  painelRanking.append(
-    tituloRanking,
-    subRanking,
-    ranking,
-    posicao,
-    tituloGrupos,
-    subGrupos,
-    rankingGrupos,
-    fonteRanking,
-  );
+  painelRanking.append(tituloRanking, subRanking, ranking, posicao, fonteRanking);
 
   const ladoLinha = el("div", "lado-trajetoria");
   const escolhidos = el("div", "escolhidos");
@@ -138,8 +169,6 @@ export function montarMundo(m: Mundo): HTMLElement {
   );
   let eixoX = m.metricas.find((x) => x.id === EIXO_X) ?? (m.metricas[0] as MetricaMundo);
   let eixoY = m.metricas.find((x) => x.id === EIXO_Y) ?? (m.metricas[1] as MetricaMundo);
-  let grupoNaDispersao = "";
-  const opcoesMetricas = m.metricas.map((mt) => ({ valor: mt.id, rotulo: mt.nome }));
   const barraDispersao = el("div", "barra-controles");
   barraDispersao.append(
     listaSuspensa("mundo-x", "Na horizontal", opcoesMetricas, eixoX.id, (id) => {
@@ -150,16 +179,6 @@ export function montarMundo(m: Mundo): HTMLElement {
       eixoY = m.metricas.find((x) => x.id === id) ?? eixoY;
       pintarDispersao();
     }).caixa,
-    listaSuspensa(
-      "mundo-grupo",
-      "Incluir os países de",
-      [{ valor: "", rotulo: "nenhum grupo" }, ...m.grupos.map((g) => ({ valor: g.iso3, rotulo: g.nome }))],
-      "",
-      (g) => {
-        grupoNaDispersao = g;
-        void carregarTodos().then(pintarDispersao);
-      },
-    ).caixa,
   );
   const legendaDispersao = el("div", "legenda");
   const telaDispersao = el("div", "tela-dispersao");
@@ -188,119 +207,114 @@ export function montarMundo(m: Mundo): HTMLElement {
     pintarDispersao();
   }
 
+  /** Os países (ou grupos) da comparação, na lista "Países". */
+  function membros(): { iso: string; marca: Marca }[] {
+    if (conjunto === MEDIAS) {
+      return m.paises.filter((p) => p.grupo === "agregado").map((p) => ({ iso: p.iso3, marca: "grupo" as Marca }));
+    }
+    const grupo = grupoDe.get(conjunto);
+    const lista = grupo
+      ? grupo.membros
+      : m.paises.filter((p) => p.grupo !== "agregado").map((p) => p.iso3);
+    // O Brasil sempre aparece, para servir de régua mesmo num grupo de que ele não faz parte.
+    const isos = lista.includes("BRA") ? lista : ["BRA", ...lista];
+    return isos.map((iso) => ({ iso, marca: (iso === "BRA" ? "brasil" : "comum") as Marca }));
+  }
+
+  function nomeDoConjunto(): string {
+    if (conjunto === MEDIAS) return "grupos";
+    const grupo = grupoDe.get(conjunto);
+    return grupo ? `países de ${grupo.nome}` : "países";
+  }
+
+  function trocarConjunto(c: string): void {
+    conjunto = c;
+    escolhaConjunto.trocar(opcoesConjunto, c);
+    if (grupoDe.has(c)) {
+      ranking.replaceChildren(el("p", "posicao", "Carregando os países…"));
+      void carregarTodos().then(pintarConjunto);
+    } else pintarConjunto();
+  }
+
+  function pintarConjunto(): void {
+    pintarRanking();
+    pintarDispersao();
+    pintarTabela();
+  }
+
   function pintarRanking(): void {
     const proj = projetado(metrica, ano);
     tituloRanking.textContent = `${metrica.nome} em ${ano}${proj ? " (projeção)" : ""}`;
-    subRanking.textContent = `${metrica.unidade} · toque num país para pô-lo no gráfico ao lado`;
-    const comValor = m.paises
-      .map((p) => ({ p, v: valor(metrica, p.iso3, ano) }))
-      .filter((x): x is { p: Pais; v: number } => x.v !== null)
+    const emGrupo = grupoDe.has(conjunto);
+    if (emGrupo && !todos) {
+      ranking.replaceChildren(el("p", "posicao", "Sem a lista de países nesta rodada."));
+      posicao.replaceChildren();
+      return;
+    }
+    subRanking.textContent =
+      conjunto === MEDIAS
+        ? `${metrica.unidade} · média do FMI para cada grupo; toque num grupo para ver os países dele`
+        : `${metrica.unidade} · toque num país para pô-lo no gráfico ao lado`;
+    const comValor = membros()
+      .map((x) => ({ ...x, v: valor(metrica, x.iso, ano) }))
+      .filter((x): x is { iso: string; marca: Marca; v: number } => x.v !== null)
       .sort((a, b) => b.v - a.v);
-    const paises = comValor.filter((x) => x.p.grupo !== "agregado");
-    const grupos = comValor.filter((x) => x.p.grupo === "agregado");
-    // Uma régua só para países e grupos: o mesmo valor fica no mesmo lugar nas duas listas.
-    const regua = reguaDe(comValor.map((x) => x.v));
-    ranking.replaceChildren(
-      ...paises.map(({ p, v }, i) => {
-        const casa = casas.get(p.iso3);
-        return linhaDoRanking(
-          {
-            chave: p.iso3,
-            nome: p.nome,
-            valor: v,
-            marca: p.iso3 === "BRA" ? "brasil" : "comum",
-            posicao: i + 1,
-            cor: casa !== undefined && p.iso3 !== "BRA" ? cor(casa) : undefined,
-            dica: `${p.nome}: ${numero(v, metrica.casas)} ${metrica.unidade}`,
-          },
-          regua,
-          metrica.casas,
-          () => alternarPais(p.iso3),
-        );
-      }),
-    );
-    rankingGrupos.replaceChildren();
-    for (const { p, v } of grupos) {
-      const grupo = grupoDe.get(p.iso3);
-      const abre = Boolean(grupo && m.arquivo_paises);
-      rankingGrupos.append(
-        linhaDoRanking(
-          {
-            chave: p.iso3,
-            nome: p.nome,
-            valor: v,
-            marca: "grupo",
-            posicao: null,
-            abre: grupo && abre ? { aberto: abertos.has(p.iso3), quantos: grupo.membros.length } : undefined,
-            dica: `${p.nome}: ${numero(v, metrica.casas)} ${metrica.unidade}`,
-          },
-          regua,
-          metrica.casas,
-          abre
-            ? () => {
-                if (abertos.has(p.iso3)) abertos.delete(p.iso3);
-                else abertos.add(p.iso3);
-                void carregarTodos().then(pintarRanking);
-              }
-            : undefined,
-        ),
-      );
-      if (grupo && abertos.has(p.iso3)) rankingGrupos.append(membrosDoGrupo(grupo, regua));
-    }
-    tituloGrupos.hidden = subGrupos.hidden = grupos.length === 0;
-    posicao.replaceChildren();
-    const lugarBrasil = paises.findIndex((x) => x.p.iso3 === "BRA") + 1;
-    const vBrasil = valor(metrica, "BRA", ano);
-    if (lugarBrasil && vBrasil !== null) {
-      posicao.append(
-        document.createTextNode("Brasil: "),
-        el("b", "", `${numero(vBrasil, metrica.casas)} ${metrica.unidade}`),
-        document.createTextNode(`, o ${lugarBrasil}º maior entre ${paises.length} países.`),
-      );
-      const mundo = valor(metrica, "G001", ano);
-      if (mundo !== null) posicao.append(document.createTextNode(` Mundo: ${numero(mundo, metrica.casas)}.`));
-    }
-    fonteRanking.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}`));
-  }
-
-  /** Os países de um grupo, ordenados, numa caixa que rola. */
-  function membrosDoGrupo(grupo: GrupoMundo, regua: ReturnType<typeof reguaDe>): HTMLElement {
-    const caixa = el("div", "ponto-membros");
-    if (!todos) {
-      caixa.append(el("p", "posicao", carregando ? "Carregando os países…" : "Sem a lista de países nesta rodada."));
-      return caixa;
-    }
-    const membros = grupo.membros
-      .map((iso) => ({ iso, v: valor(metrica, iso, ano) }))
-      .filter((x): x is { iso: string; v: number } => x.v !== null)
-      .sort((a, b) => b.v - a.v);
-    const sem = grupo.membros.length - membros.length;
-    caixa.append(
-      el(
-        "p",
-        "ponto-membros-titulo",
-        `${grupo.nome}: ${membros.length} países com dado${sem ? ` (${sem} sem)` : ""}. Pontos fora da régua ficam na ponta, com o valor ao lado.`,
-      ),
-    );
-    membros.forEach(({ iso, v }, i) => {
+    // Num grupo inteiro, os extremos (a Turquia com 30 % de inflação) achatariam todo o resto:
+    // a régua vai do 5º ao 95º percentil, e quem passa fica na ponta, com o valor ao lado.
+    const ordenados = comValor.map((x) => x.v).sort((a, b) => a - b);
+    const corte = (q: number): number => ordenados[Math.round(q * (ordenados.length - 1))] ?? 0;
+    const regua = reguaDe(ordenados.length > LISTA_CURTA ? [corte(0.05), corte(0.95)] : ordenados);
+    const linhas = comValor.map(({ iso, marca, v }, i) => {
       const casa = casas.get(iso);
-      caixa.append(
-        linhaDoRanking(
-          {
-            chave: iso,
-            nome: nomeDe(iso),
-            valor: v,
-            marca: iso === "BRA" ? "brasil" : "membro",
-            posicao: i + 1,
-            cor: casa !== undefined && iso !== "BRA" ? cor(casa) : undefined,
-          },
-          regua,
-          metrica.casas,
-          () => alternarPais(iso),
-        ),
+      const ehGrupo = marca === "grupo";
+      const grupo = grupoDe.get(iso);
+      return linhaDoRanking(
+        {
+          chave: iso,
+          nome: nomeDe(iso),
+          valor: v,
+          marca,
+          posicao: ehGrupo ? null : i + 1,
+          cor: casa !== undefined && iso !== "BRA" ? cor(casa) : undefined,
+          abre: ehGrupo && grupo && m.arquivo_paises ? { aberto: false, quantos: grupo.membros.length } : undefined,
+          dica: `${nomeDe(iso)}: ${numero(v, metrica.casas)} ${metrica.unidade}`,
+        },
+        regua,
+        metrica.casas,
+        ehGrupo
+          ? grupo && m.arquivo_paises
+            ? () => trocarConjunto(iso)
+            : undefined
+          : () => alternarPais(iso),
       );
     });
-    return caixa;
+    if (linhas.length > LISTA_CURTA) {
+      // Lista longa (um grupo do FMI inteiro): rola dentro da caixa, com o Brasil à vista.
+      const caixa = el("div", "ponto-membros lista-longa");
+      caixa.append(...linhas);
+      ranking.replaceChildren(caixa);
+      const brasil = caixa.querySelector<HTMLElement>(".ponto-linha.brasil");
+      requestAnimationFrame(() => {
+        if (brasil) caixa.scrollTop = brasil.offsetTop - caixa.clientHeight / 2;
+      });
+    } else ranking.replaceChildren(...linhas);
+
+    posicao.replaceChildren();
+    const paises = comValor.filter((x) => x.marca !== "grupo");
+    const lugarBrasil = paises.findIndex((x) => x.iso === "BRA") + 1;
+    const vBrasil = valor(metrica, "BRA", ano);
+    if (vBrasil !== null && (lugarBrasil || conjunto === MEDIAS)) {
+      posicao.append(document.createTextNode("Brasil: "), el("b", "", `${numero(vBrasil, metrica.casas)} ${metrica.unidade}`));
+      if (lugarBrasil) {
+        posicao.append(document.createTextNode(`, o ${lugarBrasil}º maior entre ${paises.length} ${nomeDoConjunto()}.`));
+      } else posicao.append(document.createTextNode("."));
+      const media = valor(metrica, emGrupo ? conjunto : "G001", ano);
+      if (media !== null && conjunto !== MEDIAS) {
+        const quem = emGrupo ? `Média de ${grupoDe.get(conjunto)?.nome ?? "grupo"}` : "Mundo";
+        posicao.append(document.createTextNode(` ${quem}: ${numero(media, metrica.casas)}.`));
+      }
+    }
+    fonteRanking.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}`));
   }
 
   // ---------------------------------------------------------------- trajetória
@@ -398,14 +412,17 @@ export function montarMundo(m: Mundo): HTMLElement {
       });
     };
     incluir("BRA", "brasil");
-    for (const p of m.paises) if (p.grupo !== "agregado") incluir(p.iso3, "comum");
-    const grupo = grupoDe.get(grupoNaDispersao);
-    if (grupo) for (const iso of grupo.membros) incluir(iso, "membro");
+    const grupo = grupoDe.get(conjunto);
+    // Os escolhidos no gráfico de linha entram sempre; o resto, do conjunto da lista "Países".
+    for (const iso of casas.keys()) incluir(iso, "comum");
+    for (const x of membros()) incluir(x.iso, conjunto === MEDIAS ? "grupo" : grupo ? "membro" : "comum");
+    // Nas médias dos grupos, os principais países ficam também (o juro do BIS não tem grupo).
+    if (conjunto === MEDIAS) for (const p of m.paises) if (p.grupo !== "agregado") incluir(p.iso3, "comum");
     telaDispersao.dataset.vazio = String(pontos.length < 3);
     const ex = { nome: eixoX.nome, unidade: eixoX.unidade, casas: eixoX.casas };
     const ey = { nome: eixoY.nome, unidade: eixoY.unidade, casas: eixoY.casas };
     const aoTocar = (iso: string): void => {
-      if (principais.has(iso)) alternarPais(iso);
+      if (!iso.startsWith("G")) alternarPais(iso);
     };
     // Quem é quem: o Brasil e os escolhidos numa legenda, em vez de rótulos que encavalam.
     legendaDispersao.replaceChildren(
@@ -430,6 +447,7 @@ export function montarMundo(m: Mundo): HTMLElement {
         document.createTextNode(
           `Verde: Brasil. Cinza: os outros países. ` +
             (grupo ? `Pontos menores: os países de ${grupo.nome}. ` : "") +
+            (pontos.some((p) => p.marca === "grupo") ? "Losangos: as médias dos grupos do FMI. " : "") +
             `Ano: ${ano}${projetado(eixoX, ano) || projetado(eixoY, ano) ? " (projeção do FMI em ao menos uma das métricas)" : ""}. `,
         ),
       );
@@ -476,46 +494,64 @@ export function montarMundo(m: Mundo): HTMLElement {
 
   // ---------------------------------------------------------------- tabela
   function pintarTabela(): void {
+    const grupo = grupoDe.get(conjunto);
+    const titulo =
+      conjunto === MEDIAS
+        ? `Todas as métricas em ${ano}, grupo a grupo`
+        : grupo
+          ? `Todas as métricas em ${ano}: ${grupo.nome}, país a país`
+          : `Todas as métricas em ${ano}, país a país`;
     caixaTabela.replaceChildren(
-      guardar(
-        `Todas as métricas em ${ano}, país a país`,
-        "Em itálico, projeção do FMI para o ano.",
-        () => {
-          const rolavel = el("div", "tabela-rolavel");
-          rolavel.style.maxHeight = "none";
-          const tabela = el("table", "dados larga");
-          const cab = tabela.createTHead().insertRow();
-          cab.append(el("th", "", "País"));
-          for (const mt of m.metricas) {
-            const th = el("th", "", mt.nome);
-            th.title = `${mt.nome} (${mt.unidade})`;
-            cab.append(th);
+      guardar(titulo, "Em itálico, projeção do FMI para o ano.", () => {
+        const rolavel = el("div", "tabela-rolavel");
+        rolavel.style.maxHeight = grupo ? "70vh" : "none";
+        const tabela = el("table", "dados larga");
+        const cab = tabela.createTHead().insertRow();
+        cab.append(el("th", "", conjunto === MEDIAS ? "Grupo" : "País"));
+        for (const mt of porTema) {
+          const th = el("th", "", mt.nome);
+          th.title = `${mt.nome} (${mt.unidade})`;
+          cab.append(th);
+        }
+        const corpo = tabela.createTBody();
+        const linhaDe = (iso: string): void => {
+          const linha = corpo.insertRow();
+          if (iso === "BRA") linha.className = "brasil";
+          linha.append(el("th", "", nomeDe(iso)));
+          for (const mt of porTema) {
+            const v = valor(mt, iso, ano);
+            linha.append(el("td", projetado(mt, ano) ? "proj" : "", v === null ? "–" : numero(v, mt.casas)));
           }
-          const corpo = tabela.createTBody();
-          for (const [grupo, nome] of GRUPOS_DA_TABELA) {
-            const lista = m.paises.filter((p) => p.grupo === grupo);
-            if (!lista.length) continue;
-            const tr = corpo.insertRow();
-            tr.className = "grupo";
-            const th = el("th", "", nome);
-            th.colSpan = m.metricas.length + 1;
-            tr.append(th);
-            for (const p of lista) {
-              const linha = corpo.insertRow();
-              if (p.iso3 === "BRA") linha.className = "brasil";
-              linha.append(el("th", "", p.nome));
-              for (const mt of m.metricas) {
-                const v = valor(mt, p.iso3, ano);
-                linha.append(el("td", projetado(mt, ano) ? "proj" : "", v === null ? "–" : numero(v, mt.casas)));
-              }
-            }
+        };
+        const titulo = (nome: string): void => {
+          const tr = corpo.insertRow();
+          tr.className = "grupo";
+          const th = el("th", "", nome);
+          th.colSpan = porTema.length + 1;
+          tr.append(th);
+        };
+        if (conjunto === MEDIAS) {
+          m.paises.filter((p) => p.grupo === "agregado").forEach((p) => linhaDe(p.iso3));
+        } else if (grupo) {
+          // O Brasil em cima; os outros em ordem alfabética.
+          const isos = grupo.membros.filter((i) => i !== "BRA");
+          isos.sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), "pt-BR"));
+          linhaDe("BRA");
+          titulo(`${grupo.nome}: ${isos.length + (grupo.membros.includes("BRA") ? 1 : 0)} países`);
+          isos.forEach(linhaDe);
+        } else {
+          for (const [g, nome] of GRUPOS_DA_TABELA) {
+            const lista = m.paises.filter((p) => p.grupo === g);
+            if (!lista.length || g === "agregado") continue;
+            titulo(nome);
+            lista.forEach((p) => linhaDe(p.iso3));
           }
-          rolavel.append(tabela);
-          const pe = el("footer", "grafico-pe");
-          pe.append(el("span", "fonte", `Fonte: FMI, ${m.edicao}; juros: BIS.`));
-          return [rolavel, pe];
-        },
-      ),
+        }
+        rolavel.append(tabela);
+        const pe = el("footer", "grafico-pe");
+        pe.append(el("span", "fonte", `Fonte: FMI, ${m.edicao}; juros: BIS.`));
+        return [rolavel, pe];
+      }),
     );
   }
 

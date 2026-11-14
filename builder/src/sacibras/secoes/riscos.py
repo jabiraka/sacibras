@@ -21,7 +21,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 
-from sacibras import contas, leis, relatorios
+from sacibras import alertas, contas, leis, relatorios
 from sacibras.fontes import bcb_focus, ibge_projecao, ipeadata, ons, tesouro_rtn
 from sacibras.modelos import divida, risco
 from sacibras.schema import (
@@ -105,6 +105,7 @@ def alerta(
     """O último ponto de `pontos` na régua de todos eles."""
     posicao = risco.posicao_na_historia(pontos, pior_quando)
     quando, valor = pontos[-1]
+    texto = alertas.EXPLICACOES.get(id)
     return Alerta(
         id=id,
         grupo=grupo,
@@ -123,6 +124,9 @@ def alerta(
         limite=limite,
         fonte=fonte,
         procedencia=procedencia,
+        significa=texto.significa if texto else "",
+        por_que=texto.por_que if texto else "",
+        pode_levar=texto.pode_levar if texto else "",
     )
 
 
@@ -441,7 +445,7 @@ def _leque(
                 serie("realizado", "Dívida bruta no fim do ano", realizado, casas=1),
                 serie(
                     "mediana",
-                    "Mediana dos sorteios",
+                    "Caminho do meio dos sorteios",
                     [
                         partida,
                         *[(date(a, 1, 1), v) for a, v in zip(futuros, leque.mediana, strict=True)],
@@ -456,23 +460,37 @@ def _leque(
             periodicidade="A",
             intervalos=[
                 Intervalo(
-                    nome="80 % dos sorteios (do 10º ao 90º percentil)",
+                    nome="8 em cada 10 sorteios ficam entre as pontas",
                     serie="mediana",
                     pontos=[
                         (date(a, 1, 1), round(leque.p10[i], 1), round(leque.p90[i], 1))
                         for i, a in enumerate(futuros)
                     ],
+                    meio=[
+                        (date(a, 1, 1), round(leque.p25[i], 1), round(leque.p75[i], 1))
+                        for i, a in enumerate(futuros)
+                    ],
+                    nome_meio="metade fica na parte grossa",
                 )
             ],
             fonte=f"{base.fonte}; {ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL')}",
             nota=(
+                "Como ler: ninguém sabe o futuro, então o computador montou 4.000 futuros "
+                "possíveis para a dívida. Cada um parte do cenário do Focus e repete, ano a "
+                f"ano, tropeços e sortes que a economia já teve entre {primeiro} e {ultimo} (um "
+                "ano de juro alto, outro de crescimento fraco), tirados ao acaso como num "
+                "sorteio. A linha tracejada é o caminho do meio: metade dos futuros fica acima "
+                "dela, metade abaixo. A barra mostra onde cai a maior parte: 8 em cada 10 "
+                "ficam entre as pontas, e metade fica na parte grossa. Quanto mais longe o ano, "
+                "maior a barra, porque há mais tempo para as coisas mudarem.\n\n"
                 "Método: a linha de base do simulador da dívida (hipóteses do Focus) somada a "
-                f"choques sorteados da história. De {primeiro} a {ultimo}, mede-se quanto juro "
-                "da dívida, crescimento, inflação e primário de cada ano se afastaram da média "
-                "do período; cada um dos 4.000 sorteios tira, para os anos à frente, blocos de "
-                "dois anos seguidos dessa história (os quatro desvios juntos, como aconteceram). "
-                "As cápsulas cobrem 80 % dos sorteios. É conta de ordem de grandeza: supõe que "
-                "o futuro pode errar como o passado errou, e não separa a dívida cambial."
+                f"choques da história. De {primeiro} a {ultimo}, mede-se quanto juro da dívida, "
+                "crescimento, inflação e primário de cada ano se afastaram da média do período; "
+                "cada sorteio tira, para os anos à frente, blocos de dois anos seguidos dessa "
+                "história (os quatro desvios juntos, como aconteceram). As pontas da barra são "
+                "o 10º e o 90º percentil; a parte grossa, o 25º e o 75º. É conta de ordem de "
+                "grandeza: supõe que o futuro pode errar como o passado errou, e não separa a "
+                "dívida cambial."
             ),
             largura="inteira",
         ),
@@ -481,15 +499,15 @@ def _leque(
         1,
         Cartao(
             id="divida-sobe-em-5-anos",
-            rotulo=f"Sorteios em que a dívida sobe até {futuros[-1]}",
+            rotulo=f"Dos futuros sorteados, em quantos a dívida sobe até {futuros[-1]}",
             valor=round(leque.chance_de_subir, 1),
             unidade="%",
             casas=0,
             referencia=dbgg[-1][0],
             periodicidade="M",
             detalhe=(
-                f"mediana em {futuros[-1]}: {br(leque.mediana[-1])} % do PIB; 80 % dos "
-                f"sorteios entre {br(leque.p10[-1])} e {br(leque.p90[-1])}"
+                f"em {futuros[-1]}, o caminho do meio dá {br(leque.mediana[-1])} % do PIB; 8 "
+                f"em cada 10 futuros ficam entre {br(leque.p10[-1])} e {br(leque.p90[-1])}"
             ),
             fonte=f"{base.fonte}; choques históricos de {primeiro} a {ultimo}",
             procedencia="calculado",

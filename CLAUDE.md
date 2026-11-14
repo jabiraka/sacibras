@@ -84,6 +84,11 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   e cada resultado diz onde mora ("Juros e Copom › Juro real · número"); o clique abre a parte
   e vai até o número, gráfico ou tabela. Coisa nova que alguém procuraria por outra palavra
   ganha o sinônimo em `SINONIMOS`.
+- **Glossário** (Caio, 14/11/2026: *"ela clica ou na palavra ou em um ? que abre a definição
+  dela [...] só um balão"*): termo que alguém poderia não saber ganha verbete em
+  `builder/src/sacibras/glossario.py` (até três frases, sem jargão; número de lei só de norma
+  lida). A tela sublinha a palavra e põe "?" nos rótulos sozinha. Indicador novo no painel de
+  alerta ganha "o que é / por que é alerta / pode levar a" em `alertas.py`.
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,
@@ -99,7 +104,10 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - **Comparações** (Caio, 14/11/2026): escolha de ano e de métrica em lista suspensa, não em
   botões; ranking em pontos (`web/src/pontos.ts`), não em barras; e o gráfico de duas
   métricas, um ponto por país ou estado. Grupo de países abre por país (hierarquia do FMI).
-  Barra de erro de previsão é cápsula vertical (`intervalos` no gráfico), não faixa sombreada.
+  Barra de erro de previsão é traço vertical em tinta neutra, com as pontas marcadas e a
+  parte de 50 % mais grossa quando há (`intervalos` no gráfico; Caio, 14/11/2026: *"não
+  gostei da barra azul"*), não faixa sombreada nem cápsula colorida. Projeção vem com o
+  "como ler" em palavras de todo dia ("8 em cada 10 futuros sorteados ficam entre as pontas").
 - Cada número com data de referência.
 
 ## Verificação antes de mostrar

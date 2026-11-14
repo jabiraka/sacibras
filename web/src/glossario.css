@@ -1,0 +1,141 @@
+/* O glossário: a palavra sublinhada, o "?" ao lado dos rótulos e o balão. Usa os tokens de
+   estilo.css. */
+
+.termo {
+  all: unset;
+  cursor: help;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--tinta-3);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  border-radius: 3px;
+}
+
+.termo:hover,
+.termo[aria-expanded="true"] {
+  text-decoration-color: var(--verde);
+  background: var(--verde-claro);
+}
+
+.termo:focus-visible,
+.termo-ajuda:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.termo-ajuda {
+  all: unset;
+  display: inline-grid;
+  place-items: center;
+  width: 1.05em;
+  height: 1.05em;
+  margin-left: 0.35em;
+  border: 1px solid var(--borda-forte);
+  border-radius: 50%;
+  font: 600 0.72em/1 var(--fonte);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tinta-3);
+  vertical-align: 0.12em;
+  cursor: help;
+  /* O toque pega uma área maior que o círculo. */
+  position: relative;
+}
+
+.termo-ajuda::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+}
+
+.termo-ajuda:hover,
+.termo-ajuda[aria-expanded="true"] {
+  color: var(--verde);
+  border-color: var(--verde);
+  background: var(--verde-claro);
+}
+
+.balao {
+  position: absolute;
+  z-index: 60;
+  width: min(320px, calc(100vw - 24px));
+  padding: 12px 14px 12px;
+  background: var(--superficie);
+  border: 1px solid var(--borda-forte);
+  border-radius: 14px;
+  box-shadow:
+    0 12px 32px rgb(20 38 28 / 16%),
+    0 2px 6px rgb(20 38 28 / 8%);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--tinta);
+}
+
+.balao[hidden] {
+  display: none;
+}
+
+/* A setinha aponta para a palavra. */
+.balao::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: calc(var(--seta, 50%) - 6px);
+  width: 10px;
+  height: 10px;
+  background: var(--superficie);
+  border-left: 1px solid var(--borda-forte);
+  border-top: 1px solid var(--borda-forte);
+  transform: rotate(45deg);
+}
+
+.balao.em-cima::before {
+  top: auto;
+  bottom: -6px;
+  transform: rotate(225deg);
+}
+
+.balao-titulo {
+  margin: 0 22px 4px 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.balao-texto {
+  margin: 0;
+  color: var(--tinta-2);
+}
+
+.balao-elo {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--verde);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.balao-elo:hover {
+  text-decoration: underline;
+}
+
+.balao-fechar {
+  all: unset;
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  color: var(--tinta-3);
+  cursor: pointer;
+}
+
+.balao-fechar:hover,
+.balao-fechar:focus-visible {
+  color: var(--tinta);
+  background: var(--fio);
+}

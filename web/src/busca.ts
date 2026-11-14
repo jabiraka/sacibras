@@ -210,6 +210,10 @@ export function revelar(alvo: string): void {
   }
   if (!no) return;
   if (no instanceof HTMLDetailsElement) no.open = true; // tabela guardada: abre
+  // Dentro de caixas guardadas (o indicador do painel de alerta, num grupo): abre todas.
+  for (let d = no.parentElement?.closest("details"); d; d = d.parentElement?.closest("details")) {
+    d.open = true;
+  }
   const achado = no;
   requestAnimationFrame(() => {
     achado.scrollIntoView({ behavior: "smooth", block: "center" });

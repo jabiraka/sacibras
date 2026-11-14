@@ -6,8 +6,9 @@ from datetime import date
 
 from sacibras import contas
 from sacibras.fontes import ibge_sidra
-from sacibras.schema import LinhaTabela, Secao, Tabela
+from sacibras.schema import Cartao, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.tipos import Ponto
 
 # SIDRA 5932, classificação 11255 (setores e subsetores). Conferido em 14/11/2026.
 COMPONENTES = {
@@ -22,6 +23,37 @@ COMPONENTES = {
     "90696": "Serviços",
 }
 FONTE_PIB = "IBGE, Contas Nacionais Trimestrais (SIDRA 5932)"
+# Taxa de investimento (FBCF / PIB, SIDRA 6727, variável 2517) e de poupança (poupança bruta /
+# PIB, SIDRA 6726, variável 9774), em % no trimestre, a preços correntes. Conferidas na API do
+# SIDRA em 14/11/2026: 16,1 % e 16,6 % no 2º tri/2026. Do Econvitals (saving rate).
+FONTE_INVESTIMENTO = "IBGE, Contas Nacionais Trimestrais (SIDRA 6727 e 6726)"
+
+
+def _investimento_e_poupanca(investimento: list[Ponto], poupanca: list[Ponto]) -> list[Cartao]:
+    """Os dois cartões, cada um contra o mesmo trimestre do ano anterior (não há ajuste)."""
+    saida: list[Cartao] = []
+    for id, rotulo, pontos in (
+        ("taxa-investimento", "Taxa de investimento", investimento),
+        ("taxa-poupanca", "Taxa de poupança", poupanca),
+    ):
+        if len(pontos) < 5:
+            continue
+        um_ano = pontos[-5]
+        saida.append(
+            cartao(
+                id,
+                rotulo,
+                pontos,
+                unidade="% do PIB",
+                periodicidade="T",
+                casas=1,
+                detalhe=f"no {periodo(um_ano[0], 'T')}: {br(um_ano[1])} %",
+                fonte=FONTE_INVESTIMENTO,
+                secao="atividade",
+                mini=40,
+            )
+        )
+    return saida
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -48,6 +80,8 @@ def montar(ctx: Contexto) -> Secao:
     pmc = ibge_sidra.serie(8880, 7170, classificacao="c11046/56734")
     pmc_ampliado = ibge_sidra.serie(8881, 7170, classificacao="c11046/56736")
     pms = ibge_sidra.serie(5906, 7168, classificacao="c11046/56726")
+    investimento = ibge_sidra.serie(6727, 2517, trimestral=True)
+    poupanca = ibge_sidra.serie(6726, 9774, trimestral=True)
     confianca = ctx.sgs("CONFIANCA_CONSUMIDOR")
     uci = ctx.sgs("UCI_INDUSTRIA")
 
@@ -125,6 +159,7 @@ def montar(ctx: Contexto) -> Secao:
             secao="atividade",
             mini=24,
         ),
+        *_investimento_e_poupanca(investimento, poupanca),
     ]
 
     inicio = date(ctx.hoje.year - 12, 1, 1)
@@ -188,6 +223,26 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             fonte="IBGE, SIDRA 8888, 8880, 8881 e 5906 (volume, com ajuste sazonal)",
             nota="Os quatro índices foram postos na mesma base para se compararem.",
+        ),
+        grafico(
+            "investimento-poupanca",
+            "Quanto o país investe e quanto poupa",
+            [
+                serie("investimento", "Taxa de investimento (FBCF / PIB)", investimento),
+                serie("poupanca", "Taxa de poupança (poupança bruta / PIB)", poupanca),
+            ],
+            unidade="% do PIB no trimestre",
+            casas=1,
+            periodicidade="T",
+            janela_anos=15,
+            fonte=FONTE_INVESTIMENTO,
+            nota=(
+                "Investimento é o que se gasta em máquinas, construções e infraestrutura; "
+                "poupança, a parte da renda do país que não vira consumo. Quando o país investe "
+                "mais do que poupa, a diferença vem de fora (é o déficit em transações "
+                "correntes). Números do trimestre, sem ajuste sazonal: compare com o mesmo "
+                "trimestre de outros anos."
+            ),
         ),
         grafico(
             "confianca",

@@ -71,6 +71,13 @@ PARTES: dict[str, list[Parte]] = {
             graficos=["ibcbr", "setores-mensais"],
         ),
         Parte(
+            "investimento",
+            "Investimento e poupança",
+            "Quanto do PIB vira máquinas e obras, e quanto o país poupa.",
+            cartoes=["taxa-investimento", "taxa-poupanca"],
+            graficos=["investimento-poupanca"],
+        ),
+        Parte(
             "confianca",
             "Confiança e capacidade",
             "Confiança do consumidor e uso da capacidade da indústria.",
@@ -290,6 +297,7 @@ PARTES: dict[str, list[Parte]] = {
             "O resultado do setor público antes e depois dos juros.",
             cartoes=["primario", "juros-divida", "nominal"],
             graficos=["primario", "nominal", "primario-mensal"],
+            tabelas=["primario-bc-fmi"],
         ),
         Parte(
             "meta",

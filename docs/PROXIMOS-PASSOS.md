@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (nona sessão do dia: título da aba sem travessão).
+Última atualização: 14/11/2026 (décima sessão do dia: glossário, painel de alerta explicado, Brasil no mundo, barras de erro).
 
 ---
 
@@ -43,6 +43,24 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
+
+## Décima sessão (14/11/2026, na nuvem, branch `ccr-3122c6b7-8l15l1`)
+
+- **Glossário** (`glossario.py` → `glossario.json`, `web/src/glossario.ts`): 89 termos; a
+  palavra sublinhada ou o "?" ao lado do nome abre a definição num balão, com "Ver no painel".
+  Termo novo que alguém não saberia: um verbete a mais.
+- **Painel de alerta** classificado (grupos que abrem no toque, atalho dos acesos) e
+  explicado: cada linha abre o que é, por que é alerta e no que pode dar (`alertas.py`; o teste
+  obriga indicador novo a ter texto). A busca leva direto ao indicador (`#riscos/a-<id>`).
+- **Brasil no mundo**: a lista "Países" (principais, médias dos grupos, todos de um grupo do
+  FMI) vale para ranking, duas métricas e tabela; métricas por tema; régua do 5º ao 95º
+  percentil quando a lista é um grupo inteiro.
+- **Barras de erro** em tinta neutra com as pontas marcadas (e a parte de 50 % grossa no leque),
+  "como ler" no leque e nas previsões; `.nota` aceita parágrafo (`\n\n`).
+- **Primário BC × FMI**: tabela em Contas públicas › Primário e juros e aviso na métrica do
+  Brasil no mundo.
+- **Investimento e poupança** (SIDRA 6727 e 6726), parte nova em Atividade.
+- Conferido a 1280 e a 390 px. **Ainda não está no `main`**: publicar quando o Caio disser.
 
 ## Resolvido no PC em 14/11/2026
 
@@ -104,12 +122,12 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
    jurídico (Anexo de Riscos Fiscais da LDO, precatórios, governança do Banco Mundial) e os
    estados perto dos limites com a nota CAPAG.
 
-1. **Mínimos de saúde e educação dos estados**: o RREO Anexo 12 (saúde) e o Anexo 08
-   (educação) trazem o percentual apurado sobre a base que a lei manda; as normas já estão
-   lidas (`leis.py`). Na ficha do estado, contra 12 % e 25 %.
+1. **Mínimos de saúde e educação dos estados**: as normas já estão lidas (`leis.py`), mas os
+   RREO Anexos 08 e 12 **não vêm na API do SICONFI** (conferido em 14/11/2026). Testar o SIOPS
+   (saúde) e o SIOPE (educação), de onde os dois saem. Na ficha do estado, contra 12 % e 25 %.
 2. **O que faltou do Econvitals:** serviços subjacentes (achar o código SGS), Caged por setor
-   (achar fonte com nome legível), taxa de investimento e de poupança, consumo das famílias +
-   investimento (a "demanda privada"). (PIB por pessoa ocupada: feito, em Demografia.) Lista no
+   (achar fonte com nome legível), consumo das famílias + investimento (a "demanda privada").
+   (PIB por pessoa ocupada e taxas de investimento e poupança: feitos.) Lista no
    [PROPOSTAS](PROPOSTAS.md).
 2a. **O que falta da Demografia** (lista no [PROPOSTAS](PROPOSTAS.md)): contribuintes da
    previdência na PNAD (achar a tabela do SIDRA), a projeção da ONU ao lado da do IBGE (com a

@@ -13,6 +13,7 @@ import { montarAlertas } from "./alertas";
 import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDoAssunto } from "./calendario";
+import { ligarGlossario } from "./glossario";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
@@ -456,7 +457,9 @@ function contagem(p: Subcategoria): string {
 
 /** A parte em que a peça do endereço ("c-ipca-12m", "t-alertas") mora. */
 function parteDaPeca(partes: Subcategoria[], peca: string): Subcategoria | undefined {
-  if (peca === "t-alertas") return partes.find((p) => p.extras.includes("alertas"));
+  if (peca === "t-alertas" || peca.startsWith("a-")) {
+    return partes.find((p) => p.extras.includes("alertas"));
+  }
   const campos: Record<string, "cartoes" | "graficos" | "tabelas"> = {
     "c-": "cartoes",
     "g-": "graficos",
@@ -629,6 +632,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
 async function iniciar(): Promise<void> {
   const conteudo = document.getElementById("conteudo") as HTMLElement;
   ligarBusca();
+  ligarGlossario(conteudo);
   document.querySelector(".menu-botao")?.addEventListener("click", () => {
     abrirMenu(!document.getElementById("lateral")?.classList.contains("aberta"));
   });

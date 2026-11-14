@@ -103,3 +103,18 @@ def test_endereco_pega_o_xlsx_mais_recente(monkeypatch: pytest.MonkeyPatch) -> N
     }
     monkeypatch.setattr(tesouro_rtn, "baixar_json", lambda url, **kw: resposta)
     assert tesouro_rtn.endereco_da_serie_historica().endswith("seriehistoricajul26.xlsx")
+
+
+def test_primario_por_quem_mede_poe_bc_e_fmi_nos_mesmos_anos() -> None:
+    from datetime import date
+
+    from sacibras.secoes.fiscal import primario_por_quem_mede
+
+    bc = [(date(a, m, 1), -0.5) for a in range(2018, 2027) for m in (6, 12)]
+    gc = [(date(a, 12, 1), -0.4) for a in range(2018, 2026)]
+    fmi = {a: -0.2 for a in range(2016, 2031)}
+    t = primario_por_quem_mede(bc, gc, fmi, 2026)
+    assert t is not None
+    assert t.colunas == [str(a) for a in range(2019, 2026)]
+    assert [len(linha.valores) for linha in t.linhas] == [7, 7, 7]
+    assert primario_por_quem_mede(bc[:2], gc, fmi, 2026) is None

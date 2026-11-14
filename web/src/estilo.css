@@ -1156,13 +1156,23 @@ main {
 }
 
 /* A barra de erro na legenda: uma cápsula em pé, como no gráfico. */
+/* A barra de erro na legenda: um "I" em tinta neutra, como no gráfico. */
 .chave.intervalo {
-  width: 7px;
+  width: 9px;
   height: 14px;
   border: 0;
+  border-top: 1.5px solid var(--tinta-2);
+  border-bottom: 1.5px solid var(--tinta-2);
+  border-radius: 0;
+  background: linear-gradient(var(--tinta-2), var(--tinta-2)) center / 1.5px 100% no-repeat;
+}
+
+.chave.intervalo-meio {
+  width: 8px;
+  height: 12px;
+  border: 0;
   border-radius: 4px;
-  background: color-mix(in srgb, var(--cor) 25%, transparent);
-  box-shadow: inset 0 0 0 0.75px var(--cor);
+  background: rgb(20 38 28 / 16%);
 }
 
 .tela {
@@ -1258,6 +1268,7 @@ main {
 .nota {
   margin: 10px 0 0;
   padding: 9px 12px;
+  white-space: pre-line; /* "\n\n" no texto separa o "como ler" do método */
   font-size: 0.8125rem;
   line-height: 1.5;
   color: var(--tinta-2);
@@ -2714,4 +2725,11 @@ button.ponto-linha:hover {
   .ficha-partes td {
     padding: 5px 4px;
   }
+}
+
+/* Brasil no mundo: um grupo inteiro do FMI no ranking rola dentro da caixa. */
+.ponto-membros.lista-longa {
+  margin: 0;
+  max-height: 520px;
+  border-left-color: var(--borda-forte);
 }

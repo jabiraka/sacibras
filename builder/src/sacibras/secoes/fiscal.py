@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date
 
 from sacibras import contas, leis
-from sacibras.fontes import bcb_focus, tesouro_rtn
+from sacibras.fontes import bcb_focus, fmi, tesouro_rtn
 from sacibras.schema import (
     Cartao,
     Faixa,
@@ -26,6 +26,59 @@ from sacibras.tipos import Ponto
 
 def _resultado(nfsp: list[Ponto]) -> list[Ponto]:
     return contas.escalar(nfsp, -1)
+
+
+def primario_por_quem_mede(
+    primario: list[Ponto], primario_gc: list[Ponto], fmi_anual: dict[int, float], ano: int
+) -> Tabela | None:
+    """O primário do Brasil pelo Banco Central e pelo FMI, nos mesmos anos.
+
+    Caio, 14/11/2026: *"O déficit primário da aba Brasil no mundo e [o daqui] se conversam?"*
+    Conversam, mas não são a mesma conta; a tabela põe os três lado a lado e a nota diz por
+    que diferem."""
+    dez = {d.year: v for d, v in primario if d.month == 12}
+    dez_gc = {d.year: v for d, v in primario_gc if d.month == 12}
+    anos = [a for a in range(ano - 7, ano) if a in dez and a in fmi_anual]
+    if len(anos) < 3:
+        return None
+    return Tabela(
+        id="primario-bc-fmi",
+        titulo="O primário do Brasil por quem mede: Banco Central e FMI",
+        subtitulo="% do PIB no ano; negativo é déficit",
+        colunas=[str(a) for a in anos],
+        linhas=[
+            LinhaTabela(
+                rotulo="Setor público consolidado (Banco Central)",
+                valores=[round(dez[a], 2) for a in anos],
+                unidade="% do PIB",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="Governo Federal e Banco Central (Banco Central)",
+                valores=[round(dez_gc[a], 2) if a in dez_gc else None for a in anos],
+                unidade="% do PIB",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="Governo geral (FMI, em Brasil no mundo)",
+                valores=[round(fmi_anual[a], 2) for a in anos],
+                unidade="% do PIB",
+                casas=2,
+            ),
+        ],
+        fonte="Banco Central (SGS 5793 e 5783, NFSP em 12 meses, dezembro); FMI, World "
+        "Economic Outlook (GGXONLB_NGDP)",
+        nota=(
+            "Conversam, mas não são a mesma conta. Quem entra: o Banco Central soma União, "
+            "estados, municípios, o próprio Banco Central e as estatais (fora Petrobras, "
+            "Eletrobras e bancos); o FMI mede só o governo geral (União, estados e municípios). "
+            'Como se mede: o Banco Central olha quanto a dívida variou no ano ("abaixo da '
+            'linha"); o FMI soma receitas e despesas ("acima da linha"). Os dois andam '
+            "juntos na maior parte dos anos, mas há anos de diferença grande. Para o Brasil, o "
+            "número oficial é o do Banco Central (e a meta da LDO vale para o Governo Central); "
+            "para comparar países, o do FMI, que mede todos do mesmo jeito."
+        ),
+    )
 
 
 def _bi(valor_em_milhoes: float) -> float:
@@ -310,6 +363,15 @@ def montar(ctx: Contexto) -> Secao:
     ]
 
     tabelas: list[Tabela] = []
+    try:  # o FMI fora do ar não derruba a seção: só a comparação fica de fora
+        weo = fmi.weo(["BRA"], ["GGXONLB_NGDP"], ctx.hoje.year - 8, ctx.hoje.year)
+        t_bc_fmi = primario_por_quem_mede(
+            primario, primario_gc, weo.valores.get(("BRA", "GGXONLB_NGDP"), {}), ctx.hoje.year
+        )
+        if t_bc_fmi:
+            tabelas.append(t_bc_fmi)
+    except Exception as erro:
+        print(f"  aviso: fiscal: sem o primário do FMI ({str(erro)[:120]})")
     c_meta, g_meta, t_meta = meta_do_primario(ctx)
     cartoes.append(c_meta)
     graficos.append(g_meta)

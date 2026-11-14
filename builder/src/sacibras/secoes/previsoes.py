@@ -223,8 +223,10 @@ def montar(ctx: Contexto) -> Secao:
                 )
             ]
             extra["nota"] = (
-                "Barras: a mediana do Focus mais ou menos o erro médio que ela teve, desde 2010, "
-                "quando medida nesta mesma época do ano. Quanto mais longe o ano, maior a barra."
+                "Como ler: a barra é o tamanho do erro de um ano comum. Vai da mediana do Focus "
+                "menos o erro médio que ela teve desde 2010 (medida nesta mesma época do ano) "
+                "até a mediana mais esse erro. Em anos de surpresa, como 2015 e 2020, o número "
+                "de verdade caiu bem longe dela. Quanto mais longe o ano, maior a barra."
             )
         return grafico(
             id,

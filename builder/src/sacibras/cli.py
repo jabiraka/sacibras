@@ -25,7 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.comando == "build":
-        from sacibras import busca
+        from sacibras import busca, glossario
         from sacibras.construir import construir
 
         print(f"Gerando em {args.saida}")
@@ -34,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  busca: {busca.gravar(args.saida)} itens")
         except Exception as erro:
             print(f"  aviso: índice da busca não gravado ({erro})")
+        print(f"  glossário: {glossario.gravar(args.saida)} termos")
         falhas = [s.id for s in painel.secoes if s.erro]
         if falhas:
             print(f"Seções com falha: {', '.join(falhas)}")

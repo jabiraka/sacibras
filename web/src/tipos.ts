@@ -24,7 +24,14 @@ export interface Grafico {
   periodicidade: Periodicidade;
   series: Serie[];
   faixa: { nome: string; pontos: [string, number, number][] } | null;
-  intervalos: { nome: string; serie: string; pontos: [string, number, number][] }[];
+  intervalos: {
+    nome: string;
+    serie: string;
+    pontos: [string, number, number][];
+    /** A parte grossa da barra (a faixa de 50 %), quando há. */
+    meio?: [string, number, number][];
+    nome_meio?: string;
+  }[];
   linhas: { valor: number; rotulo: string }[];
   janela_anos: number | null;
   fonte: string;
@@ -131,6 +138,9 @@ export interface Alerta {
   limite: { valor: number; rotulo: string } | null;
   fonte: string;
   procedencia: Procedencia;
+  significa?: string;
+  por_que?: string;
+  pode_levar?: string;
 }
 
 export interface Pais {

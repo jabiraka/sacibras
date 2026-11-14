@@ -127,7 +127,11 @@ WEO: list[tuple[str, str, str, str, str, int, bool | None]] = [
         "primario",
         "GGXONLB_NGDP",
         "Resultado primário",
-        "Receitas menos despesas do governo geral, sem os juros. Negativo é déficit.",
+        "Receitas menos despesas do governo geral, sem os juros. Negativo é déficit. Para o "
+        "Brasil, não é o mesmo número de Contas públicas: o FMI mede só União, estados e "
+        "municípios, por receitas e despesas; o Banco Central soma as estatais e o próprio "
+        "BC, pela variação da dívida. A tabela lado a lado está em Contas públicas › Primário "
+        "e juros.",
         "% do PIB",
         1,
         True,
@@ -136,7 +140,9 @@ WEO: list[tuple[str, str, str, str, str, int, bool | None]] = [
         "nominal",
         "GGXCNL_NGDP",
         "Resultado nominal",
-        "Receitas menos despesas do governo geral, com os juros. Negativo é déficit.",
+        "Receitas menos despesas do governo geral, com os juros. Negativo é déficit. Para o "
+        "Brasil, difere do resultado nominal do Banco Central (Contas públicas) pela mesma "
+        "razão do primário: outro conjunto de governo e outra forma de medir.",
         "% do PIB",
         1,
         True,

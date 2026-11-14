@@ -284,28 +284,45 @@ export function montarGrafico(g: Grafico): HTMLElement {
         Plot.areaY(faixa, { x: "t", y1: "a", y2: "b", fill: t.faixa, fillOpacity: 0.22 }),
       );
     }
-    // Barras de erro: uma cápsula translúcida na cor da série, com um traço fino no meio.
+    const xMin = Math.min(...todas.map((l) => l.t.getTime()));
+    const xMax = Math.max(...todas.map((l) => l.t.getTime()));
+    // Barras de erro (Caio, 14/11/2026: "não gostei da barra azul"): um traço fino em tinta
+    // neutra, com as pontas marcadas, e a parte do meio (50 %) mais grossa quando há.
+    const msPorPx = (xMax - xMin) / Math.max(1, largura - 60);
     for (const intervalo of g.intervalos ?? []) {
-      const indice = g.series.findIndex((x) => x.id === intervalo.serie);
-      const corDaSerie = cor(Math.max(0, indice));
       const pontos = intervalo.pontos
         .map(([iso, a, b]) => ({ t: data(iso), a, b }))
         .filter((p) => p.t.getTime() >= desde);
+      const ponta = (campo: "a" | "b") =>
+        Plot.ruleY(pontos, {
+          y: campo,
+          x1: (p: { t: Date }) => new Date(p.t.getTime() - 5 * msPorPx),
+          x2: (p: { t: Date }) => new Date(p.t.getTime() + 5 * msPorPx),
+          stroke: t.tinta2,
+          strokeWidth: 1.5,
+        });
+      const meio = (intervalo.meio ?? [])
+        .map(([iso, a, b]) => ({ t: data(iso), a, b }))
+        .filter((p) => p.t.getTime() >= desde);
+      if (meio.length) {
+        marcas.push(
+          Plot.ruleX(meio, {
+            x: "t",
+            y1: "a",
+            y2: "b",
+            stroke: t.tinta,
+            strokeOpacity: 0.16,
+            strokeWidth: 9,
+            strokeLinecap: "round",
+          }),
+        );
+      }
       marcas.push(
-        Plot.ruleX(pontos, {
-          x: "t",
-          y1: "a",
-          y2: "b",
-          stroke: corDaSerie,
-          strokeOpacity: 0.2,
-          strokeWidth: 12,
-          strokeLinecap: "round",
-        }),
-        Plot.ruleX(pontos, { x: "t", y1: "a", y2: "b", stroke: corDaSerie, strokeWidth: 1.5 }),
+        Plot.ruleX(pontos, { x: "t", y1: "a", y2: "b", stroke: t.tinta2, strokeWidth: 1.5 }),
+        ponta("a"),
+        ponta("b"),
       );
     }
-    const xMin = Math.min(...todas.map((l) => l.t.getTime()));
-    const xMax = Math.max(...todas.map((l) => l.t.getTime()));
     for (const linha of g.linhas) {
       marcas.push(
         Plot.ruleY([linha.valor], { stroke: t.tinta3, strokeDasharray: "2,4", strokeWidth: 1 }),
@@ -518,10 +535,13 @@ function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => str
   }
   for (const intervalo of g.intervalos ?? []) {
     const item = el("span", "legenda-item");
-    const chave = el("i", "chave intervalo");
-    chave.style.setProperty("--cor", cor(Math.max(0, g.series.findIndex((x) => x.id === intervalo.serie))));
-    item.append(chave, document.createTextNode(intervalo.nome));
+    item.append(el("i", "chave intervalo"), document.createTextNode(intervalo.nome));
     itens.push(item);
+    if (intervalo.meio?.length && intervalo.nome_meio) {
+      const meio = el("span", "legenda-item");
+      meio.append(el("i", "chave intervalo-meio"), document.createTextNode(intervalo.nome_meio));
+      itens.push(meio);
+    }
   }
   legenda.append(...itens);
   legenda.hidden = itens.length === 0;
@@ -612,15 +632,13 @@ function pairar(
       for (const intervalo of g.intervalos ?? []) {
         if (intervalo.serie !== s.id) continue;
         const faixa = intervalo.pontos.find(([d]) => d === ponto.iso);
+        const meio = intervalo.meio?.find(([d]) => d === ponto.iso);
+        const de = (f: [string, number, number]): string =>
+          `de ${numero(f[1], g.casas)} a ${comUnidade(f[2], g.unidade, g.casas)}`;
         if (faixa) {
-          linhas.push(
-            el(
-              "div",
-              "dica-faixa",
-              `de ${numero(faixa[1], g.casas)} a ${comUnidade(faixa[2], g.unidade, g.casas)}`,
-            ),
-          );
+          linhas.push(el("div", "dica-faixa", meio ? `8 em 10: ${de(faixa)}` : de(faixa)));
         }
+        if (meio) linhas.push(el("div", "dica-faixa", `metade: ${de(meio)}`));
       }
     });
     if (!linhas.length) return;
