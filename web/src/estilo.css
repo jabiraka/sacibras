@@ -2122,6 +2122,28 @@ button.ponto-linha:hover {
   }
 }
 
+/* Os três resultados do simulador da Selic: inflação, dólar e dívida, lado a lado. */
+.efeitos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 6px;
+}
+
+.efeito .cartao-valor {
+  font-variant-numeric: tabular-nums;
+}
+
+.efeito .cartao-detalhe {
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .efeitos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ------------------------------------------------------------------ rodapé */
 
 .rodape {

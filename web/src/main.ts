@@ -21,6 +21,7 @@ import { montarPiramide } from "./piramide";
 import { montarRetornos } from "./retornos";
 import { el, guardar } from "./pecas";
 import { montarSimulador } from "./simulador";
+import { montarSimuladorSelic } from "./simulador-selic";
 import type {
   Cartao,
   Estados,
@@ -29,6 +30,7 @@ import type {
   Mundo,
   Painel,
   Secao,
+  SimuladorSelic,
   Subcategoria,
   Tabela,
 } from "./tipos";
@@ -167,6 +169,17 @@ function montarPeca(g: Grafico): HTMLElement {
   return g.id === "retornos-em-reais" ? montarRetornos(g) : montarGrafico(g);
 }
 
+/** O simulador da Selic, guardado atrás do título; na parte dele (`#juros/efeito`) já abre. */
+function caixaDoSimuladorSelic(sim: SimuladorSelic): HTMLElement {
+  const caixa = guardar(
+    "E se a Selic mudar?",
+    "Corte ou suba a taxa e veja o que o Banco Central estima para a inflação, o dólar e a dívida",
+    () => montarSimuladorSelic(sim),
+  );
+  caixa.id = "simulador-selic";
+  return caixa;
+}
+
 function montarSecao(s: Secao, alvo: HTMLElement): void {
   if (s.cartoes.length) {
     const grade = el("div", "cartoes");
@@ -207,6 +220,8 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
       ),
     );
   }
+  const simuladorSelic = s.simulador_selic;
+  if (simuladorSelic) alvo.append(caixaDoSimuladorSelic(simuladorSelic));
   for (const t of s.tabelas) alvo.append(montarTabela(t));
 }
 
@@ -448,7 +463,7 @@ function contagem(p: Subcategoria): string {
     plural(p.cartoes.length, "número", "números"),
     plural(p.graficos.length, "gráfico", "gráficos"),
     plural(p.tabelas.length, "tabela", "tabelas"),
-    p.extras.includes("simulador") ? "simulador" : "",
+    p.extras.includes("simulador") || p.extras.includes("simulador-selic") ? "simulador" : "",
     p.extras.includes("alertas") ? "painel" : "",
   ]
     .filter(Boolean)
@@ -493,6 +508,12 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
       "Mexa no juro, no crescimento e no resultado primário e veja para onde ela vai",
       () => montarSimulador(simulador),
     );
+    if (caixa instanceof HTMLDetailsElement) caixa.open = true;
+    alvo.append(caixa);
+  }
+  const simuladorSelic = s.simulador_selic;
+  if (p.extras.includes("simulador-selic") && simuladorSelic) {
+    const caixa = caixaDoSimuladorSelic(simuladorSelic);
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;
     alvo.append(caixa);
   }

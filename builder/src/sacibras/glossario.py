@@ -225,6 +225,31 @@ TERMOS: list[Termo] = [
         "#juros",
     ),
     Termo(
+        "transmissao",
+        "Transmissão da Selic",
+        "O caminho da Selic até os preços: ela encarece o crédito e esfria o consumo, barateia "
+        "o dólar e mexe com a inflação que as pessoas esperam. Leva tempo: pela conta do Banco "
+        "Central, o maior efeito na inflação aparece cerca de um ano depois.",
+        ("transmissão da política monetária", "transmissão da Selic"),
+        "#juros/efeito",
+    ),
+    Termo(
+        "repasse-cambial",
+        "Repasse cambial",
+        "Quanto da alta do dólar chega aos preços daqui. O Banco Central estima que um dólar "
+        "10 % mais caro põe cerca de 1 ponto a mais no IPCA dos 12 meses seguintes.",
+        ("repasse cambial",),
+        "#juros/efeito",
+    ),
+    Termo(
+        "ciclo-da-selic",
+        "Ciclo da Selic",
+        "Uma sequência de reuniões em que o Copom mexe na Selic no mesmo sentido: ciclo de "
+        "corte quando ela vai caindo, ciclo de alta quando vai subindo.",
+        ("ciclo de corte", "ciclo de alta", "ciclos de corte", "ciclos de alta"),
+        "#juros/efeito",
+    ),
+    Termo(
         "juro-real",
         "Juro real",
         "O juro descontada a inflação: quanto o dinheiro rende, ou custa, em poder de compra. "

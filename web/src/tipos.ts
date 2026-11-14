@@ -94,6 +94,31 @@ export interface SimuladorDivida {
   nota: string;
 }
 
+/** O que o BC estima para 1 pp de Selic; o navegador multiplica pela mudança escolhida. */
+export interface SimuladorSelic {
+  ano: number;
+  focus_selic: number | null;
+  focus_ipca: number | null;
+  focus_dolar: number | null;
+  focus_divida: number | null;
+  meta: { centro: number; inferior: number; superior: number; norma: string } | null;
+  /** O trimestre zero e os 16 seguintes. */
+  trimestres: string[];
+  selic_caminho: number[];
+  ipca_agregado: number[];
+  ipca_desagregado: number[];
+  dolar_por_pp: number;
+  dolar_por_pp_faixa: [number, number];
+  divida_por_pp_de_selic: number;
+  divida_por_1_de_dolar: number;
+  divida_por_pp_de_precos: number;
+  /** PIB de 12 meses, em R$ bilhões. */
+  pib_em_reais: number | null;
+  fonte: string;
+  nota: string;
+  como_ler: string;
+}
+
 /** Uma parte do assunto: os ids do que abre junto, numa tela só. */
 export interface Subcategoria {
   id: string;
@@ -102,7 +127,7 @@ export interface Subcategoria {
   cartoes: string[];
   graficos: string[];
   tabelas: string[];
-  extras: ("simulador" | "alertas")[];
+  extras: ("simulador" | "simulador-selic" | "alertas")[];
 }
 
 export interface Secao {
@@ -115,6 +140,7 @@ export interface Secao {
   graficos: Grafico[];
   tabelas: Tabela[];
   simulador: SimuladorDivida | null;
+  simulador_selic?: SimuladorSelic | null;
   alertas?: Alerta[];
   gerado_em: string;
 }

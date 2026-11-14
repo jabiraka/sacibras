@@ -90,6 +90,21 @@ SINONIMOS: dict[str, list[str]] = {
     "focus": ["previsao", "projecao", "expectativa", "mercado espera", "consenso", "boletim focus"],
     "previs": ["projecao", "expectativa", "futuro", "focus", "o que vem"],
     "simul": ["simulador", "cenario", "e se"],
+    "efeito da selic": [
+        "impacto da selic",
+        "transmissao da politica monetaria",
+        "se a selic cair",
+        "se o juro cair",
+        "corte de juros",
+        "queda dos juros",
+        "simulador da selic",
+        "simulador de juros",
+        "e se",
+        "cenario",
+        "repasse cambial",
+    ],
+    "e se a selic": ["simulador", "cenario", "impacto da selic", "corte de juros", "juro cair"],
+    "ciclo de": ["ciclos da selic", "historico do copom", "aperto monetario", "afrouxamento"],
     "risco": ["perigo", "crise", "risco pais", "risco brasil", "vulnerabilidade", "alerta"],
     "alerta": ["sinal de alerta", "risco", "termometro", "indicadores de alerta"],
     "estabiliza": ["sustentabilidade da divida", "calote", "divida explode", "trajetoria"],
@@ -179,6 +194,18 @@ def montar(saida: Path) -> list[Item]:
         for t in dados.get("tabelas", []):
             alvo = f"t-{t['id']}"
             itens.append(_item(t["titulo"], f"{onde.get(alvo, nome)} · tabela", f"{h}/{alvo}"))
+        if dados.get("simulador_selic"):
+            parte = next(
+                (
+                    sub
+                    for sub in dados.get("subcategorias", [])
+                    if "simulador-selic" in sub.get("extras", [])
+                ),
+                None,
+            )
+            alvo = f"{h}/{parte['id']}" if parte else h
+            local = f"{nome} › {parte['titulo']}" if parte else nome
+            itens.append(_item("E se a Selic mudar?", f"{local} · simulador", alvo))
         if dados.get("alertas"):
             # O painel fica guardado e é montado no clique: o resultado leva a ele.
             itens.append(_item("Painel de alerta", f"{nome} · painel", f"{h}/t-alertas"))

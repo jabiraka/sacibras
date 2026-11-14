@@ -92,8 +92,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,
-  *"deixe o simulador da dívida, acho legal"*). Fora ele, cenário montado pela pessoa não
-  entra sem o "sim" do Caio.
+  *"deixe o simulador da dívida, acho legal"*). **O da Selic também** (Caio, 14/11/2026:
+  *"algum tipo de simulador, se reduzir a taxa oq acontece com as outras métricas (inflação,
+  câmbio, dívida)"*), em Juros › Efeito da Selic: só com número que o Banco Central publica
+  para 1 pp de Selic (`relatorios.py`), ao lado do Focus, e separado do que aconteceu de fato
+  depois de cada ciclo (as tabelas dos ciclos dizem "não é o que a Selic causou"). Fora os
+  dois, cenário montado pela pessoa não entra sem o "sim" do Caio.
 - **Riscos** (Caio, 14/11/2026): a palavra na tela é *sustentabilidade da dívida*, não
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
   Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de
