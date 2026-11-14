@@ -234,6 +234,14 @@ TERMOS: list[Termo] = [
         "#juros/efeito",
     ),
     Termo(
+        "faixa-de-90",
+        "Faixa de 90 %",
+        "O intervalo em que, pela conta de quem estimou, o número certo cai em 9 de cada 10 "
+        "casos. Quanto mais larga a faixa, menos se sabe sobre o tamanho do efeito.",
+        ("faixa de 90 %", "faixas de 90 %"),
+        "#juros/efeito",
+    ),
+    Termo(
         "repasse-cambial",
         "Repasse cambial",
         "Quanto da alta do dólar chega aos preços daqui. O Banco Central estima que um dólar "

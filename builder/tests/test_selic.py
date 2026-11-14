@@ -71,6 +71,7 @@ def _efeito(pp: float) -> selic.Efeito:
         pp,
         ipca_por_pp=relatorios.IPCA_MODELO_AGREGADO[4],
         ipca_por_pp_outro=relatorios.IPCA_MODELO_DESAGREGADO[4],
+        ipca_por_pp_faixa=(relatorios.IPCA_FAIXA_90_MENOR[4], relatorios.IPCA_FAIXA_90_MAIOR[4]),
         dolar_por_pp=relatorios.DOLAR_POR_PP_DE_SELIC,
         dolar_por_pp_faixa=relatorios.DOLAR_POR_PP_DE_SELIC_FAIXA,
         divida_por_pp_de_selic=relatorios.ELASTICIDADE_SELIC.bruta,
@@ -89,6 +90,11 @@ def test_corte_de_1_pp_sobe_a_inflacao_e_o_dolar_e_alivia_a_divida() -> None:
     assert e.divida_pelo_dolar == pytest.approx(0.133)
     assert e.divida_pela_inflacao == pytest.approx(0.0405)
     assert e.divida == pytest.approx(-0.3065)
+    # As faixas de 90 % do BC: a ponta de mais efeito na inflação é o triplo da de menos.
+    assert e.ipca_faixa == pytest.approx((0.17, 0.52))
+    # Dívida: juros sem faixa, mais as pontas do dólar (× 0,07) e da inflação (× 0,15).
+    assert e.divida_faixa == pytest.approx((-0.48 + 0.0539 + 0.0255, -0.48 + 0.2254 + 0.078))
+    assert e.divida_faixa[0] < e.divida < e.divida_faixa[1]
 
 
 def test_efeito_e_linear_e_simetrico() -> None:
@@ -96,6 +102,8 @@ def test_efeito_e_linear_e_simetrico() -> None:
     assert alta.ipca == pytest.approx(-corte.ipca) == pytest.approx(-0.54)
     assert alta.divida == pytest.approx(-corte.divida)
     assert alta.dolar_faixa == pytest.approx((-6.44, -1.54))
+    assert alta.ipca_faixa == pytest.approx((-1.04, -0.34))
+    assert alta.divida_faixa[0] < alta.divida < alta.divida_faixa[1]
     assert _efeito(0.0).divida == 0.0
 
 
@@ -106,6 +114,15 @@ def test_caminhos_lidos_do_bc_conferem_com_o_texto_do_boxe() -> None:
     assert r.SELIC_CAMINHO[:5] == [0.0, 1.0, 1.0, 1.0, 1.0]
     for caminho, maximo in [(r.IPCA_MODELO_AGREGADO, -0.27), (r.IPCA_MODELO_DESAGREGADO, -0.24)]:
         assert min(caminho) == maximo and caminho.index(maximo) == 4 and caminho[0] == 0.0
+    # A faixa de 90 % é da versão de 2021 (máximo de 0,33 no sexto trimestre): as duas
+    # estimativas de 2024 e as das outras versões têm de caber nela.
+    assert min(r.IPCA_MODELO_2021) == -0.33 and r.IPCA_MODELO_2021.index(-0.33) == 6
+    for i in range(1, len(r.SELIC_CAMINHO)):
+        mais, menos = r.IPCA_FAIXA_90_MAIOR[i], r.IPCA_FAIXA_90_MENOR[i]
+        for caminho in (r.IPCA_MODELO_AGREGADO, r.IPCA_MODELO_DESAGREGADO, r.IPCA_MODELO_2021):
+            assert mais <= caminho[i] <= menos, i
+    for _, maximo in r.IPCA_NAS_VERSOES:
+        assert min(r.IPCA_FAIXA_90_MAIOR) <= maximo <= max(r.IPCA_FAIXA_90_MENOR[4:9])
     piso, teto = r.DOLAR_POR_PP_DE_SELIC_FAIXA
     assert piso < r.DOLAR_POR_PP_DE_SELIC < teto < 0
     assert r.ELASTICIDADE_SELIC.choque.startswith("Selic")
@@ -126,6 +143,9 @@ def test_o_simulador_da_selic_vai_para_a_parte_dele() -> None:
         selic_caminho=r.SELIC_CAMINHO,
         ipca_agregado=r.IPCA_MODELO_AGREGADO,
         ipca_desagregado=r.IPCA_MODELO_DESAGREGADO,
+        ipca_faixa_menor=r.IPCA_FAIXA_90_MENOR,
+        ipca_faixa_maior=r.IPCA_FAIXA_90_MAIOR,
+        faixa_do_ipca="faixa de 90 % do BC",
         dolar_por_pp=r.DOLAR_POR_PP_DE_SELIC,
         dolar_por_pp_faixa=r.DOLAR_POR_PP_DE_SELIC_FAIXA,
         divida_por_pp_de_selic=0.48,

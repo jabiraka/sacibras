@@ -116,12 +116,17 @@ class Efeito:
     ipca: float
     """pp no IPCA acumulado em quatro trimestres (modelo agregado do BC)."""
     ipca_outro_modelo: float
+    ipca_faixa: tuple[float, float]
+    """A faixa de 90 % do BC para o IPCA, da menor ponta à maior."""
     dolar: float
     """% no dólar."""
     dolar_faixa: tuple[float, float]
     divida_pelos_juros: float
     divida_pelo_dolar: float
     divida_pela_inflacao: float
+
+    divida_faixa: tuple[float, float]
+    """Os juros (conta de estoque, sem faixa) mais as pontas do dólar e da inflação."""
 
     @property
     def divida(self) -> float:
@@ -134,6 +139,7 @@ def efeito(
     *,
     ipca_por_pp: float,
     ipca_por_pp_outro: float,
+    ipca_por_pp_faixa: tuple[float, float],
     dolar_por_pp: float,
     dolar_por_pp_faixa: tuple[float, float],
     divida_por_pp_de_selic: float,
@@ -143,16 +149,24 @@ def efeito(
     """As estimativas do BC na escala de `pp` (os modelos são lineares e simétricos).
 
     A dívida soma três contas do BC: os juros da parte atrelada à Selic, o dólar que a Selic
-    move e a inflação que ela move (a soma é nossa; cada parcela é dele)."""
+    move e a inflação que ela move (a soma é nossa; cada parcela é dele). As faixas são as de
+    90 % que o BC publica; a da dívida soma as pontas do dólar e da inflação."""
     dolar = dolar_por_pp * pp
     ipca = ipca_por_pp * pp
-    pontas = sorted(k * pp for k in dolar_por_pp_faixa)
+    do_dolar = sorted(k * pp for k in dolar_por_pp_faixa)
+    do_ipca = sorted(k * pp for k in ipca_por_pp_faixa)
+    juros = divida_por_pp_de_selic * pp
     return Efeito(
         ipca=ipca,
         ipca_outro_modelo=ipca_por_pp_outro * pp,
+        ipca_faixa=(do_ipca[0], do_ipca[1]),
         dolar=dolar,
-        dolar_faixa=(pontas[0], pontas[1]),
-        divida_pelos_juros=divida_por_pp_de_selic * pp,
+        dolar_faixa=(do_dolar[0], do_dolar[1]),
+        divida_pelos_juros=juros,
         divida_pelo_dolar=divida_por_1_de_dolar * dolar,
         divida_pela_inflacao=divida_por_pp_de_precos * ipca,
+        divida_faixa=(
+            juros + divida_por_1_de_dolar * do_dolar[0] + divida_por_pp_de_precos * do_ipca[0],
+            juros + divida_por_1_de_dolar * do_dolar[1] + divida_por_pp_de_precos * do_ipca[1],
+        ),
     )

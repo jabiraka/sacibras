@@ -201,6 +201,42 @@ IPCA_MODELO_DESAGREGADO = [0.0, -0.08, -0.13, -0.18, -0.24, -0.22, -0.22, -0.21,
 IPCA_MODELO_DESAGREGADO += [-0.18, -0.17, -0.17, -0.16, -0.16, -0.15, -0.15, -0.14]
 
 
+# A faixa de erro. O boxe de 2024 mostra os dois modelos, mas não a faixa; a última que o BC
+# publicou está no Relatório de Inflação de dezembro de 2021, boxe "Revisão do modelo agregado
+# de pequeno porte", p. 77 (lido em 14/11/2026 em
+# bcb.gov.br/content/ri/relatorioinflacao/202112/ri202112p.pdf), para a versão anterior do mesmo
+# modelo: "um aumento temporário de 1 p.p. na taxa Selic, com duração de quatro trimestres, gera
+# um efeito máximo de redução na inflação do IPCA, acumulada em quatro trimestres, de
+# aproximadamente 0,33 p.p., alcançado no sexto trimestre após o choque inicial". O Gráfico 2b
+# traz a resposta e o "Intervalo de credibilidade de 90%"; pontos lidos das coordenadas do
+# traço, escala conferida pelo 0,33 do texto. Os dois modelos de 2024 ficam dentro desta faixa
+# nos 16 trimestres (o teste confere).
+# MENOR = a ponta de menos efeito; MAIOR = a de mais efeito.
+FAIXA_DO_IPCA_EM = date(2021, 12, 16)
+IPCA_MODELO_2021 = [0.0, -0.10, -0.15, -0.23, -0.31, -0.30, -0.33, -0.33, -0.33]
+IPCA_MODELO_2021 += [-0.31, -0.30, -0.28, -0.27, -0.25, -0.23, -0.21, -0.20]
+IPCA_FAIXA_90_MENOR = [0.0, -0.03, -0.06, -0.11, -0.17, -0.19, -0.21, -0.20, -0.19]
+IPCA_FAIXA_90_MENOR += [-0.16, -0.14, -0.11, -0.10, -0.08, -0.07, -0.07, -0.06]
+IPCA_FAIXA_90_MAIOR = [0.0, -0.19, -0.26, -0.40, -0.52, -0.48, -0.53, -0.53, -0.55]
+IPCA_FAIXA_90_MAIOR += [-0.56, -0.56, -0.55, -0.54, -0.53, -0.51, -0.49, -0.47]
+
+# A própria estimativa do BC mudou de versão para versão (o efeito máximo de 1 pp por um ano):
+# - Relatório de Inflação de set/2020, boxe "Novo modelo agregado de pequeno porte com
+#   estimação bayesiana": "efeito máximo de redução na inflação, acumulada em quatro
+#   trimestres, de aproximadamente 0,3 p.p.";
+# - de mar/2021, boxe "Novo modelo desagregado de pequeno porte" (p. 81): "de 0,26 p.p.";
+# - de dez/2021: 0,33 p.p.; de jun/2024: 0,27 e 0,24 p.p.
+IPCA_NAS_VERSOES = [
+    ("set/2020, modelo agregado", -0.30),
+    ("mar/2021, modelo desagregado", -0.26),
+    ("dez/2021, modelo agregado", -0.33),
+]
+FONTE_FAIXA_DO_IPCA = (
+    "Banco Central, Relatório de Inflação de dez/2021, boxe Revisão do modelo agregado de "
+    "pequeno porte (p. 77, intervalo de credibilidade de 90 %)"
+)
+
+
 @dataclass(frozen=True)
 class EfeitoPorGrupo:
     """O maior efeito de 1 pp a mais de Selic por um ano num grupo de preços do IPCA."""
@@ -249,4 +285,35 @@ FONTE_EFEITO_SELIC = (
 FONTE_REPASSE_CAMBIAL = (
     "Banco Central, Relatório de Política Monetária de mar/2026, boxe Repasse cambial: "
     "estimativas por projeções locais (p. 66)"
+)
+
+# ------------------------------------------------------------------ cenário em debate
+
+# Não é fonte de número: é uma proposta pública que alguém pode querer pôr no simulador da
+# Selic (Caio, 14/11/2026: "um dos ganchos pode ser aquela proposta do André Lara Resende para
+# baixar o juros"). Nenhum dado da tela sai daqui; só o tamanho do corte que o botão simula.
+# André Lara Resende, "Eu Acuso: uma proposta para eliminar os juros absurdos", publicado no
+# Substack do autor em 25/09/2026 (lido em 14/11/2026 em
+# andrelararesende.substack.com/p/eu-acuso-uma-proposta-para-eliminar):
+#   "O BC se comprometeria a manter a taxa básica num intervalo entre a meta de inflação, 3,0%,
+#   e taxa de crescimento nominal potencial, ou seja, a meta da inflação somada ao crescimento
+#   real potencial, o que hoje seria em torno de 5,5% ao ano (3% de inflação mais 2,5% de
+#   crescimento). [...] Para dar início ao novo regime fiscal e monetário, o BC anunciaria a
+#   redução gradual do juro básico, ao longo de cerca de 12 meses, para a taxa de crescimento
+#   nominal potencial mais um spread transitório de segurança de 2%, isto é, perto de 7,5% ao
+#   ano. [...] Anunciaria ainda que se necessário atuará no câmbio para suavizar toda
+#   depreciação mais acentuada".
+#   "No longo prazo a inflação converge para a diferença entre a taxa básica de juros e a taxa
+#   de crescimento real da economia. No curto prazo, a relação entre a taxa de juros e a
+#   inflação pode ser inversa, como convencionalmente aceito. A redução do juro pode
+#   efetivamente pressionar a inflação, mas é apenas um repique transitório."
+#   "A redução do custo médio da dívida de quase 13% para 7,5% ao ano, numa dívida que
+#   corresponde a 80% do PIB, equivale a uma economia fiscal de cerca de 4% do PIB ao ano. A
+#   economia não é instantânea".
+LARA_RESENDE_SELIC = 7.5
+LARA_RESENDE_MESES = 12
+LARA_RESENDE_EM = date(2026, 9, 25)
+LARA_RESENDE_TITULO = "Eu Acuso: uma proposta para eliminar os juros absurdos"
+LARA_RESENDE_ENDERECO = (
+    "https://andrelararesende.substack.com/p/eu-acuso-uma-proposta-para-eliminar"
 )

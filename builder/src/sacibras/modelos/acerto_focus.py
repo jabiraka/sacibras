@@ -26,8 +26,15 @@ class Acerto:
 
 
 def medir(
-    indicador: str, realizado: dict[int, float], hoje: date, horizonte: int, desde: int = 2010
+    indicador: str,
+    realizado: dict[int, float],
+    hoje: date,
+    horizonte: int,
+    desde: int = 2010,
+    *,
+    relativo: bool = False,
 ) -> Acerto | None:
+    """`relativo`: o erro em % do realizado (para o dólar), não em pontos."""
     dia = min(hoje.day, 28)
     erros: list[float] = []
     anos: list[int] = []
@@ -38,7 +45,8 @@ def medir(
         aposta = bcb_focus.mediana_em(indicador, alvo, date(ano, hoje.month, dia))
         if aposta is None:
             continue
-        erros.append(aposta - realizado[alvo])
+        erro = aposta - realizado[alvo]
+        erros.append(erro / realizado[alvo] * 100 if relativo else erro)
         anos.append(alvo)
     if len(erros) < 5:
         return None

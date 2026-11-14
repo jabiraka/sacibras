@@ -94,6 +94,16 @@ export interface SimuladorDivida {
   nota: string;
 }
 
+/** Um gancho do simulador da Selic: uma proposta pública, no tamanho de corte que ela dá. */
+export interface CenarioSelic {
+  id: string;
+  rotulo: string;
+  pp: number;
+  texto: string;
+  fonte: string;
+  endereco: string;
+}
+
 /** O que o BC estima para 1 pp de Selic; o navegador multiplica pela mudança escolhida. */
 export interface SimuladorSelic {
   ano: number;
@@ -107,6 +117,10 @@ export interface SimuladorSelic {
   selic_caminho: number[];
   ipca_agregado: number[];
   ipca_desagregado: number[];
+  /** As pontas da faixa de 90 % do BC, por trimestre e por 1 pp: menos e mais efeito. */
+  ipca_faixa_menor: number[];
+  ipca_faixa_maior: number[];
+  faixa_do_ipca: string;
   dolar_por_pp: number;
   dolar_por_pp_faixa: [number, number];
   divida_por_pp_de_selic: number;
@@ -114,6 +128,12 @@ export interface SimuladorSelic {
   divida_por_pp_de_precos: number;
   /** PIB de 12 meses, em R$ bilhões. */
   pib_em_reais: number | null;
+  /** Quanto o Focus desta época costuma errar o ano seguinte: pp, % e pp do PIB. */
+  erro_focus_ipca: number | null;
+  erro_focus_dolar: number | null;
+  erro_focus_divida: number | null;
+  erro_focus_desde: number | null;
+  cenarios: CenarioSelic[];
   fonte: string;
   nota: string;
   como_ler: string;

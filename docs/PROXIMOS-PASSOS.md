@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (décima primeira sessão do dia: o efeito da Selic e o simulador dela).
+Última atualização: 14/11/2026 (décima primeira sessão do dia: o efeito da Selic, o simulador com faixas de erro e o gancho da proposta de Lara Resende).
 
 ---
 
@@ -63,7 +63,19 @@ câmbio, dívida)"*.
 - **Os ciclos** (`modelos/selic.py`): mudanças seguidas no mesmo sentido, um ano parado separa;
   de 2003 em diante. A tabela diz o que aconteceu com IPCA, dólar e dívida, e que isso não é o
   efeito da Selic.
-- Busca ("se a selic cair", "corte de juros", "simulador") e três verbetes no glossário (92).
+- **Faixas de erro em tudo** (Caio: *"claramente coloque as faixas de erro, principalmente no
+  simulador"*): sob cada efeito, a faixa de 90 % do BC; em cada quadro, a régua com o Focus e o
+  erro típico dele (`acerto_focus.medir`, agora também em % para o dólar) e o número simulado
+  com a faixa; barras de erro no gráfico. A faixa do IPCA é a do Relatório de Inflação de
+  dez/2021 (p. 77), a última publicada: a versão de 2024 saiu sem faixa (**conferir a cada
+  relatório se o BC publica a nova**).
+- **Gancho** (Caio: *"aquela proposta do André Lara Resende para baixar o juros"*): botão no
+  simulador que põe a Selic no tamanho da proposta ("Eu Acuso", 25/09/2026, Selic perto de
+  7,5 % em cerca de 12 meses; lido no Substack do autor, trechos em `relatorios.py`). O
+  tamanho sai do Focus do dia (metade da distância entre 7,5 % e a Selic que o Focus espera
+  para o fim do ano seguinte). **Rever** se o autor mudar a proposta ou quando ela envelhecer.
+- Busca ("se a selic cair", "corte de juros", "simulador", "lara resende") e quatro verbetes
+  no glossário (93).
 - Conferido a 1280 e a 390 px, com tudo aberto e o toque no gráfico. A prévia privada foi
   republicada com tudo (os treze assuntos e o glossário, que ela ainda não tinha). **Não
   publicado no `main`**: espera o "pode" do Caio.
@@ -203,6 +215,10 @@ câmbio, dívida)"*.
 - O calendário mostra só o dia da divulgação: a API traz a hora sem dizer o fuso. Se a API do
   IBGE não responder em 6 s, a linha não aparece.
 
+- No simulador da Selic, a faixa do IPCA é de uma versão anterior do modelo (dez/2021), e a
+  da dívida soma pontas (larga de propósito). O erro do Focus compara com o dado revisado de
+  hoje: na dívida são só sete anos, e parte do erro é o PIB revisado depois. O gancho de Lara
+  Resende mede só o primeiro ano, com a queda posta como média do ano.
 - O simulador da Selic é linear (o dobro da mudança, o dobro do efeito) e vale para um ano:
   o risco do país e o juro de fora ficam parados, e um corte lido como descuido com a inflação
   mexeria mais no dólar e nos preços do que a conta mostra. A soma das três parcelas da dívida
