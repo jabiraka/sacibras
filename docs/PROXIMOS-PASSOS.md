@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (Estados com PIB, prévia do PIB, trabalho, inflação, crédito e exportações por UF, no branch `ccr-b41d9ce1-hd022f`).
+Última atualização: 14/11/2026 (Estados com PIB, prévia do PIB, trabalho, inflação, crédito e exportações por UF e a prévia do PIB dos 27, publicados no `main`).
 
 ---
 
@@ -23,9 +23,9 @@ própria"*.
   crescimento do PIB.
 - Glossário (IBC-R, Contas Regionais, Gini) e sinônimos na busca ("pib estadual", "pib per
   capita", "ipca regional"...).
-- Conferido a 390 e a 1280 px (mapa, ranking, tabela, duas métricas). Falta publicar no
-  `main` (pedir ao Caio) e reler o PIB quando sair a edição de 2025 (nov/2027): o builder
-  acha a pasta nova sozinho.
+- Conferido a 390 e a 1280 px (mapa, ranking, tabela, duas métricas). **Publicado no `main`**
+  em 14/11/2026, a pedido do Caio (*"junte ao main"*). Reler o PIB quando sair a edição de
+  2025 (nov/2027): o builder acha a pasta nova sozinho.
 - **Prévia do PIB para os 27** (Caio: *"uma regra simples é preferível, isso é previsão"*):
   quem não tem IBC-R cresce como a região (`estados_economia.ibcr`, o porquê da regra na
   docstring: no teste de 2011 a 2024 errou menos que descontar os estados com índice e que
