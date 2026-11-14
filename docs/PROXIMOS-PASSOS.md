@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (Estados: tabela completa com escolha de colunas, janela do PIB escolhida pela pessoa com 2025 pela prévia, mapa em tela cheia).
+Última atualização: 14/11/2026 (glossário: 33 verbetes novos e marcação nas tabelas e legendas; antes, Estados com a tabela nova e a janela do PIB).
 
 ---
 
@@ -26,6 +26,22 @@ em branco os valores"*.
 - Falta ver no Actions a primeira rodada agendada com o passo novo.
 - A tela ainda não marca a peça mantida (a data de referência dela já diz de quando é). Se o
   Caio quiser um selo "dado anterior", o campo `mantidos` já está no `painel.json`.
+
+## Glossário: o que faltava (14/11/2026, no PC)
+
+Pedido do Caio: *"falta o glossário dos termos dos núcleos, dos impostos, veja oq falta"* e
+*"coloque glossário mesmo que o nome esteja na tabela ou num cartão"*.
+
+- **33 verbetes novos** (149 → 182): os cinco núcleos (EX0, EX3, MS, DP, P55, pela Nota
+  Técnica do BC nº 57, dez/2025, lida em 14/11/2026), preços livres, bens industriais,
+  alimentação no domicílio, IPCA-15, INPC, IGP-M/IGP-DI, CMN; Imposto de Renda (IRPF),
+  IPTU/ITBI/ITR, ADCT, lei complementar, PEC, TCU, Comitê Gestor do IBS, cesta básica,
+  dívida ativa, Zona Franca, OCDE; IBGE, PMC/PMS/PIM, FGTS, SFH, IC-Br, BPM6, TJLP, ADPF,
+  FAO, POF. Formas novas: FBCF, PIS, EBIA, WEO.
+- **Marcação** (`glossario.ts`): agora também nas linhas e colunas de toda tabela, nas
+  células de texto e nas legendas dos gráficos; cada tabela conta como peça própria.
+- Varredura usada (siglas da tela sem verbete): sobram só nomes de fonte (SGS, BCB) e as
+  notas BBB/B1/B2, que o verbete "Nota de crédito" explica. Conferido a 1280 e 390 px.
 
 ## Estados: tabela, janela do PIB e mapa em tela cheia (14/11/2026, no PC)
 

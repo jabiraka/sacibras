@@ -118,6 +118,11 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   original. Em português nada é baixado do Google. Nome próprio ou símbolo que o tradutor
   estraga ganha `translate="no"` (o "?" do glossário, a marca). A busca entende também
   inglês, espanhol e francês: assunto novo ganha as palavras em `OUTRAS_LINGUAS` (`busca.py`).
+- **Glossário em tudo o que a tela mostra** (Caio, 14/11/2026: *"coloque glossário mesmo que
+  o nome esteja na tabela ou num cartão"*): sigla, índice ou termo técnico novo ganha verbete
+  em `builder/src/sacibras/glossario.py`; a marcação (`web/src/glossario.ts`) pega texto,
+  cartão, gráfico, legenda e as linhas e colunas das tabelas. Forma com duas maiúsculas só
+  casa com a mesma caixa: "Núcleo EX0" não casa com a forma "núcleo EX0" (use só "EX0").
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,

@@ -81,7 +81,7 @@ TERMOS: list[Termo] = [
         "Taxa de investimento",
         "O que o país gasta em máquinas, construções e infraestrutura (a formação bruta de "
         "capital fixo) em proporção do PIB. É o que aumenta a capacidade de produzir no futuro.",
-        ("taxa de investimento", "formação bruta de capital"),
+        ("taxa de investimento", "formação bruta de capital", "FBCF"),
         "#atividade/investimento",
     ),
     Termo(
@@ -99,6 +99,22 @@ TERMOS: list[Termo] = [
         "ocupados. No longo prazo, é o que faz a renda subir.",
         ("produtividade", "PIB por ocupado", "PIB por pessoa ocupada"),
         "#demografia",
+    ),
+    Termo(
+        "ibge",
+        "IBGE",
+        "O Instituto Brasileiro de Geografia e Estatística, do governo federal: faz o PIB, o "
+        "IPCA, a PNAD Contínua, o censo e as projeções da população.",
+        ("IBGE",),
+    ),
+    Termo(
+        "pmc-pms-pim",
+        "PMC, PMS e PIM",
+        "As pesquisas mensais do IBGE com as empresas: a PMC mede as vendas do comércio, a PMS "
+        "a receita dos serviços e a PIM-PF a produção da indústria. Saem antes do PIB e "
+        "mostram o mês a mês de cada setor.",
+        ("PIM-PF", "PMC", "PMS", "PIM"),
+        "#atividade/mes-a-mes",
     ),
     # ---------------------------------------------------------------- trabalho
     Termo(
@@ -200,7 +216,16 @@ TERMOS: list[Termo] = [
         "Preços fixados ou autorizados pelo governo ou por contrato: energia elétrica, ônibus "
         "urbano, planos de saúde, remédios, água e esgoto, parte dos combustíveis. Os outros "
         "são os preços livres, que seguem a oferta e a procura.",
-        ("preços administrados", "administrados", "preços livres"),
+        ("preços administrados", "administrados"),
+    ),
+    Termo(
+        "livres",
+        "Preços livres",
+        "Os itens do IPCA cujo preço segue a oferta e a procura, sem governo nem contrato "
+        "no meio. O Banco Central os divide em alimentação no domicílio, serviços e bens "
+        "industriais.",
+        ("preços livres", "itens livres"),
+        "#inflacao/grupos",
     ),
     Termo(
         "difusao",
@@ -222,6 +247,100 @@ TERMOS: list[Termo] = [
         "A diferença entre duas porcentagens. Se a Selic vai de 10 % para 11 %, subiu 1 ponto "
         "percentual (1 pp), o que é um aumento de 10 % na taxa.",
         ("pontos percentuais", "ponto percentual", "pp"),
+    ),
+    Termo(
+        "nucleo-ex0",
+        "Núcleo EX0",
+        "Núcleo do Banco Central que deixa de fora os preços administrados e a alimentação no "
+        "domicílio: sobra o resto dos preços livres, isto é, serviços e bens industriais.",
+        ("EX0",),
+        "#inflacao/nucleos",
+    ),
+    Termo(
+        "nucleo-ex3",
+        "Núcleo EX3",
+        "Núcleo do Banco Central feito só com serviços e bens industriais dos preços livres, "
+        "já sem os itens mais voláteis ou de reajuste raro. Fica fora toda a alimentação no "
+        "domicílio e os preços administrados.",
+        ("EX3",),
+        "#inflacao/nucleos",
+    ),
+    Termo(
+        "nucleo-ms",
+        "Núcleo MS (médias aparadas)",
+        "Todo mês, o Banco Central ordena os itens do IPCA pela alta e tira as pontas: os de "
+        "menor alta até somar 20 % do peso e os de maior alta até outros 20 %. A média do que "
+        "sobra é o núcleo; itens de reajuste raro, como energia e ônibus, entram pela média "
+        "de 12 meses (a suavização).",
+        ("médias aparadas",),
+        "#inflacao/nucleos",
+    ),
+    Termo(
+        "nucleo-dp",
+        "Núcleo DP (dupla ponderação)",
+        "A média dos itens do IPCA com o peso de cada um diminuído conforme ele oscila: quem "
+        "varia muito de um mês para o outro conta menos. Os dois pesos (o do IPCA e o da "
+        "volatilidade) dão o nome.",
+        ("dupla ponderação",),
+        "#inflacao/nucleos",
+    ),
+    Termo(
+        "nucleo-p55",
+        "Núcleo P55 (percentil 55)",
+        "Ordenados os subitens do IPCA pela alta do mês, com o peso de cada um, o P55 é a alta "
+        "do que fica no ponto de 55 %. É um pouco acima da mediana porque a mediana costuma "
+        "ficar abaixo da inflação cheia.",
+        ("percentil 55", "P55"),
+        "#inflacao/nucleos",
+    ),
+    Termo(
+        "bens-industriais",
+        "Bens industriais",
+        "Na divisão do Banco Central, os produtos de preço livre que se pegam com a mão e não "
+        "são comida para casa: roupa, carro, eletrodoméstico, remédio.",
+        ("bens industriais",),
+        "#inflacao/grupos",
+    ),
+    Termo(
+        "alimentacao-no-domicilio",
+        "Alimentação no domicílio",
+        "A comida e a bebida compradas para comer em casa (o subgrupo 11 do IPCA). Comer fora "
+        "é outro subgrupo. Oscila muito com safra e clima.",
+        ("alimentação no domicílio",),
+        "#inflacao/grupos",
+    ),
+    Termo(
+        "ipca-15",
+        "IPCA-15",
+        "O mesmo IPCA, do IBGE, com preços coletados de meados do mês anterior a meados do mês "
+        "de referência. Sai umas duas semanas antes e serve de prévia da inflação oficial.",
+        ("IPCA-15",),
+        "#inflacao",
+    ),
+    Termo(
+        "inpc",
+        "INPC",
+        "Índice Nacional de Preços ao Consumidor, do IBGE: a inflação das famílias com renda "
+        "de 1 a 5 salários mínimos. Pesa mais comida e menos serviços que o IPCA.",
+        ("INPC",),
+        "#inflacao/outros-indices",
+    ),
+    Termo(
+        "igp",
+        "IGP-M e IGP-DI",
+        "Índices gerais de preços da FGV: misturam preços no atacado (a maior parte), ao "
+        "consumidor e da construção. Sobem e descem com dólar e commodities. O IGP-M corrige "
+        "muitos aluguéis e contratos.",
+        ("IGP-M", "IGP-DI", "IGP"),
+        "#inflacao/outros-indices",
+    ),
+    Termo(
+        "cmn",
+        "CMN",
+        "O Conselho Monetário Nacional: o ministro da Fazenda, a ministra ou ministro do "
+        "Planejamento e o presidente do Banco Central. Fixa a meta de inflação e as regras do "
+        "sistema financeiro.",
+        ("Conselho Monetário Nacional", "CMN"),
     ),
     # ---------------------------------------------------------------- juros
     Termo(
@@ -473,6 +592,22 @@ TERMOS: list[Termo] = [
         "O que se paga num período para a dívida: juros mais a parte do principal (amortização).",
         ("serviço da dívida",),
     ),
+    Termo(
+        "fgts",
+        "FGTS",
+        "O Fundo de Garantia do Tempo de Serviço: todo mês o empregador deposita 8 % do salário "
+        "numa conta do trabalhador. O dinheiro parado financia casa própria, saneamento e "
+        "obras.",
+        ("FGTS",),
+    ),
+    Termo(
+        "sfh",
+        "SFH",
+        "O Sistema Financeiro da Habitação: o crédito para a casa própria feito com o dinheiro "
+        "da poupança, com teto de juros e de valor do imóvel.",
+        ("Sistema Financeiro da Habitação", "SFH"),
+        "#credito/imoveis",
+    ),
     # ---------------------------------------------------------------- mercados
     Termo(
         "ibovespa",
@@ -559,6 +694,20 @@ TERMOS: list[Termo] = [
         "especulativo.",
         ("grau de investimento", "grau especulativo", "nota de crédito", "rating"),
         "#riscos/mercado-externo",
+    ),
+    Termo(
+        "ic-br",
+        "IC-Br",
+        "O Índice de Commodities do Banco Central: os preços, em reais, das commodities que "
+        "mais pesam na inflação do Brasil (agropecuária, metais e energia).",
+        ("IC-Br",),
+    ),
+    Termo(
+        "bpm6",
+        "BPM6",
+        "A sexta edição do manual do FMI de como montar o balanço de pagamentos. É a regra que "
+        "o Banco Central segue nas contas externas, igual à dos outros países.",
+        ("BPM6",),
     ),
     # ---------------------------------------------------------------- contas públicas
     Termo(
@@ -707,6 +856,41 @@ TERMOS: list[Termo] = [
         "orçamento para ser pagas.",
         ("precatórios", "precatório"),
     ),
+    Termo(
+        "tjlp",
+        "TJLP",
+        "A Taxa de Juros de Longo Prazo, fixada pelo CMN, que corrigia os empréstimos do BNDES. "
+        "Os contratos novos passaram a usar a TLP, mais perto dos juros de mercado.",
+        ("TJLP",),
+    ),
+    Termo(
+        "adpf",
+        "ADPF",
+        "Arguição de Descumprimento de Preceito Fundamental: a ação no Supremo para derrubar ato "
+        "do governo que fere a Constituição.",
+        ("ADPF",),
+    ),
+    Termo(
+        "lei-complementar",
+        "Lei complementar (LC)",
+        "Lei que a Constituição exige para certos assuntos, como impostos e finanças públicas. "
+        "Precisa do voto da maioria absoluta da Câmara e do Senado, não só dos presentes.",
+        ("lei complementar", "leis complementares", "LCs", "LC"),
+    ),
+    Termo(
+        "pec",
+        "PEC",
+        "Proposta de Emenda à Constituição: passa duas vezes em cada Casa do Congresso, com "
+        "três quintos dos votos. Aprovada, vira emenda constitucional (EC).",
+        ("PEC",),
+    ),
+    Termo(
+        "tcu",
+        "TCU",
+        "O Tribunal de Contas da União: fiscaliza como o governo federal gasta e arrecada, a "
+        "serviço do Congresso. Na reforma do consumo, faz a conta das alíquotas de referência.",
+        ("Tribunal de Contas da União", "TCU"),
+    ),
     # ---------------------------------------------------------------- impostos
     Termo(
         "carga-tributaria",
@@ -746,7 +930,7 @@ TERMOS: list[Termo] = [
         "Cofins e PIS",
         "Contribuições federais cobradas sobre o faturamento das empresas, que pagam a "
         "seguridade social e o seguro-desemprego.",
-        ("Cofins", "PIS/Pasep"),
+        ("Cofins", "PIS/Pasep", "PIS"),
     ),
     Termo(
         "csll",
@@ -836,6 +1020,68 @@ TERMOS: list[Termo] = [
         "Único: 20 % no geral, e toda a CBS nas contas de luz, água, gás e telefone.",
         ("cashback", "Cadastro Único"),
         "#impostos/reforma",
+    ),
+    Termo(
+        "imposto-de-renda",
+        "Imposto de Renda",
+        "O imposto federal sobre a renda: o das pessoas (IRPF), descontado no salário e acertado "
+        "na declaração anual, e o das empresas (IRPJ), sobre o lucro.",
+        ("Imposto de Renda", "IRPF"),
+        "#impostos/quem-paga",
+    ),
+    Termo(
+        "iptu-itbi-itr",
+        "IPTU, ITBI e ITR",
+        "Impostos sobre imóveis. IPTU: o municipal sobre casas e terrenos da cidade, todo ano. "
+        "ITBI: o municipal na compra e venda do imóvel. ITR: o federal sobre a terra rural.",
+        ("IPTU", "ITBI", "ITR"),
+    ),
+    Termo(
+        "adct",
+        "ADCT",
+        "O Ato das Disposições Constitucionais Transitórias: a parte do fim da Constituição com "
+        "as regras que valem só por um tempo. A transição da reforma do consumo está lá.",
+        ("ADCT",),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "comite-gestor",
+        "Comitê Gestor do IBS",
+        "O órgão dos estados e municípios que vai cobrar o IBS e dividir o dinheiro entre eles, "
+        "no lugar de cada um cobrar o seu ICMS e ISS.",
+        ("Comitê Gestor do IBS", "Comitê Gestor"),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "cesta-basica",
+        "Cesta básica",
+        "Os alimentos essenciais que a lei livra de imposto. Hoje não pagam Cofins e PIS; com a "
+        "reforma, os da Cesta Básica Nacional ficam com IBS e CBS zerados.",
+        ("Cesta Básica Nacional", "cesta básica"),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "divida-ativa",
+        "Dívida ativa",
+        "Impostos e outras dívidas com o governo que venceram sem pagamento e foram inscritas "
+        "para cobrança, na Justiça ou fora dela. Boa parte nunca é recebida.",
+        ("dívida ativa",),
+        "#impostos/gasto-tributario",
+    ),
+    Termo(
+        "zona-franca",
+        "Zona Franca de Manaus",
+        "Área de Manaus com descontos e isenções de impostos federais e do ICMS para quem "
+        "produz lá, garantidos pela Constituição. É um dos maiores gastos tributários da União.",
+        ("Zona Franca de Manaus", "Zona Franca"),
+    ),
+    Termo(
+        "ocde",
+        "OCDE",
+        "A Organização para a Cooperação e Desenvolvimento Econômico: 38 países, a maioria "
+        "ricos (Estados Unidos, Europa, Japão, Chile, México). Publica estatísticas iguais "
+        "para todos, como a carga tributária.",
+        ("OCDE",),
     ),
     # ---------------------------------------------------------------- estados
     Termo(
@@ -1017,7 +1263,7 @@ TERMOS: list[Termo] = [
         "FMI",
         "O Fundo Monetário Internacional. Duas vezes por ano publica o World Economic Outlook, "
         "com dados e projeções de quase todos os países.",
-        ("FMI",),
+        ("FMI", "WEO", "World Economic Outlook"),
         "#mundo",
     ),
     Termo(
@@ -1056,7 +1302,7 @@ TERMOS: list[Termo] = [
         "Medida pela escala do IBGE, com oito perguntas sobre os últimos três meses. Leve: "
         "medo de faltar comida ou comida pior; moderada: menos comida para os adultos; grave: "
         "alguém da casa, até criança, ficou sem comer por falta de dinheiro, a fome.",
-        ("insegurança alimentar", "insegurança grave"),
+        ("insegurança alimentar", "insegurança grave", "EBIA"),
         "#pobreza/fome",
     ),
     Termo(
@@ -1142,6 +1388,20 @@ TERMOS: list[Termo] = [
         "não paga Imposto de Renda sobre eles na declaração.",
         ("lucros e dividendos", "dividendos"),
         "#pobreza/quem-ganha-mais",
+    ),
+    Termo(
+        "fao",
+        "FAO",
+        "A agência da ONU para a alimentação e a agricultura. Mede a fome no mundo e faz o "
+        "Mapa da Fome.",
+        ("FAO",),
+    ),
+    Termo(
+        "pof",
+        "POF",
+        "A Pesquisa de Orçamentos Familiares, do IBGE: o que as famílias compram e quanto gastam "
+        "em cada coisa. Dela saem os pesos de cada item no IPCA.",
+        ("POF",),
     ),
     # ---------------------------------------------------------------- demografia
     Termo(

@@ -5,8 +5,9 @@
 // no texto que a tela mostra, também no que abre depois ("Mais números", tabelas guardadas):
 //   - no texto corrido (resumos, notas, subtítulos), a palavra ganha sublinhado pontilhado;
 //   - no nome de um número, gráfico ou alerta, o termo ganha um "?" ao lado.
-// Cada termo é marcado uma vez só por peça (cartão, gráfico, caixa), para a tela não virar um
-// mar de sublinhados.
+// Cada termo é marcado uma vez só por peça (cartão, gráfico, caixa, tabela), para a tela não
+// virar um mar de sublinhados; a tabela conta como peça própria, então o termo do título do
+// gráfico ganha o "?" de novo na linha da tabela.
 
 import "./glossario.css";
 import { el } from "./pecas";
@@ -33,6 +34,8 @@ const TEXTO = [
   ".guardado summary small",
   ".ficha-bloco .sub",
   ".ficha-numero .detalhe",
+  "table.dados td.texto",
+  "table.dados caption",
 ].join(",");
 
 /** Onde o termo ganha um "?" ao lado (rótulos curtos, em que sublinhar atrapalha a leitura). */
@@ -44,13 +47,17 @@ const ROTULO = [
   ".painel-mundo > h3",
   ".ficha-numero .rotulo",
   ".ficha-bloco h4",
+  // Tabelas e legendas também (Caio, 14/11/2026: "coloque glossário mesmo que o nome esteja
+  // na tabela ou num cartão"): o nome da coluna, o da linha e o da série.
+  "table.dados thead th",
+  "table.dados tbody th",
   ".ficha-partes tbody th",
-  ".dados.larga thead th",
+  ".legenda-item",
 ].join(",");
 
 /** A peça dentro da qual um termo só se marca uma vez. */
 const PECA =
-  ".cartao, .grafico, .guardado, .alerta, .essencial, .ficha-numero, .ficha-bloco, .painel-mundo";
+  "table.dados, .cartao, .grafico, .guardado, .alerta, .essencial, .ficha-numero, .ficha-bloco, .painel-mundo";
 
 /** Elementos em que não se mexe: o que já é clicável, campos e o próprio glossário. */
 const NAO_MEXER = "a:not(.essencial), button, select, option, input, textarea, .termo, .balao";
