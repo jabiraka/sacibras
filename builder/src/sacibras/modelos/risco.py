@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Literal
 
 from sacibras.modelos import divida
@@ -167,6 +167,26 @@ def posicao_na_historia(pontos: list[Ponto], pior_quando: PiorQuando) -> Posicao
         mediana=_percentil(valores, 50),
         desde=pontos[0][0],
     )
+
+
+def ha_um_ano(pontos: list[Ponto]) -> Ponto | None:
+    """O ponto de um ano antes do último (o último com data até 365 dias antes), se houver."""
+    alvo = pontos[-1][0] - timedelta(days=365)
+    antes = [p for p in pontos if p[0] <= alvo]
+    # Série com buraco grande (mais de 45 dias antes do alvo) não serve de comparação.
+    if not antes or (alvo - antes[-1][0]).days > 45:
+        return None
+    return antes[-1]
+
+
+def pior_que(valor: float, pontos: list[Ponto], pior_quando: PiorQuando) -> float:
+    """% dos pontos de `pontos` em situação melhor que `valor` (a régua de toda a história)."""
+    valores = [v for _, v in pontos]
+    if pior_quando == "alto":
+        melhores = sum(1 for v in valores if v < valor)
+    else:
+        melhores = sum(1 for v in valores if v > valor)
+    return melhores / len(valores) * 100
 
 
 # ------------------------------------------------------------------ preços

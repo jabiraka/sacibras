@@ -141,6 +141,9 @@ export interface Alerta {
   significa?: string;
   por_que?: string;
   pode_levar?: string;
+  ha_um_ano?: number | null;
+  ha_um_ano_em?: string | null;
+  pior_que_ha_um_ano?: number | null;
 }
 
 export interface Pais {

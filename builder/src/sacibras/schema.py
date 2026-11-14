@@ -211,6 +211,11 @@ class Alerta(Modelo):
     """Por que ele é um sinal de alerta."""
     pode_levar: str = ""
     """No que costuma dar quando piora (o caminho que a história mostrou, não previsão)."""
+    ha_um_ano: float | None = None
+    """O valor de um ano antes, para a vista "o que mudou em um ano"."""
+    ha_um_ano_em: date | None = None
+    pior_que_ha_um_ano: float | None = None
+    """Onde o valor de um ano antes fica na régua de toda a história (mesmo corte de hoje)."""
 
 
 class Subcategoria(Modelo):

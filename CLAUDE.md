@@ -98,7 +98,11 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
   Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de
   alerta põe cada indicador na régua da própria história (`web/src/alertas.ts`, o lado ruim
-  sempre à direita, ▲ e frase junto da cor) e conta quantos estão no quinto pior. Número
+  sempre à direita, ▲ e frase junto da cor) e conta quantos estão no quinto pior. Outras
+  formas de ver, na lista "Ver os alertas" (Caio, 14/11/2026): contra outros países, com os
+  parecidos (emergentes, América Latina) primeiro e o mesmo número e fonte para todos
+  (`alertas-paises.ts`, só onde há par em fonte oficial); o que mudou em um ano; e o
+  quadro-resumo com as três. Número
   lido em relatório sem API (nota de crédito, elasticidades do BC, teste dos bancos) mora
   em `builder/src/sacibras/relatorios.py`, com a citação, a data da leitura e quando reler.
 - **Comparações** (Caio, 14/11/2026): escolha de ano e de métrica em lista suspensa, não em

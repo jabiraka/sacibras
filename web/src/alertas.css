@@ -352,8 +352,99 @@
     grid-row: 2;
   }
 
+  table.dados.alerta-quadro th,
+  table.dados.alerta-quadro td {
+    padding-inline: 5px;
+    font-size: 0.75rem;
+  }
+
+  .alerta-quadro td.rumo .palavra {
+    display: none;
+  }
+
+  table.dados.alerta-quadro thead th {
+    min-width: 0;
+  }
+
   .alerta-valor .situacao {
     white-space: normal;
     text-align: right;
   }
+}
+
+/* ------------------------------------------------------------------ as outras vistas */
+
+.alerta-grupo-escolha[hidden] {
+  display: none;
+}
+
+/* Contra outros países: cada país um pontinho cinza; o Brasil, o ponto grande. */
+.alerta-par {
+  top: 4px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: rgb(20 38 28 / 14%);
+}
+
+/* Contra os países, o nome e a fonte são mais longos: a primeira coluna cresce (só na tela
+   larga; no celular vale o arranjo de duas linhas). */
+@media (min-width: 641px) {
+  .entre-paises .alerta-linha {
+    grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) minmax(0, 9rem) 0.75rem;
+  }
+}
+
+
+.alerta-ponto.aceso {
+  background: var(--alerta);
+}
+
+/* O que mudou em um ano: o ponto de antes vazado e o fio até o de hoje. */
+.alerta-ponto.antigo {
+  background: var(--superficie);
+  box-shadow: inset 0 0 0 2px var(--tinta-3);
+}
+
+.alerta-fio {
+  top: 6px;
+  height: 2px;
+  background: var(--tinta-3);
+}
+
+.alerta-valor .alerta-antes {
+  font-size: 0.6875rem;
+  color: var(--tinta-3);
+}
+
+.alerta-subtitulo {
+  margin: 22px 0 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--tinta-2);
+}
+
+/* O quadro-resumo: o que está ruim vai com ▲ e a cor do alerta. */
+.alerta-quadro td {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.alerta-quadro td.ruim {
+  color: var(--alerta);
+  font-weight: 500;
+}
+
+.alerta-quadro td i {
+  font-style: normal;
+}
+
+.alerta-quadro td.ruim i {
+  font-style: normal;
+  font-size: 0.75em;
+}
+
+.alerta-quadro td.sem {
+  color: var(--tinta-3);
 }

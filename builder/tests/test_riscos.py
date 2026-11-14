@@ -199,3 +199,15 @@ def test_notas_de_credito_em_ordem_e_na_escala() -> None:
         assert degraus[-1][0] == date(2026, 11, 14)
     assert riscos.saldo(-0.52) == "déficit primário de 0,52 %"
     assert riscos.saldo(1.2) == "superávit primário de 1,20 %"
+
+
+def test_ha_um_ano_e_a_posicao_dele_na_historia() -> None:
+    from datetime import date
+
+    pontos = [(date(2020 + i // 12, i % 12 + 1, 1), float(i)) for i in range(36)]
+    antes = risco.ha_um_ano(pontos)
+    assert antes == (date(2021, 12, 1), 23.0)
+    assert risco.pior_que(23.0, pontos, "alto") == 23 / 36 * 100
+    assert risco.pior_que(23.0, pontos, "baixo") == 12 / 36 * 100
+    curto = [(date(2026, 1, 1), 1.0), (date(2026, 6, 1), 2.0)]
+    assert risco.ha_um_ano(curto) is None

@@ -106,6 +106,7 @@ def alerta(
     posicao = risco.posicao_na_historia(pontos, pior_quando)
     quando, valor = pontos[-1]
     texto = alertas.EXPLICACOES.get(id)
+    antes = risco.ha_um_ano(pontos)
     return Alerta(
         id=id,
         grupo=grupo,
@@ -127,6 +128,11 @@ def alerta(
         significa=texto.significa if texto else "",
         por_que=texto.por_que if texto else "",
         pode_levar=texto.pode_levar if texto else "",
+        ha_um_ano=round(antes[1], casas + 2) if antes else None,
+        ha_um_ano_em=antes[0] if antes else None,
+        pior_que_ha_um_ano=(
+            round(risco.pior_que(antes[1], pontos, pior_quando), 1) if antes else None
+        ),
     )
 
 

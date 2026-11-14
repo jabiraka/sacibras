@@ -60,6 +60,9 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - **Primário BC × FMI**: tabela em Contas públicas › Primário e juros e aviso na métrica do
   Brasil no mundo.
 - **Investimento e poupança** (SIDRA 6727 e 6726), parte nova em Atividade.
+- **Painel de alerta em quatro vistas** (lista "Ver os alertas"): a própria história; outros
+  países (`alertas-paises.ts`, lê `mundo.json` e `mundo-paises.json`; emergentes por padrão);
+  o que mudou em um ano (`ha_um_ano` e `pior_que_ha_um_ano` no `Alerta`); e o quadro-resumo.
 - Conferido a 1280 e a 390 px. **Ainda não está no `main`**: publicar quando o Caio disser.
 
 ## Resolvido no PC em 14/11/2026
@@ -116,6 +119,10 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 
 ## Próximos passos, em ordem (dá para fazer na nuvem)
 
+0. **Mais pares internacionais no painel de alerta**: serviço da dívida das famílias e hiato
+   de crédito (BIS `WS_DSR` e `WS_CREDIT_GAP`, já testados), reservas (FMI), volatilidade do
+   câmbio dos emergentes (BIS, câmbio diário). Cada par novo entra em `PARES` com a frase do
+   conceito.
 0. **O que falta dos Riscos**: juro real do Brasil menos o dos EUA (fonte americana
    testada; falta a história do juro real brasileiro de 10 anos), hiato de crédito do BIS no
    painel, a taxa implícita oficial da DBGG (planilha mensal da nota fiscal do BC), o bloco
