@@ -344,8 +344,7 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "quem-paga",
             "Quem paga",
-            "O peso do imposto na renda, dos mais pobres aos mais ricos, e o imposto das "
-            "empresas.",
+            "O peso do imposto na renda, dos mais pobres aos mais ricos, e o imposto das empresas.",
             cartoes=["imposto-lucro"],
             graficos=["imposto-lucro"],
             tabelas=["quem-paga-decimos", "quem-paga-irpf", "imposto-lucro-paises"],
