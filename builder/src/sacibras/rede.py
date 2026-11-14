@@ -54,13 +54,18 @@ def baixar(
     params: dict[str, str] | None = None,
     metodo: str = "GET",
     dados: dict[str, str] | None = None,
+    corpo_json: Any = None,
     cabecalhos: dict[str, str] | None = None,
     validade: float | None = None,
     tempo_limite: float | None = None,
 ) -> bytes:
     """O corpo da resposta, com cache em arquivo. `validade` em segundos (0 = sem cache)."""
     validade = 0 if SEM_CACHE else VALIDADE_PADRAO if validade is None else validade
-    chave = json.dumps([metodo, url, params, dados], sort_keys=True, ensure_ascii=False)
+    chave = json.dumps(
+        [metodo, url, params, dados] + ([corpo_json] if corpo_json is not None else []),
+        sort_keys=True,
+        ensure_ascii=False,
+    )
     arquivo = _arquivo(chave)
     if validade > 0 and arquivo.exists() and time.time() - arquivo.stat().st_mtime < validade:
         return arquivo.read_bytes()
@@ -73,6 +78,7 @@ def baixar(
                 url,
                 params=params,
                 data=dados,
+                json=corpo_json,
                 headers=cabecalhos,
                 timeout=tempo_limite or TEMPO_LIMITE,
             )
@@ -102,8 +108,10 @@ def baixar_json(url: str, **kw: Any) -> Any:
     """O JSON da resposta. O SGS às vezes devolve uma página HTML no lugar (visto em
     14/11/2026, no meio de uma rodada que funcionava): pede de novo, sem cache, antes de
     desistir."""
+    corpo_json = kw.get("corpo_json")
     chave = json.dumps(
-        [kw.get("metodo", "GET"), url, kw.get("params"), kw.get("dados")],
+        [kw.get("metodo", "GET"), url, kw.get("params"), kw.get("dados")]
+        + ([corpo_json] if corpo_json is not None else []),
         sort_keys=True,
         ensure_ascii=False,
     )

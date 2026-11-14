@@ -12,12 +12,13 @@ Declaração de Contas Anuais (DCA) do ano fechado, que todas as UFs já entrega
 valores brutos: o ICMS sai antes de repassar aos municípios e ao Fundeb, e o Fundeb aparece como
 fatia.
 
-PIB per capita por UF ficou de fora: a tabela 5938 do IBGE vai só até 2023 e a estimativa de
-população do mesmo ano não existe na tabela 6579, então a conta misturaria anos.
+PIB, prévia do PIB (IBC-R), trabalho, inflação, crédito e exportações: `estados_economia.py`.
+O PIB por habitante usa a população da projeção do IBGE do mesmo ano do PIB.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date, datetime
 from statistics import median
 
@@ -34,6 +35,7 @@ from sacibras.schema import (
     LinhaRef,
     MetricaEstados,
 )
+from sacibras.secoes import estados_economia
 from sacibras.secoes.base import MESES, Contexto, br, periodo
 
 # (código IBGE, sigla, nome, região)
@@ -67,6 +69,7 @@ UFS: list[tuple[int, str, str, str]] = [
     (53, "DF", "Distrito Federal", "Centro-Oeste"),
 ]
 SIGLA = {cod: sigla for cod, sigla, _, _ in UFS}
+CONTAS = "Contas do governo do estado"
 
 
 def _desocupacao() -> MetricaEstados:
@@ -100,6 +103,7 @@ def _desocupacao() -> MetricaEstados:
         maior_e_melhor=False,
         fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 4099)",
         valores=valores,
+        grupo=estados_economia.TRABALHO,
         brasil=pais[-1][1] if pais and pais[-1][0] == quando else None,
     )
 
@@ -150,6 +154,7 @@ def _fiscais(
         fonte=f"Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal, Anexo 01 ({ref})",
         valores={u: (p.percentual if p else None) for u, p in pes.items()},
         limites=limites_pes,
+        grupo=CONTAS,
     )
 
     lim_div = {u: d.limite for u, d in div.items() if d}
@@ -175,6 +180,7 @@ def _fiscais(
         fonte=f"Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal, Anexo 02 ({ref})",
         valores={u: (d.dcl_percentual if d else None) for u, d in div.items()},
         limites=limites_div,
+        grupo=CONTAS,
     )
 
     per_capita: dict[str, float | None] = {}
@@ -204,6 +210,7 @@ def _fiscais(
         ),
         valores=per_capita,
         brasil=soma_rcl / soma_pop if soma_pop else None,
+        grupo=CONTAS,
     )
     return pessoal, divida, rcl, ale_pes
 
@@ -249,6 +256,7 @@ def _rreo(
         ),
         valores=resultado,
         brasil=soma_pri / soma_rcl * 100 if soma_rcl else None,
+        grupo=CONTAS,
     )
 
     icms_pc: dict[str, float | None] = {}
@@ -280,6 +288,7 @@ def _rreo(
         ),
         valores=icms_pc,
         brasil=soma_icms / soma_pop if soma_pop else None,
+        grupo=CONTAS,
     )
     return primario, icms
 
@@ -328,6 +337,7 @@ def _arrecadacao_federal(populacao: dict[int, float]) -> MetricaEstados:
             "SICONFI (IBGE)"
         ),
         valores=valores,
+        grupo="Impostos federais",
         brasil=soma / soma_pop if soma_pop else None,
     )
 
@@ -585,14 +595,47 @@ def _contas(
     return EstadosContas(contas=contas, gerado_em=agora)
 
 
+def _economia(ctx: Contexto) -> list[MetricaEstados]:
+    """PIB, prévia do PIB, inflação, exportações e concentração; cada fonte por conta própria."""
+    saida: list[MetricaEstados] = []
+
+    def sgs(chave: str) -> list[tuple[date, float]]:
+        return ctx.sgs(chave, 4)
+
+    passos: list[tuple[str, Callable[[], list[MetricaEstados]]]] = [
+        ("PIB por UF (Contas Regionais)", lambda: estados_economia.pib(UFS)),
+        ("IBC-R", lambda: estados_economia.ibcr(UFS, sgs)),
+        ("IPCA por área", lambda: [estados_economia.inflacao(UFS)]),
+        (
+            "exportações por UF",
+            lambda: [estados_economia.exportacoes(UFS, siconfi.entes())],
+        ),
+        ("concentração do PIB", lambda: [estados_economia.concentracao(UFS)]),
+    ]
+    for nome, passo in passos:
+        try:
+            saida += passo()
+        except Exception as erro:  # uma fonte fora do ar não derruba a seção
+            print(f"  aviso: {nome} indisponível: {str(erro)[:160]}")
+    return saida
+
+
 def montar(ctx: Contexto) -> Estados:
-    metricas: list[MetricaEstados] = []
+    metricas: list[MetricaEstados] = _economia(ctx)
     deso: MetricaEstados | None = None
     try:
         deso = _desocupacao()
         metricas.append(deso)
     except Exception as erro:  # uma fonte fora do ar não derruba a seção
         print(f"  aviso: desocupação por UF indisponível: {erro}")
+    try:
+        metricas += estados_economia.trabalho(UFS)
+    except Exception as erro:
+        print(f"  aviso: PNAD por UF indisponível: {str(erro)[:160]}")
+    try:
+        metricas += estados_economia.credito(UFS, lambda k: ctx.sgs(k, 4), siconfi.entes())
+    except Exception as erro:
+        print(f"  aviso: crédito por UF indisponível: {str(erro)[:160]}")
 
     fiscal: tuple[MetricaEstados, MetricaEstados, MetricaEstados, dict[str, float | None]] | None
     fiscal = None
@@ -642,8 +685,15 @@ def montar(ctx: Contexto) -> Estados:
 
     if not metricas:
         raise RuntimeError("nenhuma métrica dos estados pôde ser montada")
+    # Na ordem dos grupos (a lista e a tabela juntam por grupo); dentro dele, a de chegada.
+    ordem = [estados_economia.ECONOMIA, estados_economia.TRABALHO, estados_economia.CREDITO]
+    ordem += [CONTAS, "Impostos federais"]
+    metricas.sort(key=lambda m: ordem.index(m.grupo) if m.grupo in ordem else len(ordem))
 
     frases: list[str] = []
+    pib = next((m for m in metricas if m.id == "pib_crescimento"), None)
+    if pib:
+        frases.append(estados_economia.frase_pib(pib))
     if deso:
         v = {u: x for u, x in deso.valores.items() if x is not None}
         alto, baixo = max(v, key=lambda u: v[u]), min(v, key=lambda u: v[u])

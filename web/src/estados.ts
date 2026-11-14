@@ -133,7 +133,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   let metrica = e.metricas[0] as MetricaEstados;
   // O estado tocado no ranking ou no gráfico de duas métricas fica destacado nos dois.
   let destaque = "";
-  const opcoes = e.metricas.map((m) => ({ valor: m.id, rotulo: m.nome }));
+  const opcoes = e.metricas.map((m) => ({ valor: m.id, rotulo: m.nome, grupo: m.grupo || undefined }));
   const corDestaque = (): string =>
     getComputedStyle(document.documentElement).getPropertyValue("--serie-2").trim();
 
@@ -415,7 +415,25 @@ function tabelaCompleta(e: Estados): HTMLElement {
   const caixa = el("div", "painel-mundo");
   const rolavel = el("div", "tabela-rolavel");
   const tabela = el("table", "dados larga");
-  const cab = tabela.createTHead().insertRow();
+  const cabeca = tabela.createTHead();
+  // Uma linha com o assunto de cada bloco de colunas (Economia, Trabalho e renda…).
+  if (e.metricas.some((m) => m.grupo)) {
+    const grupos = cabeca.insertRow();
+    grupos.className = "grupos";
+    grupos.append(el("th"));
+    for (const m of e.metricas) {
+      const ultimo = grupos.lastElementChild as HTMLTableCellElement;
+      if (grupos.cells.length > 1 && ultimo.dataset.grupo === (m.grupo ?? "")) {
+        ultimo.colSpan += 1;
+        continue;
+      }
+      const th = el("th", "", m.grupo ?? "");
+      th.dataset.grupo = m.grupo ?? "";
+      th.scope = "colgroup";
+      grupos.append(th);
+    }
+  }
+  const cab = cabeca.insertRow();
   cab.append(el("th", "", "Estado"));
   for (const m of e.metricas) {
     const th = el("th", "", m.nome);

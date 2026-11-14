@@ -232,6 +232,16 @@ def test_montagem_do_rreo_divide_por_populacao_e_por_rcl() -> None:
     assert icms.brasil is not None and primario.brasil is not None
 
 
+def _sem_economia(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Sem as fontes de `estados_economia` (cada uma cai e a seção segue sem ela)."""
+
+    def cai(*a: Any, **k: Any) -> Any:
+        raise siconfi.FonteForaDoArError("fora")
+
+    for nome in ("pib", "ibcr", "inflacao", "exportacoes", "concentracao", "trabalho", "credito"):
+        monkeypatch.setattr(estados.estados_economia, nome, cai)
+
+
 def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
     deso = {str(c): [(date(2026, 4, 1), 5.0 + c / 100)] for c, *_ in estados.UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
@@ -240,6 +250,7 @@ def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
     monkeypatch.setattr(estados.siconfi, "coletar_anual", lambda *a, **k: None)
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
+    _sem_economia(monkeypatch)
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert len(e.ufs) == 27
     assert [m.id for m in e.metricas] == [
@@ -265,6 +276,7 @@ def test_rreo_fora_do_ar_nao_derruba_as_outras_metricas(monkeypatch: pytest.Monk
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", cai)
     monkeypatch.setattr(estados.siconfi, "coletar_anual", cai)
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
+    _sem_economia(monkeypatch)
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert [m.id for m in e.metricas] == ["desocupacao", "pessoal", "divida", "rcl_per_capita"]
 

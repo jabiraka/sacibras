@@ -131,6 +131,14 @@ SINONIMOS: dict[str, list[str]] = {
         "agencia de risco",
     ],
     "estado": ["estados", "uf", "unidade da federacao", "governo estadual", "regioes"],
+    "pib por habitante": ["pib per capita", "renda per capita", "riqueza por pessoa"],
+    "ibc-r": ["atividade regional", "previa do pib", "pib do estado agora"],
+    "peso no pib": ["participacao no pib", "tamanho da economia"],
+    "inflacao na capital": ["ipca regional", "inflacao por cidade", "inflacao por estado"],
+    "exportacoes por habitante": ["exportacoes por estado", "comex", "quem mais exporta"],
+    "credito por habitante": ["credito por estado", "emprestimos por estado"],
+    "concentracao do pib": ["gini", "desigualdade entre municipios"],
+    "renda media do trabalho": ["salario medio", "salario por estado", "rendimento por estado"],
     "exporta": ["exportacoes", "vendas ao exterior", "comercio exterior", "balanca comercial"],
     "importa": ["importacoes", "compras do exterior", "comercio exterior", "balanca comercial"],
     "balanca": ["comercio exterior", "exportacoes", "importacoes", "saldo comercial"],
@@ -198,7 +206,17 @@ SINONIMOS: dict[str, list[str]] = {
     "inss": ["previdencia", "aposentadoria", "rgps", "deficit da previdencia", "reforma"],
     "produtividade": ["pib por trabalhador", "eficiencia", "produto por ocupado"],
     "por pessoa ocupada": ["produtividade", "pib por trabalhador"],
-    "crescimento do pib": ["de onde veio o crescimento", "produtividade", "emprego"],
+    "crescimento do pib": [
+        "de onde veio o crescimento",
+        "produtividade",
+        "emprego",
+        "pib estadual",
+        "pib dos estados",
+        "pib por estado",
+        "pib regional",
+        "contas regionais",
+        "economia dos estados",
+    ],
 }
 
 

@@ -95,7 +95,10 @@ FONTES = {
     "externo": "Banco Central (setor externo)",
     "fiscal": "Banco Central (estatísticas fiscais) e Tesouro Nacional (RTN)",
     "impostos": "Receita Federal (arrecadação e gastos tributários), OCDE e FMI (impostos)",
-    "estados": "Tesouro Nacional (SICONFI) e IBGE (PNAD Contínua)",
+    "estados": (
+        "Tesouro Nacional (SICONFI), IBGE (Contas Regionais, PNAD Contínua e IPCA), Banco "
+        "Central (IBC-R e crédito por UF) e Comex Stat"
+    ),
     "mundo": "FMI (WEO) e BIS",
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",

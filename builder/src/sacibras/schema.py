@@ -484,6 +484,9 @@ class MetricaEstados(Modelo):
     """O número do país (ou a soma/média dos estados), quando a fonte o dá."""
     limites: list[LinhaRef] = Field(default_factory=list)
     """Linhas de referência que a própria fonte publica (ex.: o limite que consta do RGF)."""
+    grupo: str = ""
+    """O assunto da métrica ("Economia", "Trabalho e renda"…): junta as opções na lista e as
+    colunas na tabela completa."""
 
 
 class Fatia(Modelo):

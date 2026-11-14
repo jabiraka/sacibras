@@ -8,6 +8,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pycountry>=26.2.16",
     "pydantic>=2.7",
+    "xlrd>=2.0.1",
 ]
 
 [project.scripts]

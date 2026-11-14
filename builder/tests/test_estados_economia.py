@@ -1,0 +1,152 @@
+"""Estados: PIB (Contas Regionais), prévia pelo IBC-R, IPCA por área e crédito, sem rede."""
+
+from __future__ import annotations
+
+from datetime import date
+from typing import Any
+
+import pytest
+
+from sacibras.catalogo import CREDITO_INADIMPLENCIA_UF, CREDITO_SALDO_UF, IBCR_UF, SGS
+from sacibras.fontes import ibge_contas_regionais
+from sacibras.secoes import estados, estados_economia
+from sacibras.secoes.base import Contexto
+from sacibras.tipos import Ponto
+
+UFS = estados.UFS
+NOMES = [nome for _, _, nome, _ in UFS]
+
+
+def _meses(inicio: date, valores: list[float]) -> list[Ponto]:
+    saida = []
+    for i, v in enumerate(valores):
+        t = inicio.year * 12 + inicio.month - 1 + i
+        saida.append((date(t // 12, t % 12 + 1, 1), v))
+    return saida
+
+
+def test_crescimento_de_12_meses_compara_medias_e_pede_os_24_meses() -> None:
+    pontos = _meses(date(2024, 9, 1), [100.0] * 12 + [110.0] * 12)
+    assert estados_economia.crescimento_12_meses(pontos, date(2026, 8, 1)) == pytest.approx(10.0)
+    assert estados_economia.crescimento_12_meses(pontos[1:], date(2026, 8, 1)) is None
+
+
+def test_os_codigos_por_uf_cobrem_as_27_e_estao_no_catalogo() -> None:
+    siglas = {s for _, s, _, _ in UFS}
+    assert set(CREDITO_SALDO_UF) == siglas == set(CREDITO_INADIMPLENCIA_UF)
+    assert set(IBCR_UF) < siglas and len(IBCR_UF) == 13
+    assert SGS["CREDITO_SALDO_SP"].codigo == 14080 and SGS["IBCR_SP"].codigo == 25392
+    assert SGS["CREDITO_INADIMPLENCIA_ES"].codigo == 15932
+
+
+def _contas_regionais(monkeypatch: pytest.MonkeyPatch) -> None:
+    anos = range(2010, 2025)
+    corrente = {n: {a: 1000.0 for a in anos} for n in NOMES}
+    corrente["Brasil"] = {a: 27_000.0 for a in anos}
+    volume = {n: {a: 100.0 * 1.02 ** (a - 2010) for a in anos} for n in ["Brasil", *NOMES]}
+    volume["Paraíba"][2024] = volume["Paraíba"][2023] * 1.065
+    monkeypatch.setattr(
+        estados_economia.ibge_contas_regionais, "pib", lambda: (2024, corrente, volume)
+    )
+    pop = {s: {"POP_T": {2024: 1_000_000.0}} for _, s, _, _ in UFS}
+    pop["BR"] = {"POP_T": {2024: 27_000_000.0}}
+    monkeypatch.setattr(estados_economia.ibge_projecao, "grupos", lambda: pop)
+
+
+def test_pib_por_uf_cresce_pelo_volume_e_divide_pela_populacao_do_mesmo_ano(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _contas_regionais(monkeypatch)
+    m = {x.id: x for x in estados_economia.pib(UFS)}
+    assert set(m) == {
+        "pib_crescimento",
+        "pib_crescimento_10_anos",
+        "pib_per_capita",
+        "pib_participacao",
+    }
+    assert m["pib_crescimento"].valores["PB"] == pytest.approx(6.5)
+    assert m["pib_crescimento"].valores["SP"] == pytest.approx(2.0)
+    assert m["pib_crescimento_10_anos"].referencia == "2014–2024"
+    assert m["pib_crescimento_10_anos"].brasil == pytest.approx(2.0)
+    # R$ milhões × 1e6 ÷ pessoas
+    assert m["pib_per_capita"].valores["AC"] == pytest.approx(1000.0)
+    assert m["pib_per_capita"].brasil == pytest.approx(1000.0)
+    assert m["pib_participacao"].valores["AC"] == pytest.approx(1000 / 27_000 * 100)
+    assert all(x.grupo == "Economia" for x in m.values())
+
+
+def test_pib_recusa_planilha_sem_um_estado(monkeypatch: pytest.MonkeyPatch) -> None:
+    _contas_regionais(monkeypatch)
+    _, corrente, volume = ibge_contas_regionais.pib()  # o falso
+    del volume["Acre"]
+    monkeypatch.setattr(
+        estados_economia.ibge_contas_regionais, "pib", lambda: (2024, corrente, volume)
+    )
+    with pytest.raises(ibge_contas_regionais.PlanilhaMudouError):
+        estados_economia.pib(UFS)
+
+
+def test_ibcr_so_tem_os_13_estados_e_o_ano_fechado_e_o_anterior() -> None:
+    serie = _meses(date(2023, 1, 1), [100.0] * 12 + [100.0] * 12 + [103.0] * 12 + [104.0] * 8)
+
+    def sgs(chave: str) -> list[Ponto]:
+        return serie
+
+    doze, ano = estados_economia.ibcr(UFS, sgs)
+    assert ano.nome == "Prévia do PIB de 2025 (IBC-R)" and ano.referencia == "2025"
+    assert ano.valores["SP"] == pytest.approx(3.0) and ano.brasil == pytest.approx(3.0)
+    assert ano.valores["MT"] is None and "MT" in ano.descricao
+    assert doze.referencia == "12 meses até ago/2026"
+    assert sum(v is not None for v in doze.valores.values()) == 13
+
+
+def test_ipca_de_cada_area_vai_ao_estado_dela(monkeypatch: pytest.MonkeyPatch) -> None:
+    out = date(2026, 10, 1)
+
+    def series(tabela: int, variavel: int, **k: Any) -> dict[str, list[Ponto]]:
+        if k["nivel"] == "n7/all":
+            return {"3501": [(out, 4.94)], "4101": [(out, 2.05)]}
+        return {"5300108": [(out, 4.83)], "1200401": [(out, 4.13)]}
+
+    monkeypatch.setattr(estados_economia.ibge_sidra, "series", series)
+    monkeypatch.setattr(estados_economia.ibge_sidra, "serie", lambda *a, **k: [(out, 4.63)])
+    m = estados_economia.inflacao(UFS)
+    assert m.valores["SP"] == 4.94 and m.valores["DF"] == 4.83 and m.valores["AC"] == 4.13
+    assert m.valores["MT"] is None and m.brasil == 4.63 and m.referencia == "out/2026"
+
+
+def test_credito_por_habitante_e_inadimplencia_pesada_pelo_saldo() -> None:
+    setembro = date(2026, 9, 1)
+
+    def sgs(chave: str) -> list[Ponto]:
+        if chave == "CREDITO_SALDO_SP":
+            return [(setembro, 3000.0)]
+        if chave.startswith("CREDITO_SALDO_"):
+            return [(setembro, 1000.0)]
+        return [(setembro, 2.0 if chave.endswith("_SP") else 6.0)]
+
+    pop = {c: 1_000_000.0 for c, *_ in UFS}
+    por_hab, inad = estados_economia.credito(UFS, sgs, pop)
+    assert por_hab.valores["SP"] == pytest.approx(3000.0) and por_hab.referencia == "set/2026"
+    # (2 × 3000 + 6 × 26 × 1000) ÷ (3000 + 26 000)
+    assert inad.brasil == pytest.approx((2 * 3000 + 6 * 26_000) / 29_000)
+
+
+def test_metricas_saem_na_ordem_dos_grupos(monkeypatch: pytest.MonkeyPatch) -> None:
+    _contas_regionais(monkeypatch)
+
+    def cai(*a: Any, **k: Any) -> Any:
+        raise estados.siconfi.FonteForaDoArError("fora")
+
+    for nome in ("ibcr", "inflacao", "exportacoes", "concentracao", "trabalho", "credito"):
+        monkeypatch.setattr(estados_economia, nome, cai)
+    deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in UFS}
+    monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
+    monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    for nome in ("coletar", "coletar_rreo", "coletar_anual"):
+        monkeypatch.setattr(estados.siconfi, nome, cai)
+    monkeypatch.setattr(estados.receita_arrecadacao, "arrecadacao", cai)
+    e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
+    assert e.metricas[0].id == "pib_crescimento"
+    assert [m.grupo for m in e.metricas][-1] == "Trabalho e renda"
+    assert e.resumo.startswith("Em 2024, o PIB cresceu de")

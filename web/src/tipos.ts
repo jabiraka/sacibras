@@ -307,6 +307,8 @@ export interface MetricaEstados {
   valores: Record<string, number | null>;
   brasil: number | null;
   limites: { valor: number; rotulo: string }[];
+  /** O assunto da métrica: junta as opções na lista e as colunas na tabela completa. */
+  grupo?: string;
 }
 
 export interface BlocoDeConta {
