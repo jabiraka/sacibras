@@ -6,13 +6,25 @@ from contextlib import suppress
 from datetime import date, timedelta
 from itertools import pairwise
 
-from sacibras import curvas, leis
+from sacibras import curvas, leis, relatorios
 from sacibras.calendario import ultimo_dia_util
 from sacibras.catalogo import SGS
 from sacibras.config import usar_b3
 from sacibras.fontes import b3_derivativos, bcb_copom, bcb_focus, bcb_sgs, tesouro_direto
 from sacibras.juros_futuros import a_termo
-from sacibras.schema import Cartao, Grafico, LinhaRef, LinhaTabela, Secao, Tabela
+from sacibras.modelos import acerto_focus
+from sacibras.modelos import selic as modelo_selic
+from sacibras.schema import (
+    Cartao,
+    CenarioSelic,
+    Grafico,
+    LinhaRef,
+    LinhaTabela,
+    Meta,
+    Secao,
+    SimuladorSelic,
+    Tabela,
+)
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -646,6 +658,411 @@ def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico],
     return cartoes, graficos, termo
 
 
+PRIMEIRO_ANO_DOS_CICLOS = 2003
+
+
+def _br(valor: float, casas: int = 1) -> str:
+    """`br` com o sinal de menos tipográfico, como a tela escreve os números."""
+    return br(valor, casas).replace("-", "−")
+
+
+def _arredondar(valores: list[float | None], casas: int) -> list[float | None]:
+    return [None if v is None else round(v, casas) for v in valores]
+
+
+def _ciclos_da_selic(ctx: Contexto) -> list[Tabela]:
+    """O que veio depois de cada ciclo de corte e de alta, desde 2003: o fato, não o efeito."""
+    # De 2003 em diante, como a amostra dos modelos do BC (o boxe deixa de fora o começo do
+    # regime de metas, "caracterizado por elevada volatilidade"). Lê-se desde 2002 para saber
+    # de onde a Selic vinha.
+    meta = ctx.sgs("SELIC_META", anos=24)
+    ipca12 = ctx.sgs("IPCA_12M", anos=24)
+    dolar = ctx.sgs("DOLAR", anos=24)
+    divida = ctx.sgs("DBGG", anos=20)
+    todos = [c for c in modelo_selic.ciclos(meta) if c.inicio.year >= PRIMEIRO_ANO_DOS_CICLOS]
+    tabelas: list[Tabela] = []
+    for sentido, titulo, verbo in [
+        ("corte", "Depois de cada ciclo de corte da Selic", "cortar"),
+        ("alta", "Depois de cada ciclo de alta da Selic", "subir"),
+    ]:
+        deste = [c for c in todos if c.sentido == sentido]
+        if not deste:
+            continue
+        depois = [modelo_selic.depois_do_ciclo(c, ipca12, dolar, divida) for c in deste]
+        linhas = [
+            LinhaTabela(
+                rotulo="Selic antes do ciclo",
+                valores=[c.selic_antes for c in deste],
+                unidade="% a.a.",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="Selic no fim do ciclo",
+                valores=[c.selic_depois for c in deste],
+                unidade="% a.a.",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="IPCA no começo",
+                valores=[d.ipca_no_comeco for d in depois],
+                unidade="% em 12 meses",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="IPCA um ano depois",
+                valores=[d.ipca_um_ano for d in depois],
+                unidade="% em 12 meses",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="IPCA dois anos depois",
+                valores=[d.ipca_dois_anos for d in depois],
+                unidade="% em 12 meses",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Dólar: variação em um ano",
+                valores=_arredondar([d.dolar_um_ano for d in depois], 1),
+                unidade="%",
+                casas=0,
+            ),
+            LinhaTabela(
+                rotulo="Dívida bruta: mudança em dois anos",
+                valores=_arredondar([d.divida_dois_anos for d in depois], 2),
+                unidade="pp do PIB",
+                casas=1,
+            ),
+        ]
+        quando = "; ".join(
+            f"{c.rotulo}: {periodo(c.inicio, 'M')} a {periodo(c.fim, 'M')}" for c in deste
+        )
+        tabelas.append(
+            Tabela(
+                id=f"selic-ciclos-{sentido}",
+                titulo=titulo,
+                subtitulo=(
+                    f"O que a inflação, o dólar e a dívida fizeram quando o Copom começou a {verbo}"
+                ),
+                colunas=[c.rotulo for c in deste],
+                linhas=linhas,
+                fonte=(
+                    f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M', 'DOLAR', 'DBGG')}; cálculo próprio"
+                ),
+                nota=(
+                    "Como ler: é o que aconteceu, não o que a Selic causou. O Copom corta quando "
+                    "espera inflação em queda e sobe quando espera alta, e no mesmo período "
+                    "vieram safra, preço do petróleo, crise de fora e contas públicas. Para o "
+                    "efeito da Selic sozinha, vale a estimativa do Banco Central, no simulador "
+                    "desta tela.\n\n"
+                    "Ciclo: mudanças seguidas no mesmo sentido; uma pausa não encerra o ciclo, "
+                    f"mas um ano parado sim ({quando}). O último pode não ter acabado. Um ano e "
+                    "dois anos contam do mês da primeira mudança da Selic; o IPCA é o acumulado "
+                    'em 12 meses; "–" é o que '
+                    "ainda não aconteceu ou o que a série não cobre (a dívida bruta na "
+                    "metodologia atual começa em dez/2006)."
+                ),
+            )
+        )
+    return tabelas
+
+
+def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], SimuladorSelic]:
+    """O que o Banco Central estima que a Selic faz com a inflação, o dólar e a dívida.
+
+    Nenhum número é nosso: saem do boxe dos modelos do BC e da nota de estatísticas fiscais,
+    lidos à mão (`relatorios.py`). Nossa é só a soma das três parcelas da dívida."""
+    r = relatorios
+    pico = min(range(len(r.IPCA_MODELO_AGREGADO)), key=lambda i: r.IPCA_MODELO_AGREGADO[i])
+    ipca, ipca_outro = r.IPCA_MODELO_AGREGADO[pico], r.IPCA_MODELO_DESAGREGADO[pico]
+    piso_dolar, teto_dolar = r.DOLAR_POR_PP_DE_SELIC_FAIXA
+    bruta, liquida = r.ELASTICIDADE_SELIC.bruta, r.ELASTICIDADE_SELIC.liquida
+    pib = None
+    with suppress(Exception):
+        pib = ctx.sgs("PIB_12M", anos=2)[-1][1] / 1000  # R$ bilhões
+    em_reais = f"cerca de R$ {br(bruta / 100 * pib, 0)} bi, " if pib else ""
+    fonte_divida = r.FONTE_ELASTICIDADES
+    # A faixa de 90 % do IPCA é a da versão de 2021 do modelo: a de 2024 saiu sem faixa.
+    menos, mais = r.IPCA_FAIXA_90_MENOR[pico], r.IPCA_FAIXA_90_MAIOR[pico]
+    versao_da_faixa = periodo(r.FAIXA_DO_IPCA_EM, "M")
+
+    cartoes = [
+        cartao(
+            "selic-efeito-ipca",
+            "Selic 1 pp mais alta: efeito no IPCA",
+            [(r.EFEITO_SELIC_EM, ipca)],
+            unidade="pp",
+            periodicidade="M",
+            casas=2,
+            detalhe=f"um ano depois; faixa de 90 % do BC: {_br(mais, 2)} a {_br(menos, 2)}",
+            fonte=f"{r.FONTE_EFEITO_SELIC}; {r.FONTE_FAIXA_DO_IPCA}",
+            secao="juros",
+        ),
+        cartao(
+            "selic-efeito-dolar",
+            "Selic 1 pp mais alta: efeito no dólar",
+            [(r.EFEITO_SELIC_EM, r.DOLAR_POR_PP_DE_SELIC)],
+            unidade="%",
+            periodicidade="M",
+            casas=1,
+            detalhe=f"faixa de 90 % do BC: {_br(piso_dolar, 1)} % a {_br(teto_dolar, 1)} %",
+            fonte=r.FONTE_EFEITO_SELIC,
+            secao="juros",
+        ),
+        cartao(
+            "selic-efeito-divida",
+            "Selic 1 pp mais alta: efeito na dívida bruta",
+            [(r.ELASTICIDADES_EM, bruta)],
+            unidade="pp do PIB",
+            periodicidade="M",
+            casas=2,
+            detalhe=f"{em_reais}em 12 meses; sem faixa publicada",
+            fonte=fonte_divida,
+            secao="juros",
+        ),
+    ]
+
+    ordinal = "º trimestre"
+    pico_2021 = min(range(len(r.IPCA_MODELO_2021)), key=lambda i: r.IPCA_MODELO_2021[i])
+
+    def linha(
+        rotulo: str,
+        valor: float,
+        unidade: str,
+        faixa: tuple[float, float] | None = None,
+        casas: int = 2,
+    ) -> LinhaTabela:
+        """Estimativa, ponta de menos efeito e ponta de mais efeito ("–" onde o BC não deu)."""
+        pontas: list[float | None] = [None, None]
+        if faixa:
+            pontas = [*sorted(faixa, key=abs)]
+        return LinhaTabela(rotulo=rotulo, valores=[valor, *pontas], unidade=unidade, casas=casas)
+
+    linhas = [
+        linha(f"IPCA, modelo agregado de 2024 (o máximo, no {pico}{ordinal})", ipca, "pp"),
+        linha(f"IPCA, modelo desagregado de 2024 (o máximo, no {pico}{ordinal})", ipca_outro, "pp"),
+        linha(
+            f"IPCA, versão de {versao_da_faixa} do modelo, no {pico}{ordinal}",
+            r.IPCA_MODELO_2021[pico],
+            "pp",
+            (menos, mais),
+        ),
+        linha(
+            f"IPCA, versão de {versao_da_faixa} (o máximo, no {pico_2021}{ordinal})",
+            r.IPCA_MODELO_2021[pico_2021],
+            "pp",
+            (r.IPCA_FAIXA_90_MENOR[pico_2021], r.IPCA_FAIXA_90_MAIOR[pico_2021]),
+        ),
+        *[
+            linha(f"IPCA, versão de {versao} (o máximo)", valor, "pp")
+            for versao, valor in r.IPCA_NAS_VERSOES
+            if not versao.startswith(versao_da_faixa)
+        ],
+        *[
+            linha(f"{g.grupo}, 2024 (o máximo, no {g.trimestre}{ordinal})", g.maximo, "pp")
+            for g in r.IPCA_POR_GRUPO
+        ],
+        linha(
+            "Dólar, no trimestre da mudança",
+            r.DOLAR_POR_PP_DE_SELIC,
+            "%",
+            r.DOLAR_POR_PP_DE_SELIC_FAIXA,
+        ),
+        linha("Dívida bruta do governo geral, em 12 meses", bruta, "pp do PIB"),
+        linha("Dívida líquida do setor público, em 12 meses", liquida, "pp do PIB"),
+        linha(
+            "Para comparar: dólar 10 % mais caro, no IPCA dos 12 meses seguintes",
+            r.IPCA_POR_10_DE_DOLAR_12M,
+            "pp",
+            casas=1,
+        ),
+        linha(
+            "Para comparar: dólar 10 % mais caro, no IPCA dos 24 meses seguintes",
+            r.IPCA_POR_10_DE_DOLAR_24M,
+            "pp",
+            casas=1,
+        ),
+    ]
+    tabela = Tabela(
+        id="selic-contas-bc",
+        titulo="Selic 1 pp mais alta por um ano: as contas do Banco Central",
+        subtitulo="A estimativa e a faixa de erro que o BC publica, conta a conta",
+        colunas=["Estimativa", "Faixa de 90 %: de", "a"],
+        linhas=linhas,
+        fonte=(
+            f"{r.FONTE_EFEITO_SELIC}; {r.FONTE_FAIXA_DO_IPCA}; Relatórios de Inflação de "
+            f"set/2020 e mar/2021; {r.FONTE_REPASSE_CAMBIAL}; {fonte_divida}"
+        ),
+        nota=(
+            "Como ler: cada linha é quanto o número fica diferente do que seria com a Selic 1 "
+            "ponto mais alta durante um ano e o resto igual; com a Selic 1 ponto mais baixa, o "
+            "sinal troca. A estimativa é o meio; a faixa de 90 % diz que, pela conta do BC, em "
+            "9 de cada 10 casos o efeito fica entre as duas pontas. No IPCA, a ponta de mais "
+            "efeito é o triplo da de menos: sabe-se o sentido, não o tamanho.\n\n"
+            "A faixa do IPCA é a que o BC publicou na versão de "
+            f"{versao_da_faixa} do modelo; a de {periodo(r.EFEITO_SELIC_EM, 'M')}, a vigente, "
+            "saiu sem faixa, e as estimativas das quatro versões cabem todas nela. O traço é "
+            "onde o BC não publicou faixa (a dívida é conta de estoque: quanto dela segue a "
+            "Selic). Modelos estimados com dados desde 2003; depois de um ano, a Selic volta "
+            "aos poucos, como o BC costuma reagir. O efeito no IPCA já inclui o que passa pelo "
+            f"dólar. Dívida: com os dados de {periodo(r.ELASTICIDADES_EM, 'M')}. Números lidos "
+            "à mão nos relatórios em 14/11/2026."
+        ),
+    )
+
+    ano = ctx.hoje.year + 1
+
+    def focus(indicador: str) -> float | None:
+        with suppress(Exception):
+            valor = bcb_focus.mediana_anual_hoje(indicador).get(ano)
+            return None if valor is None else round(valor, 2)
+        return None
+
+    # Quanto o próprio ponto de partida erra: o Focus desta época do ano contra o que deu no
+    # ano seguinte, desde 2010 (a dívida, desde que o Focus a pergunta).
+    def erro_do_focus(
+        indicador: str, realizado: dict[int, float], relativo: bool = False
+    ) -> acerto_focus.Acerto | None:
+        with suppress(Exception):
+            return acerto_focus.medir(indicador, realizado, ctx.hoje, 1, relativo=relativo)
+        return None
+
+    def de_dezembro(chave: str) -> dict[int, float]:
+        with suppress(Exception):
+            return {d.year: v for d, v in ctx.sgs(chave, anos=24) if d.month == 12}
+        return {}
+
+    erro_ipca = erro_do_focus("IPCA", de_dezembro("IPCA_12M"))
+    erro_dolar = erro_do_focus("Câmbio", de_dezembro("DOLAR"), relativo=True)
+    erro_divida = erro_do_focus("Dívida bruta do governo geral", de_dezembro("DBGG"))
+    medidos = [e for e in (erro_ipca, erro_dolar, erro_divida) if e]
+    desde = min(min(e.anos) for e in medidos) if medidos else None
+    desde_do_erro = ""
+    if erro_ipca:
+        desde_do_erro = f" (IPCA desde {min(erro_ipca.anos)}"
+        if erro_divida:
+            desde_do_erro += (
+                f"; dívida desde {min(erro_divida.anos)}, e nela parte do erro é o PIB "
+                "revisado depois"
+            )
+        desde_do_erro += ")"
+
+    focus_selic = focus("Selic")
+    cenarios: list[CenarioSelic] = []
+    if focus_selic is not None:
+        # Em linha reta até o alvo no fim do ano, a distância média do ano para o caminho do
+        # Focus é metade da distância do fim; no passo do controle (0,25).
+        alvo = r.LARA_RESENDE_SELIC
+        pp = round((alvo - focus_selic) / 2 / 0.25) * 0.25
+        lado = "abaixo" if pp < 0 else "acima"
+        cenarios.append(
+            CenarioSelic(
+                id="lara-resende",
+                rotulo=f"Proposta de André Lara Resende: Selic rumo a {br(alvo, 1)} %",
+                pp=pp,
+                texto=(
+                    f'Em "Eu Acuso" ({periodo(r.LARA_RESENDE_EM, "D")}), André Lara Resende '
+                    "propõe que o Banco Central leve a Selic aos poucos, em cerca de "
+                    f"{r.LARA_RESENDE_MESES} meses, para perto de {br(alvo, 1)} % ao ano, e que "
+                    "depois ela fique entre a meta de inflação e o crescimento nominal "
+                    "potencial da economia.\n\n"
+                    f"O que o botão faz: põe a Selic de {ano} {br(abs(pp), 2)} pp {lado} do "
+                    f"Focus. É a média do ano se a taxa for em linha reta até {br(alvo, 1)} % em "
+                    f"dezembro, contra os {br(focus_selic, 2)} % que o Focus espera para o fim "
+                    f"de {ano} (a conta do caminho é nossa). O simulador só enxerga esse "
+                    "primeiro ano: a proposta é de juro baixo para ficar, e a maior parte da "
+                    "queda viria no fim do ano, com pouco tempo para chegar aos preços.\n\n"
+                    "O que o autor espera é outra coisa: para ele a alta da inflação seria "
+                    '"apenas um repique transitório", o BC seguraria o dólar com as reservas, e '
+                    'o custo menor da dívida daria, com o tempo, "cerca de 4% do PIB ao ano". '
+                    "Este simulador usa os modelos do Banco Central, que são a visão que ele "
+                    "contesta: mostra o que essa visão diria da proposta, não quem tem razão."
+                ),
+                fonte=f"André Lara Resende, {r.LARA_RESENDE_TITULO}",
+                endereco=r.LARA_RESENDE_ENDERECO,
+            )
+        )
+
+    meta = leis.META_CONTINUA
+    zero = date(ctx.hoje.year, 10, 1)
+    trimestres = [zero]
+    for _ in range(len(r.SELIC_CAMINHO) - 1):
+        anterior = trimestres[-1]
+        mes = anterior.month + 3
+        trimestres.append(date(anterior.year + (mes > 12), (mes - 1) % 12 + 1, 1))
+    simulador = SimuladorSelic(
+        ano=ano,
+        focus_selic=focus_selic,
+        focus_ipca=focus("IPCA"),
+        focus_dolar=focus("Câmbio"),
+        focus_divida=focus("Dívida bruta do governo geral"),
+        meta=Meta(
+            centro=meta.centro,
+            inferior=meta.centro - meta.intervalo,
+            superior=meta.centro + meta.intervalo,
+            norma=meta.referencia,
+        ),
+        trimestres=trimestres,
+        selic_caminho=r.SELIC_CAMINHO,
+        ipca_agregado=r.IPCA_MODELO_AGREGADO,
+        ipca_desagregado=r.IPCA_MODELO_DESAGREGADO,
+        ipca_faixa_menor=r.IPCA_FAIXA_90_MENOR,
+        ipca_faixa_maior=r.IPCA_FAIXA_90_MAIOR,
+        faixa_do_ipca=f"faixa de 90 % do BC, da versão de {versao_da_faixa} do modelo",
+        dolar_por_pp=r.DOLAR_POR_PP_DE_SELIC,
+        dolar_por_pp_faixa=r.DOLAR_POR_PP_DE_SELIC_FAIXA,
+        divida_por_pp_de_selic=bruta,
+        divida_por_1_de_dolar=r.ELASTICIDADE_DOLAR.bruta,
+        divida_por_pp_de_precos=r.ELASTICIDADE_PRECOS.bruta,
+        pib_em_reais=round(pib, 1) if pib else None,
+        erro_focus_ipca=round(erro_ipca.erro_tipico, 2) if erro_ipca else None,
+        erro_focus_dolar=round(erro_dolar.erro_tipico, 1) if erro_dolar else None,
+        erro_focus_divida=round(erro_divida.erro_tipico, 1) if erro_divida else None,
+        erro_focus_desde=desde,
+        cenarios=cenarios,
+        fonte=(
+            f"{r.FONTE_EFEITO_SELIC}; {r.FONTE_FAIXA_DO_IPCA}; {fonte_divida}; Focus de "
+            f"{periodo(bcb_focus.data_da_ultima_edicao(), 'D')}; soma das parcelas da dívida: "
+            "cálculo próprio"
+        ),
+        como_ler=(
+            "Como ler: não é previsão do que vai acontecer. É quanto cada número se afasta do "
+            f"que o Focus espera para {ano} se a Selic ficar diferente durante o ano inteiro e "
+            "todo o resto ficar igual. O número grande é a estimativa do meio; logo abaixo vem "
+            "a faixa de 90 % do Banco Central: pela conta dele, em 9 de cada 10 casos o efeito "
+            "fica entre as pontas, e na inflação a ponta de cima é o triplo da de baixo. Na "
+            "régua, o traço de cima é o Focus com o quanto ele costuma errar nesta época do "
+            "ano, e o de baixo é onde o número iria parar com a mudança. Sabe-se melhor o "
+            "sentido do efeito do que o tamanho."
+        ),
+        nota=(
+            "Conta: cada número é uma estimativa publicada pelo Banco Central para 1 ponto de "
+            "Selic, multiplicada pela mudança escolhida (os modelos dele são lineares: o dobro "
+            "da mudança dá o dobro do efeito, e corte e alta têm o mesmo tamanho com o sinal "
+            "trocado). Inflação: a resposta do IPCA de quatro trimestres a uma Selic diferente "
+            "por um ano; já inclui o que passa pelo dólar e pela inflação esperada. Dólar: o "
+            f"coeficiente da equação de câmbio do mesmo modelo ({br(-r.DOLAR_POR_PP_DE_SELIC, 2)} "
+            "% por ponto), com o juro dos Estados Unidos e o risco do país parados. Dívida: as "
+            f"elasticidades da nota de estatísticas fiscais do BC ({br(bruta, 2)} pp do PIB por "
+            f"ponto de Selic em 12 meses, {br(r.ELASTICIDADE_DOLAR.bruta, 2)} por 1 % de dólar e "
+            f"{br(r.ELASTICIDADE_PRECOS.bruta, 2)} por ponto de inflação); somar as três é conta "
+            "nossa. Depois do ano, a Selic volta aos poucos, como o BC costuma reagir.\n\n"
+            "Faixas: a da inflação é a de 90 % que o BC publicou na versão de "
+            f"{versao_da_faixa} do modelo (a vigente, de {periodo(r.EFEITO_SELIC_EM, 'M')}, "
+            "saiu sem faixa; as estimativas das quatro versões, de 0,24 a 0,33 por ponto, cabem "
+            "nela). A do dólar é a de 90 % do coeficiente. Na dívida, a parcela dos juros é "
+            "conta de estoque, sem faixa; a faixa soma as pontas do dólar e da inflação, o que "
+            "a deixa larga de propósito. O erro do Focus é a média de quanto a mediana desta "
+            "época do ano errou o ano seguinte" + desde_do_erro + ".\n\n"
+            "O que nenhuma faixa cobre: se um corte for lido como descuido com a inflação, o "
+            "risco do país e a inflação esperada sobem mais do que o modelo supõe, e o dólar e "
+            "os preços respondem mais. Mudança grande sai da região em que o modelo foi "
+            "estimado. E a dívida de prazo mais longo sente menos em um ano do que sentirá "
+            "depois."
+        ),
+    )
+    return cartoes, [tabela], simulador
+
+
 def montar(ctx: Contexto) -> Secao:
     meta = ctx.sgs("SELIC_META", anos=20)
     efetiva = ctx.sgs("SELIC_ANUAL", anos=3)
@@ -785,6 +1202,17 @@ def montar(ctx: Contexto) -> Secao:
         graficos_di.extend(graficos_pp)
     except Exception as erro:
         print(f"    juros por prazo ficaram de fora: {str(erro)[:120]}")
+    simulador_selic: SimuladorSelic | None = None
+    try:
+        cartoes_ef, tabelas_ef, simulador_selic = _efeito_da_selic(ctx)
+        cartoes.extend(cartoes_ef)
+        tabelas.extend(tabelas_ef)
+    except Exception as erro:
+        print(f"    efeito da Selic ficou de fora: {str(erro)[:120]}")
+    try:
+        tabelas.extend(_ciclos_da_selic(ctx))
+    except Exception as erro:
+        print(f"    ciclos da Selic ficaram de fora: {str(erro)[:120]}")
     if usar_b3():
         try:
             cartoes_di, graficos_b3, embutida = _curva_di(ctx, meta[-1][1])
@@ -871,5 +1299,6 @@ def montar(ctx: Contexto) -> Secao:
         cartoes=cartoes,
         graficos=graficos,
         tabelas=tabelas,
+        simulador_selic=simulador_selic,
         gerado_em=ctx.agora(),
     )

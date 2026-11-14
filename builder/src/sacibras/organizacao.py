@@ -17,7 +17,7 @@ from typing import Literal
 
 from sacibras.schema import Categoria, Secao, Subcategoria
 
-Extra = Literal["simulador", "alertas"]
+Extra = Literal["simulador", "simulador-selic", "alertas"]
 
 CATEGORIAS: list[Categoria] = [
     Categoria(
@@ -181,6 +181,14 @@ PARTES: dict[str, list[Parte]] = {
             "A taxa básica, a efetiva e o caminho que o mercado espera.",
             cartoes=["selic-meta", "selic-efetiva", "focus-selic"],
             graficos=["selic-trajetoria", "selic-ipca"],
+        ),
+        Parte(
+            "efeito",
+            "Efeito da Selic",
+            "O que muda na inflação, no dólar e na dívida quando a Selic cai ou sobe.",
+            cartoes=["selic-efeito-ipca", "selic-efeito-dolar", "selic-efeito-divida"],
+            tabelas=["selic-contas-bc", "selic-ciclos-corte", "selic-ciclos-alta"],
+            extras=["simulador-selic"],
         ),
         Parte(
             "juro-real",
@@ -501,6 +509,8 @@ def aplicar(secao: Secao) -> list[str]:
     extras_da_secao: list[Extra] = []
     if secao.simulador:
         extras_da_secao.append("simulador")
+    if secao.simulador_selic:
+        extras_da_secao.append("simulador-selic")
     if secao.alertas:
         extras_da_secao.append("alertas")
     usados: dict[str, set[str]] = {k: set() for k in tem}

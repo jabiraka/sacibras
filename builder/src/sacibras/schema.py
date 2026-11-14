@@ -212,6 +212,65 @@ class SimuladorDivida(Modelo):
     nota: str
 
 
+class CenarioSelic(Modelo):
+    """Um gancho do simulador: uma proposta pública, posta no tamanho de corte que ela dá."""
+
+    id: str
+    rotulo: str
+    pp: float
+    """Onde o botão põe o controle: a Selic do ano contra o Focus, em pp."""
+    texto: str
+    fonte: str
+    endereco: str
+
+
+class SimuladorSelic(Modelo):
+    """O que o Banco Central estima que muda quando a Selic fica diferente por um ano.
+
+    Tudo aqui é número publicado pelo BC para 1 pp de Selic (`relatorios.py`); o navegador
+    só multiplica pelo tamanho da mudança escolhida e põe ao lado do que o Focus espera."""
+
+    ano: int
+    """O ano do exercício: a Selic diferente durante os quatro trimestres dele."""
+    focus_selic: float | None
+    focus_ipca: float | None
+    focus_dolar: float | None
+    focus_divida: float | None
+    meta: Meta | None
+    trimestres: list[date]
+    """O trimestre zero (o último antes do ano) e os 16 seguintes."""
+    selic_caminho: list[float]
+    """O desvio da Selic em cada trimestre, para 1 pp: um ano inteiro e a volta."""
+    ipca_agregado: list[float]
+    """pp no IPCA acumulado em quatro trimestres, por 1 pp de Selic: modelo agregado."""
+    ipca_desagregado: list[float]
+    ipca_faixa_menor: list[float]
+    """A ponta de menos efeito da faixa de 90 % do BC, por trimestre e por 1 pp."""
+    ipca_faixa_maior: list[float]
+    faixa_do_ipca: str
+    """De onde é a faixa, numa frase curta ("faixa de 90 % do BC, versão de dez/2021")."""
+    dolar_por_pp: float
+    """% no dólar por 1 pp de Selic."""
+    dolar_por_pp_faixa: tuple[float, float]
+    divida_por_pp_de_selic: float
+    """pp do PIB na dívida bruta por 1 pp de Selic mantido por 12 meses."""
+    divida_por_1_de_dolar: float
+    divida_por_pp_de_precos: float
+    pib_em_reais: float | None
+    """PIB de 12 meses, em R$ bilhões: para dizer os pontos do PIB em reais."""
+    erro_focus_ipca: float | None = None
+    """Quanto o Focus desta época costuma errar o IPCA do ano seguinte, em pp."""
+    erro_focus_dolar: float | None = None
+    """O mesmo para o dólar do fim do ano seguinte, em %."""
+    erro_focus_divida: float | None = None
+    """O mesmo para a dívida bruta, em pp do PIB."""
+    erro_focus_desde: int | None = None
+    cenarios: list[CenarioSelic] = Field(default_factory=list)
+    fonte: str
+    nota: str
+    como_ler: str
+
+
 class Alerta(Modelo):
     """Um indicador do painel de alerta: o valor de hoje na régua da própria história.
 
@@ -263,7 +322,7 @@ class Subcategoria(Modelo):
     cartoes: list[str] = Field(default_factory=list)
     graficos: list[str] = Field(default_factory=list)
     tabelas: list[str] = Field(default_factory=list)
-    extras: list[Literal["simulador", "alertas"]] = Field(default_factory=list)
+    extras: list[Literal["simulador", "simulador-selic", "alertas"]] = Field(default_factory=list)
 
 
 class Secao(Modelo):
@@ -276,6 +335,7 @@ class Secao(Modelo):
     graficos: list[Grafico] = Field(default_factory=list)
     tabelas: list[Tabela] = Field(default_factory=list)
     simulador: SimuladorDivida | None = None
+    simulador_selic: SimuladorSelic | None = None
     alertas: list[Alerta] = Field(default_factory=list)
     gerado_em: datetime
 

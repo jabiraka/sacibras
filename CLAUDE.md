@@ -110,8 +110,20 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,
   *"deixe o simulador da dívida, acho legal"*), com quatro controles: juro, crescimento,
-  inflação (pedida no mesmo dia) e primário. Fora ele, cenário montado pela pessoa não
-  entra sem o "sim" do Caio.
+  inflação (pedida no mesmo dia) e primário. **O da Selic também** (Caio, 14/11/2026:
+  *"algum tipo de simulador, se reduzir a taxa oq acontece com as outras métricas (inflação,
+  câmbio, dívida)"*), em Juros › Efeito da Selic: só com número que o Banco Central publica
+  para 1 pp de Selic (`relatorios.py`), ao lado do Focus, e separado do que aconteceu de fato
+  depois de cada ciclo (as tabelas dos ciclos dizem "não é o que a Selic causou"). **Nele,
+  nenhum número sem a faixa de erro** (Caio, 14/11/2026: *"claramente coloque as faixas de
+  erro, principalmente no simulador né onde os números estão longe de serem previsíveis
+  assim"*): cada efeito com a faixa de 90 % que o BC publica, e cada nível numa régua ao lado
+  do Focus com o quanto o Focus costuma errar. **Gancho** (Caio, mesmo dia: *"aquela proposta
+  do André Lara Resende para baixar o juros"*): proposta pública vira botão que põe o controle
+  no tamanho dela, com o texto lido na fonte e citado em `relatorios.py`, o que o autor espera
+  dito ao lado do que a conta do BC dá, e sem tomar partido; dela só sai o tamanho do corte,
+  nunca um dado da tela. Fora os dois simuladores, cenário montado pela pessoa não entra sem
+  o "sim" do Caio.
 - **Riscos** (Caio, 14/11/2026): a palavra na tela é *sustentabilidade da dívida*, não
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
   Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de

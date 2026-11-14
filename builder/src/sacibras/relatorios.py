@@ -1,5 +1,6 @@
 """Números lidos à mão em relatório oficial que não tem API nem planilha: a nota de crédito
-do país, as elasticidades da dívida e o teste de estresse dos bancos.
+do país, as elasticidades da dívida, o teste de estresse dos bancos e o que o Banco Central
+estima que a Selic faz com a inflação e com o dólar.
 
 Mesma regra de `leis.py`: só entra o que foi lido na fonte, com a data da leitura e o
 endereço ao lado. Cada bloco diz quando precisa ser lido de novo.
@@ -139,6 +140,7 @@ ELASTICIDADES = [
     Elasticidade("Selic 1 pp mais alta, por 12 meses", 0.53, 0.48),
     Elasticidade("Índices de preços 1 pp mais altos, por 12 meses", 0.16, 0.15),
 ]
+ELASTICIDADE_DOLAR, ELASTICIDADE_SELIC, ELASTICIDADE_PRECOS = ELASTICIDADES
 FONTE_ELASTICIDADES = (
     "Banco Central, nota para a imprensa Estatísticas fiscais de 29/10/2026, quadro "
     "Elasticidades da DLSP e DBGG"
@@ -168,6 +170,153 @@ BASILEIA_MINIMO_FONTE = (
     "Financeira, out/2026, p. 50)"
 )
 
+# ------------------------------------------------------------------ o efeito da Selic
+
+# Relatório de Inflação de junho de 2024, boxe "Atualização dos modelos semiestruturais de
+# pequeno porte", p. 97 a 106 (lido em 14/11/2026 em
+# bcb.gov.br/content/ri/relatorioinflacao/202406/ri202406p.pdf). É a versão vigente: os
+# Relatórios de Política Monetária de março e de junho de 2026 ainda remetem a este boxe.
+# p. 102: "A taxa Selic anualizada sobe 1 p.p. por quatro trimestres e depois segue
+#   comportamento baseado na regra de Taylor (Gráfico 1A). A inflação do IPCA cai, atingindo,
+#   no acumulado em quatro trimestres, um efeito máximo estimado de 0,27 p.p. e 0,24 p.p.
+#   segundo os modelos agregado e desagregado, respectivamente, alcançados no quarto trimestre
+#   após o choque inicial. Considerando os grupos do modelo desagregado, a inflação de
+#   serviços é a que responde de forma mais intensa e persistente (Gráfico 1C)".
+# p. 106: "A transmissão de um choque de política monetária se faz por vários canais no
+#   modelo. Além do impacto sobre a demanda agregada e hiato do produto, representado na curva
+#   IS, o choque também afeta a inflação pelo canal de câmbio da equação da UIP e mais
+#   indiretamente via impacto nas expectativas de inflação."
+# Os caminhos trimestre a trimestre (Gráficos 1A, 1B e 1C, p. 105) são desenho vetorial no
+# PDF: os pontos saíram das coordenadas do traço, não do olho, com a escala tirada das marcas
+# dos eixos e conferida pelos 0,27 e 0,24 do texto; arredondados a 0,01. Índice = trimestres
+# depois do começo (0 a 16).
+# LER DE NOVO quando o BC publicar outra atualização dos modelos (o Relatório de Política
+# Monetária sai em março, junho, setembro e dezembro; procurar o boxe pelo nome).
+EFEITO_SELIC_EM = date(2024, 6, 27)
+SELIC_CAMINHO = [0.0, 1.0, 1.0, 1.0, 1.0, 0.88, 0.70, 0.50, 0.31, 0.15, 0.02]
+SELIC_CAMINHO += [-0.08, -0.15, -0.19, -0.21, -0.22, -0.22]
+IPCA_MODELO_AGREGADO = [0.0, -0.09, -0.15, -0.20, -0.27, -0.24, -0.24, -0.25, -0.24]
+IPCA_MODELO_AGREGADO += [-0.22, -0.21, -0.20, -0.19, -0.19, -0.18, -0.17, -0.16]
+IPCA_MODELO_DESAGREGADO = [0.0, -0.08, -0.13, -0.18, -0.24, -0.22, -0.22, -0.21, -0.20]
+IPCA_MODELO_DESAGREGADO += [-0.18, -0.17, -0.17, -0.16, -0.16, -0.15, -0.15, -0.14]
+
+
+# A faixa de erro. O boxe de 2024 mostra os dois modelos, mas não a faixa; a última que o BC
+# publicou está no Relatório de Inflação de dezembro de 2021, boxe "Revisão do modelo agregado
+# de pequeno porte", p. 77 (lido em 14/11/2026 em
+# bcb.gov.br/content/ri/relatorioinflacao/202112/ri202112p.pdf), para a versão anterior do mesmo
+# modelo: "um aumento temporário de 1 p.p. na taxa Selic, com duração de quatro trimestres, gera
+# um efeito máximo de redução na inflação do IPCA, acumulada em quatro trimestres, de
+# aproximadamente 0,33 p.p., alcançado no sexto trimestre após o choque inicial". O Gráfico 2b
+# traz a resposta e o "Intervalo de credibilidade de 90%"; pontos lidos das coordenadas do
+# traço, escala conferida pelo 0,33 do texto. Os dois modelos de 2024 ficam dentro desta faixa
+# nos 16 trimestres (o teste confere).
+# MENOR = a ponta de menos efeito; MAIOR = a de mais efeito.
+FAIXA_DO_IPCA_EM = date(2021, 12, 16)
+IPCA_MODELO_2021 = [0.0, -0.10, -0.15, -0.23, -0.31, -0.30, -0.33, -0.33, -0.33]
+IPCA_MODELO_2021 += [-0.31, -0.30, -0.28, -0.27, -0.25, -0.23, -0.21, -0.20]
+IPCA_FAIXA_90_MENOR = [0.0, -0.03, -0.06, -0.11, -0.17, -0.19, -0.21, -0.20, -0.19]
+IPCA_FAIXA_90_MENOR += [-0.16, -0.14, -0.11, -0.10, -0.08, -0.07, -0.07, -0.06]
+IPCA_FAIXA_90_MAIOR = [0.0, -0.19, -0.26, -0.40, -0.52, -0.48, -0.53, -0.53, -0.55]
+IPCA_FAIXA_90_MAIOR += [-0.56, -0.56, -0.55, -0.54, -0.53, -0.51, -0.49, -0.47]
+
+# A própria estimativa do BC mudou de versão para versão (o efeito máximo de 1 pp por um ano):
+# - Relatório de Inflação de set/2020, boxe "Novo modelo agregado de pequeno porte com
+#   estimação bayesiana": "efeito máximo de redução na inflação, acumulada em quatro
+#   trimestres, de aproximadamente 0,3 p.p.";
+# - de mar/2021, boxe "Novo modelo desagregado de pequeno porte" (p. 81): "de 0,26 p.p.";
+# - de dez/2021: 0,33 p.p.; de jun/2024: 0,27 e 0,24 p.p.
+IPCA_NAS_VERSOES = [
+    ("set/2020, modelo agregado", -0.30),
+    ("mar/2021, modelo desagregado", -0.26),
+    ("dez/2021, modelo agregado", -0.33),
+]
+FONTE_FAIXA_DO_IPCA = (
+    "Banco Central, Relatório de Inflação de dez/2021, boxe Revisão do modelo agregado de "
+    "pequeno porte (p. 77, intervalo de credibilidade de 90 %)"
+)
+
+
+@dataclass(frozen=True)
+class EfeitoPorGrupo:
+    """O maior efeito de 1 pp a mais de Selic por um ano num grupo de preços do IPCA."""
+
+    grupo: str
+    maximo: float
+    trimestre: int
+
+
+# Gráfico 1C (p. 105), modelo desagregado: o ponto mais baixo de cada curva.
+IPCA_POR_GRUPO = [
+    EfeitoPorGrupo("Serviços", -0.37, 9),
+    EfeitoPorGrupo("Alimentação no domicílio", -0.36, 4),
+    EfeitoPorGrupo("Bens industriais", -0.25, 5),
+]
+
+# O dólar, no mesmo boxe. p. 101, equação (4): "Δe_t = Δe_t^ppc − δ (i_t^dif − i_t−1^dif) +
+# ε_t^e", com (4.1) "i_t^dif = i_t − (i_t* + CDS_t)": "relaciona a variação da taxa de câmbio
+# com a variação do diferencial de juros domésticos e externos (no caso, a Fed Funds rate),
+# ajustados pelo prêmio de risco [...] As variações Δe_t e Δe_t^ppc são trimestrais, e as taxas
+# i_t, i_t* e CDS_t estão anualizadas." Tabela 1 (p. 103): "δ, Diferencial de taxa de juros
+# interna e externa: moda 1,90; intervalo de credibilidade (90%) [0,77; 3,22]".
+# Ou seja: 1 pp a mais de Selic, com o juro de fora e o risco parados, é um dólar 1,90 % mais
+# barato no trimestre da mudança, e ele fica assim enquanto a distância de juros durar.
+DOLAR_POR_PP_DE_SELIC = -1.90
+DOLAR_POR_PP_DE_SELIC_FAIXA = (-3.22, -0.77)
+
+# O caminho de volta, do dólar para os preços. Mesmo boxe, p. 103: "Uma depreciação permanente
+# do câmbio de 10%, por sua vez, produz um efeito máximo na variação acumulada em quatro
+# trimestres do IPCA de aproximadamente 0,96 p.p. e 0,87 p.p. [...] segundo os modelos agregado
+# e desagregado". E o Relatório de Política Monetária de março de 2026, boxe "Repasse cambial:
+# estimativas por projeções locais", p. 66 (lido em 14/11/2026 em
+# bcb.gov.br/content/ri/relatorioinflacao/202603/rpm202603p.pdf): "obtêm-se coeficientes de
+# 0,10 e 0,16 para o índice geral, nos horizontes de 12 e 24 meses, respectivamente. Dessa
+# forma, uma desvalorização de 10% do real implicaria aumentos de 1 p.p. na inflação acumulada
+# nos 12 meses subsequentes e de 1,6 p.p. no acumulado de 24 meses."
+# A resposta do IPCA à Selic (acima) já traz este caminho dentro: não se soma de novo.
+IPCA_POR_10_DE_DOLAR_MODELOS = (0.96, 0.87)
+IPCA_POR_10_DE_DOLAR_12M = 1.0
+IPCA_POR_10_DE_DOLAR_24M = 1.6
+
+FONTE_EFEITO_SELIC = (
+    "Banco Central, Relatório de Inflação de jun/2024, boxe Atualização dos modelos "
+    "semiestruturais de pequeno porte (p. 101 a 105)"
+)
+FONTE_REPASSE_CAMBIAL = (
+    "Banco Central, Relatório de Política Monetária de mar/2026, boxe Repasse cambial: "
+    "estimativas por projeções locais (p. 66)"
+)
+
+# ------------------------------------------------------------------ cenário em debate
+
+# Não é fonte de número: é uma proposta pública que alguém pode querer pôr no simulador da
+# Selic (Caio, 14/11/2026: "um dos ganchos pode ser aquela proposta do André Lara Resende para
+# baixar o juros"). Nenhum dado da tela sai daqui; só o tamanho do corte que o botão simula.
+# André Lara Resende, "Eu Acuso: uma proposta para eliminar os juros absurdos", publicado no
+# Substack do autor em 25/09/2026 (lido em 14/11/2026 em
+# andrelararesende.substack.com/p/eu-acuso-uma-proposta-para-eliminar):
+#   "O BC se comprometeria a manter a taxa básica num intervalo entre a meta de inflação, 3,0%,
+#   e taxa de crescimento nominal potencial, ou seja, a meta da inflação somada ao crescimento
+#   real potencial, o que hoje seria em torno de 5,5% ao ano (3% de inflação mais 2,5% de
+#   crescimento). [...] Para dar início ao novo regime fiscal e monetário, o BC anunciaria a
+#   redução gradual do juro básico, ao longo de cerca de 12 meses, para a taxa de crescimento
+#   nominal potencial mais um spread transitório de segurança de 2%, isto é, perto de 7,5% ao
+#   ano. [...] Anunciaria ainda que se necessário atuará no câmbio para suavizar toda
+#   depreciação mais acentuada".
+#   "No longo prazo a inflação converge para a diferença entre a taxa básica de juros e a taxa
+#   de crescimento real da economia. No curto prazo, a relação entre a taxa de juros e a
+#   inflação pode ser inversa, como convencionalmente aceito. A redução do juro pode
+#   efetivamente pressionar a inflação, mas é apenas um repique transitório."
+#   "A redução do custo médio da dívida de quase 13% para 7,5% ao ano, numa dívida que
+#   corresponde a 80% do PIB, equivale a uma economia fiscal de cerca de 4% do PIB ao ano. A
+#   economia não é instantânea".
+LARA_RESENDE_SELIC = 7.5
+LARA_RESENDE_MESES = 12
+LARA_RESENDE_EM = date(2026, 9, 25)
+LARA_RESENDE_TITULO = "Eu Acuso: uma proposta para eliminar os juros absurdos"
+LARA_RESENDE_ENDERECO = (
+    "https://andrelararesende.substack.com/p/eu-acuso-uma-proposta-para-eliminar"
+)
 
 # ------------------------------------------------------------------ imposto e crescimento
 

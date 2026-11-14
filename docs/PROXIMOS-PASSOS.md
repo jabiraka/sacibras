@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o assunto Impostos e as dez sugestões, junto no `main` com a sessão de Estados em partes, nota de crédito em letras, cartões enxutos, crédito do BIS, inflação no simulador e tradução automática).
+Última atualização: 14/11/2026 (o efeito da Selic, o simulador dela com faixas de erro e o gancho da proposta de Lara Resende, juntos no `main` com Impostos (e as dez sugestões que vieram depois), Estados em partes e tradução).
 
 ---
 
@@ -43,6 +43,43 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
+
+## Sessão da Selic (14/11/2026, na nuvem, branch `ccr-567b9de5-xode7j`, publicada no `main`)
+
+Pedido do Caio: *"senti também falta de uma sessão sobre o impacto da taxa selic na inflação, ou
+algum tipo de simulador, se reduzir a taxa oq acontece com as outras métricas (inflação,
+câmbio, dívida)"*.
+
+- **Juros › Efeito da Selic** (parte nova, `#juros/efeito`): três números (1 pp de Selic no
+  IPCA, no dólar e na dívida bruta), o simulador "E se a Selic mudar?" (`simulador_selic` no
+  JSON, `web/src/simulador-selic.ts`), a tabela com as contas do BC e as duas dos ciclos.
+- **De onde vêm os números** (`relatorios.py`, lidos em 14/11/2026): Relatório de Inflação de
+  jun/2024, boxe "Atualização dos modelos semiestruturais de pequeno porte" (IPCA: −0,27 e
+  −0,24 pp no 4º trimestre; dólar: 1,90 % por ponto, faixa de 0,77 a 3,22; as curvas por
+  trimestre saíram das coordenadas do desenho vetorial); RPM de mar/2026, boxe do repasse
+  cambial; e as elasticidades da dívida, que já estavam lá. **Reler** quando o BC publicar outra
+  atualização dos modelos (o próximo relatório sai em dezembro; os de mar/2026 e jun/2026
+  ainda remetem ao boxe de 2024).
+- **Os ciclos** (`modelos/selic.py`): mudanças seguidas no mesmo sentido, um ano parado separa;
+  de 2003 em diante. A tabela diz o que aconteceu com IPCA, dólar e dívida, e que isso não é o
+  efeito da Selic.
+- **Faixas de erro em tudo** (Caio: *"claramente coloque as faixas de erro, principalmente no
+  simulador"*): sob cada efeito, a faixa de 90 % do BC; em cada quadro, a régua com o Focus e o
+  erro típico dele (`acerto_focus.medir`, agora também em % para o dólar) e o número simulado
+  com a faixa; barras de erro no gráfico. A faixa do IPCA é a do Relatório de Inflação de
+  dez/2021 (p. 77), a última publicada: a versão de 2024 saiu sem faixa (**conferir a cada
+  relatório se o BC publica a nova**).
+- **Gancho** (Caio: *"aquela proposta do André Lara Resende para baixar o juros"*): botão no
+  simulador que põe a Selic no tamanho da proposta ("Eu Acuso", 25/09/2026, Selic perto de
+  7,5 % em cerca de 12 meses; lido no Substack do autor, trechos em `relatorios.py`). O
+  tamanho sai do Focus do dia (metade da distância entre 7,5 % e a Selic que o Focus espera
+  para o fim do ano seguinte). **Rever** se o autor mudar a proposta ou quando ela envelhecer.
+- Busca ("se a selic cair", "corte de juros", "simulador", "lara resende") e quatro verbetes
+  no glossário (93).
+- Conferido a 1280 e a 390 px, com tudo aberto e o toque no gráfico. A prévia privada foi
+  republicada com tudo (os treze assuntos e o glossário, que ela ainda não tinha). **Publicado
+  no `main`** em 14/11/2026, a pedido do Caio (*"pode juntar"*), junto com o que já estava lá
+  (Impostos, Estados em partes, tradução).
 
 ## Sessão dos Impostos (14/11/2026, na nuvem, branch `ccr-d0c7a2f5-n0uby2`, publicada no `main`)
 
@@ -215,6 +252,9 @@ o essencial"*.
 
 ## Próximos passos, em ordem (dá para fazer na nuvem)
 
+0. **O que falta do efeito da Selic** ([PROPOSTAS](PROPOSTAS.md)): atividade e crédito (boxe
+   do RPM de mar/2026, a ler inteiro), o atalho para a parte em Inflação e em Contas públicas,
+   e o gráfico dos ciclos alinhados pelo primeiro corte.
 0. **Mais pares internacionais no painel de alerta**: reservas (FMI), volatilidade do câmbio
    dos emergentes (BIS, câmbio diário). Cada par novo entra em `PARES` com a frase do
    conceito. (Serviço da dívida privada e hiato de crédito: feitos, em "Fora do painel".)
@@ -283,6 +323,17 @@ o essencial"*.
   regra do CSS para toda tabela do site).
 - O calendário mostra só o dia da divulgação: a API traz a hora sem dizer o fuso. Se a API do
   IBGE não responder em 6 s, a linha não aparece.
+
+- No simulador da Selic, a faixa do IPCA é de uma versão anterior do modelo (dez/2021), e a
+  da dívida soma pontas (larga de propósito). O erro do Focus compara com o dado revisado de
+  hoje: na dívida são só sete anos, e parte do erro é o PIB revisado depois. O gancho de Lara
+  Resende mede só o primeiro ano, com a queda posta como média do ano.
+- O simulador da Selic é linear (o dobro da mudança, o dobro do efeito) e vale para um ano:
+  o risco do país e o juro de fora ficam parados, e um corte lido como descuido com a inflação
+  mexeria mais no dólar e nos preços do que a conta mostra. A soma das três parcelas da dívida
+  (juros, dólar, inflação) é nossa; cada parcela é do BC. O modelo é o de jun/2024.
+- As tabelas dos ciclos da Selic mostram o que veio depois, não o que a Selic causou; o último
+  ciclo pode não ter acabado.
 
 - Riscos: o painel de alerta compara cada indicador com a própria história, não com um nível
   perigoso (o capital dos bancos está "aceso" e bem acima do mínimo). O leque e os testes de

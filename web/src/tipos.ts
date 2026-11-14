@@ -105,6 +105,51 @@ export interface SimuladorDivida {
   nota: string;
 }
 
+/** Um gancho do simulador da Selic: uma proposta pública, no tamanho de corte que ela dá. */
+export interface CenarioSelic {
+  id: string;
+  rotulo: string;
+  pp: number;
+  texto: string;
+  fonte: string;
+  endereco: string;
+}
+
+/** O que o BC estima para 1 pp de Selic; o navegador multiplica pela mudança escolhida. */
+export interface SimuladorSelic {
+  ano: number;
+  focus_selic: number | null;
+  focus_ipca: number | null;
+  focus_dolar: number | null;
+  focus_divida: number | null;
+  meta: { centro: number; inferior: number; superior: number; norma: string } | null;
+  /** O trimestre zero e os 16 seguintes. */
+  trimestres: string[];
+  selic_caminho: number[];
+  ipca_agregado: number[];
+  ipca_desagregado: number[];
+  /** As pontas da faixa de 90 % do BC, por trimestre e por 1 pp: menos e mais efeito. */
+  ipca_faixa_menor: number[];
+  ipca_faixa_maior: number[];
+  faixa_do_ipca: string;
+  dolar_por_pp: number;
+  dolar_por_pp_faixa: [number, number];
+  divida_por_pp_de_selic: number;
+  divida_por_1_de_dolar: number;
+  divida_por_pp_de_precos: number;
+  /** PIB de 12 meses, em R$ bilhões. */
+  pib_em_reais: number | null;
+  /** Quanto o Focus desta época costuma errar o ano seguinte: pp, % e pp do PIB. */
+  erro_focus_ipca: number | null;
+  erro_focus_dolar: number | null;
+  erro_focus_divida: number | null;
+  erro_focus_desde: number | null;
+  cenarios: CenarioSelic[];
+  fonte: string;
+  nota: string;
+  como_ler: string;
+}
+
 /** Uma parte do assunto: os ids do que abre junto, numa tela só. */
 export interface Subcategoria {
   id: string;
@@ -113,7 +158,7 @@ export interface Subcategoria {
   cartoes: string[];
   graficos: string[];
   tabelas: string[];
-  extras: ("simulador" | "alertas")[];
+  extras: ("simulador" | "simulador-selic" | "alertas")[];
 }
 
 export interface Secao {
@@ -126,6 +171,7 @@ export interface Secao {
   graficos: Grafico[];
   tabelas: Tabela[];
   simulador: SimuladorDivida | null;
+  simulador_selic?: SimuladorSelic | null;
   alertas?: Alerta[];
   gerado_em: string;
 }
