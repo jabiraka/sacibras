@@ -46,6 +46,29 @@ Ideias que ficam:
 - **Repasses da União**: FPE, SUS, Fundeb e emendas, mês a mês (Tesouro Transparente).
 - **Comparação na ficha**: o estado contra a região e contra quem tem tamanho parecido.
 
+## Do Econvitals para o Brasil (Caio, 14/11/2026: *"veja se algumas métricas do Econvitals dá pra implementar aqui"*)
+
+Lido do `data/dashboard.json` do econvitals.org em 14/11/2026. O que tem par brasileiro em
+fonte aberta:
+
+| Econvitals (EUA) | Par brasileiro | Fonte | Situação |
+|------------------|----------------|-------|----------|
+| 2, 5, 10 e 30 anos; 2s10s | juro prefixado de 2, 5 e 10 anos e a inclinação | curva zero do Tesouro (`curvas.py`) | em andamento |
+| Real 10y, breakeven 10y, 5y5y forward | juro real e inflação implícita de 5 e 10 anos; a implícita de 5 anos daqui a 5 anos | idem | em andamento |
+| 10-year decomposition | o prefixado de 10 anos = juro real + inflação implícita, no tempo | idem, um ponto por semana | em andamento |
+| Core PCE 1 e 3 meses anualizados; tabela de medidas | IPCA, núcleos, serviços, industriais, alimentação, livres e administrados em 1, 3 e 12 meses | SGS | em andamento |
+| Participação, EPOP, U-6, desemprego de longo prazo | participação, nível de ocupação, subutilização, desalento, informalidade | SIDRA (PNAD Contínua) | em andamento |
+| Payrolls com média de 3 meses, por setor | Caged com média de 3 meses, por setor | IPEADATA / Novo Caged | em andamento |
+| Current e financial account em partes | balança, renda primária e secundária; investimento direto, carteira, outros, reservas | SGS (BPM6) | em andamento |
+| Mortgage rate, house prices | juro do financiamento imobiliário, IVG-R (preço dos imóveis financiados) | SGS | em andamento |
+| Debt service, interest payments | comprometimento da renda só com juros, endividamento sem o imobiliário | SGS | em andamento |
+| Saving rate, investimento | taxa de investimento e de poupança (% do PIB) | SIDRA (contas trimestrais) | ideia |
+| Real final sales to private domestic purchasers | consumo das famílias + investimento, sem governo e estoques | SIDRA | ideia |
+| Productivity | PIB por pessoa ocupada | SIDRA | ideia |
+| FedWatch (probabilidades da reunião) | probabilidade do Copom pelos DI curtos | B3 (desligada) | espera o `SB_B3` |
+| VIX, NFCI, petróleo, metais | risco-país, Brent, minério | sem fonte aberta estável (EMBI parou em 2024) | fora por ora |
+| UMich, Cleveland | expectativa do consumidor (FGV) | FGV cobra | fora |
+
 ## Outras
 
 - Previsões próprias de IPCA e desocupação (modelo sazonal), sempre ao lado do Focus.

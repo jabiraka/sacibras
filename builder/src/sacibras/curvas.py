@@ -188,3 +188,17 @@ def media_do_caminho(degraus: Sequence[Ponto], base: date, ate: date) -> float:
     if total == 0:
         raise ValueError("prazo sem dia útil")
     return (math.exp(log_fator * ANO / total) - 1) * 100
+
+
+def termo(curva: Curva, de: int, ate: int) -> float:
+    """A taxa a termo (% ao ano, base 252) entre dois prazos em dias úteis."""
+    if not 0 <= de < ate <= curva.fim:
+        raise ValueError(f"termo fora da curva: {de}–{ate} (fim {curva.fim})")
+    fator = curva.fator_de_desconto(de) / curva.fator_de_desconto(ate)
+    return float((fator ** (ANO / (ate - de)) - 1) * 100)
+
+
+def tem_real(real: Curva, du: int) -> bool:
+    """A perna real tem preço no prazo: entre o primeiro e o último vértice (antes do
+    primeiro IPCA+, a taxa seria só a do primeiro esticada para trás)."""
+    return real.vertices[0][0] <= du <= real.fim

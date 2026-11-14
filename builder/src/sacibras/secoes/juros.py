@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 from datetime import date, timedelta
 from itertools import pairwise
 
@@ -11,7 +12,7 @@ from sacibras.catalogo import SGS
 from sacibras.config import usar_b3
 from sacibras.fontes import b3_derivativos, bcb_copom, bcb_focus, bcb_sgs, tesouro_direto
 from sacibras.juros_futuros import a_termo
-from sacibras.schema import Cartao, Grafico, LinhaRef, Secao
+from sacibras.schema import Cartao, Grafico, LinhaRef, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -380,6 +381,186 @@ def _mercado_x_focus(
     return cartoes, graficos, frase
 
 
+def _anos_depois(d: date, anos: int) -> date:
+    try:
+        return d.replace(year=d.year + anos)
+    except ValueError:  # 29 de fevereiro
+        return d.replace(year=d.year + anos, day=28)
+
+
+def _curvas_no_dia(
+    td: dict[str, dict[date, list[Ponto]]], alvo: date
+) -> tuple[date, curvas.Curva, curvas.Curva]:
+    dia, pre = tesouro_direto.no_dia(td[tesouro_direto.PREFIXADO], alvo)
+    pontos = {
+        tipo: dict(td.get(tipo, {})).get(dia, [])
+        for tipo in (tesouro_direto.PREFIXADO_JUROS, tesouro_direto.IPCA, tesouro_direto.IPCA_JUROS)
+    }
+    nominal = curvas.montar(dia, pre, pontos[tesouro_direto.PREFIXADO_JUROS], curvas.CUPOM_NTNF)
+    real = curvas.montar(
+        dia, pontos[tesouro_direto.IPCA], pontos[tesouro_direto.IPCA_JUROS], curvas.CUPOM_NTNB
+    )
+    return dia, nominal, real
+
+
+def _no_prazo(
+    dia: date, nominal: curvas.Curva, real: curvas.Curva, anos: int
+) -> tuple[float | None, float | None, float | None]:
+    """(prefixado, IPCA+, inflação implícita) para `anos` à frente, em % a.a."""
+    du = nominal.du_de(_anos_depois(dia, anos))
+    n = nominal.taxa(du) * 100 if du <= nominal.fim else None
+    r = real.taxa(du) * 100 if curvas.tem_real(real, du) else None
+    i = ((1 + n / 100) / (1 + r / 100) - 1) * 100 if n is not None and r is not None else None
+    return n, r, i
+
+
+def _a_termo(
+    dia: date, nominal: curvas.Curva, real: curvas.Curva, de: int, ate: int
+) -> tuple[float, float, float] | None:
+    """(prefixado, IPCA+, implícita) a termo entre `de` e `ate` anos à frente."""
+    a = nominal.du_de(_anos_depois(dia, de))
+    b = nominal.du_de(_anos_depois(dia, ate))
+    if b > nominal.fim or not (curvas.tem_real(real, a) and curvas.tem_real(real, b)):
+        return None
+    n, r = curvas.termo(nominal, a, b), curvas.termo(real, a, b)
+    return n, r, ((1 + n / 100) / (1 + r / 100) - 1) * 100
+
+
+def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
+    """O que o econvitals mostra para os EUA (2, 5 e 10 anos, o juro real, a inflação
+    implícita e a de 5 anos daqui a 5), na curva zero do Tesouro."""
+    td = tesouro_direto.curvas(ctx.hoje - timedelta(days=800))
+    dia, nominal, real = _curvas_no_dia(td, ctx.hoje)
+    nominal_ano: curvas.Curva | None = None
+    real_ano: curvas.Curva | None = None
+    with suppress(ValueError):
+        _, nominal_ano, real_ano = _curvas_no_dia(td, _anos_depois(ctx.hoje, -1))
+    fonte = (
+        "Tesouro Direto (taxa média entre compra e venda; curva zero com os títulos com cupom "
+        "por bootstrap, o método do Jabs)"
+    )
+    # O maior prazo, até 10 anos, que as duas pernas cobrem hoje.
+    longo = max(k for k in range(3, 11) if None not in _no_prazo(dia, nominal, real, k))
+    linhas: list[LinhaTabela] = []
+    for k in sorted({1, 2, 3, 5, longo}):
+        n, r, i = _no_prazo(dia, nominal, real, k)
+        antes = (
+            _no_prazo(dia, nominal_ano, real_ano, k)[2]
+            if nominal_ano is not None and real_ano is not None
+            else None
+        )
+        linhas.append(
+            LinhaTabela(
+                rotulo=f"{k} ano{'s' if k > 1 else ''}",
+                valores=[n, r, i, antes],
+                unidade="% a.a.",
+                casas=2,
+            )
+        )
+    meio = longo // 2
+    termo_hoje = _a_termo(dia, nominal, real, meio, longo)
+    if termo_hoje is not None:
+        termo_antes = (
+            _a_termo(dia, nominal_ano, real_ano, meio, longo)
+            if nominal_ano is not None and real_ano is not None
+            else None
+        )
+        linhas.append(
+            LinhaTabela(
+                rotulo=f"De {meio} a {longo} anos (a termo)",
+                valores=[*termo_hoje, termo_antes[2] if termo_antes else None],
+                unidade="% a.a.",
+                casas=2,
+            )
+        )
+    tabela = Tabela(
+        id="titulos-por-prazo",
+        titulo="Juro e inflação implícita por prazo",
+        subtitulo=f"Curva zero dos títulos do Tesouro em {periodo(dia, 'D')}",
+        colunas=["Prefixado", "IPCA+ (juro real)", "Inflação implícita", "Implícita há 1 ano"],
+        linhas=linhas,
+        fonte=fonte,
+        nota=(
+            "Cada prazo é contado de hoje. A implícita é (1 + prefixado) / (1 + IPCA+) − 1 no "
+            "mesmo prazo e carrega o prêmio pelo risco de inflação. A linha a termo é o que a "
+            f"curva cobra de {meio} a {longo} anos daqui, sem os anos até lá: a inflação "
+            "esperada para o longo prazo, a medida que os bancos centrais acompanham. Sem IPCA+ "
+            "curto no Tesouro Direto, o juro real dos prazos curtos fica em branco."
+        ),
+    )
+
+    # A história, um ponto por semana: o prefixado longo em juro real + inflação implícita,
+    # e a implícita a termo. O prazo do gráfico é o maior que as curvas cobrem em todas as
+    # semanas (o prefixado de 10 anos não existia em todo o ano passado).
+    semanas: list[tuple[date, curvas.Curva, curvas.Curva]] = []
+    alvo = ctx.hoje - timedelta(days=735)
+    while alvo <= ctx.hoje:
+        with suppress(ValueError):
+            semanas.append(_curvas_no_dia(td, alvo))
+        alvo += timedelta(days=7)
+
+    def cobre(k: int) -> bool:
+        return all(None not in _no_prazo(*semana, k) for semana in semanas)
+
+    prazo_grafico = next((k for k in range(longo, 2, -1) if cobre(k)), None)
+    decomposto: dict[str, list[Ponto]] = {"n": [], "r": [], "i": [], "t": []}
+    for base, n_c, r_c in semanas:
+        if prazo_grafico is not None:
+            n, r, i = _no_prazo(base, n_c, r_c, prazo_grafico)
+            if n is not None and r is not None and i is not None:
+                decomposto["n"].append((base, n))
+                decomposto["r"].append((base, r))
+                decomposto["i"].append((base, i))
+        t = _a_termo(base, n_c, r_c, meio, longo)
+        if t is not None:
+            decomposto["t"].append((base, t[2]))
+    graficos: list[Grafico] = []
+    cartoes: list[Cartao] = []
+    if len(decomposto["n"]) > 10:
+        graficos.append(
+            grafico(
+                "prefixado-decomposto",
+                f"Prefixado de {prazo_grafico} anos: juro real + inflação implícita",
+                [
+                    serie("nominal", f"Prefixado de {prazo_grafico} anos", decomposto["n"]),
+                    serie("real", "Juro real (IPCA+)", decomposto["r"]),
+                    serie("implicita", "Inflação implícita", decomposto["i"]),
+                ],
+                unidade="% a.a.",
+                casas=2,
+                periodicidade="D",
+                linhas=[LinhaRef(valor=leis.META_CONTINUA.centro, rotulo="meta")],
+                fonte=fonte,
+                nota=(
+                    f"Um ponto por semana, sempre {prazo_grafico} anos à frente da data. O "
+                    "prefixado sobe quando sobe o juro real (o custo do dinheiro acima da "
+                    "inflação) ou a "
+                    "inflação implícita (a inflação que o preço embute, com prêmio de risco)."
+                ),
+            )
+        )
+    if decomposto["t"]:
+        cartoes.append(
+            cartao(
+                "implicita-a-termo",
+                f"Inflação implícita de {meio} a {longo} anos à frente",
+                decomposto["t"],
+                unidade="% a.a.",
+                periodicidade="D",
+                casas=2,
+                detalhe=(
+                    f"a inflação que os títulos embutem para depois de {meio} anos; meta "
+                    f"{br(leis.META_CONTINUA.centro, 0)} %"
+                ),
+                fonte=fonte,
+                procedencia="calculado",
+                secao="juros",
+                mini=110,
+            )
+        )
+    return cartoes, graficos, [tabela]
+
+
 def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
     """Os juros futuros (DI1 da B3): a curva, a inclinação e a Selic embutida nela."""
     contratos = [c for c in b3_derivativos.futuros("DI1") if c.preco and c.em_aberto >= 10_000]
@@ -594,6 +775,13 @@ def montar(ctx: Contexto) -> Secao:
         graficos_di.extend(graficos_mf)
     except Exception as erro:
         print(f"    curva contra o Focus ficou de fora: {str(erro)[:120]}")
+    tabelas: list[Tabela] = []
+    try:
+        cartoes_pp, graficos_pp, tabelas = _titulos_por_prazo(ctx)
+        cartoes.extend(cartoes_pp)
+        graficos_di.extend(graficos_pp)
+    except Exception as erro:
+        print(f"    juros por prazo ficaram de fora: {str(erro)[:120]}")
     if usar_b3():
         try:
             cartoes_di, graficos_b3, embutida = _curva_di(ctx, meta[-1][1])
@@ -679,5 +867,6 @@ def montar(ctx: Contexto) -> Secao:
         resumo=resumo,
         cartoes=cartoes,
         graficos=graficos,
+        tabelas=tabelas,
         gerado_em=ctx.agora(),
     )

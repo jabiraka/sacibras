@@ -185,6 +185,7 @@ export function revelar(alvo: string): void {
     }
   }
   if (!no) return;
+  if (no instanceof HTMLDetailsElement) no.open = true; // tabela guardada: abre
   const achado = no;
   requestAnimationFrame(() => {
     achado.scrollIntoView({ behavior: "smooth", block: "center" });

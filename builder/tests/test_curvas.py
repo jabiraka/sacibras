@@ -58,3 +58,20 @@ def test_media_do_caminho() -> None:
     a, b = dias_uteis(BASE, meio), dias_uteis(meio, date(2030, 1, 1))
     esperado = ((1.14 ** (a / 252) * 1.10 ** (b / 252)) ** (252 / (a + b)) - 1) * 100
     assert media == pytest.approx(esperado)
+
+
+def test_termo_de_curva_plana_e_a_propria_taxa_e_compoe_com_o_trecho_anterior() -> None:
+    plana = curvas.Curva(BASE, ((100, 0.10), (3000, 0.10)))
+    assert curvas.termo(plana, 500, 1500) == pytest.approx(10.0)
+    inclinada = curvas.Curva(BASE, ((252, 0.10), (504, 0.12)))
+    termo = curvas.termo(inclinada, 252, 504) / 100
+    assert (1.10 * (1 + termo)) == pytest.approx(1.12**2)
+    with pytest.raises(ValueError):
+        curvas.termo(inclinada, 252, 600)
+
+
+def test_perna_real_sem_preco_antes_do_primeiro_vertice() -> None:
+    real = curvas.Curva(BASE, ((600, 0.07), (2000, 0.075)))
+    assert not curvas.tem_real(real, 300)
+    assert curvas.tem_real(real, 600)
+    assert not curvas.tem_real(real, 2001)

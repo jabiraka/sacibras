@@ -22,6 +22,11 @@ seguir, em ordem, e o que espera decisão.
   rendeu R$ 100" em Mercados; a busca com sinônimos (lupa no cabeçalho, caixa na entrada);
   a ficha de cada estado (receita, despesa por natureza e por função, investimento, dívida em
   partes e com a União, pela DCA 2025 e o RGF), com a média dos estados ao lado; o teste das fontes no Actions passou (resultado em [FONTES](FONTES.md)).
+- Do Econvitals (pedido de 14/11/2026, lista no [PROPOSTAS](PROPOSTAS.md)): em Juros, a tabela
+  por prazo (1, 2, 3, 5 e 10 anos: prefixado, juro real e inflação implícita), a implícita de
+  5 a 10 anos à frente (o "5y5y") e o prefixado longo decomposto em juro real + implícita.
+  Trabalho, inflação em 1, 3 e 12 meses, balanço de pagamentos e crédito imobiliário estão em
+  andamento.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 

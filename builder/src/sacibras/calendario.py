@@ -52,8 +52,27 @@ def dia_util(d: date) -> bool:
     return d.weekday() < 5 and d not in feriados(d.year)
 
 
+_ORIGEM = date(1990, 1, 1)
+
+
+@lru_cache(maxsize=1)
+def _acumulados() -> tuple[int, ...]:
+    """Dias úteis de 1990 até cada dia, até 2100: a contagem vira uma subtração."""
+    saida, total, cursor = [0], 0, _ORIGEM
+    while cursor.year <= 2100:
+        total += dia_util(cursor)
+        saida.append(total)
+        cursor += timedelta(days=1)
+    return tuple(saida)
+
+
 def dias_uteis(inicio: date, fim: date) -> int:
     """Dias úteis em [inicio, fim): conta o primeiro, não conta o último."""
+    if fim <= inicio:
+        return 0
+    if inicio >= _ORIGEM and fim.year <= 2100:
+        acumulados = _acumulados()
+        return acumulados[(fim - _ORIGEM).days] - acumulados[(inicio - _ORIGEM).days]
     total, cursor = 0, inicio
     while cursor < fim:
         total += dia_util(cursor)
