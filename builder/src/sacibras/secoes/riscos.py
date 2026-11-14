@@ -136,6 +136,14 @@ def alerta(
     )
 
 
+def _mais_grave(acesos: list[Alerta]) -> str:
+    """O aceso mais longe do normal, em poucas palavras (o cartão diz só o essencial)."""
+    if not acesos:
+        return "nenhum aceso"
+    pior = max(acesos, key=lambda a: a.pior_que)
+    return f"o pior: {pior.nome.lower()}" if len(pior.nome) <= 48 else "abra o painel"
+
+
 def saldo(valor: float) -> str:
     """'superávit primário de 1,20 %' ou 'déficit primário de 0,52 %'."""
     nome = "superávit" if valor >= 0 else "déficit"
@@ -201,8 +209,8 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
     inicio = date(ctx.hoje.year - 20, 1, 1)
     quando = periodo(necessario[-1][0], "M")
     sobra = -falta[-1][1]
-    distancia = f"hoje há {saldo(primario[-1][1])} do PIB: " + (
-        f"faltam {br(-sobra, 2)} pp" if sobra < 0 else f"sobram {br(sobra, 2)} pp"
+    distancia = f"hoje: {saldo(primario[-1][1])}; " + (
+        f"faltam {br(-sobra, 1)} pp" if sobra < 0 else f"sobram {br(sobra, 1)} pp"
     )
     bloco = Bloco()
     bloco.cartoes += [
@@ -227,7 +235,7 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             periodicidade="M",
             casas=1,
             detalhe=(
-                f"a dívida paga {br(juro_divida[-1][1])} % ao ano; o PIB em reais cresceu "
+                f"juro {br(juro_divida[-1][1])} % a.a.; PIB em reais "
                 f"{br(crescimento[-1][1])} % em 12 meses"
             ),
             fonte=fonte_conta,
@@ -242,7 +250,7 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             unidade="% a.a.",
             periodicidade="M",
             casas=1,
-            detalhe="juros de 12 meses do setor público ÷ dívida bruta",
+            detalhe="juros de 12 meses ÷ dívida bruta",
             fonte=fonte_conta,
             procedencia="calculado",
             secao="riscos",
@@ -255,7 +263,7 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             unidade="R$ bilhões",
             periodicidade="M",
             casas=0,
-            detalhe=f"{br(juros[-1][1], 2)} % do PIB; setor público consolidado",
+            detalhe=f"{br(juros[-1][1], 1)} % do PIB",
             fonte=ctx.fonte_sgs("NFSP_JUROS_12M_RS", "NFSP_JUROS_12M"),
             secao="riscos",
             mini=120,
@@ -267,10 +275,7 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             unidade="anos",
             periodicidade="M",
             casas=1,
-            detalhe=(
-                f"{br(prazo[-1][1])} meses; quanto mais curto, mais dívida vence por ano e "
-                "mais rápido o juro novo chega a ela"
-            ),
+            detalhe=f"{br(prazo[-1][1])} meses; mais curto, mais dívida vence por ano",
             fonte=ctx.fonte_sgs("DIVIDA_PRAZO_MEDIO"),
             secao="riscos",
             mini=120,
@@ -511,10 +516,7 @@ def _leque(
             casas=0,
             referencia=dbgg[-1][0],
             periodicidade="M",
-            detalhe=(
-                f"em {futuros[-1]}, o caminho do meio dá {br(leque.mediana[-1])} % do PIB; 8 "
-                f"em cada 10 futuros ficam entre {br(leque.p10[-1])} e {br(leque.p90[-1])}"
-            ),
+            detalhe=f"caminho do meio: {br(leque.mediana[-1])} % do PIB em {futuros[-1]}",
             fonte=f"{base.fonte}; choques históricos de {primeiro} a {ultimo}",
             procedencia="calculado",
             secao="riscos",
@@ -545,7 +547,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto], list[Ponto]]:
             unidade="% a.a.",
             periodicidade="D",
             casas=1,
-            detalhe="quanto o dólar balançou no último mês, levado ao ano",
+            detalhe="o balanço do dólar no último mês, ao ano",
             fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
             procedencia="calculado",
             secao="riscos",
@@ -558,7 +560,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto], list[Ponto]]:
             unidade="%",
             periodicidade="D",
             casas=1,
-            detalhe="quanto o índice está abaixo do maior fechamento desde 1999",
+            detalhe="abaixo do maior fechamento desde 1999",
             fonte=f"{fonte_ibov}; cálculo próprio",
             procedencia="calculado",
             secao="riscos",
@@ -681,9 +683,8 @@ def _externo(ctx: Contexto) -> Bloco:
             periodicidade="T",
             casas=0,
             detalhe=(
-                f"reservas de US$ {br(reservas[-1][1] / 1000, 0)} bi "
-                f"({periodo(reservas[-1][0], 'M')}); acima de 100 %, pagam toda a dívida "
-                "externa que vence logo"
+                f"reservas: US$ {br(reservas[-1][1] / 1000, 0)} bi; acima de 100 %, "
+                "cobrem a dívida curta"
             ),
             fonte=fonte_cobertura,
             procedencia="calculado",
@@ -698,10 +699,9 @@ def _externo(ctx: Contexto) -> Bloco:
             periodicidade="M",
             casas=1,
             detalhe=(
-                "negativa: o setor público tem mais a receber que a pagar em moeda "
-                "estrangeira, e a alta do dólar reduz a dívida líquida"
+                "negativa: o dólar mais alto reduz a dívida líquida"
                 if externa_liquida[-1][1] < 0
-                else "positiva: a alta do dólar aumenta a dívida líquida"
+                else "positiva: o dólar mais alto aumenta a dívida líquida"
             ),
             fonte=ctx.fonte_sgs("DLSP_EXTERNA"),
             secao="riscos",
@@ -714,7 +714,7 @@ def _externo(ctx: Contexto) -> Bloco:
             unidade="US$ bilhões",
             periodicidade="D",
             casas=1,
-            detalhe="proteção contra a alta do dólar que o BC vendeu ao mercado (valor nocional)",
+            detalhe="proteção contra a alta do dólar vendida pelo BC",
             fonte=ctx.fonte_sgs("SWAP_CAMBIAL"),
             secao="riscos",
             mini=750,
@@ -854,10 +854,7 @@ def _credito(ctx: Contexto) -> Bloco:
             unidade="%",
             periodicidade="M",
             casas=2,
-            detalhe=(
-                "a fila da inadimplência: o que atrasa hoje e pode virar calote "
-                f"(acima de 90 dias: {br(total[-1][1], 2)} %)"
-            ),
+            detalhe=f"pode virar inadimplência; acima de 90 dias: {br(total[-1][1], 1)} %",
             fonte=ctx.fonte_sgs("CREDITO_ATRASO_15_90", "CREDITO_INADIMPLENCIA"),
             secao="riscos",
             mini=120,
@@ -869,10 +866,7 @@ def _credito(ctx: Contexto) -> Bloco:
             unidade="%",
             periodicidade="M",
             casas=1,
-            detalhe=(
-                "capital sobre os ativos pesados pelo risco, sistema todo; capital principal: "
-                f"{br(principal[-1][1])} %"
-            ),
+            detalhe=f"sistema todo; capital principal: {br(principal[-1][1])} %",
             fonte=ctx.fonte_sgs("BASILEIA", "CAPITAL_PRINCIPAL"),
             secao="riscos",
             mini=120,
@@ -1240,7 +1234,7 @@ def _previdencia(ctx: Contexto) -> Bloco:
 def _envelhecimento(ctx: Contexto) -> Bloco:
     idosos = ibge_projecao.indicadores()["BR"]["RDI65"]
     agora = ctx.hoje.year
-    marcos = [a for a in (agora + 10, agora + 25, max(idosos)) if a in idosos]
+    marcos = [a for a in (agora + 25, max(idosos)) if a in idosos]
     if agora not in idosos or not marcos:
         return Bloco()
     depois = "; ".join(f"{br(idosos[a])} em {a}" for a in marcos)
@@ -1254,7 +1248,7 @@ def _envelhecimento(ctx: Contexto) -> Bloco:
             casas=1,
             referencia=date(agora, 1, 1),
             periodicidade="A",
-            detalhe=f"projeção do IBGE: {depois}. Mais em Demografia",
+            detalhe=f"projeção do IBGE: {depois}",
             fonte=f"{ibge_projecao.FONTE} (tabela 4, RDI65)",
             procedencia="oficial",
             secao="riscos",
@@ -1294,7 +1288,7 @@ def _energia(ctx: Contexto) -> Bloco:
             periodicidade="D",
             casas=1,
             detalhe=(
-                f"média dos meses de {meses[mes - 1]} desde {mesmo_mes[0][0].year}: "
+                f"média de {meses[mes - 1]} desde {mesmo_mes[0][0].year}: "
                 f"{br(sum(v for _, v in mesmo_mes[:-1]) / max(1, len(mesmo_mes) - 1))} %"
             ),
             fonte=f"{ons.FONTE}; soma dos quatro subsistemas",
@@ -1347,25 +1341,41 @@ def degraus(agencia: str, hoje: date) -> list[Ponto]:
     return [*pontos, (hoje, pontos[-1][1])]
 
 
+# O eixo do gráfico com o nome da nota (S&P e Fitch / Moody's) no lugar do degrau.
+NOMES_DOS_DEGRAUS = {
+    1: "BBB/Baa2",
+    0: "BBB−/Baa3",
+    -1: "BB+/Ba1",
+    -2: "BB/Ba2",
+    -3: "BB−/Ba3",
+    -4: "B+/B1",
+    -5: "B/B2",
+}
+
+
 def _nota(ctx: Contexto) -> Bloco:
     vigentes = {agencia: historia[-1] for agencia, historia in relatorios.NOTAS.items()}
     abaixo = {a: -relatorios.DEGRAU[nota] for a, (_, nota) in vigentes.items()}
-    partes = "; ".join(
-        f"{a} {nota.replace('-', '−')} (desde {periodo(d, 'D')}, perspectiva "
-        f"{relatorios.PERSPECTIVA[a]})"
-        for a, (d, nota) in vigentes.items()
-    )
+    notas = {a: nota.replace("-", "−") for a, (_, nota) in vigentes.items()}
+    # A nota mais comum vai grande; quem diverge vai no detalhe.
+    principal = max(notas.values(), key=list(notas.values()).count)
+    outras = [f"{a} {n}" for a, n in notas.items() if n != principal]
+    pior = max(abaixo.values())
     bloco = Bloco()
     bloco.cartoes.append(
         Cartao(
             id="nota-de-credito",
-            rotulo="Nota de crédito: degraus abaixo do grau de investimento",
-            valor=float(max(abaixo.values())),
-            unidade="degraus" if max(abaixo.values()) != 1 else "degrau",
+            rotulo="Nota de crédito do Brasil",
+            valor=float(pior),
+            texto=principal,
+            unidade="degraus" if pior != 1 else "degrau",
             casas=0,
             referencia=relatorios.ULTIMO_ATO_LIDO,
             periodicidade="D",
-            detalhe=f"na agência mais dura; {partes}",
+            detalhe=(
+                f"{pior} {'degrau' if pior == 1 else 'degraus'} abaixo do grau de investimento"
+                + (f"; {', '.join(outras)}" if outras else "")
+            ),
             fonte=relatorios.FONTE_NOTAS,
             secao="riscos",
         )
@@ -1379,21 +1389,18 @@ def _nota(ctx: Contexto) -> Bloco:
                 serie("fitch", "Fitch", degraus("Fitch", ctx.hoje), casas=0),
                 serie("moodys", "Moody's", degraus("Moody's", ctx.hoje), casas=0),
             ],
+            subtitulo="De BBB− para cima, grau de investimento",
             tipo="degrau",
-            unidade="degraus em relação ao grau de investimento",
+            unidade="",
             casas=0,
             periodicidade="D",
             linhas=[LinhaRef(valor=0.0, rotulo="grau de investimento (BBB−/Baa3)")],
+            marcas_y=[LinhaRef(valor=float(v), rotulo=n) for v, n in NOMES_DOS_DEGRAUS.items()],
             fonte=relatorios.FONTE_NOTAS,
             nota=(
-                "Dívida de longo prazo em moeda estrangeira. Escala: 1 = BBB/Baa2; 0 = "
-                "BBB−/Baa3, o menor grau de investimento; −1 = BB+/Ba1; −2 = BB/Ba2; −3 = "
-                "BB−/Ba3; −4 = B+/B1; −5 = B/B2. Só as mudanças de nota, na data que o "
-                "Tesouro registra; a perspectiva não aparece. O Brasil teve grau de "
-                "investimento de 2008 a 2015–16. Lido à mão em 14/11/2026: o sistema do "
-                "Tesouro que serve a tabela estava fora do ar, e o trecho até 2024 veio de "
-                "cópias arquivadas das páginas do próprio Tesouro; depois de "
-                f"{periodo(relatorios.ULTIMO_ATO_LIDO, 'D')} não achamos comunicado dele."
+                "Dívida de longo prazo em moeda estrangeira; só as mudanças de nota, sem a "
+                "perspectiva (hoje estável nas três). Lido à mão no Tesouro em 14/11/2026; "
+                f"depois de {periodo(relatorios.ULTIMO_ATO_LIDO, 'D')} não achamos ato novo."
             ),
         )
     )
@@ -1488,12 +1495,7 @@ def montar(ctx: Contexto) -> Secao:
             casas=0,
             referencia=ctx.hoje,
             periodicidade="D",
-            detalhe=(
-                "; ".join(a.nome.lower() for a in acesos[:3])
-                + (f" e mais {len(acesos) - 3}" if len(acesos) > 3 else "")
-                if acesos
-                else "nenhum aceso; abra o painel de alerta"
-            ),
+            detalhe=_mais_grave(acesos),
             fonte="Painel de alerta desta página (cada linha com a sua fonte); cálculo próprio",
             procedencia="calculado",
             secao="riscos",

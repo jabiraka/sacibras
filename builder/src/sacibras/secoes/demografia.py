@@ -26,7 +26,7 @@ from sacibras.schema import (
     Serie,
     Tabela,
 )
-from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.secoes.base import Contexto, br, cartao, grafico, serie
 from sacibras.secoes.estados import UFS
 from sacibras.tipos import Ponto
 
@@ -194,8 +194,8 @@ def montar(ctx: Contexto) -> Secao:
     fecundidade, mediana = ind["TFT"], ind["ID_MED"]
     nascimentos, obitos = ind["NASC_T"], ind["OBT_T"]
 
-    ano_pico_pop, pop_pico = pico(populacao)
-    ano_pico_pia, pia_pico = pico(pia)
+    ano_pico_pop, _ = pico(populacao)
+    ano_pico_pia, _ = pico(pia)
     obitos_passam = primeiro_ano(obitos, lambda a: obitos[a] > nascimentos.get(a, math.inf))
     abaixo_da_reposicao = primeiro_ano(fecundidade, lambda a: fecundidade[a] < REPOSICAO)
     idosos_passam = primeiro_ano(dep_idosos, lambda a: dep_idosos[a] > dep_jovens.get(a, math.inf))
@@ -244,10 +244,7 @@ def montar(ctx: Contexto) -> Secao:
             populacao,
             unidade="milhões",
             escala=1e-6,
-            detalhe=(
-                f"projeção do IBGE para {agora}; para de crescer em {ano_pico_pop} "
-                f"({br(pop_pico / 1e6)} mi) e chega a {br(populacao[2070] / 1e6)} mi em 2070"
-            ),
+            detalhe=f"projeção do IBGE; para de crescer em {ano_pico_pop}",
             fonte=fonte_tab3,
         ),
         cartao_proj(
@@ -256,7 +253,7 @@ def montar(ctx: Contexto) -> Secao:
             fecundidade,
             unidade="por mulher",
             casas=2,
-            detalhe=f"filhos por mulher; a reposição é de cerca de 2,1, {reposicao_txt}",
+            detalhe=f"filhos por mulher; reposição: 2,1 ({reposicao_txt})",
             fonte=fonte_tab4,
         ),
         cartao_proj(
@@ -265,8 +262,8 @@ def montar(ctx: Contexto) -> Secao:
             dep_idosos,
             unidade="por 100",
             detalhe=(
-                f"{br(por_idoso_hoje)} pessoas em idade de trabalhar por idoso; em 2050, "
-                f"{br(100 / dep_idosos[2050])}; em 2070, {br(100 / dep_idosos[2070])}"
+                f"{br(por_idoso_hoje)} em idade de trabalhar por idoso; "
+                f"2070: {br(100 / dep_idosos[2070])}"
             ),
             fonte=fonte_tab4,
         ),
@@ -285,7 +282,6 @@ def montar(ctx: Contexto) -> Secao:
             "Tesouro Nacional, Resultado do Tesouro Nacional (tabela 1.1: benefícios "
             f"previdenciários e arrecadação líquida para o RGPS); PIB: {ctx.fonte_sgs('PIB_12M')}"
         )
-        mes = periodo(deficit[-1][0], "M")
         cartao_inss = cartao(
             "deficit-inss",
             "Déficit do INSS em 12 meses",
@@ -294,8 +290,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             casas=1,
             detalhe=(
-                f"benefícios de {br(beneficios[-1][1])} % do PIB contra arrecadação de "
-                f"{br(arrecadacao[-1][1])} %, nos 12 meses até {mes}"
+                f"benefícios {br(beneficios[-1][1])} % do PIB; "
+                f"arrecadação {br(arrecadacao[-1][1])} %"
             ),
             fonte=fonte_rtn,
             procedencia="calculado",
@@ -343,7 +339,6 @@ def montar(ctx: Contexto) -> Secao:
     )
     var_prod = contas.variacao(prod["por_ocupado"], 4)
     media_anual = media_geometrica([x.produtividade for x in decomposicao])
-    trimestre = periodo(var_prod[-1][0], "T")
 
     cartoes += [
         cartao_proj(
@@ -351,10 +346,7 @@ def montar(ctx: Contexto) -> Secao:
             "Esperança de vida ao nascer",
             ind["e0_T"],
             unidade="anos",
-            detalhe=(
-                f"homens {br(ind['e0_H'][agora])}, mulheres {br(ind['e0_M'][agora])}; quem "
-                f"chega aos 60 vive em média mais {br(ind['e60_T'][agora])} anos"
-            ),
+            detalhe=f"homens {br(ind['e0_H'][agora])}; mulheres {br(ind['e0_M'][agora])}",
             fonte=fonte_tab4,
         ),
         cartao_proj(
@@ -362,8 +354,7 @@ def montar(ctx: Contexto) -> Secao:
             "Idade mediana",
             mediana,
             unidade="anos",
-            detalhe=f"metade tem mais que isso; era {br(mediana[2000])} em 2000, será "
-            f"{br(mediana[2070])} em 2070",
+            detalhe=f"era {br(mediana[2000])} em 2000; será {br(mediana[2070])} em 2070",
             fonte=fonte_tab4,
         ),
         cartao_proj(
@@ -372,10 +363,7 @@ def montar(ctx: Contexto) -> Secao:
             pia,
             unidade="milhões",
             escala=1e-6,
-            detalhe=(
-                f"a idade de trabalhar; para de crescer em {ano_pico_pia} "
-                f"({br(pia_pico / 1e6)} mi) e cai a {br(pia[2070] / 1e6)} mi em 2070"
-            ),
+            detalhe=f"a idade de trabalhar; para de crescer em {ano_pico_pia}",
             fonte=fonte_tab3,
         ),
         cartao(
@@ -386,11 +374,10 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="T",
             casas=1,
             detalhe=(
-                f"quatro trimestres até o {trimestre} contra os quatro anteriores; de "
-                f"{decomposicao[0].ano} a {decomposicao[-1].ano}, média de "
+                f"média de {decomposicao[0].ano} a {decomposicao[-1].ano}: "
                 f"{br(media_anual, 2)} % ao ano"
                 if decomposicao
-                else f"quatro trimestres até o {trimestre} contra os quatro anteriores"
+                else "contra os quatro trimestres anteriores"
             ),
             fonte=fonte_prod,
             procedencia="calculado",

@@ -411,6 +411,30 @@ PARTES: dict[str, list[Parte]] = {
 }
 
 
+# Estados tem peças próprias (mapa, ranking, ficha, duas métricas), montadas no navegador:
+# as partes dizem só o nome e o resumo, e o site sabe o que vai em cada uma (Caio,
+# 14/11/2026: "diminua a tela ao abrir por estado, também não precisa mostrar tudo em uma
+# página só").
+PARTES_ESTADOS: list[Parte] = [
+    Parte("mapa", "Mapa e ranking", "Uma métrica nos 27 estados, do maior ao menor."),
+    Parte(
+        "estado",
+        "Um estado por dentro",
+        "Receita, despesa e dívida de um estado, uma parte de cada vez.",
+    ),
+    Parte("duas-metricas", "Duas métricas", "Um ponto por estado, com duas métricas juntas."),
+    Parte("tabela", "Tabela completa", "Todas as métricas, estado por estado."),
+]
+
+
+def partes_dos_estados(tem_contas: bool) -> list[Subcategoria]:
+    return [
+        Subcategoria(id=p.id, titulo=p.titulo, resumo=p.resumo)
+        for p in PARTES_ESTADOS
+        if tem_contas or p.id != "estado"
+    ]
+
+
 def aplicar(secao: Secao) -> list[str]:
     """Põe as subcategorias na seção; devolve o que ficou sem lugar (foi para "Outros").
 

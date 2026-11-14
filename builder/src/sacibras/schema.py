@@ -89,6 +89,8 @@ class Grafico(Modelo):
     faixa: Faixa | None = None
     intervalos: list[Intervalo] = Field(default_factory=list)
     linhas: list[LinhaRef] = Field(default_factory=list)
+    marcas_y: list[LinhaRef] = Field(default_factory=list)
+    """Eixo vertical com nome em vez de número (a nota de crédito: 0 = "BBB−/Baa3")."""
     janela_anos: float | None = None
     """Quanto de história abre na tela (o resto fica atrás do botão "máx")."""
     fonte: str
@@ -132,6 +134,8 @@ class Cartao(Modelo):
     referencia: date
     periodicidade: Periodicidade
     detalhe: str = ""
+    texto: str = ""
+    """Mostrado no lugar do número quando o resultado é um nome (a nota de crédito: "BB")."""
     anterior: float | None = None
     anterior_rotulo: str = ""
     fonte: str
@@ -383,6 +387,8 @@ class Estados(Modelo):
     metricas: list[MetricaEstados]
     arquivo_contas: str = ""
     """O JSON com `EstadosContas`, quando houver."""
+    subcategorias: list[Subcategoria] = Field(default_factory=list)
+    """As partes da tela (`organizacao.PARTES_ESTADOS`): o site monta cada uma sozinha."""
     gerado_em: datetime
 
 

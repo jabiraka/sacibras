@@ -552,7 +552,7 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
                 periodicidade="D",
                 casas=2,
                 detalhe=(
-                    f"a inflação que os títulos embutem para depois de {meio} anos; meta "
+                    f"a dos títulos para depois de {meio} anos; meta "
                     f"{br(leis.META_CONTINUA.centro, 0)} %"
                 ),
                 fonte=fonte,

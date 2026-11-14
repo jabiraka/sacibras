@@ -1155,7 +1155,12 @@ main {
   background: color-mix(in srgb, var(--faixa) 30%, transparent);
 }
 
-/* A barra de erro na legenda: uma cápsula em pé, como no gráfico. */
+/* A linha de referência (meta, média, limite): pontilhada, como no gráfico. */
+.chave.referencia {
+  border-top: 1.5px dotted var(--tinta-2);
+  border-radius: 0;
+}
+
 /* A barra de erro na legenda: um "I" em tinta neutra, como no gráfico. */
 .chave.intervalo {
   width: 9px;
@@ -2583,15 +2588,39 @@ button.ponto-linha:hover {
 
 .ficha-numeros {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  gap: 8px;
+}
+
+/* As contas do estado, um bloco de cada vez: as abas em cima. */
+.ficha-abas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ficha-abas .pilula {
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.ficha-palco .ficha-bloco {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* A visão geral de Estados: só o mapa, sem ocupar a tela inteira. */
+.estados-so-mapa {
+  margin-top: 18px;
+  max-width: 30rem;
 }
 
 .ficha-numero {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 12px 14px;
+  gap: 2px;
+  padding: 10px 12px;
   border-radius: 14px;
   background: var(--vidro-sutil);
   border: 1px solid var(--borda);
@@ -2603,7 +2632,7 @@ button.ponto-linha:hover {
 }
 
 .ficha-numero strong {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 500;
   letter-spacing: -0.02em;
 }

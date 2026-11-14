@@ -31,6 +31,8 @@ const TEXTO = [
   "p.posicao",
   ".alerta-texto p",
   ".guardado summary small",
+  ".ficha-bloco .sub",
+  ".ficha-numero .detalhe",
 ].join(",");
 
 /** Onde o termo ganha um "?" ao lado (rótulos curtos, em que sublinhar atrapalha a leitura). */
@@ -40,10 +42,15 @@ const ROTULO = [
   ".essencial .rotulo",
   ".alerta-nome > span:first-child",
   ".painel-mundo > h3",
+  ".ficha-numero .rotulo",
+  ".ficha-bloco h4",
+  ".ficha-partes tbody th",
+  ".dados.larga thead th",
 ].join(",");
 
 /** A peça dentro da qual um termo só se marca uma vez. */
-const PECA = ".cartao, .grafico, .guardado, .alerta, .essencial, .painel-mundo";
+const PECA =
+  ".cartao, .grafico, .guardado, .alerta, .essencial, .ficha-numero, .ficha-bloco, .painel-mundo";
 
 /** Elementos em que não se mexe: o que já é clicável, campos e o próprio glossário. */
 const NAO_MEXER = "a:not(.essencial), button, select, option, input, textarea, .termo, .balao";
@@ -254,6 +261,15 @@ function marcar(raiz: ParentNode): void {
     if (b.dataset.gl) continue;
     b.dataset.gl = "1";
     marcarTexto(b);
+  }
+}
+
+/** O texto de `no` foi trocado (outra métrica na lista): marca de novo, do zero. */
+export function remarcar(no: Element): void {
+  marcadosPorPeca.delete(no.closest(PECA) ?? no);
+  marcadosPorPeca.delete(no);
+  for (const n of [no, ...no.querySelectorAll("[data-gl]")]) {
+    if (n instanceof HTMLElement) delete n.dataset.gl;
   }
 }
 

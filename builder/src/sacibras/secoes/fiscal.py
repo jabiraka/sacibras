@@ -109,10 +109,7 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         unidade="R$ bilhões",
         periodicidade="M",
         casas=1,
-        detalhe=(
-            f"a meta vale para o ano de {meta.ano}; na conta da meta, o governo desconta "
-            f"R$ {br(ultima.deducao)} bi (relatório do {ultima.bimestre})"
-        ),
+        detalhe=f"meta de {meta.ano}; a conta oficial desconta R$ {br(ultima.deducao)} bi",
         fonte=f"{fonte_bc}; meta: {meta.referencia}",
         secao="fiscal",
         mini=60,
