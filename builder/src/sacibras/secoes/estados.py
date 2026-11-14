@@ -321,7 +321,7 @@ def _fatias(partes: list[tuple[str, float | None]], outras: float | None = None)
     return fatias
 
 
-def _bloco_receita(r: siconfi.ReceitaAnual, ano: int) -> BlocoDeConta:
+def _bloco_receita(r: siconfi.ReceitaAnual, ano: int, sigla: str = "") -> BlocoDeConta:
     impostos = (r.icms or 0) + (r.ipva or 0) + (r.itcmd or 0)
     outros_tributos = (r.tributos - impostos) if r.tributos is not None else None
     outras_uniao = (r.uniao - (r.fpe or 0)) if r.uniao is not None else None
@@ -342,6 +342,12 @@ def _bloco_receita(r: siconfi.ReceitaAnual, ano: int) -> BlocoDeConta:
             "O dinheiro que o governo do estado arrecadou no ano, por fonte: impostos próprios, "
             "repasses da União e o que volta do Fundeb. Valores brutos, antes de repassar aos "
             "municípios."
+            + (
+                " O DF também cobra os impostos que nos estados são dos municípios (IPTU, ISS e "
+                'ITBI): eles estão em "Outros impostos".'
+                if sigla == "DF"
+                else ""
+            )
         ),
         referencia=f"{ano} (ano fechado)",
         fonte=(
@@ -412,6 +418,9 @@ def _blocos_divida(c: siconfi.ComposicaoDivida, ref: str) -> list[BlocoDeConta]:
         ("Empréstimos e financiamentos no país", c.emprestimos_internos),
         ("Empréstimos e financiamentos no exterior", c.emprestimos_externos),
         ("Precatórios vencidos e não pagos", c.precatorios),
+        ("Parcelamentos (tributos e previdência)", c.parcelamentos),
+        ("Demais dívidas contratuais", c.demais_contratuais),
+        ("Outras dívidas", c.outras),
     ]
     blocos = [
         BlocoDeConta(
@@ -498,7 +507,7 @@ def _contas(
         numeros: list[Cartao] = []
         fonte_dca = f"Tesouro Nacional, SICONFI, DCA {ano}"
         if a and a.receita:
-            blocos.append(_bloco_receita(a.receita, ano))
+            blocos.append(_bloco_receita(a.receita, ano, sigla))
         if a and a.despesa:
             blocos.append(_bloco_despesa(a.despesa, ano))
         if a and a.funcoes:

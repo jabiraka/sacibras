@@ -565,3 +565,31 @@ def test_sem_dca_o_estados_json_sai_sem_o_arquivo_de_contas(
     ctx = Contexto(hoje=date(2026, 11, 14))
     e = estados.montar(ctx)
     assert e.arquivo_contas == "" and "estados_contas" not in ctx.memo
+
+
+def test_composicao_le_as_demais_dividas_contratuais() -> None:
+    """TO e PR lançam parte da dívida em "Demais dívidas contratuais" (achado em 14/11/2026)."""
+    col = "Até o 2º Quadrimestre"
+    linhas = {
+        "DividaConsolidada": 5471.7,
+        "RGF2FinanciamentosInternos": 3403.1,
+        "RGF2EmprestimosInternos": 0.4,
+        "RGF2FinanciamentosExternos": 1031.6,
+        "RGF2ParcelamentoERenegociacaoDeDividas": 87.4,
+        "RGF2DemaisDividasContratuais": 174.1,
+        "PrecatoriosPosterioresA05052000VencidosENaoPagos": 737.7,
+        "OutrasDividas": 37.3,
+    }
+    itens = [{"cod_conta": k, "coluna": col, "valor": v} for k, v in linhas.items()]
+    c = siconfi.parse_composicao_divida(itens, 2)
+    assert c is not None
+    partes = (
+        c.uniao
+        + c.emprestimos_internos
+        + c.emprestimos_externos
+        + c.parcelamentos
+        + c.demais_contratuais
+        + c.precatorios
+        + c.outras
+    )
+    assert partes == pytest.approx(c.total, abs=0.2)  # os valores acima vêm arredondados

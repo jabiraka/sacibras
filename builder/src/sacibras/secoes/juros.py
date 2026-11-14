@@ -242,7 +242,8 @@ def _mercado_x_focus(
     ]
     degraus_ipca += [(date(a, 1, 1), v) for a, v in sorted(ipca_anual.items()) if a > ctx.hoje.year]
     horizonte = date(min(ultimo_ano, max(ipca_anual)) + 1, 1, 1)
-    alem = date(horizonte.year + 5, 1, 1)
+    # Só onde o Focus tem previsão: esticar o último ano dele inflaria a diferença.
+    alem = horizonte
 
     def prazos(curva: curvas.Curva, desde: int) -> list[date]:
         vencimentos = [
@@ -257,7 +258,7 @@ def _mercado_x_focus(
         juro_titulos.append((d, nominal.taxa(nominal.du_de(d)) * 100))
         juro_focus.append((d, curvas.media_do_caminho(degraus_selic, dia, d)))
     inflacao = curvas.inflacao_implicita(
-        nominal, real, [v for v, _ in ipca_mais] + prazos(real, real.vertices[0][0])
+        nominal, real, [v for v, _ in ipca_mais if v <= alem] + prazos(real, real.vertices[0][0])
     )
     infl_titulos = [(p.vencimento, p.implicita) for p in inflacao]
     infl_focus = [
@@ -268,7 +269,11 @@ def _mercado_x_focus(
         "Tesouro Direto (taxa média, curva zero com os títulos com cupom por bootstrap); "
         f"Focus de {periodo(dia, 'D')}"
     )
-    nota_alem = f" Depois de {horizonte.year - 1}, o último ano do Focus fica parado (tracejado)."
+    nota_alem = (
+        f" Vai até {periodo(horizonte, 'M')}, o fim do que o Focus projeta. A diferença junta "
+        "duas coisas que o preço não separa: o mercado esperar uma Selic (ou uma inflação) "
+        "diferente da dos economistas e o prêmio por prender o dinheiro por mais tempo."
+    )
     alvo = date(ctx.hoje.year + 2, 1, 1)
     titulo_alvo = dict(juro_titulos).get(alvo)
     focus_alvo = dict(juro_focus).get(alvo)
@@ -332,7 +337,6 @@ def _mercado_x_focus(
                     juro_focus,
                     casas=2,
                     papel="consenso",
-                    tracejado_desde=horizonte,
                 ),
             ],
             tipo="curva",
@@ -361,7 +365,6 @@ def _mercado_x_focus(
                         infl_focus,
                         casas=2,
                         papel="consenso",
-                        tracejado_desde=horizonte,
                     ),
                 ],
                 tipo="curva",

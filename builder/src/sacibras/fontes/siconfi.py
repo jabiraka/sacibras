@@ -99,6 +99,8 @@ class ComposicaoDivida:
     """Disponibilidade de caixa (já sem restos a pagar e depósitos vinculados)."""
     haveres: float | None
     liquida: float | None
+    demais_contratuais: float = 0.0
+    """"Demais dívidas contratuais" (TO e PR lançam parte da dívida aqui)."""
 
 
 @dataclass(frozen=True)
@@ -264,6 +266,7 @@ def parse_composicao_divida(
         caixa=v("RGF2DisponibilidadeDeCaixa"),
         haveres=v("DemaisHaveresFinanceiros"),
         liquida=v("DividaConsolidadaLiquida"),
+        demais_contratuais=v("RGF2DemaisDividasContratuais") or 0.0,
     )
 
 
