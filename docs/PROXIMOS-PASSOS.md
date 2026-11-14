@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (oitava sessão do dia: Riscos).
+Última atualização: 14/11/2026 (nona sessão do dia: título da aba sem travessão).
 
 ---
 
@@ -38,6 +38,9 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   ocupada e mais produto por ocupado. Previdência: déficit do INSS em % do PIB (RTN, linha nova
   "arrecadação líquida para o RGPS"). Gráfico com projeção de mais de 10 anos fica sem os
   botões de janela (`grafico.ts`).
+- **Título da aba** sem o travessão (Caio, 14/11/2026): `sacibras · status da economia
+  brasileira` (`web/index.html`). O menu lateral está no ar desde o deploy das 12h15: aparece
+  a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
 
