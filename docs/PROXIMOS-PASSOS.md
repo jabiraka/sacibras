@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o efeito da Selic, o simulador dela com faixas de erro e o gancho da proposta de Lara Resende, juntos no `main` com Impostos, Estados em partes e tradução).
+Última atualização: 14/11/2026 (os prazos de releitura em `leituras.py` e as issues automáticas "releitura" e "fonte fora do ar").
 
 ---
 
@@ -43,6 +43,28 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
+
+## Avisos automáticos (14/11/2026, na nuvem, branch `ccr-6152044c-ywy19o`)
+
+Pergunta do Caio: *"como o site atualiza? Tem jobs diários? E a manutenção das leis e
+números?"*; pedido: o prazo no código e o aviso de fonte fora do ar (*"faça o 1 e o 2"*).
+
+- **Prazos de releitura** (`builder/src/sacibras/leituras.py`): cada número lido à mão em
+  `leis.py` e `relatorios.py` (13 hoje) com a data da leitura, o prazo e onde procurar a
+  nova; o teste confere que `onde` aponta para um nome que existe. `uv run sacibras leituras
+  --todas` mostra a tabela; o build imprime "aviso: releitura vencida". **Ao reler, atualizar
+  também a `lida_em` e o `reler_ate` ali.**
+- **Workflow "Prazos de releitura"** (`.github/workflows/prazos.yml`, dias úteis, 8h23): abre
+  ou atualiza a issue com o rótulo `releitura` quando um prazo vence ou falta uma semana,
+  fecha quando tudo está em dia, e fica vermelho com prazo vencido.
+- **Fonte fora do ar** (`build-deploy.yml`, `--falhas`): seção que falha no build do `main`
+  abre a issue `fonte fora do ar` com o erro (no Actions a seção some do site, porque a pasta
+  de dados começa vazia), comenta quando muda e fecha quando todas voltam. O script das duas
+  issues é `.github/scripts/aviso.js` (testado com um GitHub de mentira; no Actions de
+  verdade, só depois de ir ao `main`).
+- **Primeiros prazos**: avaliação do 5º bimestre (24/11), nota fiscal do BC (03/12), nota de
+  crédito (14/12), RPM de dezembro (31/12), LDO 2027 (15/01, só do PC).
+- Ideia em espera: uma tarefa agendada que relê sozinha e abre PR ([PROPOSTAS](PROPOSTAS.md)).
 
 ## Sessão da Selic (14/11/2026, na nuvem, branch `ccr-567b9de5-xode7j`, publicada no `main`)
 
