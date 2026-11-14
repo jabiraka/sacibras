@@ -53,15 +53,15 @@ fonte aberta:
 
 | Econvitals (EUA) | Par brasileiro | Fonte | Situação |
 |------------------|----------------|-------|----------|
-| 2, 5, 10 e 30 anos; 2s10s | juro prefixado de 2, 5 e 10 anos e a inclinação | curva zero do Tesouro (`curvas.py`) | em andamento |
-| Real 10y, breakeven 10y, 5y5y forward | juro real e inflação implícita de 5 e 10 anos; a implícita de 5 anos daqui a 5 anos | idem | em andamento |
-| 10-year decomposition | o prefixado de 10 anos = juro real + inflação implícita, no tempo | idem, um ponto por semana | em andamento |
-| Core PCE 1 e 3 meses anualizados; tabela de medidas | IPCA, núcleos, serviços, industriais, alimentação, livres e administrados em 1, 3 e 12 meses | SGS | em andamento |
-| Participação, EPOP, U-6, desemprego de longo prazo | participação, nível de ocupação, subutilização, desalento, informalidade | SIDRA (PNAD Contínua) | em andamento |
-| Payrolls com média de 3 meses, por setor | Caged com média de 3 meses, por setor | IPEADATA / Novo Caged | em andamento |
-| Current e financial account em partes | balança, renda primária e secundária; investimento direto, carteira, outros, reservas | SGS (BPM6) | em andamento |
-| Mortgage rate, house prices | juro do financiamento imobiliário, IVG-R (preço dos imóveis financiados) | SGS | em andamento |
-| Debt service, interest payments | comprometimento da renda só com juros, endividamento sem o imobiliário | SGS | em andamento |
+| 2, 5, 10 e 30 anos; 2s10s | juro prefixado de 2, 5 e 10 anos e a inclinação | curva zero do Tesouro (`curvas.py`) | ✅ tabela "Juro e inflação implícita por prazo" (Juros) |
+| Real 10y, breakeven 10y, 5y5y forward | juro real e inflação implícita de 5 e 10 anos; a implícita de 5 anos daqui a 5 anos | idem | ✅ na tabela e no cartão da implícita de 5 a 10 anos (6,98 % em 12/11/2026) |
+| 10-year decomposition | o prefixado de 10 anos = juro real + inflação implícita, no tempo | idem, um ponto por semana | ✅ no maior prazo que cobre os dois anos (8 anos hoje: o de 10 não existia em 2025) |
+| Core PCE 1 e 3 meses anualizados; tabela de medidas | IPCA, núcleos, serviços, industriais, alimentação, livres e administrados em 1, 3 e 12 meses | SGS | ✅ tabela, gráfico e cartão (sem ajuste sazonal, dito na tela). Falta: serviços subjacentes (código SGS não achado) |
+| Participação, EPOP, U-6, desemprego de longo prazo | participação, nível de ocupação, subutilização, desalento, informalidade | SIDRA (PNAD Contínua) | ✅ quatro cartões, cinco gráficos e a tabela "Mercado de trabalho, em detalhe" |
+| Payrolls com média de 3 meses, por setor | Caged com média de 3 meses, por setor | IPEADATA / Novo Caged | ✅ média de 3 meses. Falta: por setor (o IPEADATA não tem; as séries SGS 28764 a 28783 parecem setoriais, mas sem nome que dê para ler) |
+| Current e financial account em partes | balança, renda primária e secundária; investimento direto, carteira, outros, reservas | SGS (BPM6) | ✅ gráfico empilhado e tabela em US$ e % do PIB |
+| Mortgage rate, house prices | juro do financiamento imobiliário, IVG-R (preço dos imóveis financiados) | SGS | ✅ juro de mercado e regulado, concessões, IVG-R contra o IPCA |
+| Debt service, interest payments | comprometimento da renda só com juros, endividamento sem o imobiliário | SGS | ✅ |
 | Saving rate, investimento | taxa de investimento e de poupança (% do PIB) | SIDRA (contas trimestrais) | ideia |
 | Real final sales to private domestic purchasers | consumo das famílias + investimento, sem governo e estoques | SIDRA | ideia |
 | Productivity | PIB por pessoa ocupada | SIDRA | ideia |

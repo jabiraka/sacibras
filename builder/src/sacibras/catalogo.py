@@ -50,7 +50,8 @@ SGS: dict[str, SerieSGS] = {
     "IGPM": SerieSGS(189, "IGP-M, variação mensal", "% no mês", "M", "13/11/2026"),
     "INPC": SerieSGS(188, "INPC, variação mensal", "% no mês", "M", "14/11/2026"),
     # Os cinco núcleos que o BCB acompanha nos documentos de política monetária.
-    # Atenção: 11427 é o EX0 e 16121 é o EX1 (o palpite de memória tinha os dois trocados).
+    # Atenção: 11427 é o EX0. O 16121 (fora daqui) o CKAN chama de EX2 e o SGS de EX1: não usar
+    # sem tirar a dúvida (14/11/2026).
     "NUCLEO_EX0": SerieSGS(11427, "IPCA, núcleo por exclusão EX0", "% no mês", "M", "14/11/2026"),
     "NUCLEO_EX3": SerieSGS(27839, "IPCA, núcleo por exclusão EX3", "% no mês", "M", "14/11/2026"),
     "NUCLEO_MS": SerieSGS(

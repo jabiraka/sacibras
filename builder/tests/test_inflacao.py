@@ -41,9 +41,13 @@ def test_tabela_traz_mes_tres_meses_um_ano_antes_e_doze() -> None:
         [("IPCA", [ipca], "SGS 433"), ("Atrasada", [atrasada], "SGS 1")], "Banco Central"
     )
     assert tabela is not None
-    assert tabela.subtitulo == "Até dez/2026, em %"
-    assert tabela.colunas[1] == "3 meses até dez/2026, anualizado (%)"
-    assert tabela.colunas[2] == "3 meses até dez/2025, anualizado (%)"
+    assert tabela.subtitulo.startswith("Até dez/2026. Um ano antes: os 3 meses até dez/2025")
+    assert tabela.colunas == [
+        "No mês (%)",
+        "3 meses, anualizado (%)",
+        "Um ano antes (%)",
+        "12 meses (%)",
+    ]
     mes, tres, antes, doze = tabela.linhas[0].valores
     assert mes == pytest.approx(0.5)
     assert tres == pytest.approx((1.005**12 - 1) * 100)

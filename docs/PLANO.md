@@ -325,8 +325,8 @@ Marcação de 14/11/2026: ✅ feito, 🟡 em parte, ⬜ por fazer.
 - ✅ Esqueleto ponta a ponta. ⬜ Deploy no Pages: o workflow `build-deploy.yml` publica a
   partir do `main`; falta ligar o Pages no repositório (Settings → Pages → GitHub Actions).
 
-**Fase 1 — Macro núcleo** 🟡: ✅ Resumo, Atividade, Trabalho, Inflação, Juros e Copom (Focus por
-reunião e Selic embutida na curva do Tesouro), Setor externo, Crédito; os números da página
+**Fase 1 — Macro núcleo** 🟡: ✅ Resumo, Atividade, Trabalho (com subutilização, participação, informalidade e desalento), Inflação (medidas em 1, 3 e 12 meses), Juros e Copom (Focus por
+reunião e Selic embutida na curva do Tesouro; juro e inflação implícita por prazo), Setor externo (balanço de pagamentos em partes), Crédito (financiamento imobiliário, IVG-R, juros na renda das famílias); os números da página
 inicial buscam o ponto mais novo direto do navegador. ⬜ Contribuições do PIB por componente,
 informalidade e participação (PNAD trimestral).
 

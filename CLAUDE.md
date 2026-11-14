@@ -24,6 +24,9 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - **Registro explícito de séries com unidade** em `builder/src/sacibras/catalogo.py`. Série nova
   só entra depois de conferida no catálogo da fonte (para o SGS:
   `dadosabertos.bcb.gov.br/api/3/action/package_search?fq=codigo_sgs:N`), com a data no comentário.
+  Série que o BC não lista no CKAN (EX3, P55, industriais, alimentação no domicílio) se confere
+  no serviço de metadados do próprio SGS e, quando der, contra outra fonte oficial (o IBGE),
+  dito no comentário.
 - **O site da B3 fica desligado** (`SB_B3`), pendente de decisão do Caio: a B3 veda coleta
   automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)). Não
   ligar no workflow nem no compose sem o "sim" dele.

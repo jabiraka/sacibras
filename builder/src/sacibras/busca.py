@@ -18,7 +18,8 @@ from pydantic import BaseModel
 SINONIMOS: dict[str, list[str]] = {
     "ipca": ["inflacao", "precos", "custo de vida", "carestia", "inflação oficial"],
     "inflacao": ["ipca", "precos", "custo de vida", "carestia", "alta dos precos"],
-    "nucleo": ["inflacao subjacente", "nucleos"],
+    "nucleo": ["inflacao subjacente", "nucleos", "ritmo da inflacao", "anualizado"],
+    "anualizado": ["ritmo", "ritmo da inflacao", "inflacao recente"],
     "selic": ["juros", "taxa basica", "copom", "banco central", "taxa de juros"],
     "juro": ["juros", "selic", "taxa", "rendimento"],
     "copom": ["selic", "juros", "banco central", "reuniao"],
