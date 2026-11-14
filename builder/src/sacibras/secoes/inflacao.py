@@ -27,8 +27,83 @@ GRUPOS_IPCA = {
 }
 
 
+# As medidas da tabela de 1, 3 e 12 meses: rótulo e as séries mensais (mais de uma, a média).
+MEDIDAS: list[tuple[str, list[str]]] = [
+    ("IPCA", ["IPCA"]),
+    ("Média dos núcleos", NUCLEOS),
+    ("Núcleo EX0 (exclusão)", ["NUCLEO_EX0"]),
+    ("Núcleo EX3 (exclusão)", ["NUCLEO_EX3"]),
+    ("Núcleo MS (médias aparadas)", ["NUCLEO_MS"]),
+    ("Núcleo DP (dupla ponderação)", ["NUCLEO_DP"]),
+    ("Núcleo P55 (percentil 55)", ["NUCLEO_P55"]),
+    ("Serviços", ["IPCA_SERVICOS"]),
+    ("Bens industriais", ["IPCA_INDUSTRIAIS"]),
+    ("Alimentação no domicílio", ["IPCA_ALIMENTACAO_DOMICILIO"]),
+    ("Itens livres", ["IPCA_LIVRES"]),
+    ("Administrados", ["IPCA_ADMINISTRADOS"]),
+]
+
+SEM_AJUSTE = (
+    "Os anualizados de 1 e 3 meses são sem ajuste sazonal (o Banco Central não publica essas "
+    "medidas dessazonalizadas no SGS) e por isso sobem e descem com a época do ano, com "
+    "alimentos e serviços: compare com o mesmo período do ano anterior, e não só com a meta."
+)
+
+
 def media_dos_nucleos_12m(ctx: Contexto) -> list[Ponto]:
     return contas.media_das_series([contas.acumulado(ctx.sgs(n), 12) for n in NUCLEOS])
+
+
+def ritmo(mensais: list[list[Ponto]], n: int, *, anualizar: bool = True) -> list[Ponto]:
+    """A média, entre as séries, da variação composta em `n` meses (levada ao ano, ou não).
+
+    Com uma série só, é ela mesma. Com n = 12, anualizado e acumulado dão o mesmo número."""
+    if anualizar:
+        return contas.media_das_series([contas.anualizado(s, n) for s in mensais])
+    return contas.media_das_series([contas.acumulado(s, n) for s in mensais])
+
+
+def tabela_medidas(medidas: list[tuple[str, list[list[Ponto]], str]], fonte: str) -> Tabela | None:
+    """IPCA, núcleos e aberturas no mês, em 3 meses anualizado (agora e um ano antes) e em 12.
+
+    `medidas`: (rótulo, séries mensais em % no mês, fonte da linha). A data de referência é
+    o último mês da primeira medida (o IPCA); quem não tem esse mês fica com "–"."""
+    if not medidas or not medidas[0][1] or not medidas[0][1][0]:
+        return None
+    quando = medidas[0][1][0][-1][0]
+    antes = quando.replace(year=quando.year - 1)
+    linhas = []
+    for rotulo, mensais, fonte_linha in medidas:
+        mes = dict(ritmo(mensais, 1, anualizar=False))
+        tres = dict(ritmo(mensais, 3))
+        doze = dict(ritmo(mensais, 12, anualizar=False))
+        linhas.append(
+            LinhaTabela(
+                rotulo=rotulo,
+                valores=[mes.get(quando), tres.get(quando), tres.get(antes), doze.get(quando)],
+                unidade="",
+                casas=2,
+                fonte=fonte_linha,
+            )
+        )
+    return Tabela(
+        id="ipca-medidas",
+        titulo="Medidas de inflação: 1, 3 e 12 meses",
+        subtitulo=f"Até {periodo(quando, 'M')}, em %",
+        colunas=[
+            "No mês (%)",
+            f"3 meses até {periodo(quando, 'M')}, anualizado (%)",
+            f"3 meses até {periodo(antes, 'M')}, anualizado (%)",
+            "12 meses (%)",
+        ],
+        linhas=linhas,
+        fonte=fonte,
+        nota=(
+            "Anualizado: a variação composta dos 3 meses levada a 12, (1 + v)^4 − 1. "
+            "Média dos núcleos: a média simples de EX0, EX3, MS, DP e P55, conta nossa. "
+            + SEM_AJUSTE
+        ),
+    )
 
 
 def _faixa_da_meta(ate: date) -> Faixa:
@@ -187,6 +262,32 @@ def montar(ctx: Contexto) -> Secao:
             mini=36,
         ),
     ]
+    mensais_nucleos = [ctx.sgs(n) for n in NUCLEOS]
+    nucleos3 = ritmo(mensais_nucleos, 3)
+    nucleos1 = ritmo(mensais_nucleos, 1)
+    nucleos3_antes = dict(nucleos3).get(nucleos3[-1][0].replace(year=nucleos3[-1][0].year - 1))
+    cartoes.append(
+        cartao(
+            "nucleos-3m",
+            "Média dos núcleos, 3 meses anualizado",
+            nucleos3,
+            unidade="%",
+            periodicidade="M",
+            casas=2,
+            detalhe=(
+                "sem ajuste sazonal"
+                + (
+                    f"; um ano antes: {br(nucleos3_antes, 2)} %"
+                    if nucleos3_antes is not None
+                    else ""
+                )
+            ),
+            fonte=ctx.fonte_sgs(*NUCLEOS),
+            procedencia="calculado",
+            secao="inflacao",
+            mini=36,
+        )
+    )
     ano = ctx.hoje.year
     if ano in focus_anual:
         cartoes.append(
@@ -286,9 +387,36 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=5,
             fonte=ctx.fonte_sgs("IPCA_12M", "INPC", "IGPM"),
         ),
+        grafico(
+            "nucleos-ritmo",
+            "Média dos núcleos: o ritmo do mês, de 3 meses e de 12 meses",
+            [
+                serie("doze", "12 meses", nucleos12, desde=inicio),
+                serie("tres", "3 meses, anualizado", nucleos3, desde=inicio),
+                serie("um", "1 mês, anualizado", nucleos1, desde=inicio),
+            ],
+            unidade="% ao ano",
+            casas=2,
+            periodicidade="M",
+            linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
+            janela_anos=3,
+            fonte=ctx.fonte_sgs(*NUCLEOS),
+            nota=(
+                "Média simples dos cinco núcleos (EX0, EX3, MS, DP e P55), conta nossa. "
+                "Anualizado: a variação composta do período levada a 12 meses. "
+                f"Meta: {meta.referencia}. " + SEM_AJUSTE
+            ),
+        ),
     ]
 
-    tabelas = [t for t in [_tabela_grupos()] if t]
+    medidas = tabela_medidas(
+        [
+            (rotulo, [ctx.sgs(c) for c in chaves], ctx.fonte_sgs(*chaves))
+            for rotulo, chaves in MEDIDAS
+        ],
+        ctx.fonte_sgs(*dict.fromkeys(c for _, chaves in MEDIDAS for c in chaves)),
+    )
+    tabelas = [t for t in [_tabela_grupos(), medidas] if t]
     fora = "acima do teto" if ipca12[-1][1] > teto else "dentro do intervalo"
     resumo = (
         f"O IPCA acumula {br(ipca12[-1][1], 2)} % em 12 meses até {periodo(ipca12[-1][0], 'M')}, "

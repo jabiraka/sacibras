@@ -92,3 +92,11 @@ def em_dias(pontos: list[Ponto], dias: int) -> float | None:
     if not antes or not antes[-1]:
         return None
     return (ultimo / antes[-1] - 1) * 100
+
+
+def anualizado(pontos: list[Ponto], n: int = 3, por_ano: int = 12) -> list[Ponto]:
+    """Taxas em % por período compostas em janelas de `n` e levadas ao ano.
+
+    ((∏(1 + m))^(por_ano / n) − 1): com n = 3 e mensais, o ritmo dos últimos três meses
+    como se durasse um ano. Com n = 1, o mês anualizado."""
+    return [(d, ((1 + v / 100) ** (por_ano / n) - 1) * 100) for d, v in acumulado(pontos, n)]

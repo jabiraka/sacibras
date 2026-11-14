@@ -70,6 +70,15 @@ SGS: dict[str, SerieSGS] = {
         4448, "IPCA, não comercializáveis", "% no mês", "M", "14/11/2026"
     ),
     "IPCA_DIFUSAO": SerieSGS(21379, "IPCA, índice de difusão", "%", "M", "14/11/2026"),
+    # As duas não estão no CKAN do BCB (package_search?fq=codigo_sgs:N dá count 0, como o
+    # EX3 e o P55): título, unidade e periodicidade conferidos em 14/11/2026 no serviço de
+    # metadados do próprio SGS (FachadaWSSGS, getUltimoValorXML): "IPCA - Industriais" e
+    # "IPCA - Alimentação no domicílio", "Var. % mensal", periodicidade M, último ponto out/2026.
+    # Serviços subjacentes não foi achado no CKAN nem nos códigos vizinhos: fica de fora.
+    "IPCA_INDUSTRIAIS": SerieSGS(27863, "IPCA, bens industriais", "% no mês", "M", "14/11/2026"),
+    "IPCA_ALIMENTACAO_DOMICILIO": SerieSGS(
+        27864, "IPCA, alimentação no domicílio", "% no mês", "M", "14/11/2026"
+    ),
     # ---- câmbio
     "DOLAR": SerieSGS(
         1, "Taxa de câmbio livre, dólar dos EUA (venda)", "R$/US$", "D", "13/11/2026"
@@ -131,6 +140,41 @@ SGS: dict[str, SerieSGS] = {
     "IDP_12M_PIB": SerieSGS(
         23080, "Investimento direto no país em 12 meses", "% do PIB", "M", "14/11/2026"
     ),
+    # Balanço de pagamentos (BPM6) em partes. Conferidas no package_search do BCB em
+    # 14/11/2026 (título, "Milhões de dólares americanos", mensal, desde jan/1995). Na conta
+    # financeira o BPM6 lança ativos menos passivos: positivo é SAÍDA líquida de recursos.
+    "TC_12M": SerieSGS(
+        24419, "Transações correntes acumulado em 12 meses", "US$ milhões", "M", "14/11/2026"
+    ),
+    "BP_SERVICOS": SerieSGS(22719, "Serviços, líquido mensal", "US$ milhões", "M", "14/11/2026"),
+    "BP_RENDA_PRIMARIA": SerieSGS(
+        22800, "Renda primária, líquido mensal", "US$ milhões", "M", "14/11/2026"
+    ),
+    "BP_RENDA_SECUNDARIA": SerieSGS(
+        22838, "Renda secundária, líquido mensal", "US$ milhões", "M", "14/11/2026"
+    ),
+    "BP_CONTA_FINANCEIRA": SerieSGS(
+        22863, "Conta financeira, líquido mensal", "US$ milhões", "M", "14/11/2026"
+    ),
+    "BP_IDE": SerieSGS(
+        22865,
+        "Investimentos diretos no exterior (IDE), líquido mensal",
+        "US$ milhões",
+        "M",
+        "14/11/2026",
+    ),
+    "BP_CARTEIRA": SerieSGS(
+        22905, "Investimentos em carteira, líquido mensal", "US$ milhões", "M", "14/11/2026"
+    ),
+    "BP_DERIVATIVOS": SerieSGS(
+        22966, "Derivativos, líquido mensal", "US$ milhões", "M", "14/11/2026"
+    ),
+    "BP_OUTROS_INVESTIMENTOS": SerieSGS(
+        22969, "Outros investimentos, líquido mensal", "US$ milhões", "M", "14/11/2026"
+    ),
+    "BP_ATIVOS_RESERVA": SerieSGS(
+        23043, "Ativos de reserva, fluxo mensal", "US$ milhões", "M", "14/11/2026"
+    ),
     "ICBR": SerieSGS(27574, "Índice de Commodities Brasil (IC-Br)", "índice", "M", "14/11/2026"),
     "ICBR_AGRO": SerieSGS(27575, "IC-Br, agropecuária", "índice", "M", "14/11/2026"),
     "ICBR_METAL": SerieSGS(27576, "IC-Br, metal", "índice", "M", "14/11/2026"),
@@ -165,6 +209,53 @@ SGS: dict[str, SerieSGS] = {
         29034,
         "Comprometimento de renda das famílias com o serviço da dívida, com ajuste sazonal",
         "%",
+        "M",
+        "14/11/2026",
+    ),
+    # Casa própria e bolso das famílias. Conferidas no package_search do BCB em 14/11/2026
+    # (título, unidade_medida e periodicidade mensal).
+    "FAMILIAS_COMPROMETIMENTO_JUROS": SerieSGS(
+        29033,
+        "Comprometimento de renda das famílias com juros da dívida com o SFN, com ajuste sazonal",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "FAMILIAS_ENDIVIDAMENTO_SEM_HABITACAO": SerieSGS(
+        29038,
+        "Endividamento das famílias com o SFN exceto crédito habitacional, em relação à renda "
+        "de 12 meses",
+        "%",
+        "M",
+        "14/11/2026",
+    ),
+    "IMOB_TAXA_MERCADO": SerieSGS(
+        20772,
+        "Taxa média de juros, pessoas físicas, financiamento imobiliário com taxas de mercado",
+        "% a.a.",
+        "M",
+        "14/11/2026",
+    ),
+    "IMOB_TAXA_REGULADA": SerieSGS(
+        20773,
+        "Taxa média de juros, pessoas físicas, financiamento imobiliário com taxas reguladas",
+        "% a.a.",
+        "M",
+        "14/11/2026",
+    ),
+    "IMOB_CONCESSOES": SerieSGS(
+        20704,
+        "Concessões de crédito, pessoas físicas, financiamento imobiliário total",
+        "R$ milhões",
+        "M",
+        "14/11/2026",
+    ),
+    # IVG-R: valor de avaliação dos imóveis dados em garantia de financiamento residencial
+    # (alienação fiduciária e hipoteca), 13 regiões metropolitanas; tendência de longo prazo.
+    "IVGR": SerieSGS(
+        21340,
+        "Índice de Valores de Garantia de Imóveis Residenciais Financiados (IVG-R)",
+        "índice",
         "M",
         "14/11/2026",
     ),
