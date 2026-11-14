@@ -1,8 +1,9 @@
 """Estados: as mesmas métricas para as 27 UFs.
 
 Desocupação: PNAD Contínua trimestral (IBGE). Pessoal, dívida e receita: Relatório de Gestão Fiscal
-(RGF) do Poder Executivo de cada estado, no SICONFI do Tesouro Nacional. Os limites mostrados são
-os que o próprio RGF publica; o builder não escreve número de lei.
+(RGF) do Poder Executivo de cada estado, no SICONFI do Tesouro Nacional. ICMS por habitante e
+resultado primário: Relatório Resumido da Execução Orçamentária (RREO), também do SICONFI. Os
+limites mostrados são os que o próprio RGF publica; o builder não escreve número de lei.
 
 PIB per capita por UF ficou de fora: a tabela 5938 do IBGE vai só até 2023 e a estimativa de
 população do mesmo ano não existe na tabela 6579, então a conta misturaria anos.
@@ -15,7 +16,7 @@ from datetime import date
 
 from sacibras.fontes import ibge_sidra, siconfi
 from sacibras.schema import UF, Estados, LinhaRef, MetricaEstados
-from sacibras.secoes.base import Contexto, br, periodo
+from sacibras.secoes.base import MESES, Contexto, br, periodo
 
 # (código IBGE, sigla, nome, região)
 UFS: list[tuple[int, str, str, str]] = [
@@ -202,6 +203,82 @@ def _fiscais(
     return pessoal, divida, rcl, ale_pes
 
 
+def _rreo(
+    coleta: siconfi.ColetaRreo, populacao: dict[int, float]
+) -> tuple[MetricaEstados, MetricaEstados]:
+    """Resultado primário em % da RCL e ICMS por habitante, do RREO de um mesmo bimestre."""
+    ano, fim = coleta.ano, MESES[coleta.bimestre * 2 - 1]
+    por_uf = {SIGLA[c]: c for c in SIGLA}
+    rec = {u: coleta.receita.get(c) for u, c in por_uf.items()}
+    pri = {u: coleta.primario.get(c) for u, c in por_uf.items()}
+
+    resultado: dict[str, float | None] = {}
+    soma_pri = soma_rcl = 0.0
+    for u, r in rec.items():
+        p = pri[u]
+        if r and r.rcl and p is not None:
+            resultado[u] = p / r.rcl * 100
+            soma_pri += p
+            soma_rcl += r.rcl
+        else:
+            resultado[u] = None
+    ref_pri = f"jan–{fim}/{ano}"
+    primario = MetricaEstados(
+        id="primario",
+        nome="Resultado primário",
+        descricao=(
+            "Receitas menos despesas do estado, sem contar juros, em proporção da receita "
+            "corrente líquida dos últimos 12 meses. É o acumulado do ano até o bimestre, não "
+            "12 meses. Positivo é superávit: sobrou dinheiro antes de pagar juros da dívida. "
+            "Usa o resultado acima da linha sem os fundos de previdência próprios (RPPS), o que "
+            "a LDO usa como meta e o que melhor compara estados com regimes de tamanhos "
+            "diferentes."
+        ),
+        unidade="% da RCL",
+        casas=1,
+        referencia=ref_pri,
+        maior_e_melhor=True,
+        fonte=(
+            "Tesouro Nacional, SICONFI, RREO Anexo 06 (resultado primário, sem RPPS, acima da "
+            f"linha, acumulado {ref_pri}) e Anexo 03 (RCL de 12 meses)"
+        ),
+        valores=resultado,
+        brasil=soma_pri / soma_rcl * 100 if soma_rcl else None,
+    )
+
+    icms_pc: dict[str, float | None] = {}
+    soma_icms = soma_pop = 0.0
+    for u, r in rec.items():
+        pop = populacao.get(por_uf[u])
+        if r and r.icms is not None and pop:
+            icms_pc[u] = r.icms / pop
+            soma_icms += r.icms
+            soma_pop += pop
+        else:
+            icms_pc[u] = None
+    ref_icms = f"12 meses até {fim}/{ano}"
+    icms = MetricaEstados(
+        id="icms_per_capita",
+        nome="ICMS por habitante",
+        descricao=(
+            "ICMS que o estado arrecadou nos últimos 12 meses, já descontados o que vai aos "
+            "municípios e ao Fundeb, dividido pela população estimada. Mostra o peso do "
+            "principal imposto estadual, não o quanto é bem gasto."
+        ),
+        unidade="R$ por pessoa",
+        casas=0,
+        referencia=ref_icms,
+        maior_e_melhor=None,
+        fonte=(
+            f"Tesouro Nacional, SICONFI, RREO Anexo 03 (ICMS líquido de transferências e do "
+            f"FUNDEB, {ref_icms}); população estimada do cadastro de entes do SICONFI (IBGE)"
+        ),
+        valores=icms_pc,
+        brasil=soma_icms / soma_pop if soma_pop else None,
+    )
+    return primario, icms
+
+
 def montar(ctx: Contexto) -> Estados:
     metricas: list[MetricaEstados] = []
     deso: MetricaEstados | None = None
@@ -219,9 +296,28 @@ def montar(ctx: Contexto) -> Estados:
             print("  aviso: nenhum quadrimestre recente com 24 estados no RGF")
         else:
             fiscal = _fiscais(coleta, siconfi.entes())
-            metricas += list(fiscal[:3])
+            metricas += list(fiscal[:2])
     except Exception as erro:
         print(f"  aviso: RGF indisponível: {erro}")
+
+    rreo: tuple[MetricaEstados, MetricaEstados] | None = None
+    try:
+        recolha = siconfi.coletar_rreo([c for c, *_ in UFS], ctx.hoje)
+        if recolha is None:
+            print("  aviso: nenhum bimestre recente com 24 estados no RREO")
+        else:
+            rreo = _rreo(recolha, siconfi.entes())
+    except Exception as erro:
+        print(f"  aviso: RREO indisponível: {erro}")
+
+    if rreo:
+        metricas += list(rreo)
+        for m in rreo:
+            faltam = [u for u, v in m.valores.items() if v is None]
+            if faltam:
+                print(f"  aviso: {m.nome} sem dado de {', '.join(faltam)}")
+    if fiscal:
+        metricas.append(fiscal[2])  # RCL por habitante fecha a lista
 
     if not metricas:
         raise RuntimeError("nenhuma métrica dos estados pôde ser montada")

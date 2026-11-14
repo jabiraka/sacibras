@@ -112,3 +112,13 @@ def test_indices_b3_leem_a_grade_dia_por_mes(respostas: dict[str, Any]) -> None:
         (date(2026, 11, 12), 171324.31),
         (date(2026, 11, 13), 172457.76),
     ]
+
+
+def test_baixar_json_tenta_de_novo_quando_vem_html(monkeypatch: pytest.MonkeyPatch) -> None:
+    # O SGS às vezes devolve uma página HTML no meio de uma rodada boa (14/11/2026).
+    from sacibras import rede
+
+    respostas = iter([b"<?xml version='1.0'?><html>erro</html>", b'[{"valor": "4.63"}]'])
+    monkeypatch.setattr(rede, "baixar", lambda url, **kw: next(respostas))
+    monkeypatch.setattr(rede.time, "sleep", lambda s: None)
+    assert rede.baixar_json("https://exemplo") == [{"valor": "4.63"}]

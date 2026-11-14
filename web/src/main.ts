@@ -6,6 +6,7 @@
 import "@fontsource-variable/geist";
 import "./estilo.css";
 import { comUnidade, data, dataHora, numero, periodo } from "./formato";
+import { pontoMaisNovo } from "./aovivo";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
@@ -181,6 +182,22 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
 
 // ------------------------------------------------------------------ vistas
 
+/** O conteúdo de um dos seis números; `aoVivo` quando o valor veio agora, direto da fonte. */
+function preencherEssencial(item: HTMLElement, c: Cartao, aoVivo: boolean): void {
+  item.replaceChildren();
+  item.title =
+    `${c.detalhe && !aoVivo ? `${c.detalhe}. ` : ""}Fonte: ${c.fonte}` +
+    (aoVivo ? ". Lido agora, direto da fonte, mais novo que a última rodada do painel." : "");
+  const valor = el("strong");
+  valorComUnidade(c, valor);
+  item.append(valor, el("span", "rotulo", c.rotulo));
+  if (c.meta) item.append(...medidorDaMeta(c.valor, c.meta, c.casas));
+  const quando = el("span", "quando", periodo(c.referencia, c.periodicidade));
+  if (aoVivo) quando.append(el("span", "novo", "novo"));
+  item.append(quando);
+  item.classList.toggle("ao-vivo", aoVivo);
+}
+
 /** O número contra a meta oficial: onde ele está no intervalo, e em palavras. */
 function medidorDaMeta(valor: number, meta: NonNullable<Cartao["meta"]>, casas: number): HTMLElement[] {
   const situacao =
@@ -245,13 +262,13 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
       for (const c of resumo.cartoes) {
         const item = el("a", "essencial");
         item.href = `#${c.secao}`;
-        item.title = `${c.detalhe ? `${c.detalhe}. ` : ""}Fonte: ${c.fonte}`;
-        const valor = el("strong");
-        valorComUnidade(c, valor);
-        item.append(valor, el("span", "rotulo", c.rotulo));
-        if (c.meta) item.append(...medidorDaMeta(c.valor, c.meta, c.casas));
-        item.append(el("span", "quando", periodo(c.referencia, c.periodicidade)));
+        preencherEssencial(item, c, false);
         essenciais.append(item);
+        // O ponto mais novo, direto da fonte: se vier depois do da última rodada, troca.
+        void pontoMaisNovo(c).then((novo) => {
+          if (!novo || novo[0] <= c.referencia) return;
+          preencherEssencial(item, { ...c, referencia: novo[0], valor: novo[1] }, true);
+        });
       }
     })
     .catch(() => essenciais.remove());

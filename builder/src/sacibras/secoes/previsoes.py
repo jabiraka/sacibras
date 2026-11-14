@@ -2,12 +2,7 @@
 
 A regra da casa: previsão nunca sozinha. O "PIB agora" aparece com o Focus do mesmo
 trimestre e com o erro que o método teve fora da amostra; o Focus aparece com o quanto
-costuma errar nesta época do ano.
-
-O simulador da dívida (`_simulador`, `modelos/divida.py` e `web/src/simulador.ts`) está
-pronto e testado, mas FORA DA TELA por decisão do Caio (14/11/2026: *"tire 'a sua simulação'
-nos gráficos por enquanto… vamos deixar só de fontes que temos"*). Para religar, ver
-docs/PROXIMOS-PASSOS.md.
+costuma errar nesta época do ano; o simulador da dívida parte das hipóteses do Focus.
 """
 
 from __future__ import annotations
@@ -18,8 +13,8 @@ from sacibras.fontes import bcb_focus, fmi
 from sacibras.modelos import acerto_focus, divida, pib_agora
 from sacibras.schema import (
     Cartao,
-    Faixa,
     Grafico,
+    Intervalo,
     LinhaTabela,
     Secao,
     SimuladorDivida,
@@ -28,8 +23,9 @@ from sacibras.schema import (
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
-MOSTRAR_SIMULADOR = False
-"""Fora da tela até o Caio pedir de volta (docs/PROXIMOS-PASSOS.md)."""
+MOSTRAR_SIMULADOR = True
+"""Saiu da tela em 14/11/2026 e voltou no mesmo dia, a pedido do Caio ("deixe o simulador da
+dívida, acho legal")."""
 
 # (indicador do Focus, detalhe, rótulo, unidade, casas)
 LINHAS: list[tuple[str, str | None, str, str, int]] = [
@@ -195,12 +191,14 @@ def montar(ctx: Contexto) -> Secao:
         ultimo = realizado[-1]
         do_fmi = weo.valores.get(("BRA", codigo), {})
         indicador = "IPCA" if codigo == "PCPIEPCH" else "PIB Total"
-        banda = [(ultimo[0], ultimo[1], ultimo[1])]
+        # O erro típico vira barra de erro em cada ano do Focus: o intervalo onde a mediana,
+        # nesta época do ano, costumou acertar desde 2010.
+        barras = []
         for horizonte in (0, 1):
             medido = acertos.get((indicador, horizonte))
             alvo = ano + horizonte
             if medido and alvo in focus and alvo > ultimo[0].year:
-                banda.append(
+                barras.append(
                     (
                         date(alvo, 1, 1),
                         round(focus[alvo] - medido.erro_tipico, 2),
@@ -208,11 +206,15 @@ def montar(ctx: Contexto) -> Secao:
                     )
                 )
         extra: dict[str, object] = {}
-        if len(banda) > 1:
-            extra["faixa"] = Faixa(nome="erro típico do Focus nesta época do ano", pontos=banda)
+        if barras:
+            extra["intervalos"] = [
+                Intervalo(
+                    nome="erro típico do Focus nesta época do ano", serie="focus", pontos=barras
+                )
+            ]
             extra["nota"] = (
-                "A faixa é a mediana do Focus mais ou menos o erro médio que ela teve, desde "
-                "2010, quando medida nesta mesma época do ano."
+                "Barras: a mediana do Focus mais ou menos o erro médio que ela teve, desde 2010, "
+                "quando medida nesta mesma época do ano. Quanto mais longe o ano, maior a barra."
             )
         return grafico(
             id,
@@ -330,17 +332,19 @@ def montar(ctx: Contexto) -> Secao:
                 unidade="% contra o mesmo trimestre do ano anterior",
                 casas=2,
                 periodicidade="T",
-                faixa=Faixa(
-                    nome=f"erro típico do método (±{br(agora.erro_tipico)} pp)",
-                    pontos=[
-                        (ultimo[0], ultimo[1], ultimo[1]),
-                        (
-                            agora.trimestre,
-                            round(agora.previsao - agora.erro_tipico, 2),
-                            round(agora.previsao + agora.erro_tipico, 2),
-                        ),
-                    ],
-                ),
+                intervalos=[
+                    Intervalo(
+                        nome=f"erro típico do método (±{br(agora.erro_tipico)} pp)",
+                        serie="agora",
+                        pontos=[
+                            (
+                                agora.trimestre,
+                                round(agora.previsao - agora.erro_tipico, 2),
+                                round(agora.previsao + agora.erro_tipico, 2),
+                            )
+                        ],
+                    )
+                ],
                 fonte=(
                     "IBGE (SIDRA 5932); Banco Central (IBC-Br, SGS 24363; Focus, "
                     "ExpectativasMercadoTrimestrais); cálculo próprio"
@@ -428,8 +432,7 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
 
-    # O simulador da dívida: linha de base com as hipóteses do Focus. Desligado por enquanto
-    # (ver o docstring do módulo).
+    # O simulador da dívida: linha de base com as hipóteses do Focus.
     simulador = None
     if MOSTRAR_SIMULADOR:
         try:

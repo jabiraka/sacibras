@@ -1,4 +1,4 @@
-"""Estados sem rede: o parser do RGF (SICONFI) com trechos reais e a montagem das métricas."""
+"""Estados sem rede: os parsers do RGF e do RREO (SICONFI) com trechos reais e a montagem."""
 
 from datetime import date
 from typing import Any
@@ -61,6 +61,58 @@ A2_SP = [
     _linha("LimiteDefinidoPorResolucaoDoSenadoFederal", COL2, 558994798594.16),
     _linha("LimiteDeAlerta", COL2, 503095318734.74),
 ]
+
+
+T12 = "TOTAL (ÚLTIMOS 12 MESES)"
+# Trechos reais do RREO-Anexo 03 (4º bimestre de 2026, consultado em 14/11/2026).
+R3_SP = [
+    _linha("ICMSLiquidoExcetoTransferenciasEFUNDEB", "<MR>", 21782488968.33),
+    _linha("ICMSLiquidoExcetoTransferenciasEFUNDEB", T12, 250219667943.92),
+    _linha("ICMSLiquidoExcetoTransferenciasEFUNDEB", "PREVISÃO ATUALIZADA 2026", 254620847220),
+    _linha("RREO3ReceitaCorrenteLiquida", T12, 279658527567.42),
+]
+# O DF só responde com co_esfera=E.
+R3_DF = [
+    _linha("ICMSLiquidoExcetoTransferenciasEFUNDEB", T12, 13774849189.55),
+    _linha("RREO3ReceitaCorrenteLiquida", T12, 42283586178.36),
+]
+# Estado que entregou o Anexo 03 sem a linha do ICMS (só a RCL).
+R3_SEM_ICMS = [_linha("RREO3ReceitaCorrenteLiquida", T12, 1_000_000_000.0)]
+# Trechos reais do RREO-Anexo 06: acima da linha, com e sem RPPS (coluna VALOR).
+R6_SP = [
+    _linha("ResultadoPrimarioComRPPSAcimaDaLinha", "VALOR", 5341116534.66),
+    _linha("ResultadoPrimarioSemRPPSAcimaDaLinha", "VALOR", 5320559240.55),
+    _linha("ResultadoPrimarioAbaixoDaLinhaSemRPPS", "VALOR", 5320559240.55),
+]
+R6_DF = [
+    _linha("ResultadoPrimarioComRPPSAcimaDaLinha", "VALOR", 1714434057.5),
+    _linha("ResultadoPrimarioSemRPPSAcimaDaLinha", "VALOR", 1824667292.95),
+]
+
+
+def test_receita_do_rreo_de_sp_e_do_df() -> None:
+    sp = siconfi.parse_receita(R3_SP)
+    assert sp == siconfi.Receita(icms=250219667943.92, rcl=279658527567.42)
+    df = siconfi.parse_receita(R3_DF)
+    assert df == siconfi.Receita(icms=13774849189.55, rcl=42283586178.36)
+
+
+def test_receita_sem_a_conta_do_icms_ou_sem_nada() -> None:
+    sem = siconfi.parse_receita(R3_SEM_ICMS)
+    assert sem is not None and sem.icms is None and sem.rcl == 1_000_000_000.0
+    assert siconfi.parse_receita([]) is None
+
+
+def test_primario_usa_a_conta_sem_rpps_acima_da_linha() -> None:
+    assert siconfi.parse_primario(R6_SP) == 5320559240.55
+    assert siconfi.parse_primario(R6_DF) == 1824667292.95  # no DF "sem" difere da "com"
+    assert siconfi.parse_primario([]) is None
+    assert siconfi.parse_primario(R6_SP[:1]) is None  # só a "com RPPS": não troca de conta
+
+
+def test_bimestres_voltam_no_tempo() -> None:
+    assert siconfi.bimestres(date(2026, 11, 14), 3) == [(2026, 6), (2026, 5), (2026, 4)]
+    assert siconfi.bimestres(date(2026, 2, 1), 3) == [(2026, 1), (2025, 6), (2025, 5)]
 
 
 def test_pessoal_de_sp() -> None:
@@ -141,14 +193,61 @@ def test_montagem_das_metricas_fiscais_deixa_none_para_quem_falta() -> None:
     assert "AC" not in alertas and alertas["SP"] == 44.1
 
 
+def _coleta_rreo(sem_dado: set[int]) -> siconfi.ColetaRreo:
+    cods = [c for c, *_ in estados.UFS]
+    receita = {
+        c: None if c in sem_dado else siconfi.Receita(icms=2_000_000.0 * c, rcl=10_000_000.0 * c)
+        for c in cods
+    }
+    primario = {c: None if c in sem_dado else 500_000.0 * c for c in cods}
+    primario[53] = -1_000_000.0 * 53  # DF no vermelho
+    return siconfi.ColetaRreo(2026, 4, receita, primario)
+
+
+def test_montagem_do_rreo_divide_por_populacao_e_por_rcl() -> None:
+    populacao = {c: 1000.0 for c, *_ in estados.UFS}
+    primario, icms = estados._rreo(_coleta_rreo({12}), populacao)
+    assert primario.referencia == "jan–ago/2026" and icms.referencia == "12 meses até ago/2026"
+    assert "acumulado do ano" in primario.descricao and "RPPS" in primario.descricao
+    assert primario.maior_e_melhor is True
+    assert primario.valores["SP"] == pytest.approx(5.0)  # 500 mil / 10 mi = 5 %
+    assert primario.valores["DF"] == pytest.approx(-10.0)
+    assert primario.valores["AC"] is None and icms.valores["AC"] is None
+    assert icms.valores["SP"] == pytest.approx(2_000_000.0 * 35 / 1000.0)
+    assert len(icms.valores) == 27 and icms.unidade == "R$ por pessoa"
+    assert icms.brasil is not None and primario.brasil is not None
+
+
 def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
     deso = {str(c): [(date(2026, 4, 1), 5.0 + c / 100)] for c, *_ in estados.UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
     monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
+    monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert len(e.ufs) == 27
-    assert [m.id for m in e.metricas] == ["desocupacao", "pessoal", "divida", "rcl_per_capita"]
+    assert [m.id for m in e.metricas] == [
+        "desocupacao",
+        "pessoal",
+        "divida",
+        "primario",
+        "icms_per_capita",
+        "rcl_per_capita",
+    ]
     assert e.metricas[0].referencia == "2º tri/2026" and e.metricas[0].brasil == 5.4
     assert "5,4 %" in e.resumo and "limite de alerta" in e.resumo
+
+
+def test_rreo_fora_do_ar_nao_derruba_as_outras_metricas(monkeypatch: pytest.MonkeyPatch) -> None:
+    def cai(*a: Any, **k: Any) -> Any:
+        raise siconfi.FonteForaDoArError("fora")
+
+    deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in estados.UFS}
+    monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
+    monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
+    monkeypatch.setattr(estados.siconfi, "coletar", lambda *a, **k: _coleta({12}))
+    monkeypatch.setattr(estados.siconfi, "coletar_rreo", cai)
+    monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
+    e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
+    assert [m.id for m in e.metricas] == ["desocupacao", "pessoal", "divida", "rcl_per_capita"]

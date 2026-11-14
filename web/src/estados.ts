@@ -9,6 +9,14 @@ import type { GeometryCollection, Topology } from "topojson-specification";
 import { numero } from "./formato";
 import malha from "./mapa/ufs.json";
 import { el, guardar } from "./pecas";
+import {
+  desenharDispersao,
+  linhaDoRanking,
+  listaSuspensa,
+  reguaDe,
+  type LinhaDoRanking,
+  type PontoDisperso,
+} from "./pontos";
 import type { Estados, MetricaEstados } from "./tipos";
 
 type PropriedadesUF = { uf: string; area: number };
@@ -63,11 +71,12 @@ function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<str
   };
 
   // Rótulo só onde cabe: no celular, só os estados grandes; o resto aparece ao tocar.
-  // Pernambuco é comprido e fino: no celular o rótulo dele encavala nos vizinhos.
-  const comRotulo = UFS.features.filter((d) =>
-    estreito ? d.properties.area > 70000 && d.properties.uf !== "PE" : d.properties.area > 15000,
+  // Rótulo só onde cabe; o resto aparece ao tocar. Pernambuco é comprido e fino, e os estados
+  // pequenos do Nordeste e do Sudeste encavalam: ficam sem rótulo.
+  const comRotulo = UFS.features.filter(
+    (d) => d.properties.area > (estreito ? 70000 : 50000) && d.properties.uf !== "PE",
   );
-  const comValor = estreito ? [] : comRotulo.filter((d) => d.properties.area > 45000);
+  const comValor = estreito ? [] : comRotulo.filter((d) => d.properties.area > 90000);
   const corDoTexto = (d: UFNoMapa): string => {
     const v = valorDe(d);
     return v !== null && fracao(v) > 0.55 ? "#ffffff" : c.tinta;
@@ -115,20 +124,17 @@ export function montarEstados(e: Estados): HTMLElement {
   const raiz = el("div");
   const nomes = new Map(e.ufs.map((u) => [u.sigla, u.nome]));
   let metrica = e.metricas[0] as MetricaEstados;
+  // O estado tocado no ranking ou no gráfico de duas métricas fica destacado nos dois.
+  let destaque = "";
 
-  const fichas = el("div", "mundo-controles");
-  fichas.setAttribute("role", "group");
-  fichas.setAttribute("aria-label", "Métrica");
-  const botoes = e.metricas.map((m) => {
-    const b = el("button", "ficha", m.nome);
-    b.type = "button";
-    b.addEventListener("click", () => {
-      metrica = m;
+  const opcoes = e.metricas.map((m) => ({ valor: m.id, rotulo: m.nome }));
+  const barra = el("div", "barra-controles");
+  barra.append(
+    listaSuspensa("estados-metrica", "Métrica", opcoes, metrica.id, (id) => {
+      metrica = e.metricas.find((m) => m.id === id) ?? metrica;
       pintar();
-    });
-    fichas.append(b);
-    return b;
-  });
+    }).caixa,
+  );
   const sobre = el("p", "secao-resumo");
 
   const grade = el("div", "mundo-grade");
@@ -142,12 +148,41 @@ export function montarEstados(e: Estados): HTMLElement {
 
   const painelRanking = el("div", "painel-mundo");
   const tituloRanking = el("h3", "", "Do maior ao menor");
-  const ranking = el("div", "ranking");
+  const ranking = el("div", "ranking-pontos");
   const posicao = el("p", "posicao");
   painelRanking.append(tituloRanking, ranking, posicao);
   grade.append(painelMapa, painelRanking);
 
-  raiz.append(fichas, sobre, grade);
+  // Duas métricas ao mesmo tempo, um ponto por estado.
+  const painelDispersao = el("div", "painel-mundo dispersao-painel");
+  let eixoX = e.metricas.find((m) => m.id === "pessoal") ?? (e.metricas[0] as MetricaEstados);
+  let eixoY = e.metricas.find((m) => m.id === "divida") ?? (e.metricas[1] as MetricaEstados);
+  const barraDispersao = el("div", "barra-controles");
+  barraDispersao.append(
+    listaSuspensa("estados-x", "Na horizontal", opcoes, eixoX.id, (id) => {
+      eixoX = e.metricas.find((m) => m.id === id) ?? eixoX;
+      pintarDispersao();
+    }).caixa,
+    listaSuspensa("estados-y", "Na vertical", opcoes, eixoY.id, (id) => {
+      eixoY = e.metricas.find((m) => m.id === id) ?? eixoY;
+      pintarDispersao();
+    }).caixa,
+  );
+  const telaDispersao = el("div", "tela-dispersao");
+  const notaDispersao = el("p", "posicao");
+  const peDispersao = el("footer", "grafico-pe");
+  // Com só 27 estados, os extremos são a história (a dívida de RJ, MG e RS): todos à vista.
+  let comExtremos = true;
+  painelDispersao.append(
+    el("h3", "", "Duas métricas ao mesmo tempo"),
+    el("p", "sub", "Um ponto por estado. Toque num ponto para ver os números e destacá-lo."),
+    barraDispersao,
+    telaDispersao,
+    notaDispersao,
+    peDispersao,
+  );
+
+  raiz.append(barra, sobre, grade, painelDispersao);
   const caixaTabela = el("div");
   raiz.append(caixaTabela);
 
@@ -156,68 +191,105 @@ export function montarEstados(e: Estados): HTMLElement {
     cancelAnimationFrame(pendente);
     pendente = requestAnimationFrame(() => desenharMapa(tela, metrica, nomes));
   }).observe(tela);
+  let pendenteDispersao = 0;
+  new ResizeObserver(() => {
+    cancelAnimationFrame(pendenteDispersao);
+    pendenteDispersao = requestAnimationFrame(pintarDispersao);
+  }).observe(telaDispersao);
 
-  function pintar(): void {
-    botoes.forEach((b, i) => b.setAttribute("aria-pressed", String(e.metricas[i]?.id === metrica.id)));
-    sobre.textContent = metrica.descricao;
-    tituloMapa.textContent = metrica.nome;
-    subMapa.textContent = `${metrica.unidade} · ${metrica.referencia}`;
+  function destacar(uf: string): void {
+    destaque = destaque === uf ? "" : uf;
+    pintarRanking();
+    pintarDispersao();
+  }
 
+  function pintarDispersao(): void {
+    if (!telaDispersao.clientWidth) return;
+    const corDestaque = getComputedStyle(document.documentElement).getPropertyValue("--serie-2").trim();
+    const pontos: PontoDisperso[] = [];
+    for (const u of e.ufs) {
+      const x = eixoX.valores[u.sigla] ?? null;
+      const y = eixoY.valores[u.sigla] ?? null;
+      if (x === null || y === null) continue;
+      pontos.push({
+        chave: u.sigla,
+        nome: u.sigla,
+        x,
+        y,
+        marca: "comum",
+        cor: u.sigla === destaque ? corDestaque : undefined,
+        // Sigla em todos: são só 27, e é o jeito de achar o seu estado.
+        rotulo: true,
+      });
+    }
+    if (pontos.length < 3) {
+      telaDispersao.replaceChildren(el("p", "vazio", "Poucos estados com as duas métricas."));
+      return;
+    }
+    const fora = desenharDispersao(
+      telaDispersao,
+      pontos,
+      { nome: eixoX.nome, unidade: eixoX.unidade, casas: eixoX.casas },
+      { nome: eixoY.nome, unidade: eixoY.unidade, casas: eixoY.casas },
+      destacar,
+      comExtremos,
+    );
+    // Quem saiu do desenho por estar muito longe dos outros é dito, com o botão de mostrar.
+    notaDispersao.replaceChildren();
+    if (fora.length || comExtremos) {
+      if (fora.length) {
+        notaDispersao.append(
+          document.createTextNode(
+            `Fora do desenho, por estar muito longe dos outros: ${fora
+              .map((p) => `${nomes.get(p.chave) ?? p.chave} (${numero(p.x, eixoX.casas)}; ${numero(p.y, eixoY.casas)})`)
+              .join(", ")}. `,
+          ),
+        );
+      }
+      const botao = el("button", "botao-texto", comExtremos ? "Tirar os valores extremos" : "Mostrar todos");
+      botao.type = "button";
+      botao.addEventListener("click", () => {
+        comExtremos = !comExtremos;
+        pintarDispersao();
+      });
+      notaDispersao.append(botao);
+    }
+    peDispersao.replaceChildren(
+      el(
+        "span",
+        "fonte",
+        `${eixoX.nome}: ${eixoX.referencia}. ${eixoY.nome}: ${eixoY.referencia}. Fontes: ${eixoX.fonte}${eixoX.fonte === eixoY.fonte ? "" : `; ${eixoY.fonte}`}.`,
+      ),
+    );
+  }
+
+  function pintarRanking(): void {
     const linhas = e.ufs
       .map((u) => ({ u, v: metrica.valores[u.sigla] ?? null }))
       .filter((x): x is { u: (typeof e.ufs)[number]; v: number } => x.v !== null)
       .sort((a, b) => b.v - a.v);
-    const valores = linhas.map((x) => x.v);
-    const min = Math.min(...valores);
-    const max = Math.max(...valores);
-
-    if (tela.clientWidth) desenharMapa(tela, metrica, nomes);
-    escala.replaceChildren(
-      el("span", "", numero(min, metrica.casas)),
-      el("i"),
-      el("span", "", numero(max, metrica.casas)),
+    const corDestaque = getComputedStyle(document.documentElement).getPropertyValue("--serie-2").trim();
+    const regua = reguaDe(
+      [...linhas.map((x) => x.v), ...(metrica.brasil === null ? [] : [metrica.brasil])],
+      metrica.limites,
     );
-    peMapa.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`));
-
-    // O ranking, com o Brasil e os limites que a fonte publica.
-    const teto = Math.max(max, metrica.brasil ?? 0, ...metrica.limites.map((l) => l.valor));
-    const piso = Math.min(0, min);
-    const amplitude = teto - piso || 1;
-    const zero = ((0 - piso) / amplitude) * 100;
-    ranking.replaceChildren();
-    const comBrasil: { nome: string; v: number; brasil: boolean }[] = linhas.map((x) => ({
+    const itens: LinhaDoRanking[] = linhas.map((x, i) => ({
+      chave: x.u.sigla,
       nome: x.u.nome,
-      v: x.v,
-      brasil: false,
+      valor: x.v,
+      marca: "comum",
+      posicao: i + 1,
+      cor: x.u.sigla === destaque ? corDestaque : undefined,
     }));
     if (metrica.brasil !== null) {
-      comBrasil.push({ nome: "Brasil", v: metrica.brasil, brasil: true });
-      comBrasil.sort((a, b) => b.v - a.v);
+      itens.push({ chave: "BR", nome: "Brasil", valor: metrica.brasil, marca: "brasil", posicao: null });
+      itens.sort((a, b) => b.valor - a.valor);
     }
-    let lugar = 0;
-    for (const x of comBrasil) {
-      if (!x.brasil) lugar += 1;
-      const linha = el("div", `rank-linha ${x.brasil ? "brasil" : ""}`);
-      const trilho = el("div", "rank-trilho");
-      const barra = el("div", `rank-barra ${x.v < 0 ? "negativa" : ""}`);
-      const tamanho = (Math.abs(x.v) / amplitude) * 100;
-      barra.style.left = `${x.v < 0 ? zero - tamanho : zero}%`;
-      barra.style.width = `${tamanho}%`;
-      trilho.append(barra);
-      for (const l of metrica.limites) {
-        const marca = el("div", "rank-limite");
-        marca.style.left = `${((l.valor - piso) / amplitude) * 100}%`;
-        marca.title = `${l.rotulo}: ${numero(l.valor, metrica.casas)}`;
-        trilho.append(marca);
-      }
-      linha.append(
-        el("span", "rank-pos", x.brasil ? "" : String(lugar)),
-        el("span", "rank-nome", x.nome),
-        trilho,
-        el("span", "rank-valor", numero(x.v, metrica.casas)),
-      );
-      ranking.append(linha);
-    }
+    ranking.replaceChildren(
+      ...itens.map((item) =>
+        linhaDoRanking(item, regua, metrica.casas, item.marca === "brasil" ? undefined : () => destacar(item.chave)),
+      ),
+    );
     posicao.replaceChildren();
     if (metrica.limites.length) {
       posicao.textContent = `Traços amarelos: ${metrica.limites
@@ -227,11 +299,25 @@ export function montarEstados(e: Estados): HTMLElement {
     const semDado = e.ufs.filter((u) => (metrica.valores[u.sigla] ?? null) === null);
     if (semDado.length) {
       posicao.append(
-        document.createTextNode(
-          ` Sem dado neste período: ${semDado.map((u) => u.sigla).join(", ")}.`,
-        ),
+        document.createTextNode(` Sem dado neste período: ${semDado.map((u) => u.sigla).join(", ")}.`),
       );
     }
+  }
+
+  function pintar(): void {
+    sobre.textContent = metrica.descricao;
+    tituloMapa.textContent = metrica.nome;
+    subMapa.textContent = `${metrica.unidade} · ${metrica.referencia}`;
+    const valores = Object.values(metrica.valores).filter((v): v is number => v !== null);
+    if (tela.clientWidth) desenharMapa(tela, metrica, nomes);
+    escala.replaceChildren(
+      el("span", "", numero(Math.min(...valores), metrica.casas)),
+      el("i"),
+      el("span", "", numero(Math.max(...valores), metrica.casas)),
+    );
+    peMapa.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`));
+    pintarRanking();
+    pintarDispersao();
 
     // Todas as métricas lado a lado, guardadas.
     caixaTabela.replaceChildren(

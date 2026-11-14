@@ -45,9 +45,13 @@ feito sai, o que apareceu entra, a data muda) e mande no mesmo commit.
   se está dentro, acima do teto ou abaixo do piso.
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
-- **Na tela, só o que vem das fontes** (Caio, 14/11/2026): o simulador da dívida ("a sua
-  simulação") está fora até ele pedir de volta. Cenário montado pela pessoa não entra sem o
-  "sim" dele.
+- **O simulador da dívida fica** (Caio, 14/11/2026: tirou e pediu de volta no mesmo dia,
+  *"deixe o simulador da dívida, acho legal"*). Fora ele, cenário montado pela pessoa não
+  entra sem o "sim" do Caio.
+- **Comparações** (Caio, 14/11/2026): escolha de ano e de métrica em lista suspensa, não em
+  botões; ranking em pontos (`web/src/pontos.ts`), não em barras; e o gráfico de duas
+  métricas, um ponto por país ou estado. Grupo de países abre por país (hierarquia do FMI).
+  Barra de erro de previsão é cápsula vertical (`intervalos` no gráfico), não faixa sombreada.
 - Cada número com data de referência.
 
 ## Verificação antes de mostrar

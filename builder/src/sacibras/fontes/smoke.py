@@ -98,6 +98,43 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
         "IBGE calendário (servicodados)",
         _texto("https://servicodados.ibge.gov.br/api/v3/calendario/?qtd=1", tempo_limite=20),
     ),
+    (
+        "IBGE malhas (servicodados)",
+        _texto(
+            "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?intrarregiao=UF&qualidade=minima",
+            tempo_limite=20,
+        ),
+    ),
+    (
+        "FMI grupos de países (SDMX)",
+        _texto(
+            "https://api.imf.org/external/sdmx/2.1/hierarchicalcodelist/all/all/latest",
+            cabecalhos={"Accept": "application/json"},
+            tempo_limite=90,
+        ),
+    ),
+    (
+        "Tesouro RTN (CKAN)",
+        _texto(
+            "https://www.tesourotransparente.gov.br/ckan/api/3/action/package_show",
+            params={"id": "resultado-do-tesouro-nacional"},
+        ),
+    ),
+    (
+        "SICONFI RREO",
+        _texto(
+            "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo",
+            params={
+                "an_exercicio": "2026",
+                "nr_periodo": "4",
+                "co_tipo_demonstrativo": "RREO",
+                "no_anexo": "RREO-Anexo 03",
+                "co_esfera": "E",
+                "id_ente": "35",
+            },
+            tempo_limite=90,
+        ),
+    ),
 ]
 
 

@@ -5,75 +5,76 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md). Aqui fica só o que vem a
 seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026.
+Última atualização: 14/11/2026 (terceira sessão do dia).
 
 ---
 
 ## Onde paramos
 
 - Trabalho no branch `ccr-615b3774-yyp5n8` (CI verde). **Ainda não está no `main` nem no ar.**
-- O site tem a página inicial ("Status da economia brasileira", seis números, o IPCA contra a
-  meta) e onze assuntos: atividade, trabalho, inflação, juros e Copom, crédito, mercados, setor
-  externo, contas públicas e dívida, estados (com o mapa do Brasil), Brasil no mundo e
-  previsões.
-- Tema só claro. Sem "Anterior"/"Próximo": só o "Voltar".
-- Prévia privada (dados de 14/11/2026): https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS —
-  republicar depois de mudança visível na tela.
+- O site: página inicial ("Status da economia brasileira", seis números com o ponto mais novo
+  buscado pelo navegador, o IPCA contra a meta) e onze assuntos — atividade, trabalho,
+  inflação, juros e Copom, crédito, mercados, setor externo, contas públicas e dívida, estados,
+  Brasil no mundo, previsões.
+- Feito nesta sessão: simulador da dívida de volta; barras de erro do Focus como cápsula
+  vertical; cabeçalho só com a marca; em "Brasil no mundo", métrica e ano em lista suspensa,
+  ranking em pontos, grupos do FMI que abrem por país (197 países) e o gráfico de duas
+  métricas; em "Estados", o mesmo tratamento e duas métricas novas (ICMS por habitante e
+  resultado primário); o teste das fontes passou a rodar no Actions a cada push que mexe nas
+  fontes.
+- Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
+  mudança visível.
 
-## Esperando decisão do Caio
+## Esperando decisão do Caio (no PC)
 
 1. **Publicar.** Juntar o branch no `main` e ligar o Pages (Settings → Pages → Source: GitHub
-   Actions). O workflow `build-deploy.yml` já gera e publica a cada push no `main` e duas vezes
-   por dia útil. A sessão não pode mandar ao `main` sem o "sim"; pode abrir o PR.
-2. **B3: ligar ou não** (`SB_B3`). O site da B3 veda coleta automatizada. Desligado, o
-   Ibovespa vem do IPEADATA (um dia de atraso). Ligado, entram índices setoriais e futuros.
-   Recomendação: deixar desligado até ter autorização. Detalhe em [FONTES](FONTES.md).
-3. **Normas que faltam ler.** O Planalto não abre de fora do Brasil. Se o Caio colar os
-   trechos, entram na tela: LC 200/2023 e LDO 2026 (meta de primário e banda), LC 101/2000
-   arts. 19 e 20 (limites de pessoal), Resolução do Senado 40/2001 (dívida dos estados).
+   Actions). O `build-deploy.yml` publica a cada push no `main` e duas vezes por dia útil. A
+   sessão na nuvem não manda ao `main` sem o "sim"; pode abrir o PR.
+2. **B3: ligar ou não** (`SB_B3`). O site da B3 veda coleta automatizada. Recomendação: deixar
+   desligado até ter autorização. Detalhe em [FONTES](FONTES.md).
+3. **Normas que faltam ler** (o Planalto não abre de fora do Brasil). Colando os trechos, entram
+   na tela: LC 200/2023 e LDO 2026 (meta de primário e banda), LC 101/2000 arts. 19 e 20
+   (limites de pessoal), Resolução do Senado 40/2001 (dívida dos estados).
+4. **Calendário de divulgações.** A API de calendário do IBGE (`servicodados`) derruba a conexão
+   de fora do Brasil, então não dá para testar daqui. No PC: abrir
+   `https://servicodados.ibge.gov.br/api/v3/calendario/?qtd=20` no navegador e ver se responde
+   com `Access-Control-Allow-Origin`; se sim, o navegador do visitante pode buscar direto.
 
-## Próximos passos, em ordem
+## Próximos passos, em ordem (dá para fazer na nuvem)
 
-1. **Rodar o teste das fontes de dentro do Actions** (`fontes-smoke.yml`, "Run workflow").
-   Os runners ficam nos EUA: pode aparecer bloqueio que daqui não aparece (o IBGE `servicodados`
-   já bloqueia). Anotar o resultado em [FONTES](FONTES.md).
-2. **O ponto mais recente direto do navegador.** O site lê os JSONs do builder; SGS, Focus,
-   SIDRA e IPEADATA têm CORS aberto, então o navegador pode buscar o último valor e trocar o
-   número se for mais novo. Começar pelos seis números da página inicial.
-3. **Calendário de divulgações.** Próximas divulgações (IBGE, Copom, Focus às segundas) e o que
-   saiu nos últimos 7 dias. A API de calendário do IBGE não abre de fora do Brasil: testar do
-   navegador. As datas do Copom não têm API: hoje o gráfico da Selic aproxima o mês da reunião.
-4. **Estados no tempo.** Hoje o assunto é uma foto do último período. Faltam a série de cada
-   estado, ICMS (RREO Anexo 03), resultado primário (RREO Anexo 06) e a nota CAPAG (CSV do
-   Tesouro). Campos já anotados em [FONTES](FONTES.md).
-5. **Arrecadação federal por tributo** (RTN aba 1.1 ou o CSV da Receita) e **carga tributária**.
-6. **Previsões próprias que faltam:** IPCA e desocupação com modelo sazonal; "o que mudou desde
-   a última leitura" no PIB agora (precisa guardar a leitura anterior, por exemplo no cache do
-   Actions); PIB agora com indústria, varejo e serviços além do IBC-Br. Sempre ao lado do Focus,
-   com faixa de erro e o método numa frase.
-7. **Brasil no mundo:** câmbio e bolsa no ano, juro de 10 anos (OCDE), inflação mensal.
-8. **Acabamento:** "novo desde sua última visita", PNG dos gráficos, imagem de compartilhamento,
+1. **Ler o resultado do teste das fontes no Actions** (workflow "Fontes (teste de fumaça)",
+   resumo da execução) e anotar em [FONTES](FONTES.md) o que bloqueia de lá. A primeira rodada
+   sai com o push desta sessão.
+2. **Estados no tempo.** O assunto é uma foto do último período. Faltam a série de cada estado
+   (tocar no estado e ver a linha dele contra o Brasil), a nota CAPAG (CSV do Tesouro) e a
+   despesa por função per capita. Cuidado com o custo: cada período a mais são 54 chamadas ao
+   SICONFI; usar só o 3º quadrimestre de cada ano (o fechamento) para a história.
+3. **Arrecadação federal por tributo** (RTN aba 1.1 ou o CSV da Receita) e **carga tributária**.
+4. **Previsões próprias que faltam:** IPCA e desocupação com modelo sazonal; "o que mudou desde a
+   última leitura" no PIB agora (precisa guardar a leitura anterior, por exemplo no cache do
+   Actions); PIB agora com indústria, varejo e serviços além do IBC-Br. Sempre ao lado do
+   Focus, com barra de erro e o método numa frase.
+5. **Brasil no mundo:** câmbio contra o dólar no ano (BIS `WS_XRU`), juro de 10 anos (OCDE),
+   inflação mensal em 12 meses (BIS). A trajetória de país que só está no arquivo de todos os
+   países mostra só de 2020 a 2031.
+6. **Acabamento:** "novo desde sua última visita", PNG dos gráficos, imagem de compartilhamento,
    domínio.
-
-## Guardado para depois
-
-- **Simulador da dívida** (Caio, 14/11/2026: *"tire 'a sua simulação' nos gráficos por
-  enquanto, deixe anotado pra incluirmos no futuro, vamos deixar só de fontes que temos"*).
-  Está pronto e testado, só fora da tela: a conta em `builder/src/sacibras/modelos/divida.py`,
-  a linha de base em `secoes/previsoes.py` (`_simulador`), a tela em `web/src/simulador.ts`.
-  Para religar: `MOSTRAR_SIMULADOR = True` em `secoes/previsoes.py` e tirar o teste
-  `test_simulador_fica_fora_da_tela_por_enquanto`. Só com o "sim" do Caio.
 
 ## Limites conhecidos
 
-- O "PIB agora" é estimativa própria (reta com o IBC-Br), mostrada ao lado do Focus. Com só dois
-  meses do trimestre, o erro real é maior que o erro típico medido.
+- O "PIB agora" é estimativa própria (reta com o IBC-Br), ao lado do Focus. Com dois meses do
+  trimestre, o erro real é maior que o erro típico medido.
 - O histórico de acerto do Focus compara com o dado revisado de hoje, não com o da época.
+- O simulador da dívida é conta de ordem de grandeza: não separa a dívida atrelada ao câmbio.
 - A participação da dívida por indexador não traz o IPCA no SGS: "índices de preços" é o que
   falta para 100 %.
-- O RTN sai com uns dois meses de atraso; o RGF dos estados, por quadrimestre (o 3º de 2026
-  ainda vazio).
-- O build a frio (sem cache) faz ~54 chamadas ao SICONFI e ~60 ao Focus; não foi medido.
+- No resultado primário dos estados, o numerador é o acumulado do ano (jan–ago) e o
+  denominador é a RCL de 12 meses.
+- O gráfico de duas métricas de "Brasil no mundo" tira do desenho, por padrão, quem fica muito
+  longe dos outros (a Turquia na inflação), com aviso e botão para mostrar; em "Estados"
+  mostra todos (os extremos, RJ, MG e RS na dívida, são a história).
+- O build a frio leva cerca de 2 minutos com cache vazio de SICONFI e Focus (medido
+  localmente: 1 min 40 s com parte em cache).
 
 ## Para conferir antes de mostrar
 

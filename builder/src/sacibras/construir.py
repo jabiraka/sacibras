@@ -15,7 +15,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras.schema import Cartao, EstadoFonte, ItemSecao, Painel, Secao
+from sacibras.catalogo import SGS
+from sacibras.schema import AoVivo, Cartao, EstadoFonte, ItemSecao, Painel, Secao
 from sacibras.secoes import (
     atividade,
     credito,
@@ -49,6 +50,17 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
 # Os seis números da página inicial, na ordem; cada um nasce no assunto que o explica.
 # Decisão do Caio (14/11/2026): só o essencial na entrada, o resto abre no clique.
 RESUMO = ["pib-4t", "ipca-12m", "selic-meta", "desocupacao", "dolar", "dbgg"]
+
+# Onde o navegador busca o ponto mais novo de cada número da entrada (SGS e SIDRA têm CORS
+# aberto, conferido em 14/11/2026). A Selic meta fica de fora: o SGS a preenche dia a dia até
+# a próxima reunião, então "data mais nova" não quer dizer decisão nova.
+AO_VIVO = {
+    "pib-4t": AoVivo(tipo="sidra", caminho="t/5932/n1/all/v/6562/p/last%201/c11255/90707"),
+    "ipca-12m": AoVivo(tipo="sgs", codigo=SGS["IPCA_12M"].codigo),
+    "desocupacao": AoVivo(tipo="sgs", codigo=SGS["DESOCUPACAO"].codigo),
+    "dolar": AoVivo(tipo="sgs", codigo=SGS["DOLAR"].codigo),
+    "dbgg": AoVivo(tipo="sgs", codigo=SGS["DBGG"].codigo),
+}
 
 
 def manchete(texto: str) -> str:
@@ -106,6 +118,9 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
         try:
             secao = montar(ctx)
             _gravar(saida, arquivo, secao)
+            extra = ctx.memo.pop(f"{id}_paises", None)  # o arquivo à parte da seção, se houver
+            if extra is not None:
+                _gravar(saida, getattr(secao, "arquivo_paises", ""), extra)
             if isinstance(secao, Secao):
                 cartoes.update({c.id: c for c in secao.cartoes})
             itens.append(
@@ -122,6 +137,15 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
         except Exception as erro:
             traceback.print_exc()
             sobrou = (saida / arquivo).exists()
+            if sobrou:
+                # O JSON bom da rodada anterior continua valendo, e os números dele também
+                # entram na página inicial.
+                try:
+                    antigo = json.loads((saida / arquivo).read_text(encoding="utf-8"))
+                    for c in antigo.get("cartoes", []):
+                        cartoes[c["id"]] = Cartao.model_validate(c)
+                except (OSError, ValueError):
+                    pass
             itens.append(
                 ItemSecao(id=id, titulo=titulo, arquivo=arquivo, ok=sobrou, erro=str(erro)[:300])
             )
@@ -133,7 +157,11 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
         id="resumo",
         titulo="Resumo",
         resumo="Os seis números da página inicial.",
-        cartoes=[cartoes[c] for c in RESUMO if c in cartoes],
+        cartoes=[
+            cartoes[c].model_copy(update={"ao_vivo": AO_VIVO.get(c)})
+            for c in RESUMO
+            if c in cartoes
+        ],
         gerado_em=agora,
     )
     _gravar(saida, "resumo.json", resumo)

@@ -6,6 +6,13 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 11 * * 1" # segundas, 8h17 de Brasília
+  # Também quando um push mexe nas fontes: o workflow manual só aparece depois que o arquivo
+  # chega ao main, e o teste de dentro do Actions é o que interessa antes disso.
+  push:
+    paths:
+      - "builder/src/sacibras/fontes/**"
+      - "builder/src/sacibras/rede.py"
+      - ".github/workflows/fontes-smoke.yml"
 
 jobs:
   smoke:

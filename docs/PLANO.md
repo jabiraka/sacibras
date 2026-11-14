@@ -326,9 +326,9 @@ Marcação de 14/11/2026: ✅ feito, 🟡 em parte, ⬜ por fazer.
   partir do `main`; falta ligar o Pages no repositório (Settings → Pages → GitHub Actions).
 
 **Fase 1 — Macro núcleo** 🟡: ✅ Resumo, Atividade, Trabalho, Inflação, Juros e Copom (Focus por
-reunião e Selic embutida na curva do Tesouro), Setor externo, Crédito. ⬜ Contribuições do PIB
-por componente, informalidade e participação (PNAD trimestral), chamada direta do navegador
-para o ponto mais recente.
+reunião e Selic embutida na curva do Tesouro), Setor externo, Crédito; os números da página
+inicial buscam o ponto mais novo direto do navegador. ⬜ Contribuições do PIB por componente,
+informalidade e participação (PNAD trimestral).
 
 **Fase 2 — Contas públicas, dívida e impostos** 🟡: ✅ NFSP (primário, juros, nominal), DBGG e
 DLSP, com o Focus ao lado; receita e despesa do Governo Central e a composição da despesa
@@ -338,8 +338,8 @@ custo da dívida (o Tesouro não publica em dado aberto leve), linha do tempo da
 
 **Fase 3 — Estados** 🟡: ✅ mapa do Brasil (malha do IBGE) e ranking das 27 UFs: desocupação (PNAD), despesa com
 pessoal e dívida sobre a RCL (RGF, com os limites que o próprio RGF publica), receita por
-habitante. ⬜ ICMS, resultado primário, despesa por função per capita, CAPAG, capitais, série
-de cada estado no tempo.
+habitante, ICMS por habitante e resultado primário (RREO); ranking em pontos e gráfico de duas
+métricas. ⬜ Despesa por função per capita, CAPAG, capitais, série de cada estado no tempo.
 
 **Fase 4 — Mercados** 🟡: ✅ Ibovespa (reais e dólares), dólar, euro, curva prefixada e de juro
 real, inflação implícita, IC-Br. Escrito e desligado (`SB_B3`): índices setoriais, futuros de
@@ -348,12 +348,12 @@ DI, dólar, Ibovespa e agrícolas. ⬜ ETFs (COTAHIST), amplitude, moedas de eme
 **Fase 5 — Previsões** 🟡: ✅ consenso do Focus (tabela, história das apostas) e FMI ao lado do
 realizado; **histórico de acerto do Focus** (erro típico nesta época do ano, desde 2010) como
 faixa de erro; **PIB agora** (equação-ponte com o IBC-Br, erro medido fora da amostra, Focus
-do trimestre ao lado). ⏸ Simulador da dívida: pronto, fora da tela a pedido do Caio
-(14/11/2026), ver [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
+do trimestre ao lado); **simulador da dívida** no navegador, com linha de base do Focus.
 ⬜ IPCA e desocupação com modelo sazonal, "o que mudou desde a última leitura" (pede guardar
 a leitura anterior), PIB agora com indústria, varejo e serviços além do IBC-Br.
 
-**Brasil no mundo** (pedido de 14/11/2026, fora do plano original) ✅: 22 países e 5 agregados
+**Brasil no mundo** (pedido de 14/11/2026, fora do plano original) ✅ — com os grupos do FMI
+abrindo por país, ranking em pontos e gráfico de duas métricas: 22 países e 5 agregados
 em 11 métricas — PIB, inflação, juro básico, juro real, desemprego, dívida, primário, nominal,
 conta corrente, investimento, PIB per capita — com ranking por ano, trajetória com as
 projeções do FMI até 2031 e tabela ordenável. ⬜ Câmbio e bolsa no ano, juro de 10 anos,

@@ -99,16 +99,22 @@ def baixar(
 
 
 def baixar_json(url: str, **kw: Any) -> Any:
-    """O JSON da resposta. Fonte que devolve HTML no lugar (o SGS faz isso) é falha."""
-    corpo = baixar(url, **kw)
-    try:
-        return json.loads(corpo)
-    except json.JSONDecodeError as erro:
-        # Não deixar a resposta ruim no cache.
-        chave = json.dumps(
-            [kw.get("metodo", "GET"), url, kw.get("params"), kw.get("dados")],
-            sort_keys=True,
-            ensure_ascii=False,
-        )
-        _arquivo(chave).unlink(missing_ok=True)
-        raise FonteForaDoArError(f"{url} não devolveu JSON: {corpo[:120]!r}") from erro
+    """O JSON da resposta. O SGS às vezes devolve uma página HTML no lugar (visto em
+    14/11/2026, no meio de uma rodada que funcionava): pede de novo, sem cache, antes de
+    desistir."""
+    chave = json.dumps(
+        [kw.get("metodo", "GET"), url, kw.get("params"), kw.get("dados")],
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    corpo = b""
+    for tentativa in range(TENTATIVAS):
+        corpo = baixar(url, **kw)
+        try:
+            return json.loads(corpo)
+        except json.JSONDecodeError:
+            # Não deixar a resposta ruim no cache, e esperar um pouco antes de pedir de novo.
+            _arquivo(chave).unlink(missing_ok=True)
+            if tentativa + 1 < TENTATIVAS:
+                time.sleep(2.0 * (tentativa + 1))
+    raise FonteForaDoArError(f"{url} não devolveu JSON: {corpo[:120]!r}")

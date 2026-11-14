@@ -32,6 +32,10 @@ Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
 
 | IBGE geoftp, Malha Territorial 2024 (`BR_UF_2024.zip`, 15 MB) | o contorno das 27 UFs | Responde de fora do Brasil; a API de malhas (`servicodados`) não. Simplificada por `npm run malha` (mapshaper, 0,6 % dos vértices, sem as ilhas oceânicas) para um TopoJSON de 48 KB que fica no repositório. |
 
+| FMI SDMX, hierarquia `H_WEO_COUNTRIES` (`hierarchicalcodelist/all/all/latest`, 2,7 MB) | quem pertence a cada grupo do WEO (Mundo 197, Avançados 43, Emergentes 154, América Latina 33, Zona do euro 21…) | Responde de fora. Os nomes em português vêm do `pycountry` (tradução pt_BR do ISO 3166), com 20 corrigidos à mão. A chave de país vazia no WEO traz os 197 numa chamada. |
+| SICONFI, RREO Anexos 03 e 06 | ICMS de 12 meses e resultado primário do ano, por UF | 4º bimestre de 2026 nas 27 UFs (o 5º ainda vazio). ICMS somado: R$ 909,6 bi em 12 meses. Primário: a conta "sem RPPS, acima da linha", a mesma da meta da LDO. |
+| SGS e SIDRA, pelo navegador | o ponto mais novo dos números da página inicial | CORS `*` conferido com `Origin` de github.io. O SGS às vezes devolve HTML no lugar do JSON: o builder agora pede de novo antes de desistir. |
+
 ## Testadas, ainda sem uso (próximas fases)
 
 | Fonte | O que dá | Responde de fora? | CORS | Observações |

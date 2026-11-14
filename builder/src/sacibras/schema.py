@@ -41,6 +41,14 @@ class Faixa(Modelo):
     pontos: list[tuple[date, float, float]]
 
 
+class Intervalo(Modelo):
+    """Barras de erro: em cada data, de `inferior` a `superior`, na cor da série `serie`."""
+
+    nome: str
+    serie: str
+    pontos: list[tuple[date, float, float]]
+
+
 class LinhaRef(Modelo):
     valor: float
     rotulo: str
@@ -56,6 +64,7 @@ class Grafico(Modelo):
     periodicidade: Periodicidade
     series: list[Serie]
     faixa: Faixa | None = None
+    intervalos: list[Intervalo] = Field(default_factory=list)
     linhas: list[LinhaRef] = Field(default_factory=list)
     janela_anos: float | None = None
     """Quanto de história abre na tela (o resto fica atrás do botão "máx")."""
@@ -72,6 +81,21 @@ class Meta(Modelo):
     inferior: float
     superior: float
     norma: str
+
+
+class AoVivo(Modelo):
+    """De onde o navegador busca o ponto mais recente do número (fontes com CORS aberto).
+
+    O JSON do builder é o piso: se a busca falhar ou não trouxer data mais nova, fica o
+    número do builder."""
+
+    tipo: Literal["sgs", "sidra"]
+    codigo: int | None = None
+    """Código da série no SGS."""
+    caminho: str = ""
+    """Caminho da consulta no SIDRA (`t/5932/n1/all/v/6562/p/last%201/c11255/90707`)."""
+    escala: float = 1.0
+    """Multiplica o valor da fonte (para pôr na unidade do cartão)."""
 
 
 class Cartao(Modelo):
@@ -91,6 +115,7 @@ class Cartao(Modelo):
     secao: str = ""
     """Âncora da seção em que o número é explicado."""
     meta: Meta | None = None
+    ao_vivo: AoVivo | None = None
 
 
 class LinhaTabela(Modelo):
@@ -166,6 +191,17 @@ class MetricaMundo(Modelo):
     """{iso3: um valor por ano de `anos`}."""
 
 
+class GrupoMundo(Modelo):
+    """Um grupo de países do FMI (hierarquia oficial H_WEO_COUNTRIES), para abrir por país."""
+
+    iso3: str
+    """Código do grupo no WEO: G001 Mundo, G110 Avançados, G200 Emergentes, G205 América
+    Latina e Caribe, G163 Zona do euro…"""
+    nome: str
+    membros: list[str]
+    """Os países (ISO3), sem os subgrupos, como a hierarquia do FMI os lista."""
+
+
 class Mundo(Modelo):
     id: Literal["mundo"] = "mundo"
     titulo: str
@@ -175,6 +211,20 @@ class Mundo(Modelo):
     ano_corrente: int
     edicao: str
     """De qual edição vêm as projeções, ex. 'World Economic Outlook, outubro de 2026'."""
+    grupos: list[GrupoMundo] = Field(default_factory=list)
+    nomes: dict[str, str] = Field(default_factory=dict)
+    """{ISO3: nome em português} de todos os países que aparecem em algum grupo."""
+    arquivo_paises: str = ""
+    """O JSON com as métricas de todos os países (MundoPaises), lido só quando a pessoa abre
+    um grupo."""
+    gerado_em: datetime
+
+
+class MundoPaises(Modelo):
+    """As mesmas métricas do `Mundo`, para todos os países dos grupos, em menos anos."""
+
+    id: Literal["mundo-paises"] = "mundo-paises"
+    metricas: list[MetricaMundo]
     gerado_em: datetime
 
 

@@ -14,6 +14,8 @@ from typing import Any
 from sacibras.rede import baixar_json
 
 BASE = "https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO,9.0.0"
+HIERARQUIAS = "https://api.imf.org/external/sdmx/2.1/hierarchicalcodelist/all/all/latest"
+HIERARQUIA_PAISES = "H_WEO_COUNTRIES"
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,7 @@ def _atributo(estrutura: list[dict[str, Any]], indices: list[Any], nome: str) ->
 
 
 def weo(paises: list[str], indicadores: list[str], inicio: int, fim: int) -> Weo:
+    """Os indicadores dos países pedidos; lista vazia traz todos (a chave vazia do SDMX)."""
     url = f"{BASE}/{'+'.join(paises)}.{'+'.join(indicadores)}.A"
     bruto = baixar_json(
         url,
@@ -65,3 +68,52 @@ def weo(paises: list[str], indicadores: list[str], inicio: int, fim: int) -> Weo
     )
     quando = date.fromisoformat(publicado[:10]) if publicado else date.today()
     return Weo(quando, valores, realizado)
+
+
+def _codigo(no: dict[str, Any]) -> str:
+    """O código do nó: o que vem depois do último ponto de `code` (G205, BRA…)."""
+    return str(no["code"]).rsplit(".", 1)[-1]
+
+
+def _folhas(no: dict[str, Any], destino: dict[str, None]) -> None:
+    filhos = no.get("hierarchicalCodes") or []
+    if not filhos:
+        destino[_codigo(no)] = None  # dict como conjunto ordenado
+    for filho in filhos:
+        _folhas(filho, destino)
+
+
+def _grupos_da_arvore(nos: list[dict[str, Any]], saida: dict[str, list[str]]) -> None:
+    for no in nos:
+        filhos = no.get("hierarchicalCodes") or []
+        if filhos:
+            paises: dict[str, None] = {}
+            _folhas(no, paises)
+            saida[_codigo(no)] = list(paises)
+            _grupos_da_arvore(filhos, saida)
+
+
+def grupos_da_resposta(bruto: dict[str, Any]) -> dict[str, list[str]]:
+    """{grupo: países ISO3 únicos}, achatando os subgrupos, da hierarquia H_WEO_COUNTRIES."""
+    for lista in bruto.get("data", {}).get("hierarchicalCodelists", []):
+        if lista.get("id") == HIERARQUIA_PAISES:
+            saida: dict[str, list[str]] = {}
+            for hierarquia in lista.get("hierarchies", []):
+                _grupos_da_arvore(hierarquia.get("hierarchicalCodes", []), saida)
+            return saida
+    raise RuntimeError(
+        f"A hierarquia {HIERARQUIA_PAISES} não está na lista de hierarquias do FMI "
+        f"({HIERARQUIAS}); o FMI mudou o nome ou tirou a hierarquia."
+    )
+
+
+def grupos() -> dict[str, list[str]]:
+    """Os grupos de países do WEO (G001 Mundo, G110 Avançados, G205 América Latina…), cada um
+    com todos os países dentro dele, subgrupos achatados."""
+    bruto = baixar_json(
+        HIERARQUIAS,
+        cabecalhos={"Accept": "application/json"},
+        validade=7 * 86400,
+        tempo_limite=180,
+    )
+    return grupos_da_resposta(bruto)

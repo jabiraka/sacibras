@@ -269,6 +269,26 @@ export function montarGrafico(g: Grafico): HTMLElement {
         Plot.areaY(faixa, { x: "t", y1: "a", y2: "b", fill: t.faixa, fillOpacity: 0.22 }),
       );
     }
+    // Barras de erro: uma cápsula translúcida na cor da série, com um traço fino no meio.
+    for (const intervalo of g.intervalos ?? []) {
+      const indice = g.series.findIndex((x) => x.id === intervalo.serie);
+      const corDaSerie = cor(Math.max(0, indice));
+      const pontos = intervalo.pontos
+        .map(([iso, a, b]) => ({ t: data(iso), a, b }))
+        .filter((p) => p.t.getTime() >= desde);
+      marcas.push(
+        Plot.ruleX(pontos, {
+          x: "t",
+          y1: "a",
+          y2: "b",
+          stroke: corDaSerie,
+          strokeOpacity: 0.2,
+          strokeWidth: 12,
+          strokeLinecap: "round",
+        }),
+        Plot.ruleX(pontos, { x: "t", y1: "a", y2: "b", stroke: corDaSerie, strokeWidth: 1.5 }),
+      );
+    }
     const xMin = Math.min(...todas.map((l) => l.t.getTime()));
     const xMax = Math.max(...todas.map((l) => l.t.getTime()));
     for (const linha of g.linhas) {
@@ -481,6 +501,13 @@ function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => str
     item.append(el("i", "chave banda"), document.createTextNode(g.faixa.nome));
     itens.push(item);
   }
+  for (const intervalo of g.intervalos ?? []) {
+    const item = el("span", "legenda-item");
+    const chave = el("i", "chave intervalo");
+    chave.style.setProperty("--cor", cor(Math.max(0, g.series.findIndex((x) => x.id === intervalo.serie))));
+    item.append(chave, document.createTextNode(intervalo.nome));
+    itens.push(item);
+  }
   legenda.append(...itens);
   legenda.hidden = itens.length === 0;
 }
@@ -566,6 +593,20 @@ function pairar(
       const valor = el("b", "", comUnidade(ponto.v, g.unidade, g.casas));
       linha.append(chave, el("span", "", s.nome), valor);
       linhas.push(linha);
+      // Se a série tem barra de erro nesta data, a faixa vai escrita logo abaixo.
+      for (const intervalo of g.intervalos ?? []) {
+        if (intervalo.serie !== s.id) continue;
+        const faixa = intervalo.pontos.find(([d]) => d === ponto.iso);
+        if (faixa) {
+          linhas.push(
+            el(
+              "div",
+              "dica-faixa",
+              `de ${numero(faixa[1], g.casas)} a ${comUnidade(faixa[2], g.unidade, g.casas)}`,
+            ),
+          );
+        }
+      }
     });
     if (!linhas.length) return;
     dica.replaceChildren(el("div", "dica-data", periodo(iso, g.periodicidade)), ...linhas);

@@ -24,6 +24,7 @@ export interface Grafico {
   periodicidade: Periodicidade;
   series: Serie[];
   faixa: { nome: string; pontos: [string, number, number][] } | null;
+  intervalos: { nome: string; serie: string; pontos: [string, number, number][] }[];
   linhas: { valor: number; rotulo: string }[];
   janela_anos: number | null;
   fonte: string;
@@ -47,6 +48,7 @@ export interface Cartao {
   mini: [string, number][];
   secao: string;
   meta: { centro: number; inferior: number; superior: number; norma: string } | null;
+  ao_vivo: { tipo: "sgs" | "sidra"; codigo: number | null; caminho: string; escala: number } | null;
 }
 
 export interface Tabela {
@@ -103,6 +105,12 @@ export interface MetricaMundo {
   valores: Record<string, (number | null)[]>;
 }
 
+export interface GrupoMundo {
+  iso3: string;
+  nome: string;
+  membros: string[];
+}
+
 export interface Mundo {
   id: "mundo";
   titulo: string;
@@ -111,6 +119,15 @@ export interface Mundo {
   metricas: MetricaMundo[];
   ano_corrente: number;
   edicao: string;
+  grupos: GrupoMundo[];
+  nomes: Record<string, string>;
+  arquivo_paises: string;
+  gerado_em: string;
+}
+
+export interface MundoPaises {
+  id: "mundo-paises";
+  metricas: MetricaMundo[];
   gerado_em: string;
 }
 

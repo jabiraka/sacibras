@@ -189,7 +189,8 @@ button {
   top: 14px;
   z-index: 40;
   transform: translateX(-50%);
-  width: min(56rem, 100% - 1.5rem);
+  /* Só a marca (Caio, 14/11/2026): a pílula fica do tamanho dela. */
+  width: auto;
   border-radius: 999px;
   background: var(--vidro-forte);
   border: 1px solid var(--borda-forte);
@@ -198,7 +199,7 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 6px 6px 16px;
+  padding: 8px 18px 8px 14px;
 }
 
 .marca {
@@ -446,6 +447,18 @@ main {
 .regua-legenda {
   font-size: 0.6875rem;
   color: var(--tinta-2);
+}
+
+/* Número que o navegador acabou de ler na fonte, mais novo que a rodada do painel. */
+.essencial .novo {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--verde);
+  background: var(--verde-claro);
 }
 
 .essencial .quando {
@@ -828,6 +841,16 @@ main {
   background: color-mix(in srgb, var(--faixa) 30%, transparent);
 }
 
+/* A barra de erro na legenda: uma cápsula em pé, como no gráfico. */
+.chave.intervalo {
+  width: 7px;
+  height: 14px;
+  border: 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--cor) 25%, transparent);
+  box-shadow: inset 0 0 0 0.75px var(--cor);
+}
+
 .tela {
   position: relative;
   margin-top: 8px;
@@ -880,6 +903,12 @@ main {
   color: var(--tinta);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.dica-faixa {
+  margin: -1px 0 2px 23px;
+  font-size: 0.75rem;
+  color: var(--tinta-3);
 }
 
 .grafico-pe {
@@ -1321,6 +1350,365 @@ table.dados thead th:first-child {
 .posicao b {
   color: var(--tinta);
   font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ listas suspensas */
+
+.barra-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 22px 0 14px;
+}
+
+.painel-mundo .barra-controles {
+  margin: 12px 0 8px;
+}
+
+.escolha-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.escolha-rotulo {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tinta-3);
+}
+
+.escolha-rotulo:empty {
+  display: none;
+}
+
+select.escolha {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--tinta);
+  height: 42px;
+  min-width: 11rem;
+  max-width: 100%;
+  padding: 0 38px 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--borda-forte);
+  background-color: var(--superficie);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300853a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+
+select.escolha:hover {
+  border-color: var(--verde);
+}
+
+select.escolha:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------------------ ranking em pontos */
+
+.ranking-pontos {
+  display: grid;
+  gap: 1px;
+  margin-top: 10px;
+}
+
+.ponto-linha {
+  display: grid;
+  grid-template-columns: 22px minmax(7rem, 10rem) minmax(0, 1fr) 3.4rem;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: inherit;
+  text-align: left;
+}
+
+button.ponto-linha {
+  cursor: pointer;
+}
+
+button.ponto-linha:hover {
+  background: var(--vidro-sutil);
+}
+
+.ponto-linha.brasil {
+  background: var(--verde-claro);
+  font-weight: 500;
+}
+
+.ponto-linha.grupo .ponto-nome {
+  font-style: italic;
+  color: var(--tinta-2);
+}
+
+.ponto-linha.membro {
+  font-size: 0.78125rem;
+  padding-block: 2px;
+}
+
+.ponto-pos {
+  color: var(--tinta-3);
+  font-size: 0.71875rem;
+  text-align: right;
+}
+
+/* O nome inteiro ("Oriente Médio e Ásia Central"), quebrando em duas linhas se precisar. */
+.ponto-nome {
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.abre-seta {
+  display: inline-block;
+  width: 1em;
+  font-style: normal;
+  color: var(--verde);
+}
+
+.abre-conta {
+  font-style: normal;
+  font-size: 0.6875rem;
+  color: var(--tinta-3);
+}
+
+.ponto-trilho {
+  position: relative;
+  height: 14px;
+}
+
+/* A linha de guia da régua, discreta, e o zero um pouco mais forte. */
+.ponto-trilho::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1px dotted var(--fio);
+}
+
+.ponto-zero {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 0;
+  border-left: 1px solid var(--eixo);
+}
+
+.ponto-marco {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1px dashed var(--amarelo);
+}
+
+.ponto {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--tinta-3);
+  box-shadow: 0 0 0 2px var(--superficie);
+}
+
+.ponto-linha.brasil .ponto {
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  background: var(--verde);
+}
+
+.ponto-linha.grupo .ponto {
+  background: var(--azul);
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+.ponto-linha.membro .ponto {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: var(--neutro-barra);
+}
+
+.ponto-linha.escolhido .ponto {
+  background: var(--cor);
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+}
+
+.ponto-linha.escolhido .ponto-nome {
+  font-weight: 500;
+}
+
+/* Valor fora da régua (inflação de 200 % num grupo aberto): o ponto fica na ponta, vazado. */
+.ponto.fora-dir,
+.ponto.fora-esq {
+  background: var(--superficie) !important;
+  box-shadow: inset 0 0 0 2px var(--tinta-3);
+}
+
+.ponto-valor {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ponto-membros {
+  margin: 2px 0 6px 14px;
+  padding: 6px 4px 6px 8px;
+  border-left: 2px solid var(--azul);
+  max-height: 360px;
+  overflow-y: auto;
+  background: var(--vidro-sutil);
+  border-radius: 0 10px 10px 0;
+}
+
+.ponto-membros-titulo {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  color: var(--tinta-2);
+}
+
+.subtitulo-lista {
+  margin: 20px 0 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.botao-texto {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--verde);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.chave.redonda {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cor);
+}
+
+/* ------------------------------------------------------------------ trajetória */
+
+.lado-trajetoria {
+  min-width: 0;
+}
+
+.escolhidos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ficha.escolhida {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--superficie);
+  color: var(--tinta);
+  border-color: var(--cor);
+}
+
+.ficha.escolhida:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.ficha.escolhida i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--cor);
+}
+
+.ficha .tirar {
+  margin-left: 6px;
+  color: var(--tinta-3);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.escolha-campo.adicionar select.escolha {
+  height: 32px;
+  min-width: 0;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  padding: 0 32px 0 12px;
+  background-position: right 9px center;
+}
+
+/* ------------------------------------------------------------------ duas métricas */
+
+.dispersao-painel {
+  margin-top: 12px;
+}
+
+.tela-dispersao {
+  margin-top: 6px;
+  min-height: 260px;
+}
+
+.tela-dispersao svg {
+  display: block;
+  max-width: 100%;
+  touch-action: pan-y;
+}
+
+@media (max-width: 520px) {
+  /* Uma lista por linha: lado a lado, os nomes das métricas cortavam. */
+  .barra-controles {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  select.escolha {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.875rem;
+  }
+
+  .ponto-linha {
+    grid-template-columns: 18px minmax(0, 8.5rem) minmax(0, 1fr) 2.8rem;
+    gap: 6px;
+    font-size: 0.78125rem;
+  }
+
+  .ponto-nome {
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .ponto-membros {
+    margin-left: 4px;
+  }
 }
 
 /* ------------------------------------------------------------------ estados: mapa */

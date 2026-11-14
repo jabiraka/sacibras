@@ -128,6 +128,7 @@ export function montarSimulador(s: SimuladorDivida): HTMLElement[] {
           },
         ],
         faixa: null,
+        intervalos: [],
         linhas: [],
         janela_anos: null,
         fonte: s.fonte,
