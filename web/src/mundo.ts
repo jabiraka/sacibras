@@ -41,6 +41,7 @@ const TEMAS: Record<string, string> = {
   divida: "Contas públicas",
   primario: "Contas públicas",
   nominal: "Contas públicas",
+  carga: "Contas públicas",
   conta_corrente: "Contas externas",
   servico_divida: "Crédito",
   hiato_credito: "Crédito",

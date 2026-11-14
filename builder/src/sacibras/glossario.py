@@ -735,6 +735,52 @@ TERMOS: list[Termo] = [
         ("IOF",),
     ),
     Termo(
+        "cbs",
+        "CBS",
+        "Contribuição sobre Bens e Serviços: o tributo federal sobre o consumo criado pela "
+        "reforma de 2023, que substitui o PIS e a Cofins a partir de 2027.",
+        ("CBS",),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "ibs",
+        "IBS",
+        "Imposto sobre Bens e Serviços: o tributo de estados e municípios criado pela reforma "
+        "de 2023, que substitui o ICMS e o ISS aos poucos, de 2029 a 2033.",
+        ("IBS",),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "imposto-seletivo",
+        "Imposto Seletivo",
+        "Imposto federal criado pela reforma de 2023 sobre produtos que fazem mal à saúde ou "
+        "ao meio ambiente. Começa em 2027.",
+        ("Imposto Seletivo",),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "iss",
+        "ISS",
+        "Imposto Sobre Serviços: municipal, cobrado de quem presta serviço.",
+        ("ISS",),
+    ),
+    Termo(
+        "irpj",
+        "IRPJ",
+        "Imposto de Renda da Pessoa Jurídica: o imposto federal sobre o lucro das empresas, "
+        "de 25 % para as grandes.",
+        ("IRPJ",),
+        "#impostos/quem-paga",
+    ),
+    Termo(
+        "aliquota-de-referencia",
+        "Alíquota de referência",
+        "A alíquota da CBS e do IBS que o Senado fixa para a arrecadação ficar igual à dos "
+        "tributos que saem. Cada estado e município pode cobrar acima ou abaixo dela.",
+        ("alíquota de referência", "alíquotas de referência"),
+        "#impostos/reforma",
+    ),
+    Termo(
         "correlacao",
         "Correlação",
         "Mede de -1 a 1 o quanto duas coisas andam juntas. Perto de zero, não andam; andar "
@@ -742,35 +788,11 @@ TERMOS: list[Termo] = [
         ("correlação",),
     ),
     Termo(
-        "ibs",
-        "IBS",
-        "Imposto sobre Bens e Serviços: o imposto dos estados e municípios criado pela reforma "
-        "do consumo, que substitui o ICMS e o ISS aos poucos, de 2029 a 2033.",
-        ("IBS",),
-        "#impostos/reforma",
-    ),
-    Termo(
-        "cbs",
-        "CBS",
-        "Contribuição sobre Bens e Serviços: o tributo federal criado pela reforma do consumo, "
-        "que substitui o PIS e a Cofins a partir de 2027.",
-        ("CBS",),
-        "#impostos/reforma",
-    ),
-    Termo(
-        "iss",
-        "ISS",
-        "O imposto dos municípios sobre serviços (academia, oficina, escola, advogado). Acaba "
-        "em 2033, substituído pelo IBS.",
-        ("ISS",),
-    ),
-    Termo(
         "aliquota-cheia",
         "Alíquota cheia",
         "O percentual do imposto para o que não tem desconto, cobrado sobre o valor sem o "
-        "imposto. Na reforma, a de referência é a que o Senado fixa para a arrecadação ficar "
-        "igual à dos impostos que saem.",
-        ("alíquota cheia", "alíquota de referência", "alíquotas de referência"),
+        "imposto. Quem tem desconto de 60 % paga 40 % dela; a cesta básica, zero.",
+        ("alíquota cheia", "alíquotas cheias"),
         "#impostos/reforma",
     ),
     Termo(
@@ -779,15 +801,6 @@ TERMOS: list[Termo] = [
         "Parte do IBS e da CBS pagos volta para a família de baixa renda inscrita no Cadastro "
         "Único: 20 % no geral, e toda a CBS nas contas de luz, água, gás e telefone.",
         ("cashback", "Cadastro Único"),
-        "#impostos/reforma",
-    ),
-    Termo(
-        "imposto-seletivo",
-        "Imposto Seletivo",
-        "Imposto federal criado pela reforma para o que faz mal à saúde ou ao meio ambiente, "
-        "como cigarro, bebida alcoólica e refrigerante. É cobrado além do IBS e da CBS, de "
-        "2027 em diante.",
-        ("Imposto Seletivo",),
         "#impostos/reforma",
     ),
     # ---------------------------------------------------------------- estados

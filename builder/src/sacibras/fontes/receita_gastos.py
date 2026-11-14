@@ -45,6 +45,31 @@ class Edicao:
     """{ano realizado: % do PIB}."""
     principais: list[tuple[str, float]]
     """Os gastos do último ano, do maior ao menor: (nome, R$)."""
+    regioes: dict[str, float]
+    """{região: R$} do último ano (aba Q IV, linha TOTAL); vazio se a aba mudou."""
+
+
+@dataclass(frozen=True)
+class Previsao:
+    """O gasto tributário previsto no projeto de orçamento (PLOA) de um ano."""
+
+    ano: int
+    total: float
+    pct_pib: float
+
+
+LISTAGEM_PLOA = LISTAGEM.replace("bases-efetivas", "ploa")
+FONTE_PLOA = "Receita Federal, Demonstrativo dos Gastos Tributários do PLOA"
+PADRAO_PLOA = re.compile(
+    r'href="(?P<url>[^"]*/dgt-(?:previsao-)?ploa-(?P<ano>\d{4})-quadros(?:\.xlsx)?)/view"'
+)
+REGIOES = {
+    "NORTE": "Norte",
+    "NORDESTE": "Nordeste",
+    "CENTRO-OESTE": "Centro-Oeste",
+    "SUDESTE": "Sudeste",
+    "SUL": "Sul",
+}
 
 
 def edicoes_na_listagem(html: str) -> dict[int, str]:
@@ -67,6 +92,7 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
             raise FonteForaDoArError(f"DGT {ano}: sem as abas Q XXVI e Q X")
         serie = list(livro[abas["Q XXVI"]].iter_rows(values_only=True))
         principais_brutos = list(livro[abas["Q X"]].iter_rows(values_only=True))
+        por_regiao = list(livro[abas["Q IV"]].iter_rows(values_only=True)) if "Q IV" in abas else []
     finally:
         livro.close()
 
@@ -111,7 +137,57 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
         total=valores(achadas["TOTAL"], 1.0),
         pct_pib=valores(achadas["GT / PIB"], 100.0),
         principais=principais,
+        regioes=ler_regioes(por_regiao),
     )
+
+
+def ler_regioes(linhas: list[tuple[object, ...]]) -> dict[str, float]:
+    """A linha TOTAL da aba Q IV, pelas colunas que o cabeçalho nomeia."""
+    colunas: dict[int, str] = {}
+    for linha in linhas:
+        if not colunas:
+            achadas = {i: REGIOES[_rotulo(c)] for i, c in enumerate(linha) if _rotulo(c) in REGIOES}
+            if len(achadas) == len(REGIOES):
+                colunas = achadas
+        elif _rotulo(linha[0] if linha else None) == "TOTAL":
+            return {
+                nome: float(linha[i])  # type: ignore[arg-type]
+                for i, nome in colunas.items()
+                if i < len(linha) and isinstance(linha[i], (int, float))
+            }
+    return {}
+
+
+def ler_previsao(conteudo: bytes, ano: int) -> Previsao:
+    """Aba Q VI ("consolidação por tipo de tributo"): na linha TOTAL, o valor em R$ e, na
+    coluna seguinte, a participação no PIB, já em %."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        livro = openpyxl.load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
+    try:
+        abas = {nome.strip(): nome for nome in livro.sheetnames}
+        if "Q VI" not in abas:
+            raise FonteForaDoArError(f"DGT PLOA {ano}: sem a aba Q VI")
+        linhas = list(livro[abas["Q VI"]].iter_rows(values_only=True))
+    finally:
+        livro.close()
+    for linha in linhas:
+        if _rotulo(linha[0] if linha else None) == "TOTAL":
+            valor, pib = (*linha[1:3], None, None)[:2]
+            if isinstance(valor, (int, float)) and isinstance(pib, (int, float)):
+                return Previsao(ano=ano, total=float(valor), pct_pib=float(pib))
+    raise FonteForaDoArError(f"DGT PLOA {ano}: sem a linha TOTAL na aba Q VI")
+
+
+def previsoes(depois_de: int) -> list[Previsao]:
+    """O previsto no PLOA dos anos depois do último realizado, do mais velho ao mais novo."""
+    html = baixar(LISTAGEM_PLOA, validade=24 * 3600).decode("utf-8", "replace")
+    achadas = {int(m["ano"]): m["url"] + "/@@download/file" for m in PADRAO_PLOA.finditer(html)}
+    saida: list[Previsao] = []
+    for ano in sorted(a for a in achadas if a > depois_de):
+        corpo = baixar(achadas[ano], validade=7 * 24 * 3600, tempo_limite=120)
+        saida.append(ler_previsao(corpo, ano))
+    return saida
 
 
 def edicoes(quantas: int = 4) -> list[Edicao]:

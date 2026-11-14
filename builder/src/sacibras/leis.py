@@ -2,6 +2,8 @@
 
 Regra do projeto: número de lei só entra daqui, e só depois de a norma ter sido lida na fonte
 oficial (a data da leitura fica ao lado).
+O prazo de cada releitura mora em `leituras.py` (o build e o workflow "Prazos de releitura"
+avisam quando vence).
 """
 
 from __future__ import annotations
@@ -122,40 +124,113 @@ AVALIACOES_2026 = [
 # educação, no mínimo 25 % da receita de impostos, incluídas as transferências
 # (Constituição, art. 212).
 
+
 # ------------------------------------------------------------------ reforma do consumo
 
-# O Planalto recusa a nuvem (429 em 14/11/2026); as normas abaixo foram lidas em 14/11/2026 em
-# outras duas fontes oficiais:
-# - Emenda Constitucional nº 132, de 20/12/2023, na publicação do Senado
-#   (legis.senado.leg.br/norma/37959796/publicacao/37963893), arts. 125 a 130 do ADCT;
-# - Lei Complementar nº 214, de 16/1/2025, no texto atualizado da Câmara, que já traz as mudanças
-#   da LC nº 227, de 13/1/2026 (www2.camara.leg.br/legin/fed/leicom/2025/
-#   leicomplementar-214-16-janeiro-2025-796905-normaatualizada-pl.html).
-#
-# ADCT, art. 125: "Em 2026, o imposto previsto no art. 156-A [o IBS] será cobrado à alíquota
-#   estadual de 0,1% (um décimo por cento), e a contribuição prevista no art. 195, V [a CBS],
-#   [...] será cobrada à alíquota de 0,9% (nove décimos por cento)." § 1º: "O montante recolhido
-#   na forma do caput será compensado com o valor devido das contribuições" (PIS e Cofins).
-#   LC 214, art. 348, § 1º: "Fica dispensado o recolhimento do IBS e da CBS [de 2026] em relação
-#   aos sujeitos passivos que cumprirem as obrigações acessórias".
-# ADCT, art. 126: "A partir de 2027: I – serão cobrados: a) a contribuição prevista no art.
-#   195, V [CBS]; b) o imposto previsto no art. 153, VIII [o Imposto Seletivo]; II – serão
-#   extintas as contribuições [Cofins e PIS]; III – o imposto previsto no art. 153, IV [IPI]:
-#   a) terá suas alíquotas reduzidas a zero, exceto em relação aos produtos que tenham
-#   industrialização incentivada na Zona Franca de Manaus".
-# ADCT, art. 127: "Em 2027 e 2028, o [IBS] será cobrado à alíquota estadual de 0,05% (cinco
-#   centésimos por cento) e à alíquota municipal de 0,05% (cinco centésimos por cento).
-#   Parágrafo único. No período referido no caput, a alíquota da [CBS] será reduzida em 0,1
-#   (um décimo) ponto percentual."
-# ADCT, art. 128: "De 2029 a 2032, as alíquotas dos impostos previstos nos arts. 155, II
-#   [ICMS], e 156, III [ISS] [...] serão fixadas nas seguintes proporções das alíquotas fixadas
-#   nas respectivas legislações: I – 9/10 (nove décimos), em 2029; II – 8/10 (oito décimos), em
-#   2030; III – 7/10 (sete décimos), em 2031; IV – 6/10 (seis décimos), em 2032."
-# ADCT, art. 129: "Ficam extintos, a partir de 2033, os impostos previstos nos arts. 155, II, e
-#   156, III".
-# ADCT, art. 130: "Resolução do Senado Federal fixará, para todas as esferas federativas, as
-#   alíquotas de referência [...] § 1º As alíquotas de referência serão fixadas no ano anterior
-#   ao de sua vigência [...] com base em cálculo realizado pelo Tribunal de Contas da União."
+
+@dataclass(frozen=True)
+class PassoDaReforma:
+    quando: str
+    muda: str
+    """O que muda, em palavras de todo dia."""
+    norma: str
+
+
+# Emenda Constitucional nº 132, de 20/12/2023, art. 2º (acrescenta os arts. 124 a 133 ao ADCT),
+# e Lei Complementar nº 214, de 16/1/2025. Lidas em 14/11/2026 no Senado, na PUBLICAÇÃO
+# ORIGINAL do Diário Oficial (legis.senado.leg.br/norma/37959796/publicacao/37963893 e
+# legis.senado.leg.br/norma/40180341/publicacao/40181429): o Planalto, que tem o texto
+# compilado, não responde da nuvem. LER DE NOVO no Planalto, do PC, para ver se norma
+# posterior mexeu nestes artigos. Trechos:
+# - ADCT art. 125: "Em 2026, o imposto previsto no art. 156-A será cobrado à alíquota estadual
+#   de 0,1% (um décimo por cento), e a contribuição prevista no art. 195, V, ambos da
+#   Constituição Federal, será cobrada à alíquota de 0,9% (nove décimos por cento)." § 1º: "O
+#   montante recolhido na forma do caput será compensado com o valor devido das contribuições
+#   previstas no art. 195, I, "b", e IV, e da contribuição para o Programa de Integração Social".
+#   LC 214, art. 348, § 1º: "Fica dispensado o recolhimento do IBS e da CBS relativo aos fatos
+#   geradores ocorridos no período indicado no caput em relação aos sujeitos passivos que
+#   cumprirem as obrigações acessórias previstas na legislação."
+# - ADCT art. 126: "A partir de 2027: I – serão cobrados: a) a contribuição prevista no art.
+#   195, V [...]; b) o imposto previsto no art. 153, VIII [...]; II – serão extintas as
+#   contribuições previstas no art. 195, I, "b", e IV, e a contribuição para o Programa de
+#   Integração Social de que trata o art. 239 [...], desde que instituída a contribuição
+#   referida na alínea "a" do inciso I; III – o imposto previsto no art. 153, IV [...]: a) terá
+#   suas alíquotas reduzidas a zero, exceto em relação aos produtos que tenham industrialização
+#   incentivada na Zona Franca de Manaus".
+# - ADCT art. 127: "Em 2027 e 2028, o imposto previsto no art. 156-A da Constituição Federal
+#   será cobrado à alíquota estadual de 0,05% (cinco centésimos por cento) e à alíquota
+#   municipal de 0,05% (cinco centésimos por cento). Parágrafo único. No período referido no
+#   caput, a alíquota da contribuição prevista no art. 195, V, [...] será reduzida em 0,1 (um
+#   décimo) ponto percentual."
+# - ADCT art. 128: "De 2029 a 2032, as alíquotas dos impostos previstos nos arts. 155, II, e
+#   156, III, [...] serão fixadas nas seguintes proporções das alíquotas fixadas nas respectivas
+#   legislações: I – 9/10 (nove décimos), em 2029; II – 8/10 (oito décimos), em 2030; III – 7/10
+#   (sete décimos), em 2031; IV – 6/10 (seis décimos), em 2032."
+# - ADCT art. 129: "Ficam extintos, a partir de 2033, os impostos previstos nos arts. 155, II, e
+#   156, III, da Constituição Federal."
+# - ADCT art. 130: "Resolução do Senado Federal fixará, para todas as esferas federativas, as
+#   alíquotas de referência dos tributos previstos nos arts. 156-A e 195, V [...]". § 4º: "A
+#   alíquota de referência da contribuição a que se refere o art. 195, V, [...] será reduzida em
+#   2030 caso a média da Receita-Base da União em 2027 e 2028 exceda o Teto de Referência da
+#   União." § 5º: as duas alíquotas "serão reduzidas em 2035 caso a média da Receita-Base Total
+#   entre 2029 e 2033 exceda o Teto de Referência Total" (os tetos são a média de 2012 a 2021,
+#   em proporção do PIB, § 3º).
+# Na Constituição: 195, V = CBS; 156-A = IBS; 153, VIII = Imposto Seletivo; 195, I, "b" e IV =
+# Cofins; 239 = PIS; 153, IV = IPI; 155, II = ICMS; 156, III = ISS.
+REFORMA_DO_CONSUMO: list[PassoDaReforma] = [
+    PassoDaReforma(
+        "2026",
+        "Ano de teste. A CBS (federal) aparece na nota a 0,9 % e o IBS (de estados e "
+        "municípios) a 0,1 %, descontados do PIS e da Cofins. Quem cumpre as obrigações de "
+        "informar fica dispensado de recolher.",
+        "ADCT, art. 125; LC 214/2025, arts. 343, 346 e 348",
+    ),
+    PassoDaReforma(
+        "2027",
+        "A CBS passa a valer de fato e o PIS e a Cofins acabam. O IPI vai a zero, menos para "
+        "o que também é fabricado com incentivo na Zona Franca de Manaus. Começa o Imposto "
+        "Seletivo, sobre o que faz mal à saúde ou ao meio ambiente.",
+        "ADCT, art. 126",
+    ),
+    PassoDaReforma(
+        "2027 e 2028",
+        "O IBS segue em teste, a 0,1 % (0,05 % dos estados e 0,05 % dos municípios), e a CBS "
+        "é cobrada 0,1 ponto abaixo da alíquota de referência.",
+        "ADCT, art. 127",
+    ),
+    PassoDaReforma(
+        "2029",
+        "O ICMS e o ISS começam a encolher: valem 9/10 das alíquotas de hoje. O IBS sobe o "
+        "bastante para repor a receita.",
+        "ADCT, arts. 128 e 130",
+    ),
+    PassoDaReforma("2030", "ICMS e ISS a 8/10 das alíquotas.", "ADCT, art. 128"),
+    PassoDaReforma("2031", "ICMS e ISS a 7/10 das alíquotas.", "ADCT, art. 128"),
+    PassoDaReforma("2032", "ICMS e ISS a 6/10 das alíquotas.", "ADCT, art. 128"),
+    PassoDaReforma(
+        "2033",
+        "O ICMS e o ISS acabam. Ficam a CBS, o IBS e o Imposto Seletivo.",
+        "ADCT, art. 129",
+    ),
+    PassoDaReforma(
+        "Trava da carga",
+        "O Senado fixa as alíquotas de referência para a arrecadação não subir nem cair com a "
+        "troca. Se a receita passar da média de 2012 a 2021 em proporção do PIB, as alíquotas "
+        "caem: a da CBS em 2030, e as duas em 2035.",
+        "ADCT, art. 130",
+    ),
+]
+
+
+# ------------------------------------------------------------------ reforma: os números
+
+# Os números que o simulador da reforma usa. Os arts. 125 a 129 do ADCT estão citados acima,
+# em `REFORMA_DO_CONSUMO`. A Lei Complementar nº 214/2025 foi lida em 14/11/2026 no TEXTO
+# ATUALIZADO da Câmara, que já traz as mudanças da LC nº 227, de 13/1/2026
+# (www2.camara.leg.br/legin/fed/leicom/2025/
+# leicomplementar-214-16-janeiro-2025-796905-normaatualizada-pl.html): os artigos citados
+# abaixo e os arts. 343 a 349 conferem com a publicação original, e a LC 227 só mexeu, entre
+# eles, no § 10 do art. 475 e no inciso I do § 2º do art. 117.
 REFORMA_ANOS = list(range(2026, 2034))
 IBS_TESTE_2026 = 0.1
 CBS_TESTE_2026 = 0.9

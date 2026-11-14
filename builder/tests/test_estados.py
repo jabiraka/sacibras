@@ -608,3 +608,26 @@ def test_composicao_le_as_demais_dividas_contratuais() -> None:
         + c.outras
     )
     assert partes == pytest.approx(c.total, abs=0.2)  # os valores acima vêm arredondados
+
+
+@pytest.fixture(autouse=True)
+def _sem_a_receita(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Os testes de `montar` não chamam a Receita: sem ela, a métrica fica de fora."""
+
+    def fora() -> None:
+        raise RuntimeError("sem rede no teste")
+
+    monkeypatch.setattr(estados.receita_arrecadacao, "arrecadacao", fora)
+
+
+def test_arrecadacao_federal_por_habitante(monkeypatch: pytest.MonkeyPatch) -> None:
+    meses = [(date(2026, m, 1), 1000.0) for m in range(1, 10)]
+    monkeypatch.setattr(
+        estados.receita_arrecadacao,
+        "arrecadacao",
+        lambda: {"ir": {"SP": meses, "AC": meses[:1], "BR": meses}},
+    )
+    m = estados._arrecadacao_federal({35: 100.0, 12: 10.0})
+    assert m.valores["SP"] == 90.0 and m.valores["AC"] == 100.0 and m.valores["RJ"] is None
+    assert m.brasil == pytest.approx(10000.0 / 110.0)
+    assert m.referencia == "12 meses até set/2026"

@@ -53,6 +53,7 @@ def test_le_as_linhas_pelo_rotulo_e_pula_mes_vazio() -> None:
     dados = ler_aba(_planilha(LINHAS))
     assert set(dados) == {
         "receita_liquida",
+        "receita_rfb",
         "despesa_total",
         "arrecadacao_rgps",
         "rgps",

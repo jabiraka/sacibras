@@ -178,6 +178,9 @@ class LinhaTabela(Modelo):
     unidade: str
     casas: int = 1
     fonte: str = ""
+    textos: list[str] = Field(default_factory=list)
+    """Quando há, as células da linha são estes textos (uma linha do tempo, um quadro de
+    regras) e `valores` fica vazio."""
 
 
 class Tabela(Modelo):

@@ -31,6 +31,10 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   Série que o BC não lista no CKAN (EX3, P55, industriais, alimentação no domicílio) se confere
   no serviço de metadados do próprio SGS e, quando der, contra outra fonte oficial (o IBGE),
   dito no comentário (aprovado pelo Caio em 14/11/2026).
+- **Número lido à mão tem prazo** (Caio, 14/11/2026): o que entra em `leis.py` ou
+  `relatorios.py` ganha linha em `builder/src/sacibras/leituras.py` (lida em, reler até, onde
+  procurar). Ao reler, atualizar as duas datas. O workflow "Prazos de releitura" abre a issue
+  `releitura`; fonte que falha no build abre a `fonte fora do ar`.
 - **O site da B3 fica desligado** (`SB_B3`; Caio, 14/11/2026: *"deixar desligado"*): a B3 veda
   coleta automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)).
   Não ligar no workflow nem no compose; o que depende dela fica fora.

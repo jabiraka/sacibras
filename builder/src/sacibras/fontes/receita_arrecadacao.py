@@ -123,3 +123,56 @@ def ler_csv(texto: str) -> dict[str, dict[str, list[Ponto]]]:
 def arrecadacao() -> dict[str, dict[str, list[Ponto]]]:
     corpo = baixar(URL, validade=24 * 3600, tempo_limite=120)
     return ler_csv(corpo.decode("latin-1"))
+
+
+def doze_meses_por_uf(dados: dict[str, dict[str, list[Ponto]]]) -> tuple[dict[str, float], date]:
+    """{UF: R$ nos 12 meses até o último mês do arquivo} (todos os tributos) e esse mês."""
+    por_uf: dict[str, dict[date, float]] = {}
+    for ufs in dados.values():
+        for uf, pontos in ufs.items():
+            if uf == "BR":
+                continue
+            for d, v in pontos:
+                por_uf.setdefault(uf, {})[d] = por_uf.get(uf, {}).get(d, 0.0) + v
+    ultimo = max(d for meses in por_uf.values() for d in meses)
+    janela = {
+        date(ultimo.year - (ultimo.month <= k), (ultimo.month - k - 1) % 12 + 1, 1)
+        for k in range(12)
+    }
+    return {uf: sum(v for d, v in m.items() if d in janela) for uf, m in por_uf.items()}, ultimo
+
+
+URL_SETORES = "https://www.gov.br/receitafederal/dados/arrecadacao-cnae.csv"
+"""Arrecadação por seção da CNAE (a letra: C indústria de transformação, K financeiro…), mês
+a mês desde 2016, em reais. Lido em 14/11/2026 (até set/2026). Mesmo formato do arquivo por
+estado, com o mês abreviado ("Jan", às vezes "Fev " com espaço) e, além das seções A a U, as
+linhas PF (pessoa física), NI (não informado) e IN (inválido). Em 2026 a indústria extrativa
+salta e a de transformação cai em todos os tributos (parece reclassificação de grandes
+contribuintes, não confirmada): comparar setores só dentro de um mesmo ano fechado."""
+ABREVIADOS = {nome[:3]: numero_do_mes for nome, numero_do_mes in MESES.items()}
+
+
+def ler_setores(texto: str) -> dict[int, dict[str, float]]:
+    """{ano: {nome da seção: R$ no ano}} só dos anos com os 12 meses."""
+    leitor = csv.reader(io.StringIO(texto), delimiter=";")
+    cabecalho = [normalizar(c) for c in next(leitor)]
+    if cabecalho[:4] != ["ano", "mes", "secao - sigla", "secao - nome"]:
+        raise FonteForaDoArError(f"Receita (CNAE): cabeçalho inesperado {cabecalho[:5]}")
+    soma: dict[int, dict[str, float]] = {}
+    meses: dict[int, set[int]] = {}
+    for linha in leitor:
+        if len(linha) < 5 or not linha[0].strip().isdigit():
+            continue
+        mes = ABREVIADOS.get(normalizar(linha[1])[:3])
+        if mes is None:
+            continue
+        ano, nome = int(linha[0]), " ".join(linha[3].split())
+        meses.setdefault(ano, set()).add(mes)
+        por_setor = soma.setdefault(ano, {})
+        por_setor[nome] = por_setor.get(nome, 0.0) + sum(numero(v) for v in linha[4:])
+    return {a: s for a, s in soma.items() if len(meses[a]) == 12}
+
+
+def setores() -> dict[int, dict[str, float]]:
+    corpo = baixar(URL_SETORES, validade=24 * 3600, tempo_limite=120)
+    return ler_setores(corpo.decode("latin-1"))

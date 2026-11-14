@@ -54,7 +54,7 @@ def test_calendario_da_emenda() -> None:
 
 
 def test_a_parte_da_reforma_sai_da_lei_e_das_contas_oficiais() -> None:
-    cartoes, tabelas, simulador = impostos._reforma(Contexto())
+    cartoes, tabelas, simulador = impostos._simulador_da_reforma(Contexto())
     assert all(len(c.detalhe) <= 60 for c in cartoes)
     por_id = {c.id: c for c in cartoes}
     assert por_id["reforma-cbs-2027"].valor == pytest.approx(11.2)  # 11,3 do TCU menos 0,1
@@ -69,9 +69,14 @@ def test_a_parte_da_reforma_sai_da_lei_e_das_contas_oficiais() -> None:
     assert all(len(e.rotulo) <= 34 for e in simulador.etapas)
     de_2027 = next(e for e in simulador.etapas if e.id == "2027")
     assert (de_2027.cbs, de_2027.ibs, de_2027.devolve_ibs) == (11.2, 0.1, False)
-    calendario = next(t for t in tabelas if t.id == "reforma-calendario")
-    assert calendario.colunas == [str(a) for a in leis.REFORMA_ANOS]
-    assert calendario.linhas[0].valores[:3] == [0.9, 11.2, None]
+    # A linha do tempo em palavras (`_reforma`) mora na mesma parte que o simulador.
+    _, _, linha_do_tempo, _ = impostos._reforma(Contexto())
+    tabelas = [*tabelas, *linha_do_tempo]
+    assert {t.id for t in tabelas} == {
+        "reforma-linha-do-tempo",
+        "reforma-aliquota",
+        "reforma-descontos",
+    }
 
     secao = Secao(
         id="impostos",

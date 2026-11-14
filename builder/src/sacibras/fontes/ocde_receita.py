@@ -78,3 +78,28 @@ def carga(
         tempo_limite=180,
     )
     return ler_csv(corpo.decode("utf-8-sig"))
+
+
+LUCRO = "https://sdmx.oecd.org/public/rest/data/OECD.CTP.TPS,DSD_TAX_CIT@DF_CIT,"
+
+
+def imposto_sobre_lucro(inicio: int = 2000) -> dict[str, PorAno]:
+    """{ISO3: {ano: alíquota legal combinada do imposto sobre o lucro das empresas, em %}}.
+
+    Fluxo DF_CIT, medida CIT_C (central mais subnacional), alíquota padrão (ST), governo
+    geral. ~146 jurisdições; conferido em 14/11/2026: Brasil 34 desde 2001 (IRPJ 25 + CSLL 9).
+    Dimensões: REF_AREA.FREQ.MEASURE.TARGETING.UNIT_MEASURE.SECTOR.DIV_TREATMENT.
+    RATE_STRUCTURE.TAX_BASE. O fluxo não traz médias de grupos."""
+    corpo = baixar(
+        LUCRO + "/.A.CIT_C.ST.PT_INC_TAX.S13._Z._Z._Z",
+        params={"startPeriod": str(inicio), "format": "csvfile"},
+        validade=24 * 3600,
+        tempo_limite=180,
+    )
+    saida: dict[str, PorAno] = {}
+    for linha in csv.DictReader(io.StringIO(corpo.decode("utf-8-sig"))):
+        valor = linha.get("OBS_VALUE") or ""
+        if valor in ("", "NaN") or len(linha["REF_AREA"]) != 3:
+            continue
+        saida.setdefault(linha["REF_AREA"], {})[int(linha["TIME_PERIOD"])] = float(valor)
+    return saida

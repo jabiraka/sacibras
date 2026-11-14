@@ -27,6 +27,7 @@ LINHA_DO_CABECALHO = 5
 
 # Rótulo normalizado (sem acento, minúsculas, sem numeração) -> nome que o resto do código usa.
 LINHAS = {
+    "receita administrada pela rfb": "receita_rfb",
     "receita liquida (1-2)": "receita_liquida",
     "despesa total": "despesa_total",
     "arrecadacao liquida para o rgps": "arrecadacao_rgps",

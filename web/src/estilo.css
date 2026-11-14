@@ -1472,6 +1472,14 @@ table.dados tr.grupo th {
   padding-top: 14px;
 }
 
+/* Célula de texto (linha do tempo, quadro de regras): à esquerda e com quebra de linha. */
+table.dados td.texto {
+  text-align: left;
+  white-space: normal;
+  min-width: 15rem;
+  line-height: 1.45;
+}
+
 table.dados td.proj {
   font-style: italic;
   color: var(--tinta-2);
@@ -1548,6 +1556,10 @@ table.dados thead th:first-child {
   table.dados th,
   table.dados td {
     padding: 7px 8px;
+  }
+
+  table.dados td.texto {
+    min-width: 11.5rem;
   }
 
   table.dados tbody th {

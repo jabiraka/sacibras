@@ -16,12 +16,21 @@ from __future__ import annotations
 
 import gettext
 import math
+from collections.abc import Callable
 from datetime import date
 
 import pycountry
 
 from sacibras import contas, leis, relatorios
-from sacibras.fontes import fmi, ocde_receita, receita_arrecadacao, receita_gastos
+from sacibras.fontes import (
+    fmi,
+    ocde_receita,
+    receita_arrecadacao,
+    receita_gastos,
+    receita_irpf,
+    siconfi,
+    tesouro_rtn,
+)
 from sacibras.fontes.ocde_receita import BASES, ESFERAS
 from sacibras.fontes.receita_arrecadacao import COMPLETO_DESDE, NOMES
 from sacibras.schema import (
@@ -39,6 +48,7 @@ from sacibras.schema import (
     TipoDeCompra,
 )
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.secoes.estados import UFS
 from sacibras.secoes.mundo import nome_do_pais
 from sacibras.tipos import Ponto
 
@@ -302,6 +312,53 @@ def _arrecadacao(
     return cartoes, graficos, tabelas, frase + "."
 
 
+def _por_estado(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], str]:
+    """A arrecadação federal dos 12 meses por UF, no total e por habitante."""
+    por_uf, ultimo = receita_arrecadacao.doze_meses_por_uf(receita_arrecadacao.arrecadacao())
+    populacao = siconfi.entes()
+    total = sum(por_uf.values())
+    linhas: list[tuple[float, LinhaTabela]] = []
+    for codigo, sigla, nome, _ in UFS:
+        valor, pop = por_uf.get(sigla), populacao.get(codigo)
+        if valor is None or not pop:
+            continue
+        linhas.append(
+            (
+                valor / pop,
+                LinhaTabela(
+                    rotulo=nome,
+                    valores=[
+                        round(valor / pop / 1e3, 1),
+                        round(valor / 1e9, 1),
+                        round(valor / total * 100, 1),
+                    ],
+                    unidade="",
+                    casas=1,
+                ),
+            )
+        )
+    linhas.sort(key=lambda x: -x[0])
+    tabela = Tabela(
+        id="arrecadacao-estados",
+        titulo="Arrecadação federal por estado",
+        subtitulo=f"12 meses até {periodo(ultimo, 'M')}, do maior ao menor por habitante",
+        colunas=["R$ mil por habitante", "R$ bi", "% do país"],
+        linhas=[linha for _, linha in linhas],
+        fonte=(
+            f"{receita_arrecadacao.FONTE}; população: Tesouro Nacional, cadastro de entes do "
+            "SICONFI (estimativa do IBGE)"
+        ),
+        nota=(
+            "O imposto conta para o estado do endereço fiscal de quem paga, não para onde a "
+            "venda ou o trabalho aconteceu: o Distrito Federal (órgãos federais e estatais) e "
+            "São Paulo e Rio de Janeiro (sedes de empresas e bancos) aparecem com mais do que "
+            "a economia local explicaria. O ICMS de cada estado, por habitante, está em "
+            "Estados."
+        ),
+    )
+    return [], [], [tabela], ""
+
+
 def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], str]:
     base = ocde_receita.carga(["BRA", *AGREGADOS, *COMPARAR], ["S13"], inicio=2000)
     esferas = ocde_receita.carga(["BRA"], list(ESFERAS), ["_T"], inicio=2000)
@@ -458,7 +515,7 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
 def _crescimento(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
     """Um ponto por país: carga média e crescimento médio por habitante nos mesmos anos."""
     todos = ocde_receita.carga(None, ["S13"], ["_T"], inicio=ctx.hoje.year - 15)
-    carga = {p: v for (p, _, _), v in todos.items() if len(p) == 3 and p != "OECD_REP"[:3]}
+    carga = {p: v for (p, _, _), v in todos.items() if len(p) == 3}
     weo = fmi.weo([], ["NGDPRPC"], ctx.hoje.year - 16, ctx.hoje.year)
     # O último ano com carga para a maioria dos países fecha a janela.
     contagem: dict[int, int] = {}
@@ -539,7 +596,7 @@ def _tabela_estudos() -> Tabela:
     )
 
 
-def _gasto_tributario() -> tuple[list[Cartao], list[Grafico], list[Tabela], str]:
+def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], str]:
     edicoes = receita_gastos.edicoes()
     total: dict[int, float] = {}
     pct: dict[int, float] = {}
@@ -548,6 +605,11 @@ def _gasto_tributario() -> tuple[list[Cartao], list[Grafico], list[Tabela], str]
         pct.update(e.pct_pib)
     nova = edicoes[0]
     ano = max(pct)
+    previstos: list[receita_gastos.Previsao] = []
+    try:
+        previstos = receita_gastos.previsoes(ano)
+    except Exception as erro:
+        print(f"    impostos: sem o gasto tributário do PLOA ({str(erro)[:120]})")
     fonte = f"{receita_gastos.FONTE} (edição {nova.ano})"
     cartoes = [
         cartao(
@@ -566,16 +628,37 @@ def _gasto_tributario() -> tuple[list[Cartao], list[Grafico], list[Tabela], str]
         grafico(
             "gasto-tributario",
             "O que a União deixa de arrecadar",
-            [serie("gt", "Gasto tributário", _pontos_anuais(pct))],
+            [
+                serie("gt", "Realizado", _pontos_anuais(pct)),
+                *(
+                    [
+                        serie(
+                            "ploa",
+                            "Previsto no projeto de orçamento",
+                            [(date(p.ano, 1, 1), p.pct_pib) for p in previstos],
+                            papel="previsao",
+                        )
+                    ]
+                    if previstos
+                    else []
+                ),
+            ],
             tipo="barras",
             unidade="% do PIB",
             casas=1,
             periodicidade="A",
-            fonte=fonte,
+            fonte=fonte + (f"; {receita_gastos.FONTE_PLOA}" if previstos else ""),
             nota=(
                 "Isenções, reduções de alíquota e regimes especiais dos tributos federais, no "
                 'valor realizado ("bases efetivas") que a Receita publica com uns dois anos '
                 "de atraso. Não entram os benefícios de ICMS e ISS dos estados e municípios."
+                + (
+                    " A linha tracejada é o que a Receita previu ao mandar o orçamento de cada "
+                    f"ano ao Congresso; para {previstos[-1].ano}, "
+                    f"R$ {br(previstos[-1].total / 1e9, 0)} bi."
+                    if previstos
+                    else ""
+                )
             ),
         )
     ]
@@ -603,6 +686,30 @@ def _gasto_tributario() -> tuple[list[Cartao], list[Grafico], list[Tabela], str]
             ),
         )
     ]
+    if nova.regioes:
+        soma_regioes = sum(nova.regioes.values())
+        tabelas.append(
+            Tabela(
+                id="gasto-tributario-regioes",
+                titulo="O gasto tributário por região",
+                subtitulo=str(nova.ano),
+                colunas=["R$ bi", "% do total"],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=nome,
+                        valores=[round(v / 1e9, 1), round(v / soma_regioes * 100, 1)],
+                        unidade="",
+                        casas=1,
+                    )
+                    for nome, v in sorted(nova.regioes.items(), key=lambda x: -x[1])
+                ],
+                fonte=fonte,
+                nota=(
+                    "A região é a de quem deixou de pagar (a sede da empresa ou o endereço da "
+                    "pessoa), pela divisão que a própria Receita faz."
+                ),
+            )
+        )
     frase = (
         f"A União deixou de arrecadar {br(pct[ano])} % do PIB em {ano} com isenções e "
         "regimes especiais"
@@ -613,8 +720,11 @@ def _gasto_tributario() -> tuple[list[Cartao], list[Grafico], list[Tabela], str]
 # ------------------------------------------------------------------ seção
 
 
-def _reforma(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], SimuladorReforma]:
-    """A reforma do consumo: o calendário da lei, as contas oficiais da alíquota e o simulador.
+def _simulador_da_reforma(
+    ctx: Contexto,
+) -> tuple[list[Cartao], list[Tabela], SimuladorReforma]:
+    """A reforma do consumo em números: as contas oficiais da alíquota, os descontos da lei e
+    o simulador. O calendário em palavras é a tabela de `_reforma`, mais abaixo.
 
     Nada aqui é estimativa nossa: as regras saem da emenda e da lei lidas (`leis.py`) e as
     alíquotas, das contas da Fazenda, do Comitê Gestor do IBS e do TCU (`relatorios.py`). Nossa
@@ -624,7 +734,6 @@ def _reforma(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], SimuladorReform
     centro, piso, teto = r.ALIQUOTA_FAZENDA_2024
     mais, mais_piso, mais_teto = r.ALIQUOTA_MUDANCAS_DA_CAMARA
     soma_recente = r.IBS_COMITE_GESTOR + r.CBS_REFERENCIA_2027
-    anos = leis.REFORMA_ANOS
 
     cartoes = [
         cartao(
@@ -662,61 +771,6 @@ def _reforma(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], SimuladorReform
             secao="impostos",
         ),
     ]
-
-    def por_ano(valores: dict[int, float | None]) -> list[float | None]:
-        return [valores.get(a) for a in anos]
-
-    cbs_cheia: dict[int, float | None] = {2026: leis.CBS_TESTE_2026, 2027: cbs_2027, 2028: None}
-    ibs_cheio: dict[int, float | None] = {
-        2026: leis.IBS_TESTE_2026,
-        2027: leis.IBS_2027_2028,
-        2028: leis.IBS_2027_2028,
-    }
-    calendario = Tabela(
-        id="reforma-calendario",
-        titulo="O que se cobra em cada ano da transição",
-        subtitulo="Os impostos novos entram e os antigos saem, de 2026 a 2033",
-        colunas=[str(a) for a in anos],
-        linhas=[
-            LinhaTabela(
-                rotulo="CBS: alíquota cheia", valores=por_ano(cbs_cheia), unidade="%", casas=1
-            ),
-            LinhaTabela(
-                rotulo="IBS: alíquota cheia", valores=por_ano(ibs_cheio), unidade="%", casas=1
-            ),
-            LinhaTabela(
-                rotulo="PIS e Cofins",
-                valores=[float(leis.PIS_COFINS_QUE_CONTINUA[a]) for a in anos],
-                unidade="% do que são hoje",
-                casas=0,
-            ),
-            LinhaTabela(
-                rotulo="IPI, fora o que a Zona Franca produz",
-                valores=[float(leis.PIS_COFINS_QUE_CONTINUA[a]) for a in anos],
-                unidade="% do que é hoje",
-                casas=0,
-            ),
-            LinhaTabela(
-                rotulo="ICMS e ISS",
-                valores=[float(leis.ICMS_ISS_QUE_CONTINUA[a]) for a in anos],
-                unidade="% do que são hoje",
-                casas=0,
-            ),
-        ],
-        fonte=f"{leis.REFORMA_NORMAS}; {r.FONTE_CBS_2027}",
-        nota=(
-            "Como ler: 2026 é teste (1 % na nota fiscal, descontado do PIS e da Cofins: o preço "
-            "não muda). Em 2027 a CBS substitui PIS e Cofins e o IPI vai a zero; o IBS fica em "
-            "0,1 %. De 2029 a 2032 o ICMS e o ISS encolhem um décimo por ano e o IBS cresce no "
-            "lugar; em 2033 sobram só IBS, CBS e o Imposto Seletivo (cigarro, bebida, carro e "
-            "outros).\n\n"
-            "O traço é alíquota que ainda não existe: o Senado fixa a de cada ano no ano "
-            "anterior, com a conta do TCU, para a arrecadação ficar igual à dos impostos que "
-            f"saem. A CBS de 2027 é o cálculo do TCU ({br(r.CBS_REFERENCIA_2027, 1)} %) menos "
-            "0,1 ponto; se o Senado não votar até dezembro, vale o cálculo. A de 2028 será "
-            "fixada em 2027. Normas lidas em 14/11/2026 no Senado e na Câmara."
-        ),
-    )
 
     estimativas = Tabela(
         id="reforma-aliquota",
@@ -929,7 +983,382 @@ def _reforma(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], SimuladorReform
             "Imposto Seletivo."
         ),
     )
-    return cartoes, [calendario, estimativas, descontos], simulador
+    return cartoes, [estimativas, descontos], simulador
+
+
+def _por_setor(ctx: Contexto) -> Pecas:
+    por_ano = receita_arrecadacao.setores()
+    ano = max(por_ano)
+    setores = por_ano[ano]
+    total = sum(setores.values())
+    nomes = {
+        "Pessoa Física": "Pessoas físicas (não é setor)",
+        "Não informado": "Setor não informado",
+    }
+    linhas = [
+        LinhaTabela(
+            rotulo=nomes.get(nome, nome),
+            valores=[round(v / 1e9, 1), round(v / total * 100, 1)],
+            unidade="",
+            casas=1,
+        )
+        for nome, v in sorted(setores.items(), key=lambda x: -x[1])
+        if v / total >= 0.005
+    ]
+    tabela = Tabela(
+        id="arrecadacao-setores",
+        titulo="Arrecadação federal por setor da economia",
+        subtitulo=f"{ano}, do setor que mais paga ao que menos paga",
+        colunas=["R$ bi", "% do total"],
+        linhas=linhas,
+        fonte="Receita Federal, arrecadação por seção da CNAE (dados abertos)",
+        nota=(
+            "O setor é o da atividade principal de quem recolhe o imposto, não o de quem "
+            "arca com ele: a indústria e o comércio recolhem tributos que vão no preço ao "
+            "consumidor, e os bancos, o imposto retido das aplicações dos clientes. A "
+            "administração pública aparece pelo imposto retido dos servidores e pela "
+            "contribuição à previdência. Setores com menos de 0,5 % do total ficam de fora. "
+            f"Mostra-se o último ano fechado ({ano}): em 2026 a Receita parece ter mudado "
+            "grandes empresas de setor, e os meses de 2026 não se comparam com os de antes."
+        ),
+    )
+    return [], [], [tabela], ""
+
+
+def _previsto(ctx: Contexto) -> Pecas:
+    """O que entrou no ano contra o que o governo previu arrecadar (relatório bimestral)."""
+    rtn = tesouro_rtn.serie_historica()
+    ano = relatorios.ANO_DA_RECEITA_PREVISTA
+    linhas: list[LinhaTabela] = []
+    ate: date | None = None
+    for r in relatorios.RECEITA_PREVISTA:
+        no_ano = [(d, v) for d, v in rtn[r.rtn] if d.year == ano]
+        antes = {d.month: v for d, v in rtn[r.rtn] if d.year == ano - 1}
+        if not no_ano:
+            continue
+        ate = no_ano[-1][0]
+        feito = sum(v for _, v in no_ano) / 1e3
+        mesmo_periodo = sum(antes.get(d.month, 0.0) for d, _ in no_ano)
+        ano_passado = sum(antes.values())
+        linhas.append(
+            LinhaTabela(
+                rotulo=r.linha,
+                valores=[
+                    r.loa,
+                    r.avaliacao,
+                    round(feito, 1),
+                    round(feito / r.avaliacao * 100, 1),
+                    round(mesmo_periodo / ano_passado * 100, 1) if ano_passado else None,
+                ],
+                unidade="",
+                casas=1,
+            )
+        )
+    if not linhas or ate is None:
+        raise RuntimeError(f"RTN sem meses de {ano}")
+    meses = f"jan–{periodo(ate, 'M')}"
+    tabela = Tabela(
+        id="arrecadacao-previsto",
+        titulo=f"O previsto para {ano} e o que já entrou",
+        subtitulo=f"R$ bilhões; realizado de {meses}",
+        colunas=[
+            "orçamento",
+            f"previsão do {relatorios.AVALIACAO_DA_RECEITA}",
+            f"entrou, {meses}",
+            "% da previsão",
+            f"% do ano em {ano - 1}, mesmos meses",
+        ],
+        linhas=linhas,
+        fonte=(
+            "Relatório de Avaliação de Receitas e Despesas Primárias (orçamento e previsão); "
+            "Tesouro Nacional, Resultado do Tesouro Nacional, tabela 1.1 (realizado)"
+        ),
+        nota=(
+            "A cada dois meses o governo refaz a conta de quanto espera arrecadar no ano. A "
+            "última coluna diz quanto do total do ano passado já tinha entrado nos mesmos "
+            'meses: se o "% da previsão" está perto dela, a arrecadação anda no ritmo '
+            "previsto. A previsão desconta incentivos fiscais; o realizado do Tesouro pode "
+            "ter pequena diferença de conceito. A Receita divulga a arrecadação de cada mês "
+            "entre os dias 21 e 30 do mês seguinte, sem calendário publicado."
+        ),
+    )
+    return [], [], [tabela], ""
+
+
+def _divida_ativa(ctx: Contexto) -> Pecas:
+    estoque, recuperado = relatorios.DIVIDA_ATIVA_ESTOQUE, relatorios.DIVIDA_ATIVA_RECUPERADO
+    anos = sorted(estoque)
+    ano = anos[-1]
+    cartoes = [
+        cartao(
+            "divida-ativa",
+            "Dívida ativa da União",
+            [(date(a, 1, 1), estoque[a] / 1e3) for a in anos],
+            unidade="R$ tri",
+            casas=2,
+            periodicidade="A",
+            detalhe=(
+                f"imposto e outras dívidas não pagas; {br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % "
+                "tido como perda"
+            ),
+            fonte=relatorios.FONTE_DIVIDA_ATIVA,
+            secao="impostos",
+        )
+    ]
+    tabela = Tabela(
+        id="divida-ativa",
+        titulo="O que a União tem a receber e quanto recupera",
+        subtitulo="dívida ativa da União, em R$ bilhões",
+        colunas=[str(a) for a in anos],
+        linhas=[
+            LinhaTabela(
+                rotulo="Dívida ativa (o que está em cobrança)",
+                valores=[estoque[a] for a in anos],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Recuperado no ano",
+                valores=[recuperado.get(a) for a in anos],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Recuperado, % da dívida",
+                valores=[
+                    round(recuperado[a] / estoque[a] * 100, 1) if a in recuperado else None
+                    for a in anos
+                ],
+                unidade="",
+                casas=1,
+            ),
+        ],
+        fonte=relatorios.FONTE_DIVIDA_ATIVA,
+        nota=(
+            "Dívida ativa é o imposto (e outras dívidas com a União) que não foi pago no "
+            "prazo e passou à cobrança da Procuradoria da Fazenda. O número é grande, mas a "
+            f"maior parte não volta: de {ano}, o próprio governo conta "
+            f"{br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % como perda (empresas falidas ou sem "
+            f"bens) e espera recuperar R$ {br(relatorios.DIVIDA_ATIVA_A_RECUPERAR, 0)} bi em "
+            "15 anos."
+        ),
+    )
+    return cartoes, [], [tabela], ""
+
+
+def _quem_paga(ctx: Contexto) -> Pecas:
+    tabelas = [
+        Tabela(
+            id="quem-paga-decimos",
+            titulo="Imposto em % da renda, dos mais pobres aos mais ricos",
+            subtitulo="famílias em dez grupos de renda por pessoa, 2017-2018",
+            colunas=["sobre o consumo, %", "sobre renda e patrimônio, %", "total, %"],
+            linhas=[
+                LinhaTabela(
+                    rotulo=nome,
+                    valores=[indiretos, diretos, round(indiretos + diretos, 1)],
+                    unidade="",
+                    casas=1,
+                )
+                for nome, indiretos, diretos in relatorios.INCIDENCIA_POR_DECIMO
+            ],
+            fonte=relatorios.FONTE_INCIDENCIA,
+            nota=(
+                "Quem ganha menos gasta quase tudo o que ganha, e o imposto embutido nos preços "
+                "(ICMS, PIS, Cofins, IPI, ISS) leva uma parte maior da renda: 23,4 % nos 10 % "
+                "mais pobres contra 8,6 % nos 10 % mais ricos. O imposto sobre renda e "
+                "patrimônio (com a contribuição à previdência, o IPTU e o IPVA) cresce com a "
+                "renda, mas não o bastante para compensar. O total é a soma das duas colunas. "
+                "É estimativa do Ipea com a pesquisa de orçamentos do IBGE, não dado de "
+                "arrecadação."
+            ),
+        )
+    ]
+    frase = ""
+    try:
+        ano, faixas = receita_irpf.grandes_numeros()
+        topo = faixas[-1]
+        maior = max(faixas, key=lambda f: f.aliquota)
+        tabelas.append(
+            Tabela(
+                id="quem-paga-irpf",
+                titulo="Imposto de Renda por faixa de renda de quem declara",
+                subtitulo=f"declarações de {ano + 1}, renda de {ano}; faixas em salários mínimos",
+                colunas=[
+                    "declarantes, mil",
+                    "renda total, R$ bi",
+                    "renda isenta, % da renda",
+                    "imposto, % da renda",
+                ],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=f.nome,
+                        valores=[
+                            round(f.declarantes / 1e3, 0),
+                            round(f.renda / 1e9, 1),
+                            round(f.isentos / f.renda * 100, 1) if f.renda else None,
+                            round(f.aliquota, 1),
+                        ],
+                        unidade="",
+                        casas=1,
+                    )
+                    for f in faixas
+                ],
+                fonte=f"{receita_irpf.FONTE}, ano-calendário {ano} (tabela 8)",
+                nota=(
+                    f'O imposto pesa mais na faixa "{maior.nome.lower()}" salários mínimos '
+                    f"({br(maior.aliquota)} % da renda) e cai daí para cima: na faixa mais alta, "
+                    f"{br(topo.isentos / topo.renda * 100, 0)} % da renda é isenta (boa parte, "
+                    "lucros e dividendos) e o imposto fica em "
+                    f"{br(topo.aliquota)} %.\n\nO imposto aqui é o da declaração (tabela "
+                    "progressiva). Falta o retido na fonte sobre 13º, aplicações e ganho de "
+                    "capital, que a planilha não traz: no topo, onde esses rendimentos pesam, "
+                    "a conta sai menor do que o que a pessoa pagou. Só entra quem declara "
+                    f"({br(sum(f.declarantes for f in faixas) / 1e6)} milhões de pessoas). "
+                    "A faixa de até meio salário mínimo tem "
+                    "imposto por rendimentos atrasados recebidos de uma vez."
+                ),
+            )
+        )
+        frase = (
+            f"No Imposto de Renda de {ano}, quem declarou mais de 320 salários mínimos pagou "
+            f"{br(topo.aliquota)} % da renda na declaração, menos que a faixa de "
+            f"{maior.nome.lower().removeprefix('de ')} ({br(maior.aliquota)} %)"
+        )
+    except Exception as erro:
+        print(f"    impostos: sem os Grandes Números do IRPF ({str(erro)[:120]})")
+    return [], [], tabelas, frase + ("." if frase else "")
+
+
+def _aliquotas(ctx: Contexto) -> Pecas:
+    """O imposto sobre o lucro das empresas, Brasil e outros países (OCDE)."""
+    por_pais = ocde_receita.imposto_sobre_lucro(inicio=2000)
+    # O último ano com quase todos os países (o ano corrente costuma vir com faltas).
+    contagem: dict[int, int] = {}
+    for por_ano in por_pais.values():
+        for a in por_ano:
+            contagem[a] = contagem.get(a, 0) + 1
+    ano = max(a for a, n in contagem.items() if n >= 0.97 * max(contagem.values()))
+    no_ano = {p: v[ano] for p, v in por_pais.items() if ano in v}
+    brasil = no_ano["BRA"]
+    acima = sum(1 for v in no_ano.values() if v > brasil)
+
+    def mediana(a: int) -> float | None:
+        valores = sorted(v[a] for v in por_pais.values() if a in v)
+        if len(valores) < 30:
+            return None
+        meio = len(valores) // 2
+        return valores[meio] if len(valores) % 2 else (valores[meio - 1] + valores[meio]) / 2
+
+    anos = sorted(por_pais["BRA"])
+    medianas = [(date(a, 1, 1), m) for a in anos if (m := mediana(a)) is not None]
+    traducao = _nomes()
+    linhas = [
+        LinhaTabela(
+            rotulo="Brasil" if p == "BRA" else nome_do_pais(p, traducao),
+            valores=[round(no_ano[p], 1)],
+            unidade="",
+            casas=1,
+        )
+        for p in sorted(["BRA", *COMPARAR, "IND"], key=lambda p: -no_ano.get(p, -1))
+        if p in no_ano
+    ]
+    linhas.append(
+        LinhaTabela(
+            rotulo=f"Mediana dos {len(no_ano)} países",
+            valores=[round(mediana(ano) or 0, 1)],
+            unidade="",
+            casas=1,
+        )
+    )
+    fonte = "OCDE, Corporate Tax Statistics (alíquotas legais do imposto sobre o lucro)"
+    cartoes = [
+        cartao(
+            "imposto-lucro",
+            "Imposto sobre o lucro das empresas",
+            [x for x in _pontos_anuais(por_pais["BRA"]) if x[0].year <= ano],
+            unidade="%",
+            casas=0,
+            periodicidade="A",
+            detalhe=f"IRPJ de 25 % mais CSLL de 9 %; {acima} de {len(no_ano)} países cobram mais",
+            fonte=fonte,
+            secao="impostos",
+        )
+    ]
+    graficos = [
+        grafico(
+            "imposto-lucro",
+            "Imposto sobre o lucro das empresas: Brasil e o mundo",
+            [
+                serie("bra", "Brasil", _pontos_anuais(por_pais["BRA"])),
+                serie("mediana", "Mediana dos países", medianas),
+            ],
+            unidade="% do lucro, alíquota da lei",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            nota=(
+                "A alíquota cheia da lei para uma empresa grande, somando todas as esferas de "
+                "governo. Não é o que as empresas pagam de fato: deduções, incentivos e "
+                "regimes como o Simples e o lucro presumido fazem a conta efetiva ser outra. "
+                "Mediana: metade dos países cobra mais, metade cobra menos."
+            ),
+        )
+    ]
+    tabelas = [
+        Tabela(
+            id="imposto-lucro-paises",
+            titulo="Imposto sobre o lucro das empresas, país a país",
+            subtitulo=f"alíquota da lei em {ano}, em % do lucro",
+            colunas=["alíquota, %"],
+            linhas=linhas,
+            fonte=fonte,
+            nota=(
+                "A OCDE só publica com o Brasil o imposto sobre o lucro das empresas. Para o "
+                "Imposto de Renda da pessoa física, o imposto sobre o consumo e o que pesa "
+                "sobre o salário, as bases comparáveis da OCDE não trazem o Brasil."
+            ),
+        )
+    ]
+    return cartoes, graficos, tabelas, ""
+
+
+def _reforma(ctx: Contexto) -> Pecas:
+    tabela = Tabela(
+        id="reforma-linha-do-tempo",
+        titulo="A reforma do consumo, ano a ano",
+        subtitulo="de 2026 a 2033, pela Emenda Constitucional 132/2023",
+        colunas=["O que muda", "Onde está"],
+        linhas=[
+            LinhaTabela(rotulo=p.quando, valores=[], unidade="", textos=[p.muda, p.norma])
+            for p in leis.REFORMA_DO_CONSUMO
+        ],
+        fonte=(
+            "Emenda Constitucional nº 132/2023 (arts. 124 a 133 do ADCT) e Lei Complementar "
+            "nº 214/2025, lidas no Senado Federal (publicação original)"
+        ),
+        nota=(
+            "A reforma troca cinco tributos sobre o consumo (PIS, Cofins e IPI, federais; "
+            "ICMS, estadual; ISS, municipal) por dois de mesma base, a CBS (federal) e o IBS "
+            "(de estados e municípios), mais o Imposto Seletivo. As alíquotas cheias ainda "
+            "não existem: o Senado as fixa no ano anterior a cada uma (para 2027, o TCU "
+            "calculou a da CBS; as contas estão na tabela da alíquota cheia). A emenda foi "
+            "lida na publicação original; a lei complementar, também no texto atualizado."
+        ),
+    )
+    return [], [], [tabela], ""
+
+
+Pecas = tuple[list[Cartao], list[Grafico], list[Tabela], str]
+MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
+    ("arrecadação por estado", _por_estado),
+    ("arrecadação por setor", _por_setor),
+    ("previsto × realizado", _previsto),
+    ("quem paga", _quem_paga),
+    ("dívida ativa", _divida_ativa),
+    ("alíquotas", _aliquotas),
+    ("reforma", _reforma),
+]
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -948,14 +1377,16 @@ def montar(ctx: Contexto) -> Secao:
         except Exception as erro:
             falhas.append(nome)
             print(f"    impostos: {nome} ficou de fora: {str(erro)[:160]}")
-    try:
-        c, g, t, f = _gasto_tributario()
-        cartoes += c
-        graficos += g
-        tabelas += t
-        frases.append(f)
-    except Exception as erro:
-        print(f"    impostos: gasto tributário ficou de fora: {str(erro)[:160]}")
+    for nome, outra in (("gasto tributário", _gasto_tributario), *MAIS_PARTES):
+        try:
+            c, g, t, f = outra(ctx)
+            cartoes += c
+            graficos += g
+            tabelas += t
+            if f:
+                frases.append(f)
+        except Exception as erro:
+            print(f"    impostos: {nome} ficou de fora: {str(erro)[:160]}")
     try:
         g, t = _crescimento(ctx)
         graficos += g
@@ -964,7 +1395,7 @@ def montar(ctx: Contexto) -> Secao:
         print(f"    impostos: carga × crescimento ficou de fora: {str(erro)[:160]}")
     simulador_reforma: SimuladorReforma | None = None
     try:
-        c, t, simulador_reforma = _reforma(ctx)
+        c, t, simulador_reforma = _simulador_da_reforma(ctx)
         cartoes += c
         tabelas += t
     except Exception as erro:
