@@ -1,24 +1,119 @@
-// Estados: a mesma métrica nas 27 unidades da federação — um mapa em grade (cada estado um
-// quadrado, mais ou menos no lugar dele) e o ranking. Sem geometria para baixar.
+// Estados: a mesma métrica nas 27 unidades da federação — o mapa do Brasil, pintado do claro
+// ao escuro conforme o valor, e o ranking ao lado. A malha é a do IBGE (src/mapa/ufs.json,
+// gerada por `npm run malha`).
 
+import * as Plot from "@observablehq/plot";
+import type { Feature, FeatureCollection, Geometry } from "geojson";
+import { feature } from "topojson-client";
+import type { GeometryCollection, Topology } from "topojson-specification";
 import { numero } from "./formato";
+import malha from "./mapa/ufs.json";
 import { el, guardar } from "./pecas";
 import type { Estados, MetricaEstados } from "./tipos";
 
-// [coluna, linha] de cada estado na grade de 7 × 9.
-const LUGAR: Record<string, [number, number]> = {
-  RR: [2, 0], AP: [3, 0],
-  AM: [1, 1], PA: [2, 1], MA: [3, 1], CE: [4, 1], RN: [5, 1],
-  AC: [0, 2], RO: [1, 2], TO: [2, 2], PI: [3, 2], PE: [4, 2], PB: [5, 2],
-  MT: [1, 3], GO: [2, 3], BA: [3, 3], AL: [4, 3], SE: [5, 3],
-  MS: [1, 4], DF: [2, 4], MG: [3, 4], ES: [4, 4],
-  SP: [2, 5], RJ: [3, 5],
-  PR: [2, 6], SC: [2, 7], RS: [2, 8],
-};
+type PropriedadesUF = { uf: string; area: number };
+type UFNoMapa = Feature<Geometry, PropriedadesUF>;
+
+const topologia = malha as unknown as Topology<{ ufs: GeometryCollection<PropriedadesUF> }>;
+const UFS = feature(topologia, topologia.objects.ufs) as FeatureCollection<
+  Geometry,
+  PropriedadesUF
+>;
+
+/** Uma cor entre as duas pontas da escala (hex), com `t` de 0 a 1. */
+function misturar(de: string, ate: string, t: number): string {
+  const canal = (hex: string, i: number): number => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
+  const partes = [0, 1, 2].map((i) =>
+    Math.round(canal(de, i) + (canal(ate, i) - canal(de, i)) * t)
+      .toString(16)
+      .padStart(2, "0"),
+  );
+  return `#${partes.join("")}`;
+}
+
+function cores(): { claro: string; escuro: string; semDado: string; tinta: string; borda: string } {
+  const css = getComputedStyle(document.documentElement);
+  const v = (nome: string): string => css.getPropertyValue(nome).trim();
+  return {
+    claro: v("--mapa-claro"),
+    escuro: v("--mapa-escuro"),
+    semDado: v("--mapa-sem-dado"),
+    tinta: v("--tinta"),
+    borda: v("--superficie"),
+  };
+}
+
+function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<string, string>): void {
+  const largura = Math.max(260, Math.floor(alvo.clientWidth));
+  const estreito = largura < 400;
+  const c = cores();
+  const valores = Object.values(metrica.valores).filter((v): v is number => v !== null);
+  const min = Math.min(...valores);
+  const max = Math.max(...valores);
+  const fracao = (v: number): number => (v - min) / (max - min || 1);
+  const valorDe = (d: UFNoMapa): number | null => metrica.valores[d.properties.uf] ?? null;
+  const preenchimento = (d: UFNoMapa): string => {
+    const v = valorDe(d);
+    return v === null ? c.semDado : misturar(c.claro, c.escuro, fracao(v));
+  };
+  const titulo = (d: UFNoMapa): string => {
+    const v = valorDe(d);
+    const nome = nomes.get(d.properties.uf) ?? d.properties.uf;
+    return `${nome}\n${v === null ? "sem dado" : `${numero(v, metrica.casas)} ${metrica.unidade}`}`;
+  };
+
+  // Rótulo só onde cabe: no celular, só os estados grandes; o resto aparece ao tocar.
+  // Pernambuco é comprido e fino: no celular o rótulo dele encavala nos vizinhos.
+  const comRotulo = UFS.features.filter((d) =>
+    estreito ? d.properties.area > 70000 && d.properties.uf !== "PE" : d.properties.area > 15000,
+  );
+  const comValor = estreito ? [] : comRotulo.filter((d) => d.properties.area > 45000);
+  const corDoTexto = (d: UFNoMapa): string => {
+    const v = valorDe(d);
+    return v !== null && fracao(v) > 0.55 ? "#ffffff" : c.tinta;
+  };
+  const texto = (d: UFNoMapa): string => {
+    const v = valorDe(d);
+    if (!comValor.includes(d) || v === null) return d.properties.uf;
+    return `${d.properties.uf}\n${numero(v, metrica.casas)}`;
+  };
+
+  const mapa = Plot.plot({
+    width: largura,
+    height: Math.round(largura * 0.98),
+    margin: 4,
+    projection: { type: "mercator", domain: UFS },
+    style: { background: "transparent", fontFamily: "inherit", overflow: "visible" },
+    marks: [
+      Plot.geo(UFS.features, {
+        fill: preenchimento,
+        stroke: c.borda,
+        strokeWidth: 0.9,
+      }),
+      Plot.text(
+        comRotulo,
+        Plot.centroid({
+          text: texto,
+          fill: corDoTexto,
+          fontSize: estreito ? 9.5 : 11,
+          fontWeight: 600,
+          lineHeight: 1.15,
+        }),
+      ),
+      Plot.tip(UFS.features, Plot.pointer(Plot.centroid({ title: titulo, fontSize: 12 }))),
+    ],
+  });
+  mapa.setAttribute("role", "img");
+  mapa.setAttribute(
+    "aria-label",
+    `${metrica.nome} por estado, ${metrica.referencia}. O ranking ao lado traz todos os valores.`,
+  );
+  alvo.replaceChildren(mapa);
+}
 
 export function montarEstados(e: Estados): HTMLElement {
   const raiz = el("div");
-  const nomes = new Map(e.ufs.map((u) => [u.sigla, u]));
+  const nomes = new Map(e.ufs.map((u) => [u.sigla, u.nome]));
   let metrica = e.metricas[0] as MetricaEstados;
 
   const fichas = el("div", "mundo-controles");
@@ -40,11 +135,10 @@ export function montarEstados(e: Estados): HTMLElement {
   const painelMapa = el("div", "painel-mundo");
   const tituloMapa = el("h3");
   const subMapa = el("p", "sub");
-  const mapa = el("div", "mapa-grade");
-  mapa.setAttribute("role", "img");
+  const tela = el("div", "mapa");
   const escala = el("div", "mapa-escala");
   const peMapa = el("footer", "grafico-pe");
-  painelMapa.append(tituloMapa, subMapa, mapa, escala, peMapa);
+  painelMapa.append(tituloMapa, subMapa, tela, escala, peMapa);
 
   const painelRanking = el("div", "painel-mundo");
   const tituloRanking = el("h3", "", "Do maior ao menor");
@@ -56,6 +150,12 @@ export function montarEstados(e: Estados): HTMLElement {
   raiz.append(fichas, sobre, grade);
   const caixaTabela = el("div");
   raiz.append(caixaTabela);
+
+  let pendente = 0;
+  new ResizeObserver(() => {
+    cancelAnimationFrame(pendente);
+    pendente = requestAnimationFrame(() => desenharMapa(tela, metrica, nomes));
+  }).observe(tela);
 
   function pintar(): void {
     botoes.forEach((b, i) => b.setAttribute("aria-pressed", String(e.metricas[i]?.id === metrica.id)));
@@ -71,33 +171,13 @@ export function montarEstados(e: Estados): HTMLElement {
     const min = Math.min(...valores);
     const max = Math.max(...valores);
 
-    // O mapa: um tom só, do claro ao forte conforme o valor.
-    mapa.replaceChildren();
-    for (const u of e.ufs) {
-      const lugar = LUGAR[u.sigla];
-      if (!lugar) continue;
-      const v = metrica.valores[u.sigla] ?? null;
-      const peca = el("div", "uf");
-      peca.style.gridColumn = String(lugar[0] + 1);
-      peca.style.gridRow = String(lugar[1] + 1);
-      const forca = v === null ? 0 : 0.14 + 0.72 * ((v - min) / (max - min || 1));
-      peca.style.setProperty("--forca", String(forca));
-      if (v === null) peca.classList.add("sem-dado");
-      else if (forca > 0.55) peca.classList.add("forte");
-      peca.append(el("b", "", u.sigla), el("span", "", v === null ? "–" : numero(v, metrica.casas)));
-      peca.title = `${u.nome}: ${v === null ? "sem dado" : `${numero(v, metrica.casas)} ${metrica.unidade}`}`;
-      mapa.append(peca);
-    }
-    mapa.setAttribute(
-      "aria-label",
-      `${metrica.nome} por estado, ${metrica.referencia}. A lista ao lado traz todos os valores.`,
-    );
+    if (tela.clientWidth) desenharMapa(tela, metrica, nomes);
     escala.replaceChildren(
       el("span", "", numero(min, metrica.casas)),
       el("i"),
       el("span", "", numero(max, metrica.casas)),
     );
-    peMapa.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}`));
+    peMapa.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`));
 
     // O ranking, com o Brasil e os limites que a fonte publica.
     const teto = Math.max(max, metrica.brasil ?? 0, ...metrica.limites.map((l) => l.valor));
@@ -140,7 +220,7 @@ export function montarEstados(e: Estados): HTMLElement {
     }
     posicao.replaceChildren();
     if (metrica.limites.length) {
-      posicao.textContent = `Traços no gráfico: ${metrica.limites
+      posicao.textContent = `Traços amarelos: ${metrica.limites
         .map((l) => `${l.rotulo} (${numero(l.valor, metrica.casas)})`)
         .join("; ")}.`;
     }
@@ -174,7 +254,7 @@ export function montarEstados(e: Estados): HTMLElement {
           tr.append(th);
           for (const u of e.ufs.filter((x) => x.regiao === regiao)) {
             const linha = corpo.insertRow();
-            linha.append(el("th", "", nomes.get(u.sigla)?.nome ?? u.sigla));
+            linha.append(el("th", "", u.nome));
             for (const m of e.metricas) {
               const v = m.valores[u.sigla] ?? null;
               linha.append(el("td", "", v === null ? "–" : numero(v, m.casas)));

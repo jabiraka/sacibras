@@ -3,19 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>sacibras — a economia brasileira em poucos números</title>
+    <title>sacibras — status da economia brasileira</title>
     <meta
       name="description"
       content="PIB, inflação, juros, emprego, dólar e dívida do Brasil em uma tela, com fonte oficial e data. O resto abre no clique."
     />
-    <meta name="theme-color" content="#070a08" />
+    <meta name="theme-color" content="#f4f2e8" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <script>
-      // Antes do primeiro quadro, para o tema escolhido não piscar. O padrão é o escuro.
-      try {
-        if (localStorage.getItem("tema") === "light") document.documentElement.dataset.theme = "light";
-      } catch {}
-    </script>
   </head>
   <body>
     <div class="luz" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -38,7 +32,6 @@
       </a>
       <a class="elo some-no-celular" href="#assuntos">Assuntos</a>
       <a class="elo" href="#mundo">Brasil no mundo</a>
-      <button type="button" id="tema" aria-label="Trocar entre tema escuro e claro">Tema</button>
     </header>
     <main class="miolo" id="conteudo"></main>
     <footer class="rodape">

@@ -195,7 +195,12 @@ def montar(ctx: Contexto) -> Secao:
         subtitulo=f"Variação até {periodo(quando, 'D')}",
         colunas=["Último", "No dia (%)", "Em 30 dias (%)", "No ano (%)", "Em 12 meses (%)"],
         linhas=[
-            LinhaTabela(rotulo=nome, valores=[p[-1][1], *_retornos(p)], unidade=u, casas=2)
+            LinhaTabela(
+                rotulo=nome,
+                valores=[p[-1][1], *_retornos(p)],
+                unidade=u,
+                casas=0 if u == "pontos" else 2,
+            )
             for nome, p, u in [
                 ("Ibovespa", ibov, "pontos"),
                 ("Ibovespa em dólares", ibov_usd, "pontos"),

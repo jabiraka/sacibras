@@ -1,54 +1,15 @@
-/* sacibras — vidro escuro com as luzes da bandeira.
+/* sacibras — papel claro, vidro e as luzes da bandeira.
 
    O desenho segue o do finjabs (Caio, 14/11/2026: "pode deixar o site um pouco parecido com
-   o finjabs"): fundo quase preto, cartões de vidro, cabeçalho em pílula, título grande e
-   poucos números. O que é só daqui: as luzes de fundo são verde, amarela e azul, e a marca é
-   o losango. A página inicial mostra o essencial; o resto abre no clique.
+   o finjabs"): cartões de vidro, cabeçalho em pílula, título grande e poucos números. O tema
+   é só o claro (Caio, 14/11/2026: "deixe sempre o tema claro sem opção de tema escuro"). O
+   que é só daqui: as luzes de fundo verde, amarela e azul, e a marca é o losango. A página
+   inicial mostra o essencial; o resto abre no clique.
 
    As seis cores de série passaram no validador de paleta (luminosidade, croma, separação
-   para daltônicos e contraste) nos dois temas. */
+   para daltônicos e contraste) sobre o papel claro. */
 
 :root {
-  color-scheme: dark;
-  --fundo: #070a08;
-  --superficie: #0f1411; /* a cor opaca mais próxima do vidro: anel dos pontos dos gráficos */
-  --vidro: rgb(255 255 255 / 4.5%);
-  --vidro-sutil: rgb(255 255 255 / 3%);
-  --vidro-forte: rgb(13 17 15 / 82%);
-  --borda: rgb(255 255 255 / 8%);
-  --borda-forte: rgb(255 255 255 / 17%);
-  --brilho-topo: inset 0 1px 0 rgb(255 255 255 / 6%);
-  --tinta: #f7f8f6;
-  --tinta-2: rgb(255 255 255 / 66%);
-  --tinta-3: rgb(255 255 255 / 42%);
-  --fio: rgb(255 255 255 / 7%);
-  --eixo: rgb(255 255 255 / 22%);
-
-  --verde: #2ecf7c;
-  --verde-claro: rgb(46 207 124 / 13%);
-  --amarelo: #ffd400;
-  --azul: #4f86f0;
-  --vermelho: #e5604d;
-  --faixa: #d9a900;
-  --luz-1: #0e9f55;
-  --luz-2: #ffd400;
-  --luz-3: #1f4fb8;
-  --luz-forca: 1;
-
-  --serie-1: #1faa59;
-  --serie-2: #4f86f0;
-  --serie-3: #bb8b00;
-  --serie-4: #9b7be8;
-  --serie-5: #e5604d;
-  --serie-6: #19a7b5;
-  --neutro-barra: rgb(255 255 255 / 20%);
-
-  --raio: 20px;
-  --suave: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --fonte: "Geist Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-:root[data-theme="light"] {
   color-scheme: light;
   --fundo: #f4f2e8;
   --superficie: #fdfcf7;
@@ -65,9 +26,17 @@
   --eixo: rgb(20 38 28 / 28%);
   --verde: #00853a;
   --verde-claro: rgb(0 133 58 / 11%);
+  --amarelo: #ffd400;
   --azul: #1f4fb8;
   --vermelho: #d1432f;
+  --mapa-claro: #e4efe2; /* a escala do mapa: um tom só, do claro ao verde fundo */
+  --mapa-escuro: #00602b;
+  --mapa-sem-dado: #ece9de;
+  --alerta: #b54708; /* estado "fora da meta": texto laranja escuro, legível no papel */
   --faixa: #f2c200;
+  --luz-1: #0e9f55;
+  --luz-2: #ffd400;
+  --luz-3: #1f4fb8;
   --luz-forca: 0.55;
   --serie-1: #00853a;
   --serie-2: #1f4fb8;
@@ -76,6 +45,9 @@
   --serie-5: #d1432f;
   --serie-6: #0e9aa7;
   --neutro-barra: rgb(20 38 28 / 22%);
+  --raio: 20px;
+  --suave: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --fonte: "Geist Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 * {
@@ -390,6 +362,92 @@ main {
   color: var(--tinta-2);
 }
 
+/* O IPCA contra a meta: um selo com ícone e palavra (a cor nunca sozinha) e a régua. */
+.situacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  background: var(--vidro-sutil);
+  border: 1px solid var(--borda);
+}
+
+.situacao i {
+  font-style: normal;
+  font-size: 0.625rem;
+}
+
+.situacao.acima,
+.situacao.abaixo {
+  color: var(--alerta);
+  border-color: color-mix(in srgb, var(--alerta) 35%, transparent);
+  background: color-mix(in srgb, var(--alerta) 9%, transparent);
+}
+
+.situacao.dentro {
+  color: var(--verde);
+  border-color: color-mix(in srgb, var(--verde) 35%, transparent);
+}
+
+.regua {
+  position: relative;
+  display: block;
+  width: min(100%, 8.5rem);
+  height: 10px;
+  margin: 8px 0 2px;
+}
+
+.regua::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--eixo);
+}
+
+.regua i {
+  position: absolute;
+  top: 0;
+  height: 10px;
+}
+
+.regua-faixa {
+  top: 2px !important;
+  height: 6px !important;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--faixa) 45%, transparent);
+}
+
+.regua-centro {
+  width: 0;
+  border-left: 1.5px solid var(--tinta-2);
+}
+
+.regua-ponto {
+  width: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 0 2px var(--superficie);
+}
+
+.regua-ponto.acima,
+.regua-ponto.abaixo {
+  background: var(--alerta);
+}
+
+.regua-legenda {
+  font-size: 0.6875rem;
+  color: var(--tinta-2);
+}
+
 .essencial .quando {
   font-size: 0.6875rem;
   color: var(--tinta-3);
@@ -485,8 +543,7 @@ main {
   flex: none;
 }
 
-.assunto:hover .seta,
-.vizinho:hover .seta {
+.assunto:hover .seta {
   transform: translateX(4px);
 }
 
@@ -872,6 +929,7 @@ main {
   overflow: auto;
   border: 1px solid var(--borda);
   border-radius: 12px;
+  background: var(--superficie);
 }
 
 /* Tabela guardada: abre no clique. */
@@ -1020,6 +1078,75 @@ table.dados.larga thead th:first-child {
   z-index: 2;
 }
 
+/* Tabelas no celular: o cabeçalho quebra em linhas (em vez de empurrar os números para fora
+   da tela), a unidade desce para baixo do rótulo e a primeira coluna fica parada quando a
+   tabela rola de lado. */
+table.dados thead th {
+  white-space: normal;
+  vertical-align: bottom;
+  line-height: 1.25;
+  min-width: 4.5rem;
+}
+
+table.dados thead th:first-child {
+  min-width: 0;
+}
+
+.tabela-rolavel table.dados tbody th,
+.tabela-rolavel table.dados thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--superficie);
+}
+
+.tabela-rolavel table.dados thead th:first-child {
+  z-index: 3;
+}
+
+/* Parada, a célula precisa de fundo opaco: o verde do Brasil é misturado ao papel. */
+.tabela-rolavel table.dados tr.brasil th {
+  background: color-mix(in srgb, var(--verde) 11%, var(--superficie));
+}
+
+@media (max-width: 520px) {
+  table.dados th,
+  table.dados td {
+    padding: 7px 8px;
+  }
+
+  table.dados tbody th {
+    white-space: normal;
+    min-width: 7.5rem;
+    max-width: 10rem;
+    line-height: 1.3;
+  }
+
+  table.dados tbody th .sub {
+    display: block;
+    font-size: 0.6875rem;
+  }
+
+  /* O gráfico do simulador mora dentro de um quadro: no celular, sem quadro duplo. */
+  details.guardado > .conteudo > .grafico,
+  details.guardado > .conteudo > div > .grafico {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  details.guardado > summary {
+    padding: 14px 16px;
+  }
+
+  details.guardado > .conteudo {
+    padding: 0 14px 14px;
+  }
+}
+
 /* ------------------------------------------------------------------ Brasil no mundo */
 
 .mundo-controles {
@@ -1096,6 +1223,10 @@ table.dados.larga thead th:first-child {
   margin: 12px 0 14px;
   padding-bottom: 2px;
   scrollbar-width: none;
+  /* Rola de lado: as pontas esmaecem para mostrar que há mais anos. */
+  mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  padding-inline: 14px;
+  scroll-padding-inline: 14px;
 }
 
 .anos .ficha {
@@ -1192,55 +1323,19 @@ table.dados.larga thead th:first-child {
   font-weight: 500;
 }
 
-/* ------------------------------------------------------------------ estados: mapa em grade */
+/* ------------------------------------------------------------------ estados: mapa */
 
-.mapa-grade {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  margin-top: 14px;
-  max-width: 26rem;
+.mapa {
+  margin-top: 10px;
+  max-width: 34rem;
+  min-height: 240px;
 }
 
-.uf {
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--verde) calc(var(--forca) * 100%), transparent);
-  border: 1px solid var(--borda);
-  font-size: 0.6875rem;
-  line-height: 1.1;
-  min-width: 0;
-}
-
-.uf b {
-  font-weight: 500;
-  font-size: 0.75rem;
-}
-
-.uf span {
-  color: var(--tinta-2);
-  font-size: 0.625rem;
-}
-
-/* Sobre o verde forte, a tinta escura do fundo lê melhor nos dois temas. */
-:root:not([data-theme="light"]) .uf.forte,
-:root:not([data-theme="light"]) .uf.forte span {
-  color: #06130c;
-}
-
-:root[data-theme="light"] .uf.forte,
-:root[data-theme="light"] .uf.forte span {
-  color: #fff;
-}
-
-.uf.sem-dado {
-  border-style: dashed;
-  color: var(--tinta-3);
+.mapa svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  touch-action: pan-y;
 }
 
 .mapa-escala {
@@ -1258,11 +1353,7 @@ table.dados.larga thead th:first-child {
   height: 8px;
   border-radius: 999px;
   border: 1px solid var(--borda);
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--verde) 14%, transparent),
-    color-mix(in srgb, var(--verde) 86%, transparent)
-  );
+  background: linear-gradient(90deg, var(--mapa-claro), var(--mapa-escuro));
 }
 
 .rank-limite {
@@ -1318,44 +1409,7 @@ table.dados.larga thead th:first-child {
   }
 }
 
-/* ------------------------------------------------------------------ vizinhos e rodapé */
-
-.vizinhos {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 44px;
-}
-
-.vizinho {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 14px 18px;
-  text-decoration: none;
-  transition: border-color 0.3s;
-}
-
-.vizinho:hover {
-  border-color: var(--borda-forte);
-}
-
-.vizinho small {
-  font-size: 0.71875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--tinta-3);
-}
-
-.vizinho span {
-  font-size: 1.0625rem;
-  letter-spacing: -0.02em;
-}
-
-.vizinho.proximo {
-  text-align: right;
-  grid-column: 2;
-}
+/* ------------------------------------------------------------------ rodapé */
 
 .rodape {
   border-top: 1px solid var(--borda);
@@ -1429,19 +1483,41 @@ table.dados.larga thead th:first-child {
     padding: 16px 14px 12px;
   }
 
+  /* O nome inteiro ("Rio Grande do Norte", "América Latina e Caribe") vale mais que a barra
+     comprida: a coluna do nome cresce e, se precisar, quebra em duas linhas. */
   .rank-linha {
-    grid-template-columns: 18px minmax(70px, 96px) minmax(0, 1fr) 54px;
+    grid-template-columns: 18px minmax(0, 8.5rem) minmax(0, 1fr) 42px;
     gap: 6px;
+    font-size: 0.78125rem;
   }
 
-  .vizinhos {
-    grid-template-columns: minmax(0, 1fr);
+  .rank-nome {
+    white-space: normal;
+    line-height: 1.2;
   }
 
-  .vizinho.proximo {
-    grid-column: 1;
-    text-align: left;
+  .legenda {
+    gap: 2px 12px;
+    font-size: 0.75rem;
   }
+
+  .ficha {
+    padding: 4px 11px;
+    font-size: 0.78125rem;
+  }
+
+  .mundo-controles {
+    gap: 5px;
+  }
+
+  .dica {
+    max-width: calc(100% - 4px);
+  }
+
+  .essencial strong {
+    font-size: 1.5rem;
+  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

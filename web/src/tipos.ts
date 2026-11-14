@@ -46,6 +46,7 @@ export interface Cartao {
   procedencia: Procedencia;
   mini: [string, number][];
   secao: string;
+  meta: { centro: number; inferior: number; superior: number; norma: string } | null;
 }
 
 export interface Tabela {

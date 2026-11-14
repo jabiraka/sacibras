@@ -30,6 +30,8 @@ Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
 | BCB SGS 4173 a 4180 | dívida mobiliária federal por indexador | A família não tem o IPCA: "índices de preços" é o que falta para 100 % (confere com a fatia das NTN-B). |
 | BCB Focus, edições antigas | a mediana de qualquer data passada | Permite medir o erro do consenso sem banco: ~60 consultas, um mês de cache. |
 
+| IBGE geoftp, Malha Territorial 2024 (`BR_UF_2024.zip`, 15 MB) | o contorno das 27 UFs | Responde de fora do Brasil; a API de malhas (`servicodados`) não. Simplificada por `npm run malha` (mapshaper, 0,6 % dos vértices, sem as ilhas oceânicas) para um TopoJSON de 48 KB que fica no repositório. |
+
 ## Testadas, ainda sem uso (próximas fases)
 
 | Fonte | O que dá | Responde de fora? | CORS | Observações |

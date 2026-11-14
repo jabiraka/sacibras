@@ -7,7 +7,7 @@ from datetime import date
 from sacibras import contas
 from sacibras.fontes import bcb_focus, ibge_sidra
 from sacibras.leis import META_CONTINUA
-from sacibras.schema import Faixa, Grafico, LinhaRef, LinhaTabela, Secao, Tabela
+from sacibras.schema import Faixa, Grafico, LinhaRef, LinhaTabela, Meta, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -116,19 +116,27 @@ def montar(ctx: Contexto) -> Secao:
 
     teto = meta.centro + meta.intervalo
     anterior = ha_um_ano(ipca12)
-    cartoes = [
-        cartao(
-            "ipca-12m",
-            "IPCA em 12 meses",
-            ipca12,
-            unidade="%",
-            periodicidade="M",
-            casas=2,
-            detalhe=f"meta {br(meta.centro)} %, teto {br(teto)} %",
-            fonte=ctx.fonte_sgs("IPCA_12M"),
-            secao="inflacao",
-            mini=60,
+    piso = meta.centro - meta.intervalo
+    distancia = ipca12[-1][1] - meta.centro
+    lado = "acima" if distancia > 0 else "abaixo"
+    cartao_ipca = cartao(
+        "ipca-12m",
+        "IPCA em 12 meses",
+        ipca12,
+        unidade="%",
+        periodicidade="M",
+        casas=2,
+        detalhe=(
+            f"{br(abs(distancia), 2)} pp {lado} da meta de {br(meta.centro)} % "
+            f"(intervalo de {br(piso)} % a {br(teto)} %)"
         ),
+        fonte=f"{ctx.fonte_sgs('IPCA_12M')}; meta: {meta.referencia}",
+        secao="inflacao",
+        mini=60,
+    )
+    cartao_ipca.meta = Meta(centro=meta.centro, inferior=piso, superior=teto, norma=meta.referencia)
+    cartoes = [
+        cartao_ipca,
         cartao(
             "ipca-mes",
             "IPCA do mês",

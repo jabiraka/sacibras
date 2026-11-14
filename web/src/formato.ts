@@ -10,10 +10,10 @@ export function data(iso: string): Date {
 }
 
 export function numero(valor: number, casas = 1): string {
-  return valor.toLocaleString("pt-BR", {
-    minimumFractionDigits: casas,
-    maximumFractionDigits: casas,
-  });
+  // O sinal de menos tipográfico (−) e não o hífen: o hífen fica curto e solto ("- 2").
+  return valor
+    .toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas })
+    .replace(/^-/, "−");
 }
 
 /** O valor com a unidade do jeito que se lê: "13,75 % a.a.", "R$ 5,42", "128.450 pontos". */

@@ -388,11 +388,16 @@ export function montarGrafico(g: Grafico): HTMLElement {
     }
 
     const dias = (xMax - xMin) / DIA;
+    const estreito = largura < 480;
     const umaSerie = !barras && g.series.length === 1;
     const grafico = Plot.plot({
       width: largura,
-      height: Math.round(Math.min(340, Math.max(220, largura * 0.5))),
-      marginLeft: 46,
+      // No celular o gráfico fica mais alto que largo em proporção: a linha precisa de altura
+      // para mostrar o movimento, e a largura é pouca.
+      height: Math.round(
+        estreito ? Math.min(300, Math.max(240, largura * 0.72)) : Math.min(340, Math.max(220, largura * 0.5)),
+      ),
+      marginLeft: estreito ? 38 : 46,
       marginRight: umaSerie ? 52 : 18,
       marginTop: 14,
       marginBottom: 28,
@@ -400,7 +405,12 @@ export function montarGrafico(g: Grafico): HTMLElement {
       x: {
         type: "utc",
         label: null,
-        ticks: marcasDoEixo(xMin, xMax, Math.max(3, Math.floor(largura / 84))),
+        // Quantos rótulos cabem: um ano ("2024") pede uns 52 px; um mês ("out/26"), uns 66.
+        ticks: marcasDoEixo(
+          xMin,
+          xMax,
+          Math.max(3, Math.floor((largura - 60) / ((xMax - xMin) / DIA > 800 ? 52 : 66))),
+        ),
         tickSize: 0,
         tickPadding: 8,
         line: false,
@@ -563,10 +573,18 @@ function pairar(
     camada.style.display = "";
     const larguraTela = tela.clientWidth;
     const xTela = xi * escala;
-    const aDireita = xTela < larguraTela * 0.6;
-    dica.style.left = aDireita ? `${xTela + 14}px` : "";
-    dica.style.right = aDireita ? "" : `${larguraTela - xTela + 14}px`;
-    dica.style.top = `${Math.max(0, ev.clientY - caixa.top - 20)}px`;
+    if (larguraTela < 480) {
+      // No celular a dica fica no alto, do lado oposto ao dedo, e nunca sai do quadro.
+      const doLadoDireito = xTela < larguraTela / 2;
+      dica.style.left = doLadoDireito ? "" : "0px";
+      dica.style.right = doLadoDireito ? "0px" : "";
+      dica.style.top = "0px";
+    } else {
+      const aDireita = xTela < larguraTela * 0.6;
+      dica.style.left = aDireita ? `${xTela + 14}px` : "";
+      dica.style.right = aDireita ? "" : `${larguraTela - xTela + 14}px`;
+      dica.style.top = `${Math.max(0, ev.clientY - caixa.top - 20)}px`;
+    }
   };
   const sair = (): void => {
     dica.hidden = true;
@@ -574,7 +592,19 @@ function pairar(
   };
   grafico.addEventListener("pointermove", mover);
   grafico.addEventListener("pointerdown", mover);
-  grafico.addEventListener("pointerleave", sair);
+  // Com mouse, a dica some quando o ponteiro sai. Com o dedo, o "sair" vem no fim de todo
+  // toque: a dica fica até a pessoa tocar fora do gráfico.
+  grafico.addEventListener("pointerleave", (ev) => {
+    if (ev.pointerType === "mouse") sair();
+  });
+  const foraDoGrafico = (ev: PointerEvent): void => {
+    if (!grafico.isConnected) {
+      document.removeEventListener("pointerdown", foraDoGrafico);
+      return;
+    }
+    if (!grafico.contains(ev.target as Node)) sair();
+  };
+  document.addEventListener("pointerdown", foraDoGrafico);
 }
 
 function descricao(g: Grafico): string {

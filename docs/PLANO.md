@@ -334,7 +334,7 @@ DLSP, com o Focus ao lado; receita e despesa do Governo Central e a composição
 tributo, carga tributária, meta fiscal e banda (depende de ler a LC 200 e a LDO), prazo e
 custo da dívida (o Tesouro não publica em dado aberto leve), linha do tempo da reforma.
 
-**Fase 3 — Estados** 🟡: ✅ mapa em grade e ranking das 27 UFs: desocupação (PNAD), despesa com
+**Fase 3 — Estados** 🟡: ✅ mapa do Brasil (malha do IBGE) e ranking das 27 UFs: desocupação (PNAD), despesa com
 pessoal e dívida sobre a RCL (RGF, com os limites que o próprio RGF publica), receita por
 habitante. ⬜ ICMS, resultado primário, despesa por função per capita, CAPAG, capitais, série
 de cada estado no tempo.

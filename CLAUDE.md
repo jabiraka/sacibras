@@ -6,7 +6,10 @@ as fases estão em [docs/PLANO.md](docs/PLANO.md) — leia antes de começar.
 ## Dados
 
 - **Sem banco em produção.** O builder chama as APIs e gera JSONs que vão com o site; nada de
-  dado é commitado (`web/public/data/` está no `.gitignore`).
+  dado é commitado (`web/public/data/` está no `.gitignore`). A exceção é a malha dos estados
+  (`web/src/mapa/ufs.json`, ~50 KB): a API de malhas do IBGE recusa quem está fora do Brasil,
+  como o GitHub Actions, então ela é gerada do shapefile oficial por `npm run malha` e fica no
+  repositório. Fronteira quase não muda; rodar de novo só com malha nova do IBGE.
 - **Bases separadas do finance_agent** (Caio, 13/11/2026). Nunca ler nem escrever no Postgres
   (`fa_postgres`, 5433) nem no Supabase dele. O Postgres local do sacibras é `sb_postgres`, porta
   5434, volume `sb_pgdata`, e serve só de cache de desenvolvimento. Código útil do finance_agent
@@ -28,11 +31,14 @@ as fases estão em [docs/PLANO.md](docs/PLANO.md) — leia antes de começar.
   pra abrir"*). Na entrada: seis números (`RESUMO` em `construir.py`) e um cartão por assunto,
   com a manchete dele. Dentro do assunto: quatro números e o primeiro gráfico; o resto fica
   atrás de "Mais números", "Mais gráficos" e das tabelas guardadas. Coisa nova entra guardada,
-  não na entrada.
-- **O desenho segue o do finjabs** (Caio, 14/11/2026): fundo escuro, cartões de vidro,
-  cabeçalho em pílula, Geist, título grande com a segunda metade apagada. O que é só daqui:
-  as luzes de fundo verde, amarela e azul e o losango da marca. Tema claro existe, mas o
-  padrão é o escuro.
+  não na entrada. Sem "Anterior"/"Próximo" entre assuntos: só o "Voltar" (Caio, 14/11/2026).
+- **O desenho segue o do finjabs** (Caio, 14/11/2026): cartões de vidro, cabeçalho em pílula,
+  Geist, título grande com a segunda metade apagada. O que é só daqui: as luzes de fundo
+  verde, amarela e azul e o losango da marca. **Só o tema claro, sem botão de tema** (Caio,
+  14/11/2026: *"deixe sempre o tema claro sem opção de tema escuro"*).
+- **Número com meta se mostra contra a meta** (Caio, 14/11/2026, o IPCA na entrada): o
+  cartão leva `meta` (centro e intervalo, da norma lida) e a tela diz em palavras e na régua
+  se está dentro, acima do teto ou abaixo do piso.
 - PT-BR e formato brasileiro: `R$ 1,2 tri`, `4,5 %`, `out/2026`, `3º tri/2026`.
 - Previsão nunca sozinha: consenso (Focus) ao lado, faixa de erro e o método em uma frase.
 - Cada número com data de referência.
@@ -45,9 +51,11 @@ cd builder && uv run ruff check src tests && uv run ruff format --check src test
 cd web && npm run build          # tsc + vite
 ```
 
-Mexeu em gráfico, cartão ou cor? Rode o builder, abra o site e olhe a 390 e a 1280 px, nos
-dois temas. As seis cores de série (`--serie-1` a `--serie-6` em `web/src/estilo.css`)
-passaram num validador de paleta para daltônicos; trocar uma pede validar de novo.
+Mexeu em gráfico, cartão, tabela ou cor? Rode o builder, abra o site e olhe a 390 e a 1280 px
+com tudo aberto ("Mais números", "Mais gráficos", as tabelas guardadas): nada pode sair do
+quadro nem cortar texto, e a dica do gráfico tem de ficar visível depois de um toque. As seis
+cores de série (`--serie-1` a `--serie-6` em `web/src/estilo.css`) passaram num validador de
+paleta para daltônicos; trocar uma pede validar de novo.
 
 ## Git
 

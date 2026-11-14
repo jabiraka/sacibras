@@ -181,6 +181,42 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
 
 // ------------------------------------------------------------------ vistas
 
+/** O número contra a meta oficial: onde ele está no intervalo, e em palavras. */
+function medidorDaMeta(valor: number, meta: NonNullable<Cartao["meta"]>, casas: number): HTMLElement[] {
+  const situacao =
+    valor > meta.superior ? "acima" : valor < meta.inferior ? "abaixo" : "dentro";
+  const texto = { acima: "acima do teto", abaixo: "abaixo do piso", dentro: "dentro da meta" }[
+    situacao
+  ];
+  const selo = el("span", `situacao ${situacao}`);
+  selo.append(el("i", "", situacao === "dentro" ? "✓" : situacao === "acima" ? "▲" : "▼"), document.createTextNode(texto));
+
+  // Régua de 0 até um pouco além do teto (ou do valor, se passar dele).
+  const fim = Math.max(meta.superior + 1.5, valor + 0.5);
+  const pos = (v: number): string => `${Math.min(100, Math.max(0, (v / fim) * 100))}%`;
+  const regua = el("span", "regua");
+  regua.setAttribute("aria-hidden", "true");
+  const faixa = el("i", "regua-faixa");
+  faixa.style.left = pos(meta.inferior);
+  faixa.style.width = `calc(${pos(meta.superior)} - ${pos(meta.inferior)})`;
+  const centro = el("i", "regua-centro");
+  centro.style.left = pos(meta.centro);
+  const ponto = el("i", `regua-ponto ${situacao}`);
+  ponto.style.left = pos(valor);
+  regua.append(faixa, centro, ponto);
+
+  const diferenca = valor - meta.centro;
+  const legenda = el(
+    "span",
+    "regua-legenda",
+    `meta ${numero(meta.centro, 0)} % (${numero(meta.inferior, 1)} a ${numero(meta.superior, 1)})`,
+  );
+  legenda.title =
+    `${numero(Math.abs(diferenca), casas)} pp ${diferenca >= 0 ? "acima" : "abaixo"} do centro da meta. ` +
+    `${meta.norma}.`;
+  return [selo, regua, legenda];
+}
+
 function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
   const assuntos = painel.secoes.filter((s) => s.id !== "resumo");
 
@@ -190,8 +226,8 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
   const titulo = el("h1", "entra");
   titulo.style.setProperty("--i", "1");
   titulo.append(
-    document.createTextNode("A economia brasileira "),
-    el("span", "apagado", "em seis números."),
+    document.createTextNode("Status da "),
+    el("span", "apagado", "economia brasileira"),
   );
   const lema = el(
     "p",
@@ -212,11 +248,9 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
         item.title = `${c.detalhe ? `${c.detalhe}. ` : ""}Fonte: ${c.fonte}`;
         const valor = el("strong");
         valorComUnidade(c, valor);
-        item.append(
-          valor,
-          el("span", "rotulo", c.rotulo),
-          el("span", "quando", periodo(c.referencia, c.periodicidade)),
-        );
+        item.append(valor, el("span", "rotulo", c.rotulo));
+        if (c.meta) item.append(...medidorDaMeta(c.valor, c.meta, c.casas));
+        item.append(el("span", "quando", periodo(c.referencia, c.periodicidade)));
         essenciais.append(item);
       }
     })
@@ -253,7 +287,7 @@ function vistaAssunto(painel: Painel, id: string, conteudo: HTMLElement): void {
   if (!item) return;
 
   const secao = el("section", "secao");
-  const voltar = el("a", "voltar", "← Início");
+  const voltar = el("a", "voltar", "← Voltar");
   voltar.href = "#";
   secao.append(voltar, el("p", "sobretitulo", "Assunto"), el("h2", "", item.titulo));
   const corpo = el("div");
@@ -278,52 +312,12 @@ function vistaAssunto(painel: Painel, id: string, conteudo: HTMLElement): void {
       .catch((erro) => corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`)));
   }
 
-  const vizinhos = el("nav", "vizinhos");
-  vizinhos.setAttribute("aria-label", "Outros assuntos");
-  const anterior = assuntos[indice - 1];
-  const proximo = assuntos[indice + 1];
-  if (anterior) {
-    const a = el("a", "vidro vizinho");
-    a.href = `#${anterior.id}`;
-    a.append(el("small", "", "← Anterior"), el("span", "", anterior.titulo));
-    vizinhos.append(a);
-  }
-  if (proximo) {
-    const a = el("a", "vidro vizinho proximo");
-    a.href = `#${proximo.id}`;
-    a.append(el("small", "", "Próximo →"), el("span", "", proximo.titulo));
-    vizinhos.append(a);
-  }
-  secao.append(vizinhos);
   conteudo.replaceChildren(secao);
 }
 
-// ------------------------------------------------------------------ tema e partida
-
-function tema(): void {
-  const botao = document.getElementById("tema");
-  if (!botao) return;
-  const claro = (): boolean => document.documentElement.dataset.theme === "light";
-  const rotular = (): void => {
-    botao.textContent = claro() ? "Tema escuro" : "Tema claro";
-  };
-  rotular();
-  botao.addEventListener("click", () => {
-    const novo = claro() ? "dark" : "light";
-    if (novo === "light") document.documentElement.dataset.theme = "light";
-    else delete document.documentElement.dataset.theme;
-    try {
-      localStorage.setItem("tema", novo);
-    } catch {
-      // Sem armazenamento (janela anônima): o tema vale só nesta visita.
-    }
-    rotular();
-    document.dispatchEvent(new Event("tema"));
-  });
-}
+// ------------------------------------------------------------------ partida
 
 async function iniciar(): Promise<void> {
-  tema();
   const conteudo = document.getElementById("conteudo") as HTMLElement;
   let painel: Painel;
   try {

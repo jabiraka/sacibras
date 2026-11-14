@@ -65,6 +65,15 @@ class Grafico(Modelo):
     largura: Literal["meia", "inteira"] = "meia"
 
 
+class Meta(Modelo):
+    """A meta oficial com que o número se compara (a de inflação, do CMN)."""
+
+    centro: float
+    inferior: float
+    superior: float
+    norma: str
+
+
 class Cartao(Modelo):
     id: str
     rotulo: str
@@ -81,6 +90,7 @@ class Cartao(Modelo):
     mini: list[tuple[date, float]] = Field(default_factory=list)
     secao: str = ""
     """Âncora da seção em que o número é explicado."""
+    meta: Meta | None = None
 
 
 class LinhaTabela(Modelo):
