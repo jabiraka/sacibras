@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o assunto Impostos, junto no `main` com a sessão de Estados em partes, nota de crédito em letras, cartões enxutos, crédito do BIS, inflação no simulador e tradução automática).
+Última atualização: 14/11/2026 (o assunto Impostos e as dez sugestões, junto no `main` com a sessão de Estados em partes, nota de crédito em letras, cartões enxutos, crédito do BIS, inflação no simulador e tradução automática).
 
 ---
 
@@ -66,8 +66,22 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   - **Gasto tributário**: o DGT da Receita, bases efetivas (`fontes/receita_gastos.py`), 2014 a
     2023 juntando quatro edições, e os maiores itens do último ano.
 - Glossário (+9 termos), sinônimos da busca, teste de fumaça das três fontes novas.
-- **Esperando decisão do Caio**: a lista "Impostos: o que mais cabe" no
-  [PROPOSTAS](PROPOSTAS.md) (dez sugestões).
+- **Depois, as dez sugestões** (Caio: *"todas entram, planeje e implemente"*; situação de cada
+  uma no [PROPOSTAS](PROPOSTAS.md)). Impostos ficou em seis partes: Arrecadação federal (com
+  o previsto × realizado do ano); Por estado e por setor; Carga tributária (com a composição);
+  Quem paga (dez grupos de renda do Ipea, IRPF por faixa da Receita, imposto das empresas
+  contra 143 países); Crescimento e reforma (com a linha do tempo de 2026 a 2033); O que não
+  entra (gasto tributário, com o previsto no PLOA e por região, e a dívida ativa). Fora de
+  Impostos: "Carga tributária" em Brasil no mundo e "Arrecadação federal por habitante" em
+  Estados. `LinhaTabela.textos` deixa uma tabela ter células de texto (a linha do tempo).
+- **Lido à mão, com prazo para reler**: a receita prevista do ano
+  (`relatorios.RECEITA_PREVISTA`, a cada bimestre; o 5º sai até 22/11, junto com
+  `leis.AVALIACOES_2026`); a dívida ativa (PLDO em abril, PGFN em Números em março); os dez
+  grupos de renda do Ipea (quando refizerem com a próxima POF); a reforma (`leis.py`: **reler
+  a EC 132 e a LC 214 no Planalto, do PC**, porque o Senado serve a publicação original, não
+  o texto compilado).
+- **Não deu**: calendário da arrecadação (a Receita não publica) e as alíquotas de IR da
+  pessoa física, consumo e salário contra outros países (a OCDE não traz o Brasil).
 ## 11ª sessão (14/11/2026, na nuvem, branch `claude/ui-refinements-glossary-v417zq`)
 
 Pedidos do Caio: *"diminua a tela ao abrir por estado"*, *"adicione RCL e outros termos na aba
@@ -225,13 +239,10 @@ o essencial"*.
 3. **Estados no tempo.** A ficha é uma foto. Faltam a série de cada estado contra o Brasil, a
    nota CAPAG, a previdência do estado (RREO Anexo 04). Cuidado com o custo: cada período a
    mais são 54 chamadas ao SICONFI; usar só o 3º quadrimestre de cada ano.
-4. **O que falta de Impostos** (lista no [PROPOSTAS](PROPOSTAS.md)): a linha do tempo da
-   reforma do consumo (CBS/IBS de 2026 a 2033) depende de **ler a EC 132/2023 e a LC 214/2025
-   no Planalto, do PC** (a nuvem não alcança); a carga como métrica em Brasil no mundo (a OCDE
-   já está lida); arrecadação federal e ICMS na ficha do estado; o PLOA ao lado do gasto
-   tributário. **Reler** o DGT quando sair a edição 2024 (prevista para 2027) e o
-   multiplicador de receita da SPE, se a nota metodológica do Boletim Impulso Estrutural do
-   Gasto for publicada.
+4. **O que falta de Impostos** (no [PROPOSTAS](PROPOSTAS.md)): fonte oficial comparável para
+   IR da pessoa física, imposto sobre consumo e sobre salário em outros países; o FPE/FPM ao
+   lado da arrecadação por estado; o imposto retido na fonte por faixa de renda. **Reler** o
+   DGT quando sair a edição 2024 e o PLOA 2027, e os números lidos à mão (lista acima).
 5. **Previsões próprias que faltam:** IPCA e desocupação com modelo sazonal; "o que mudou desde a
    última leitura" no PIB agora; PIB agora com indústria, varejo e serviços além do IBC-Br.
    Sempre ao lado do Focus, com barra de erro e o método numa frase.
@@ -258,6 +269,11 @@ o essencial"*.
 - A projeção da população é a do IBGE, sem faixa de erro (o IBGE não publica). O PIB por
   ocupado é por pessoa, não por hora; de 2020 a 2022 a pandemia distorce a decomposição (dito
   na tela). O déficit do INSS é só o Regime Geral (sem servidores e militares).
+- Impostos, quem paga: o IRPF por faixa é o imposto da declaração sobre a renda total; falta
+  o retido na fonte (13º, aplicações), então o topo paga mais do que a tabela mostra. Os dez
+  grupos de renda são estimativa do Ipea com a POF 2017-2018. A arrecadação por estado e por
+  setor conta onde está quem recolhe, não quem arca. O realizado do previsto × realizado vem
+  do RTN, que em 14/11/2026 estava parado em jul/2026 no CKAN.
 - Impostos: a carga é a da OCDE (33,7 % do PIB em 2024), não a da Receita (outro método); a
   arrecadação soma as UFs do CSV da Receita, que fica perto do total oficial mas não igual; o
   gasto tributário é só o federal e sai com dois anos de atraso. O gráfico carga ×

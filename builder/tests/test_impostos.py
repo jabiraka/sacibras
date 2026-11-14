@@ -238,3 +238,22 @@ def test_reforma_e_decimos_estao_inteiros() -> None:
     pobres, ricos = relatorios.INCIDENCIA_POR_DECIMO[0], relatorios.INCIDENCIA_POR_DECIMO[9]
     assert pobres[1] + pobres[2] == pytest.approx(26.4)  # os totais que o estudo escreve
     assert ricos[1] + ricos[2] == pytest.approx(19.2)
+
+
+def test_setores_le_meses_abreviados_e_so_ano_fechado() -> None:
+    cab = "Ano;Mês;Seção - Sigla;Seção - Nome;II;IRPJ"
+    meses = ["Jan", "Fev ", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+    linhas = [f"2025;{m};C;Indústrias  de transformação;1.000,50;9" for m in meses]
+    linhas += ["2025;Jan;K;Atividades financeiras;;5", "2026;Jan;C;Indústrias de transformação;1;1"]
+    por_ano = receita_arrecadacao.ler_setores("\n".join([cab, *linhas]))
+    assert list(por_ano) == [2025]
+    assert por_ano[2025]["Indústrias de transformação"] == pytest.approx(12 * 1009.5)
+    assert por_ano[2025]["Atividades financeiras"] == 5.0
+    with pytest.raises(FonteForaDoArError):
+        receita_arrecadacao.ler_setores("Ano;Mês;UF;X\n2025;Jan;SP;1")
+
+
+def test_previsto_e_divida_ativa_tem_o_que_a_tela_usa() -> None:
+    assert {r.rtn for r in relatorios.RECEITA_PREVISTA} == {"receita_rfb", "arrecadacao_rgps"}
+    assert all(r.loa > 0 and r.avaliacao > 0 for r in relatorios.RECEITA_PREVISTA)
+    assert set(relatorios.DIVIDA_ATIVA_RECUPERADO) <= set(relatorios.DIVIDA_ATIVA_ESTOQUE)

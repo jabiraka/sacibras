@@ -29,6 +29,7 @@ from sacibras.fontes import (
     receita_gastos,
     receita_irpf,
     siconfi,
+    tesouro_rtn,
 )
 from sacibras.fontes.ocde_receita import BASES, ESFERAS
 from sacibras.fontes.receita_arrecadacao import COMPLETO_DESDE, NOMES
@@ -715,6 +716,166 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
 # ------------------------------------------------------------------ seção
 
 
+def _por_setor(ctx: Contexto) -> Pecas:
+    por_ano = receita_arrecadacao.setores()
+    ano = max(por_ano)
+    setores = por_ano[ano]
+    total = sum(setores.values())
+    nomes = {
+        "Pessoa Física": "Pessoas físicas (não é setor)",
+        "Não informado": "Setor não informado",
+    }
+    linhas = [
+        LinhaTabela(
+            rotulo=nomes.get(nome, nome),
+            valores=[round(v / 1e9, 1), round(v / total * 100, 1)],
+            unidade="",
+            casas=1,
+        )
+        for nome, v in sorted(setores.items(), key=lambda x: -x[1])
+        if v / total >= 0.005
+    ]
+    tabela = Tabela(
+        id="arrecadacao-setores",
+        titulo="Arrecadação federal por setor da economia",
+        subtitulo=f"{ano}, do setor que mais paga ao que menos paga",
+        colunas=["R$ bi", "% do total"],
+        linhas=linhas,
+        fonte="Receita Federal, arrecadação por seção da CNAE (dados abertos)",
+        nota=(
+            "O setor é o da atividade principal de quem recolhe o imposto, não o de quem "
+            "arca com ele: a indústria e o comércio recolhem tributos que vão no preço ao "
+            "consumidor, e os bancos, o imposto retido das aplicações dos clientes. A "
+            "administração pública aparece pelo imposto retido dos servidores e pela "
+            "contribuição à previdência. Setores com menos de 0,5 % do total ficam de fora. "
+            f"Mostra-se o último ano fechado ({ano}): em 2026 a Receita parece ter mudado "
+            "grandes empresas de setor, e os meses de 2026 não se comparam com os de antes."
+        ),
+    )
+    return [], [], [tabela], ""
+
+
+def _previsto(ctx: Contexto) -> Pecas:
+    """O que entrou no ano contra o que o governo previu arrecadar (relatório bimestral)."""
+    rtn = tesouro_rtn.serie_historica()
+    ano = relatorios.ANO_DA_RECEITA_PREVISTA
+    linhas: list[LinhaTabela] = []
+    ate: date | None = None
+    for r in relatorios.RECEITA_PREVISTA:
+        no_ano = [(d, v) for d, v in rtn[r.rtn] if d.year == ano]
+        antes = {d.month: v for d, v in rtn[r.rtn] if d.year == ano - 1}
+        if not no_ano:
+            continue
+        ate = no_ano[-1][0]
+        feito = sum(v for _, v in no_ano) / 1e3
+        mesmo_periodo = sum(antes.get(d.month, 0.0) for d, _ in no_ano)
+        ano_passado = sum(antes.values())
+        linhas.append(
+            LinhaTabela(
+                rotulo=r.linha,
+                valores=[
+                    r.loa,
+                    r.avaliacao,
+                    round(feito, 1),
+                    round(feito / r.avaliacao * 100, 1),
+                    round(mesmo_periodo / ano_passado * 100, 1) if ano_passado else None,
+                ],
+                unidade="",
+                casas=1,
+            )
+        )
+    if not linhas or ate is None:
+        raise RuntimeError(f"RTN sem meses de {ano}")
+    meses = f"jan–{periodo(ate, 'M')}"
+    tabela = Tabela(
+        id="arrecadacao-previsto",
+        titulo=f"O previsto para {ano} e o que já entrou",
+        subtitulo=f"R$ bilhões; realizado de {meses}",
+        colunas=[
+            "orçamento",
+            f"previsão do {relatorios.AVALIACAO_DA_RECEITA}",
+            f"entrou, {meses}",
+            "% da previsão",
+            f"% do ano em {ano - 1}, mesmos meses",
+        ],
+        linhas=linhas,
+        fonte=(
+            "Relatório de Avaliação de Receitas e Despesas Primárias (orçamento e previsão); "
+            "Tesouro Nacional, Resultado do Tesouro Nacional, tabela 1.1 (realizado)"
+        ),
+        nota=(
+            "A cada dois meses o governo refaz a conta de quanto espera arrecadar no ano. A "
+            "última coluna diz quanto do total do ano passado já tinha entrado nos mesmos "
+            'meses: se o "% da previsão" está perto dela, a arrecadação anda no ritmo '
+            "previsto. A previsão desconta incentivos fiscais; o realizado do Tesouro pode "
+            "ter pequena diferença de conceito. A Receita divulga a arrecadação de cada mês "
+            "entre os dias 21 e 30 do mês seguinte, sem calendário publicado."
+        ),
+    )
+    return [], [], [tabela], ""
+
+
+def _divida_ativa(ctx: Contexto) -> Pecas:
+    estoque, recuperado = relatorios.DIVIDA_ATIVA_ESTOQUE, relatorios.DIVIDA_ATIVA_RECUPERADO
+    anos = sorted(estoque)
+    ano = anos[-1]
+    cartoes = [
+        cartao(
+            "divida-ativa",
+            "Dívida ativa da União",
+            [(date(a, 1, 1), estoque[a] / 1e3) for a in anos],
+            unidade="R$ tri",
+            casas=2,
+            periodicidade="A",
+            detalhe=(
+                f"imposto e outras dívidas não pagas; {br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % "
+                "tido como perda"
+            ),
+            fonte=relatorios.FONTE_DIVIDA_ATIVA,
+            secao="impostos",
+        )
+    ]
+    tabela = Tabela(
+        id="divida-ativa",
+        titulo="O que a União tem a receber e quanto recupera",
+        subtitulo="dívida ativa da União, em R$ bilhões",
+        colunas=[str(a) for a in anos],
+        linhas=[
+            LinhaTabela(
+                rotulo="Dívida ativa (o que está em cobrança)",
+                valores=[estoque[a] for a in anos],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Recuperado no ano",
+                valores=[recuperado.get(a) for a in anos],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Recuperado, % da dívida",
+                valores=[
+                    round(recuperado[a] / estoque[a] * 100, 1) if a in recuperado else None
+                    for a in anos
+                ],
+                unidade="",
+                casas=1,
+            ),
+        ],
+        fonte=relatorios.FONTE_DIVIDA_ATIVA,
+        nota=(
+            "Dívida ativa é o imposto (e outras dívidas com a União) que não foi pago no "
+            "prazo e passou à cobrança da Procuradoria da Fazenda. O número é grande, mas a "
+            f"maior parte não volta: de {ano}, o próprio governo conta "
+            f"{br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % como perda (empresas falidas ou sem "
+            f"bens) e espera recuperar R$ {br(relatorios.DIVIDA_ATIVA_A_RECUPERAR, 0)} bi em "
+            "15 anos."
+        ),
+    )
+    return cartoes, [], [tabela], ""
+
+
 def _quem_paga(ctx: Contexto) -> Pecas:
     tabelas = [
         Tabela(
@@ -920,7 +1081,10 @@ def _reforma(ctx: Contexto) -> Pecas:
 Pecas = tuple[list[Cartao], list[Grafico], list[Tabela], str]
 MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
     ("arrecadação por estado", _por_estado),
+    ("arrecadação por setor", _por_setor),
+    ("previsto × realizado", _previsto),
     ("quem paga", _quem_paga),
+    ("dívida ativa", _divida_ativa),
     ("alíquotas", _aliquotas),
     ("reforma", _reforma),
 ]

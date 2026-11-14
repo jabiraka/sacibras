@@ -24,6 +24,7 @@ from sacibras.fontes import (
     ocde_receita,
     receita_arrecadacao,
     receita_gastos,
+    receita_irpf,
     tesouro_direto,
 )
 
@@ -98,6 +99,16 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     ),
     ("Receita, arrecadação por estado (CSV)", _texto(receita_arrecadacao.URL, tempo_limite=120)),
     ("Receita, gastos tributários (lista)", _texto(receita_gastos.LISTAGEM)),
+    ("Receita, arrecadação por setor (CSV)", _texto(receita_arrecadacao.URL_SETORES)),
+    ("Receita, Grandes Números do IRPF (lista)", _texto(receita_irpf.LISTAGEM)),
+    (
+        "OCDE, imposto sobre o lucro",
+        _texto(
+            ocde_receita.LUCRO + "/BRA.A.CIT_C.ST.PT_INC_TAX.S13._Z._Z._Z",
+            params={"startPeriod": "2024", "format": "csvfile"},
+            tempo_limite=120,
+        ),
+    ),
     (
         "OCDE, Global Revenue Statistics",
         _texto(

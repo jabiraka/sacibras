@@ -19,7 +19,7 @@ data. Pedido novo vira linha aqui antes de virar código. A ordem do que fazer a
 | Painel de alerta: comparar com outros países, sobretudo os parecidos, e outras formas de ver além da régua da história | ✅ lista "Ver os alertas": contra a própria história; contra outros países (emergentes por padrão, América Latina, os 22 de Brasil no mundo, avançados, mundo; FMI e BIS, mesmo número e ano para todos; dívida, primário, nominal, juros, conta corrente, inflação, e fora do painel juro real, crescimento e desemprego); o que mudou em um ano; e o quadro-resumo. Falta par internacional para crédito (BIS: serviço da dívida das famílias, hiato de crédito), reservas (FMI, IFS), volatilidade do câmbio (BIS, câmbio diário) e previdência. |
 | Melhorar as faixas das projeções (a barra azul) | ✅ traço fino em tinta neutra com as pontas marcadas; no leque, a parte de 50 % mais grossa. Regra no `CLAUDE.md`. |
 | Riscos: faixa e "sorteio" mais intuitivos | ✅ "como ler" em palavras de todo dia no leque e nas previsões ("8 em cada 10 futuros sorteados ficam entre as pontas"), nomes da legenda e do cartão reescritos, verbetes no glossário. |
-| Uma seção sobre impostos, ou o impacto dos impostos no crescimento | ✅ Assunto "Impostos" em Contas públicas, cinco partes: arrecadação federal por tributo (Receita, mês a mês, a preços de hoje), carga tributária e quem arrecada (OCDE), sobre o que se cobra com outros países, impostos e crescimento (carga × crescimento por habitante, um ponto por país, com o aviso de que andar junto não é causa; e os estudos oficiais lidos, `relatorios.EFEITOS_DE_IMPOSTO`), gasto tributário (Receita, 2014–2023). Escolha do Caio: as quatro peças do crescimento. Falta: a linha do tempo da reforma do consumo (CBS/IBS, EC 132 e LC 214 lidas no Planalto, do PC), a carga como métrica em Brasil no mundo, ICMS e arrecadação federal por estado na ficha do estado, o gasto tributário de antes de 2014 (só em PDF) e a previsão do PLOA ao lado, o multiplicador de receita da SPE quando sair a nota metodológica. |
+| Uma seção sobre impostos, ou o impacto dos impostos no crescimento | ✅ Assunto "Impostos" em Contas públicas, cinco partes: arrecadação federal por tributo (Receita, mês a mês, a preços de hoje), carga tributária e quem arrecada (OCDE), sobre o que se cobra com outros países, impostos e crescimento (carga × crescimento por habitante, um ponto por país, com o aviso de que andar junto não é causa; e os estudos oficiais lidos, `relatorios.EFEITOS_DE_IMPOSTO`), gasto tributário (Receita, 2014–2023). Escolha do Caio: as quatro peças do crescimento. Depois, as dez sugestões (tabela abaixo). Falta: o gasto tributário de antes de 2014 (só em PDF) e o multiplicador de receita da SPE quando sair a nota metodológica. |
 | O primário do Brasil no mundo e o de Contas públicas se conversam? | Conversam, mas não são a mesma conta (FMI: governo geral, receitas menos despesas; BC: setor público com estatais, variação da dívida). ✅ Tabela lado a lado em Contas públicas › Primário e juros, e a diferença dita na descrição da métrica em Brasil no mundo. |
 
 ## Por estado
@@ -114,20 +114,20 @@ crescimento entre ocupação e produtividade; déficit do INSS (RTN).
 | Envelhecimento contra outros países (idosos por 100, fecundidade) | Banco Mundial (lento) ou ONU | ligaria com "Brasil no mundo" |
 | Ficha do estado com a pirâmide e o ano do pico da população | a mesma projeção do IBGE, por UF | dado já baixado |
 
-## Impostos: o que mais cabe (sugestões de 14/11/2026, esperando o "sim" do Caio)
+## Impostos: as dez sugestões (Caio, 14/11/2026: *"todas entram, planeje e implemente"*)
 
-| Ideia | De onde viria | Observação |
-|-------|---------------|------------|
-| Linha do tempo da reforma do consumo (CBS/IBS, 2026 a 2033) | EC 132/2023 e LC 214/2025, lidas no Planalto | Só do PC (a nuvem não alcança o Planalto). |
-| Quem paga: imposto em % da renda, por faixa de renda | Receita, Grandes Números do IRPF (planilha); estudos do Ipea para o imposto sobre consumo | O IRPF é dado; o do consumo é estudo lido à mão. |
-| Alíquotas do Brasil contra outros países (IRPJ + CSLL, IRPF máximo, imposto sobre consumo, sobre salário) | OCDE (Tax Database, Taxing Wages), mesma API | Brasil nem sempre está nas bases da OCDE: conferir cobertura. |
-| Imposto por estado: arrecadação federal e ICMS por habitante, e quanto volta em FPE/FPM | CSV da Receita (já lido por UF), SICONFI, IBGE | Entra na ficha do estado e num ranking em Impostos. |
-| Previsto × realizado da arrecadação no ano | Relatório bimestral (já lido para a meta) e o CSV da Receita | Liga com a parte Meta fiscal. |
-| Gasto tributário: previsto no orçamento ao lado do realizado, e por região | DGT do PLOA (mesmo formato de planilha), aba Q IV | O PLOA 2026 está no ar; o de 2027 ainda não. |
-| Arrecadação por setor da economia | Receita, arrecadação por CNAE (dados abertos) | A testar. |
-| Carga tributária como métrica em Brasil no mundo | OCDE, já lida | Rápido: uma métrica a mais. |
-| Custo de pagar imposto e dívida ativa (o que a União tem a receber) | PGFN (dados abertos) | A testar. |
-| Calendário: o dia da divulgação mensal da arrecadação | Receita | Hoje o calendário só tem o IBGE. |
+| Ideia | Situação |
+|-------|----------|
+| Linha do tempo da reforma do consumo (2026 a 2033) | ✅ Tabela em Impostos › Crescimento e reforma, da EC 132/2023 e da LC 214/2025 lidas no Senado (publicação original; trechos em `leis.py`). Falta: reler no Planalto, do PC, para ver se norma posterior mexeu nos artigos. |
+| Quem paga: imposto em % da renda por faixa | ✅ Parte "Quem paga": os dez grupos de renda (Ipea TD 2823, lido à mão) e o IRPF por faixa de salários mínimos (Grandes Números da Receita, ano-calendário 2024). Falta: o imposto retido na fonte dos rendimentos de tributação exclusiva (a planilha não traz), que faz o topo parecer pagar menos do que paga. |
+| Alíquotas do Brasil contra outros países | 🟡 Só o imposto sobre o lucro das empresas (OCDE, `DF_CIT`, 143 países). IR máximo da pessoa física, imposto sobre o consumo e sobre o salário: as bases da OCDE não trazem o Brasil (conferido em 14/11/2026). Falta achar outra fonte oficial comparável. |
+| Imposto por estado | ✅ Arrecadação federal por estado, total e por habitante (tabela em Impostos e métrica em Estados). Falta: o que volta em FPE/FPM ao lado (o FPE já está na ficha do estado). |
+| Previsto × realizado no ano | ✅ Tabela em Impostos › Arrecadação: orçamento, previsão do 4º bimestre e o que entrou (RTN). Lido à mão em `relatorios.RECEITA_PREVISTA`: reler a cada bimestre. |
+| Gasto tributário previsto e por região | ✅ Linha tracejada com o previsto no PLOA (2024 a 2026) e tabela por região. |
+| Arrecadação por setor | ✅ Tabela do último ano fechado (CSV da Receita por seção da CNAE). Em 2026 os dados por setor têm uma quebra (indústria extrativa salta): por isso só o ano fechado. |
+| Carga tributária em Brasil no mundo | ✅ Métrica "Carga tributária" (OCDE), nos 22 países e em todos os dos grupos. |
+| Dívida ativa | ✅ Cartão e tabela em Impostos › O que não entra (PLDO 2027, Anexo de Riscos Fiscais; PGFN em Números), lidos à mão em `relatorios.py`. |
+| Calendário da arrecadação | ❌ A Receita não publica calendário (conferido em 14/11/2026): cada divulgação é avisada por notícia na véspera, entre os dias 21 e 30 do mês seguinte. Fica dito na nota da tabela previsto × realizado. |
 
 ## Outras
 

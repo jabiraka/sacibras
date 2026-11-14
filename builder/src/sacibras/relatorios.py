@@ -291,3 +291,56 @@ INCIDENCIA_POR_DECIMO: list[tuple[str, float, float]] = [
     ("10 % mais ricos", 8.6, 10.6),
     ("Média", 11.2, 8.0),
 ]
+
+
+# ------------------------------------------------------------------ previsto no ano
+
+
+@dataclass(frozen=True)
+class ReceitaPrevista:
+    """O que o governo projeta arrecadar no ano, em R$ bilhões: no orçamento e na avaliação
+    bimestral mais nova."""
+
+    linha: str
+    rtn: str
+    """A linha do RTN (aba 1.1) com o realizado."""
+    loa: float
+    avaliacao: float
+
+
+# Receita de 2026. LOA: planilha "quadros de apoio" do Relatório de Avaliação do 2º bimestre de
+# 2026 (gov.br/planejamento, relatórios de avaliação fiscal), aba "Tabela 1", coluna "LOA 2026",
+# em R$ milhões: "Receita Administrada pela RFB/MF, exceto RGPS e líquida de incentivos
+# fiscais" 2.040.990,1; "Arrecadação Líquida para o RGPS" 793.153,5. Avaliação do 4º bimestre:
+# a mesma Nota Informativa da Conorf/Senado de 25/9/2026 usada em `leis.AVALIACOES_2026`
+# (Tabela 1): "Receita Administrada pela RFB/MF, exceto RGPS e líquida de incentivos fiscais
+# 2.079,8 [3º bim.] 2.065,7 [4º bim.]"; "Arrecadação Líquida para o RGPS 784,0 786,4". Lidos em
+# 14/11/2026. LER DE NOVO a cada bimestre (o do 5º sai até 22/11) e trocar o ano em janeiro.
+ANO_DA_RECEITA_PREVISTA = 2026
+AVALIACAO_DA_RECEITA = "4º bimestre"
+RECEITA_PREVISTA = [
+    ReceitaPrevista("Tributos administrados pela Receita", "receita_rfb", 2041.0, 2065.7),
+    ReceitaPrevista("Contribuição ao INSS", "arrecadacao_rgps", 793.2, 786.4),
+]
+
+# ------------------------------------------------------------------ dívida ativa
+
+# Estoque: Projeto da LDO 2027, Anexo V (Riscos Fiscais), lido em 14/11/2026 em
+# gov.br/planejamento (orçamentos anuais, 2027, PLDO). P. 15: "O estoque da Dívida Ativa da
+# União alcançou o valor de R$ 3.226,1 bilhões em 2025 referentes a mais de 29,3 milhões de
+# débitos, titularizados por 7,9 milhões de contribuintes. Desse valor, aproximadamente 78,0%
+# (R$ 2.517,8 bilhões) foram considerados perdas. Há uma expectativa de recuperação/arrecadação
+# de R$ 708,3 bilhões dentro dos próximos 15 anos". Tabela 39 (fonte: BGU e PGFN), linha
+# Total: 2.743,1 (2023), 2.990,2 (2024), 3.226,1 (2025).
+# Recuperado: PGFN em Números 2026, p. 19: "No exercício de 2025, o órgão atingiu novo recorde
+# com R$ 66,1 bilhões recuperados da dívida ativa da União, valor 10% maior que o patamar de
+# 2024"; PGFN em Números 2025: R$ 59,9 bi em 2024. LER DE NOVO a cada PLDO (abril) e a cada
+# PGFN em Números (março).
+DIVIDA_ATIVA_ESTOQUE = {2023: 2743.1, 2024: 2990.2, 2025: 3226.1}  # R$ bilhões
+DIVIDA_ATIVA_RECUPERADO = {2024: 59.9, 2025: 66.1}  # R$ bilhões
+DIVIDA_ATIVA_PERDA = 78.0  # % do estoque de 2025 considerado perda
+DIVIDA_ATIVA_A_RECUPERAR = 708.3  # R$ bilhões esperados em 15 anos
+FONTE_DIVIDA_ATIVA = (
+    "Projeto da LDO 2027, Anexo de Riscos Fiscais (tabela 39, com dados do Balanço Geral da "
+    "União e da PGFN); PGFN em Números 2025 e 2026"
+)
