@@ -81,7 +81,10 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=10,
             fonte=ctx.fonte_sgs("TC_12M_PIB", "IDP_12M_PIB"),
-            nota="Quando o investimento direto supera o déficit em conta corrente, ele o financia inteiro.",
+            nota=(
+                "Quando o investimento direto supera o déficit em conta corrente, ele o "
+                "financia inteiro."
+            ),
         ),
         grafico(
             "balanca",
@@ -114,7 +117,10 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=20,
             linhas=[LinhaRef(valor=round(media_cambio, 1), rotulo="média de 25 anos")],
             fonte=ctx.fonte_sgs("CAMBIO_REAL_EFETIVO"),
-            nota="Descontada a inflação daqui e dos parceiros comerciais. Para cima: real mais fraco.",
+            nota=(
+                "Descontada a inflação daqui e dos parceiros comerciais. Para cima: real mais "
+                "fraco."
+            ),
         ),
         grafico(
             "commodities",

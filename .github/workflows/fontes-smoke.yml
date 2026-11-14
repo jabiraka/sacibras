@@ -1,0 +1,23 @@
+name: Fontes (teste de fumaça)
+
+# Uma chamada mínima a cada fonte, de dentro do Actions: os runners ficam nos EUA, e é daqui
+# que o site será gerado. O resultado sai como tabela no resumo da execução.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 11 * * 1" # segundas, 8h17 de Brasília
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen --no-dev
+      - name: Chamar as fontes
+        run: uv run --no-dev sacibras fontes-smoke --markdown | tee saida.txt
+      - name: Tabela no resumo
+        run: sed -n '/^| Fonte/,$p' saida.txt >> "$GITHUB_STEP_SUMMARY"

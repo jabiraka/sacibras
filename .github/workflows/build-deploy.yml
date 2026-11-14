@@ -1,0 +1,69 @@
+name: Gerar e publicar
+
+# O builder chama as fontes, o Vite monta o site e o resultado vai ao GitHub Pages como
+# artefato: nenhum dado é commitado. Horários em UTC (Brasília = UTC-3).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "40 12 * * 1-5" # 9h40: depois do IBGE (9h) e do Focus (segunda, 8h25)
+    - cron: "0 22 * * 1-5" # 19h: depois do fechamento do mercado
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # O CSV do Tesouro Direto tem 15 MB e muda uma vez por dia: fica no cache do Actions.
+      - uses: actions/cache@v4
+        with:
+          path: builder/.cache
+          key: fontes-${{ github.run_id }}
+          restore-keys: fontes-
+
+      - name: Gerar os JSONs
+        working-directory: builder
+        env:
+          SB_CACHE_HORAS: "1"
+        run: |
+          uv sync --frozen --no-dev
+          uv run --no-dev sacibras build --tolerante
+
+      - name: Montar o site
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

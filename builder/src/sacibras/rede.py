@@ -22,6 +22,8 @@ TEMPO_LIMITE = float(os.environ.get("SB_HTTP_TIMEOUT", "40"))
 TENTATIVAS = int(os.environ.get("SB_HTTP_TENTATIVAS", "3"))
 PASTA_CACHE = Path(os.environ.get("SB_CACHE_DIR", ".cache"))
 VALIDADE_PADRAO = float(os.environ.get("SB_CACHE_HORAS", "6")) * 3600
+SEM_CACHE = os.environ.get("SB_SEM_CACHE", "") == "1"
+"""Ignora o cache em arquivo (o teste de fumaça liga: o que importa é a resposta de agora)."""
 
 
 class FonteForaDoArError(RuntimeError):
@@ -57,7 +59,7 @@ def baixar(
     tempo_limite: float | None = None,
 ) -> bytes:
     """O corpo da resposta, com cache em arquivo. `validade` em segundos (0 = sem cache)."""
-    validade = VALIDADE_PADRAO if validade is None else validade
+    validade = 0 if SEM_CACHE else VALIDADE_PADRAO if validade is None else validade
     chave = json.dumps([metodo, url, params, dados], sort_keys=True, ensure_ascii=False)
     arquivo = _arquivo(chave)
     if validade > 0 and arquivo.exists() and time.time() - arquivo.stat().st_mtime < validade:
@@ -74,8 +76,9 @@ def baixar(
                 headers=cabecalhos,
                 timeout=tempo_limite or TEMPO_LIMITE,
             )
-            # 4xx que não é "tente depois" não melhora com insistência.
-            if resposta.status_code in (400, 401, 403, 404, 451):
+            # 4xx que não é "tente depois" não melhora com insistência. (O 403 fica de
+            # fora: há porteiro de site que recusa ao acaso e aceita na tentativa seguinte.)
+            if resposta.status_code in (400, 401, 404, 451):
                 raise FonteForaDoArError(
                     f"HTTP {resposta.status_code} em {resposta.request.url}: "
                     f"{resposta.text[:200]!r}"

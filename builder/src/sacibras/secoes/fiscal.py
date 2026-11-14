@@ -153,7 +153,10 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=10,
             fonte=f"{ctx.fonte_sgs('NFSP_PRIMARIO_12M', 'NFSP_PRIMARIO_GC_12M')}; Focus",
-            nota="O Banco Central publica a necessidade de financiamento; aqui o sinal está trocado para ler como resultado.",
+            nota=(
+                "O Banco Central publica a necessidade de financiamento; aqui o sinal está "
+                "trocado para ler como resultado."
+            ),
         ),
         grafico(
             "nominal",
@@ -184,8 +187,9 @@ def montar(ctx: Contexto) -> Secao:
     ]
     sinal = "déficit" if primario[-1][1] < 0 else "superávit"
     resumo = (
-        f"A dívida bruta está em {br(dbgg[-1][1])} % do PIB ({periodo(dbgg[-1][0], 'M')}). O setor "
-        f"público tem {sinal} primário de {br(abs(primario[-1][1]), 2)} % do PIB em 12 meses e paga "
+        f"A dívida bruta está em {br(dbgg[-1][1])} % do PIB ({periodo(dbgg[-1][0], 'M')}). "
+        f"O setor público tem {sinal} primário de {br(abs(primario[-1][1]), 2)} % do PIB em "
+        "12 meses e paga "
         f"{br(juros[-1][1], 2)} % do PIB em juros: o resultado nominal é de "
         f"{br(nominal[-1][1], 2)} % do PIB."
     )

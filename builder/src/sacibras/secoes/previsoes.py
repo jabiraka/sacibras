@@ -63,8 +63,8 @@ def montar(ctx: Contexto) -> Secao:
         linhas=linhas,
         fonte="Banco Central, Relatório Focus (ExpectativasMercadoAnuais)",
         nota=(
-            "Consenso não é previsão nossa: é a mediana do que cerca de uma centena de "
-            "instituições informou ao Banco Central."
+            "Consenso não é previsão nossa: é a mediana das projeções que as instituições "
+            "participantes informam ao Banco Central."
         ),
     )
 
@@ -136,7 +136,10 @@ def montar(ctx: Contexto) -> Secao:
             unidade="% no ano",
             casas=2,
             periodicidade="A",
-            fonte=f"IBGE e Banco Central (realizado); Focus de {periodo(edicao, 'D')}; FMI, {edicao_fmi}",
+            fonte=(
+                f"IBGE e Banco Central (realizado); Focus de {periodo(edicao, 'D')}; "
+                f"FMI, {edicao_fmi}"
+            ),
         )
 
     if "PIB Total" in medianas:

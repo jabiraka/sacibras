@@ -12,7 +12,17 @@ from datetime import date, timedelta
 
 from sacibras import rede
 from sacibras.catalogo import SGS
-from sacibras.fontes import b3_indices, bcb_copom, bcb_focus, bcb_sgs, bis, fmi, ibge_sidra
+from sacibras.config import usar_b3
+from sacibras.fontes import (
+    b3_indices,
+    bcb_copom,
+    bcb_focus,
+    bcb_sgs,
+    bis,
+    fmi,
+    ibge_sidra,
+    tesouro_direto,
+)
 
 
 def _sgs() -> str:
@@ -62,11 +72,6 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     ("BCB Focus (Olinda)", _focus),
     ("BCB Copom (site)", _copom),
     ("IBGE SIDRA", _sidra),
-    ("B3 índices", _b3),
-    (
-        "B3 derivativos (cotação)",
-        _texto("https://cotacao.b3.com.br/mds/api/v1/DerivativeQuotation/DI1"),
-    ),
     ("FMI WEO (SDMX)", _fmi),
     ("BIS", _bis),
     (
@@ -82,7 +87,11 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     ),
     (
         "IPEADATA",
-        _texto("http://www.ipeadata.gov.br/api/odata4/Metadados('GM366_IBVSP366')"),
+        _texto("https://www.ipeadata.gov.br/api/odata4/Metadados('GM366_IBVSP366')"),
+    ),
+    (
+        "Tesouro Direto (CSV)",
+        _texto(tesouro_direto.URL, tempo_limite=180),
     ),
     ("Comex Stat", _texto("https://api-comexstat.mdic.gov.br/general/dates/updated")),
     (
@@ -92,11 +101,21 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
 ]
 
 
+# Só com SB_B3=1: o site da B3 veda coleta automatizada (ver `config.usar_b3`).
+FONTES_B3: list[tuple[str, Callable[[], str]]] = [
+    ("B3 índices", _b3),
+    (
+        "B3 derivativos (cotação)",
+        _texto("https://cotacao.b3.com.br/mds/api/v1/DerivativeQuotation/DI1"),
+    ),
+]
+
+
 def rodar(*, markdown: bool = False) -> int:
-    rede.VALIDADE_PADRAO = 0  # sem cache: é teste de conexão
+    rede.SEM_CACHE = True  # é teste de conexão: nada vem do disco
     rede.TENTATIVAS = 2
     linhas: list[tuple[str, bool, float, str]] = []
-    for nome, chamar in FONTES:
+    for nome, chamar in [*FONTES, *(FONTES_B3 if usar_b3() else [])]:
         inicio = time.monotonic()
         try:
             detalhe, ok = chamar(), True

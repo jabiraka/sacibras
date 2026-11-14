@@ -1,0 +1,87 @@
+# Fontes testadas
+
+Teste de 14/11/2026, de uma máquina **fora do Brasil** (o que revela bloqueio por IP
+estrangeiro), sem chave e sem serviço pago. "CORS" é a resposta a
+`Origin: https://x.github.io`: com CORS, o navegador do visitante também pode chamar.
+
+Ainda **não testado de dentro do GitHub Actions**: o workflow `fontes-smoke.yml` roda
+`sacibras fontes-smoke` lá e põe a tabela no resumo da execução.
+
+## Em uso no builder
+
+| Fonte | O que dá | Responde de fora? | CORS | Observações |
+|-------|----------|-------------------|------|-------------|
+| BCB SGS `api.bcb.gov.br/dados/serie/bcdata.sgs.N` | 60 séries do catálogo | sim | `*` | Série diária recusa janela maior que 10 anos; alguns códigos voltam em ordem decrescente de data; a 432 (Selic meta) vem preenchida até a próxima reunião do Copom. |
+| BCB Focus (Olinda) `…/Expectativas/versao/v1/odata/` | medianas anuais, mensais, trimestrais e Selic por reunião | sim, 0,2–1 s | ecoa a origem | O recurso mensal é `ExpectativaMercadoMensais` (sem "s"). Não aceita `+` como espaço: usar `%20`. `DataReferencia` e `Reuniao` são texto, ordenar no cliente. |
+| BCB Copom `bcb.gov.br/api/servico/sitebcb/historicotaxasjuros` | as 290 reuniões, com data e meta | sim | – | Não há API com o calendário das reuniões futuras. |
+| IBGE SIDRA `apisidra.ibge.gov.br/values/…` | PIB (5932), PNAD (6381, 6390, 6392), PIM (8888), PMC (8880, 8881), PMS (5906), IPCA (7060) | sim | `*` | Variáveis e categorias conferidas pela própria resposta (lista em `secoes/`). `desctabapi.aspx` dá 403. |
+| FMI WEO, SDMX `api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO,9.0.0/` | anuais e projeções até 2031, 22 países e agregados | sim, 1–2 s | `*` | Edição de out/2026 (`PUBLICATION_DATE`). Agregados: G001 mundo, G110 avançados, G163 zona do euro, G200 emergentes, G205 América Latina. Pedir `Accept: application/json`. |
+| BIS `stats.bis.org/api/v2/data/dataflow/BIS/` | juro básico (WS_CBPOL) e inflação em 12 meses (WS_LONG_CPI) | sim | sim | CSV. Alemanha, França, Itália e Espanha: usar XM (BCE). Argentina parada em jun/2025. |
+| Tesouro Direto (CSV do Tesouro Transparente) | taxa e preço diários de cada título desde 2004 | sim, ~15 s | não | 15 MB, `;` e decimal com vírgula. Conexão cai de vez em quando: o builder insiste. Licença ODbL. |
+| IPEADATA OData `ipeadata.gov.br/api/odata4/` | Ibovespa diário (`GM366_IBVSP366`) | sim (usar https) | `*` | Um dia de atraso em relação à B3. EMBI+ (`JPM366_EMBI366`) parou em 30/07/2024. Saldo do Novo Caged: `CAGED12_SALDONAJU12`. |
+
+## Testadas, ainda sem uso (próximas fases)
+
+| Fonte | O que dá | Responde de fora? | CORS | Observações |
+|-------|----------|-------------------|------|-------------|
+| SICONFI `apidatalake.tesouro.gov.br/ords/siconfi/tt/` | RGF e RREO dos estados | sim, 1–2 s por chamada | ecoa | Mais recente em 2026: RGF do 2º quadrimestre, RREO do 4º bimestre. Campos (conferidos em SP): pessoal/RCL em RGF-Anexo 01 `DespesaComPessoalTotal`, coluna "% sobre a RCL Ajustada"; DCL/RCL em RGF-Anexo 02 `PercentualDaDCLSobreARCL`; ICMS em RREO-Anexo 03; primário em RREO-Anexo 06. ~108 chamadas para as 27 UFs. O DF é esfera `D`. |
+| Tesouro Transparente (CKAN) | RTN (XLSX, aba 1.1 mensal desde 1997), estoque da DPF por título, CAPAG | sim | não | O nome do arquivo do RTN muda todo mês: descobrir pelo CKAN. Prazo médio, custo e detentores da dívida não estão em dado aberto leve. |
+| Receita Federal `gov.br/receitafederal/dados/arrecadacao-estado.csv` | arrecadação por UF e tributo | sim | não | 2,4 MB, latin-1. |
+| Comex Stat `api-comexstat.mdic.gov.br` | balança comercial detalhada | sim (POST `/general`) | ecoa | O HTTP 451 de 13/11 só acontece no GET com cabeçalho `Origin`. Os CSVs de `balanca.economia.gov.br` falham por cadeia de certificado incompleta. |
+| Banco Mundial `api.worldbank.org/v2` | indicadores anuais | sim, mas lento | `*` | A primeira chamada de cada URL levou de 21 a 88 s. Reserva, não fonte principal. |
+| OCDE SDMX `sdmx.oecd.org` | CPI, PIB trimestral, juro de 10 anos, Economic Outlook | sim | sim | Cobertura irregular fora da OCDE (Peru e Argentina faltam em várias). |
+| FRED `fred.stlouisfed.org/graph/fredgraph.csv?id=` | séries dos EUA | instável | não | Um id por chamada; deu timeout numa das rodadas. |
+| ANBIMA ETTJ `anbima.com.br/informacoes/est-termo/CZ-down.asp` | curva zero do dia | sim | – | Só o dia corrente foi testado. |
+
+## Não funcionam daqui
+
+| Fonte | O que aconteceu |
+|-------|-----------------|
+| IBGE `servicodados.ibge.gov.br` (calendário de divulgações, malhas, metadados) | conexão derrubada no TLS em todas as tentativas. Do Brasil deve responder: o navegador do visitante pode chamar. |
+| Planalto `planalto.gov.br/ccivil_03` | redireciona para a página inicial. Por isso **não foram lidos**: LC 200/2023 e LDO (meta de primário e banda), LC 101/2000 arts. 19–20 (limites de pessoal), Resolução do Senado 40/2001 (dívida dos estados) e o Decreto 12.079/2024. Esses números ficam fora da tela até alguém ler a norma. |
+| FMI DataMapper `imf.org/external/datamapper/api` | 403 (Akamai) em parte das chamadas; trocado pela API SDMX. |
+| Stooq, Yahoo Finance | desafio de JavaScript, HTTP 429 ou sem CORS; não usar. |
+| DBnomics | responde, mas o WEO mais novo lá é abril/2025. |
+
+## B3: funciona, mas o site veda a coleta
+
+Tecnicamente tudo abaixo responde de fora (com `403` ao acaso do Cloudflare, que passa na
+tentativa seguinte). **Mas** a página do Boletim Diário do Mercado da B3 diz, em texto lido em
+14/11/2026:
+
+> é expressamente vedada a coleta automatizada, inclusive por meio de ferramentas de
+> inteligência artificial, para quaisquer finalidades, comerciais ou não, próprias ou de
+> terceiros.
+
+Por isso o builder **não lê o site da B3 por padrão**: o Ibovespa vem do IPEADATA, o câmbio do
+Banco Central e a curva de juros do Tesouro Direto. As fontes abaixo estão escritas e ligam com
+`SB_B3=1` — decisão que cabe ao Caio (ver "Em aberto" no [PLANO](PLANO.md)).
+
+| Rota | O que dá |
+|------|----------|
+| `sistemaswebb3-listados.b3.com.br/indexStatisticsProxy/IndexCall/GetPortfolioDay/<base64>` | fechamento diário de qualquer índice (IBOV, IBXX, SMLL, IDIV, IFIX, IFNC, IMAT, ICON, UTIL, IMOB, IEEX, INDX), um ano por chamada. Escrito em `fontes/b3_indices.py`. |
+| `cotacao.b3.com.br/mds/api/v1/DerivativeQuotation/{DI1,DOL,IND,DAP,BGI,CCM,SJC,ICF}` | todos os vencimentos de um futuro, com último negócio, ajuste anterior e contratos em aberto (CORS `*`). Escrito em `fontes/b3_derivativos.py`. |
+| `b3.com.br/pesquisapregao/download?filelist=PRaammdd.zip` | ajustes de todos os futuros de um dia passado (XML BVBG.086, 11 MB compactado), desde 2018. Não escrito. |
+| `bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_Dddmmaaaa.ZIP` | cotações do dia, com os ETFs de índice (BOVA11, SMAL11, IVVB11, DIVO11, GOLD11, HASH11, XFIX11, NASD11). Não escrito. |
+| `arquivos.b3.com.br/bdi/table/EconomicIndicators/…` (POST) | moedas de emergentes, bolsas de fora, participação do investidor estrangeiro; só ~21 dias de janela. Não escrito. |
+| Taxas referenciais (DI × pré, cupom cambial) | a página antiga não responde mais; a curva sai dos futuros. |
+
+## Ideias de preços relevantes para o macro
+
+O que já está na tela: Ibovespa (em reais e em dólares), dólar, euro, curva prefixada, curva de
+juro real, inflação implícita, Selic embutida na curva, IC-Br (commodities em reais).
+
+O que dá para acrescentar, por ordem de valor para a leitura macro:
+
+1. **Juros futuros de DI** e a Selic embutida mês a mês — o termômetro mais rápido da política
+   monetária (B3; hoje a versão aberta usa os prefixados do Tesouro, com menos vértices).
+2. **Índices setoriais** como sensor de juro e câmbio: financeiro, consumo e imobiliário sentem
+   a Selic; materiais básicos, o dólar e as commodities (B3).
+3. **Dólar futuro e cupom cambial** (DOL, DDI/FRC): quanto custa proteger-se do câmbio (B3).
+4. **Futuros agrícolas** (boi, milho, soja, café) como antecipação da inflação de alimentos (B3).
+5. **ETFs de índice** (BOVA11, SMAL11, IVVB11, DIVO11, IMAB11) — repetem os índices; valem pelo
+   volume negociado e pelo fluxo (B3, COTAHIST).
+6. **Fluxo do investidor estrangeiro** na bolsa (B3, BDI).
+7. **Moedas de emergentes contra o dólar** e o real entre elas: BIS (`WS_XRU`, mensal, aberto).
+8. **Juro de 10 anos e bolsas de fora** para comparar: OCDE (`DF_FINMARK`) e FRED.
+9. **Risco-país**: o EMBI+ aberto parou em 2024; CDS não tem fonte gratuita.

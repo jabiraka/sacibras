@@ -6,6 +6,14 @@ dívida, impostos e estados — com previsões ao lado do consenso de mercado.
 
 Escrito em 13/11/2026. Referência: [econvitals.org](https://econvitals.org/) (EUA).
 
+## Estado em 14/11/2026
+
+No ar (no Docker local e no build do Actions, ainda sem deploy porque o trabalho está no
+branch): o builder, o site e dez seções com dados reais — **atividade, trabalho, inflação,
+juros e Copom, crédito, mercados, setor externo, contas públicas e dívida, Brasil no mundo,
+previsões** — mais o resumo de 12 cartões. O que cada fase já entregou está no §10; o que
+falta decidir, no §11. O resultado dos testes de conexão está em [FONTES.md](FONTES.md).
+
 ---
 
 ## 1. O que aprendemos com o econvitals
@@ -86,6 +94,11 @@ vai direto às APIs e usa `actions/cache` para os arquivos pesados (CSV do Tesou
 ---
 
 ## 4. Fontes testadas (13/11/2026)
+
+> **Refeito em 14/11/2026**, fonte a fonte, com o que mudou (a API nova do FMI, o 451 do
+> Comex Stat explicado, a API de calendário do IBGE que cai de fora do Brasil, o aviso da B3
+> contra coleta automatizada): ver [FONTES.md](FONTES.md). A tabela abaixo é a primeira
+> leitura e fica como registro.
 
 Teste feito com `Origin: https://x.github.io`, a partir de uma máquina fora do Brasil.
 
@@ -297,38 +310,70 @@ sacibras/
 ## 10. Fases
 
 Cada fase termina com o site no ar (ou no Docker local) mostrando o que ela entregou.
+Marcação de 14/11/2026: ✅ feito, 🟡 em parte, ⬜ por fazer.
 
-**Fase 0 — Fundação**
-- Repositório, compose (`db`, `builder`, `web`), CI (ruff, mypy, pytest, `tsc`).
-- `sacibras fontes-smoke`: uma chamada mínima a cada fonte do §4, rodada **localmente e dentro
-  do Actions**, para mapear bloqueios por IP. Resultado vira tabela neste documento.
-- Esqueleto ponta a ponta: catálogo com 5 séries → `resumo.json` → página com 6 cartões →
-  deploy no Pages.
+**Fase 0 — Fundação** 🟡
+- ✅ Repositório, compose (`db`, `builder`, `web`), CI (ruff, mypy, pytest, `tsc`).
+- ✅ `sacibras fontes-smoke` rodado localmente; ⬜ rodar **dentro do Actions** (o workflow
+  `fontes-smoke.yml` está pronto, falta dispará-lo no GitHub).
+- ✅ Esqueleto ponta a ponta. ⬜ Deploy no Pages: o workflow `build-deploy.yml` publica a
+  partir do `main`; falta ligar o Pages no repositório (Settings → Pages → GitHub Actions).
 
-**Fase 1 — Macro núcleo**: Resumo completo, Atividade, Trabalho, Inflação, Juros e Copom
-(com Focus por reunião e implícita da curva), Setor externo. Chamada direta do navegador
+**Fase 1 — Macro núcleo** 🟡: ✅ Resumo, Atividade, Trabalho, Inflação, Juros e Copom (Focus por
+reunião e Selic embutida na curva do Tesouro), Setor externo, Crédito. ⬜ Contribuições do PIB
+por componente, informalidade e participação (PNAD trimestral), chamada direta do navegador
 para o ponto mais recente.
 
-**Fase 2 — Contas públicas, dívida e impostos**: RTN, NFSP, DBGG/DLSP, DPF, arrecadação,
-carga tributária, linha do tempo da reforma.
+**Fase 2 — Contas públicas, dívida e impostos** 🟡: ✅ NFSP (primário, juros, nominal), DBGG e
+DLSP, com o Focus ao lado. ⬜ RTN (receitas e despesas do Governo Central), DPF por indexador,
+arrecadação, carga tributária, meta fiscal e banda (depende de ler a LC 200 e a LDO), linha do
+tempo da reforma.
 
-**Fase 3 — Estados**: SICONFI, mapa, rankings, limites da LRF, capitais.
+**Fase 3 — Estados** ⬜: SICONFI testado (campos em [FONTES.md](FONTES.md)); nada na tela.
 
-**Fase 4 — Mercados**: B3 (índices, altas e baixas, amplitude), câmbio, commodities.
+**Fase 4 — Mercados** 🟡: ✅ Ibovespa (reais e dólares), dólar, euro, curva prefixada e de juro
+real, inflação implícita, IC-Br. Escrito e desligado (`SB_B3`): índices setoriais, futuros de
+DI, dólar, Ibovespa e agrícolas. ⬜ ETFs (COTAHIST), amplitude, moedas de emergentes.
 
-**Fase 5 — Previsões**: PIB agora, IPCA, desocupação, simulador da dívida, histórico de acerto.
+**Fase 5 — Previsões** 🟡: ✅ consenso do Focus (tabela, história das apostas, PIB trimestral)
+e FMI ao lado do realizado. ⬜ Modelos próprios (PIB agora, IPCA, desocupação), simulador da
+dívida, histórico de acerto com faixa de erro.
 
-**Fase 6 — Acabamento**: calendário, "novo desde sua última visita", PNG dos gráficos,
-textos alternativos, imagem de compartilhamento, domínio.
+**Brasil no mundo** (pedido de 14/11/2026, fora do plano original) ✅: 22 países e 5 agregados
+em 11 métricas — PIB, inflação, juro básico, juro real, desemprego, dívida, primário, nominal,
+conta corrente, investimento, PIB per capita — com ranking por ano, trajetória com as
+projeções do FMI até 2031 e tabela ordenável. ⬜ Câmbio e bolsa no ano, juro de 10 anos,
+inflação mensal.
+
+**Fase 6 — Acabamento** 🟡: ✅ tema claro e escuro, tabela e CSV em todo gráfico, texto
+alternativo. ⬜ calendário, "novo desde sua última visita", PNG dos gráficos, imagem de
+compartilhamento, domínio.
 
 ---
 
 ## 11. Em aberto
 
+- **B3: ligar ou não a coleta do site** (decisão do Caio). A página do Boletim Diário diz que
+  é "expressamente vedada a coleta automatizada, inclusive por meio de ferramentas de
+  inteligência artificial". O builder nasceu com a B3 desligada (`SB_B3`): Ibovespa pelo
+  IPEADATA, câmbio pelo Banco Central, curva pelo Tesouro Direto. Ligar dá índices setoriais,
+  futuros e ETFs; as saídas são (a) deixar desligado, (b) ligar por conta e risco, (c) pedir
+  autorização ou contratar o dado da B3. Detalhe em [FONTES.md](FONTES.md).
+- **Normas ainda não lidas** (o Planalto redireciona de fora do Brasil): LC 200/2023 e LDO
+  (meta de primário e banda), LC 101/2000 arts. 19–20, Resolução do Senado 40/2001, Decreto
+  12.079/2024. Só a Resolução CMN 5.141/2024 (meta de inflação) foi lida e está em
+  `builder/src/sacibras/leis.py`. Alguém no Brasil precisa abrir e colar o trecho.
+- **Calendário**: a API de calendário do IBGE (`servicodados`) cai de fora do Brasil, e o BCB
+  não publica as reuniões futuras do Copom em API. No gráfico da Selic, as reuniões futuras
+  estão no mês da reunião de mesma ordem do último calendário conhecido.
+- **Teste de fumaça de dentro do Actions**: falta disparar; pode revelar bloqueio que daqui
+  não aparece.
+- **Cache em Postgres** (`SB_CACHE_URL`): o builder usa cache em arquivo (`.cache/`), que
+  bastou; o `sb_postgres` segue no compose, sem uso.
+- **Rodada que falha numa fonte**: a seção fica marcada e o resto publica, mas o JSON bom
+  anterior só é reaproveitado se estiver na pasta de saída; falta lê-lo do site no ar.
 - **Nome e domínio** (`sacibras` é o nome de trabalho).
-- **Comex Stat e outros bloqueios**: depende do teste da Fase 0.
-- **DI1 futuro**: a B3 publica, mas o acesso estável e gratuito precisa ser confirmado; até lá,
-  a implícita sai do Tesouro Direto.
-- **Novo Caged**: achar uma série agregada oficial leve antes de baixar os arquivos do PDET.
+- **Novo Caged**: o saldo hoje sai da diferença do estoque no SGS (28763); o IPEADATA tem o
+  saldo ajustado (`CAGED12_SALDONAJU12`) para conferir.
 - **Portal da Transparência**: pede chave gratuita (vira segredo do Actions) — só na Fase 2+.
 - **Municípios além das capitais**: custo de chamadas ao SICONFI × valor.

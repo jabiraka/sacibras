@@ -46,12 +46,12 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
 # Os doze cartões do topo, na ordem; cada um nasce na seção que o explica.
 RESUMO = [
     "pib-tt",
-    "ibcbr",
     "desocupacao",
     "ipca-12m",
     "nucleos-12m",
     "selic-meta",
     "juro-real-ex-ante",
+    "inclinacao",
     "ibovespa",
     "dolar",
     "dbgg",
@@ -65,7 +65,7 @@ FONTES = {
     "inflacao": "Banco Central (SGS)",
     "juros": "Banco Central (Copom e Focus)",
     "credito": "Banco Central (crédito)",
-    "mercados": "B3",
+    "mercados": "IPEADATA e Banco Central (bolsa e câmbio)",
     "externo": "Banco Central (setor externo)",
     "fiscal": "Banco Central (estatísticas fiscais)",
     "mundo": "FMI (WEO) e BIS",

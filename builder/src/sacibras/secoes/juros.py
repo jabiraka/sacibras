@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+from itertools import pairwise
 
+from sacibras.calendario import ultimo_dia_util
 from sacibras.catalogo import SGS
-from sacibras.fontes import bcb_copom, bcb_focus, bcb_sgs
-from sacibras.schema import Secao
+from sacibras.config import usar_b3
+from sacibras.fontes import b3_derivativos, bcb_copom, bcb_focus, bcb_sgs, tesouro_direto
+from sacibras.juros_futuros import a_termo
+from sacibras.schema import Cartao, Grafico, Secao
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
+
+# Os vencimentos de janeiro, abril, julho e outubro concentram os contratos de DI.
+MESES_LIQUIDOS = (1, 4, 7, 10)
 
 
 def _mensal(diaria: list[Ponto]) -> list[Ponto]:
@@ -28,6 +35,259 @@ def _mudancas(diaria: list[Ponto]) -> list[Ponto]:
     if diaria and saida[-1][0] != diaria[-1][0]:
         saida.append(diaria[-1])
     return saida
+
+
+def _mais_perto(curva: list[Ponto], alvo: date) -> Ponto:
+    return min(curva, key=lambda p: abs((p[0] - alvo).days))
+
+
+def _interpolar(curva: list[Ponto], quando: date) -> float:
+    """A taxa da curva em `quando`, por interpolação linear no tempo (chata fora das pontas)."""
+    if quando <= curva[0][0]:
+        return curva[0][1]
+    for (d0, v0), (d1, v1) in pairwise(curva):
+        if d0 <= quando <= d1:
+            return v0 + (v1 - v0) * (quando - d0).days / (d1 - d0).days
+    return curva[-1][1]
+
+
+def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
+    """As curvas dos títulos públicos (Tesouro Direto): prefixada, real e a inflação entre
+    elas. Devolve também a Selic embutida na curva prefixada."""
+    curvas = tesouro_direto.curvas(ctx.hoje - timedelta(days=800))
+    pre, real = curvas[tesouro_direto.PREFIXADO], curvas[tesouro_direto.IPCA]
+    dia, pre_hoje = tesouro_direto.no_dia(pre, ctx.hoje)
+    _, real_hoje = tesouro_direto.no_dia(real, ctx.hoje)
+    ctx.memo["curva_prefixada"] = pre_hoje
+    fonte = "Tesouro Nacional, Tesouro Direto (taxa de compra dos títulos sem cupom)"
+
+    def tres_datas(por_data: dict[date, list[Ponto]], id: str) -> list:  # type: ignore[type-arg]
+        series = []
+        for rotulo, atras, papel in [
+            ("", 0, "realizado"),
+            ("Um mês antes", 30, "referencia"),
+            ("Um ano antes", 365, "referencia"),
+        ]:
+            try:
+                quando, pontos = tesouro_direto.no_dia(por_data, ctx.hoje - timedelta(days=atras))
+            except ValueError:
+                continue
+            # Curvas antigas trazem títulos que já venceram ou estão para vencer: só os
+            # prazos que ainda existem hoje se comparam.
+            pontos = [p for p in pontos if (p[0] - ctx.hoje).days > 30]
+            nome = rotulo or f"Em {periodo(quando, 'D')}"
+            series.append(serie(f"{id}-{atras}", nome, pontos, casas=2, papel=papel))
+        return series
+
+    # Inflação implícita: o que iguala o prefixado ao IPCA+ de mesmo prazo, dia a dia.
+    vertices = [v for v, _ in real_hoje if v <= pre_hoje[-1][0] + timedelta(days=400)][:2]
+    implicitas: dict[date, list[Ponto]] = {v: [] for v in vertices}
+    for base in sorted(set(pre) & set(real)):
+        if base < ctx.hoje - timedelta(days=730):
+            continue
+        mapa_real = dict(real[base])
+        for v in vertices:
+            if v in mapa_real and pre[base]:
+                nominal = _interpolar(pre[base], v)
+                implicitas[v].append(
+                    (base, ((1 + nominal / 100) / (1 + mapa_real[v] / 100) - 1) * 100)
+                )
+
+    curto = next((p for p in pre_hoje if (p[0] - ctx.hoje).days > 300), pre_hoje[0])
+    longo = pre_hoje[-1]
+    cartoes = [
+        cartao(
+            "prefixado",
+            f"Juro prefixado até {periodo(curto[0], 'M')}",
+            [(dia, curto[1])],
+            unidade="% a.a.",
+            periodicidade="D",
+            casas=2,
+            detalhe=f"até {periodo(longo[0], 'M')}: {br(longo[1], 2)} %",
+            fonte=fonte,
+            procedencia="mercado",
+            secao="juros",
+        ),
+        cartao(
+            "inclinacao",
+            "Inclinação da curva de juros",
+            [(dia, longo[1] - curto[1])],
+            unidade="pp",
+            periodicidade="D",
+            casas=2,
+            detalhe=(
+                f"prefixado {periodo(longo[0], 'M')} menos prefixado {periodo(curto[0], 'M')}"
+            ),
+            fonte=fonte,
+            procedencia="calculado",
+            secao="juros",
+        ),
+        cartao(
+            "juro-real-longo",
+            f"Juro real até {periodo(real_hoje[0][0], 'M')}",
+            [(dia, real_hoje[0][1])],
+            unidade="% a.a.",
+            periodicidade="D",
+            casas=2,
+            detalhe="Tesouro IPCA+: acima da inflação",
+            fonte=fonte,
+            procedencia="mercado",
+            secao="juros",
+        ),
+    ]
+    graficos = [
+        grafico(
+            "curva-prefixada",
+            "Curva prefixada: o juro travado para cada prazo",
+            tres_datas(pre, "pre"),
+            tipo="curva",
+            unidade="% a.a., por vencimento",
+            casas=2,
+            periodicidade="M",
+            fonte=fonte,
+            nota="Cada ponto é a taxa de um Tesouro Prefixado até o vencimento dele.",
+        ),
+        grafico(
+            "curva-real",
+            "Curva de juro real: quanto o Tesouro paga acima da inflação",
+            tres_datas(real, "real"),
+            tipo="curva",
+            unidade="% a.a. acima do IPCA, por vencimento",
+            casas=2,
+            periodicidade="M",
+            fonte=fonte.replace("títulos sem cupom", "Tesouro IPCA+ sem cupom"),
+        ),
+    ]
+    com_dados = [v for v in vertices if implicitas[v]]
+    if com_dados:
+        primeiro = implicitas[com_dados[0]]
+        ctx.memo["inflacao_implicita"] = (com_dados[0], primeiro[-1][1])
+        cartoes.append(
+            cartao(
+                "inflacao-implicita",
+                f"Inflação implícita até {periodo(com_dados[0], 'M')}",
+                primeiro,
+                unidade="% a.a.",
+                periodicidade="D",
+                casas=2,
+                detalhe="a que iguala o prefixado ao IPCA+",
+                fonte=fonte,
+                procedencia="calculado",
+                secao="juros",
+                mini=250,
+            )
+        )
+        graficos.append(
+            grafico(
+                "inflacao-implicita",
+                "Inflação implícita nos títulos públicos",
+                [
+                    serie(f"ate-{v.year}", f"Até {periodo(v, 'M')}", implicitas[v])
+                    for v in com_dados
+                ],
+                unidade="% a.a.",
+                casas=2,
+                periodicidade="D",
+                fonte=fonte.replace("títulos sem cupom", "Prefixado e IPCA+ sem cupom"),
+                nota=(
+                    "(1 + taxa prefixada) / (1 + taxa do IPCA+) − 1, com a prefixada "
+                    "interpolada para o vencimento do IPCA+. Inclui prêmio de risco: não é "
+                    "previsão pura de inflação."
+                ),
+            )
+        )
+    # A Selic embutida na curva prefixada: taxa a termo entre os vencimentos anuais.
+    cdi = ctx.sgs("CDI_ANUAL", anos=1)[-1][1]
+    distancia = ctx.sgs("SELIC_META", anos=20)[-1][1] - cdi
+    referencia = ultimo_dia_util(dia)
+    termo = [(d, v + distancia) for d, v in a_termo(pre_hoje, referencia)]
+    if termo:
+        termo[0] = (ctx.hoje, termo[0][1])
+        termo.append((pre_hoje[-1][0], termo[-1][1]))
+        termo = [p for p in termo if p[0] <= date(ctx.hoje.year + 3, 1, 5)]
+    return cartoes, graficos, termo
+
+
+def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
+    """Os juros futuros (DI1 da B3): a curva, a inclinação e a Selic embutida nela."""
+    contratos = [c for c in b3_derivativos.futuros("DI1") if c.preco and c.em_aberto >= 10_000]
+    referencia = ultimo_dia_util(ctx.hoje)
+    limite = date(ctx.hoje.year + 10, 12, 31)
+    curva = [(c.vencimento, float(c.preco or 0)) for c in contratos if c.vencimento <= limite]
+    anterior = [
+        (c.vencimento, c.ajuste_anterior)
+        for c in contratos
+        if c.ajuste_anterior and c.vencimento <= limite
+    ]
+    ctx.memo["curva_di"] = curva
+
+    # A Selic embutida: taxa a termo entre os vencimentos líquidos, mais a distância de hoje
+    # entre a Selic meta e o CDI.
+    liquidos = [p for i, p in enumerate(curva) if i == 0 or p[0].month in MESES_LIQUIDOS]
+    cdi = ctx.sgs("CDI_ANUAL", anos=1)[-1][1]
+    distancia = selic - cdi
+    horizonte = date(ctx.hoje.year + 2, 12, 31)
+    termo = [(d, v + distancia) for d, v in a_termo(liquidos, referencia) if d <= horizonte]
+    if termo:
+        fim = next((p[0] for p in liquidos if p[0] > termo[-1][0]), termo[-1][0])
+        termo.append((fim, termo[-1][1]))
+        termo[0] = (ctx.hoje, termo[0][1])
+
+    um_ano = _mais_perto(curva, date(ctx.hoje.year + 1, ctx.hoje.month, 1))
+    dois = _mais_perto(curva, date(ctx.hoje.year + 2, 1, 1))
+    dez = _mais_perto(curva, date(ctx.hoje.year + 10, 1, 1))
+    fonte = "B3, futuro de DI de um dia (DI1), último negócio"
+    cartoes = [
+        cartao(
+            "di-1-ano",
+            f"Juro futuro para {periodo(um_ano[0], 'M')}",
+            [(referencia, um_ano[1])],
+            unidade="% a.a.",
+            periodicidade="D",
+            casas=2,
+            detalhe="taxa prefixada de hoje até lá (DI futuro)",
+            fonte=fonte,
+            procedencia="mercado",
+            secao="juros",
+        ),
+        cartao(
+            "inclinacao-di",
+            "Inclinação da curva de DI",
+            [(referencia, dez[1] - dois[1])],
+            unidade="pp",
+            periodicidade="D",
+            casas=2,
+            detalhe=(
+                f"DI {periodo(dez[0], 'M')} ({br(dez[1], 2)} %) menos "
+                f"DI {periodo(dois[0], 'M')} ({br(dois[1], 2)} %)"
+            ),
+            fonte=fonte,
+            procedencia="calculado",
+            secao="juros",
+        ),
+    ]
+    graficos = [
+        grafico(
+            "curva-di",
+            "Curva de juros: a taxa prefixada para cada prazo",
+            [
+                serie("hoje", f"Em {periodo(referencia, 'D')}", curva, casas=3),
+                serie(
+                    "anterior", "Ajuste do pregão anterior", anterior, casas=3, papel="referencia"
+                ),
+            ],
+            tipo="curva",
+            unidade="% a.a., por vencimento",
+            casas=2,
+            periodicidade="M",
+            fonte=fonte + "; vencimentos com mais de 10 mil contratos em aberto",
+            nota=(
+                "Cada ponto é o juro que o mercado trava hoje até aquela data. Curva subindo: "
+                "o mercado cobra mais para prazos longos."
+            ),
+        )
+    ]
+    return cartoes, graficos, termo
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -143,15 +403,47 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
 
+    # A curva de juros: sempre a dos títulos do Tesouro (dado aberto); com SB_B3=1, também
+    # a dos futuros de DI. Se uma faltar, a seção sai sem ela.
+    graficos_di: list[Grafico] = []
+    embutida: list[Ponto] = []
+    origem = ""
+    try:
+        cartoes_td, graficos_di, embutida = _tesouro(ctx)
+        cartoes[2:2] = cartoes_td
+        origem = "nos títulos prefixados do Tesouro"
+    except Exception as erro:
+        print(f"    curva do Tesouro ficou de fora: {str(erro)[:120]}")
+    if usar_b3():
+        try:
+            cartoes_di, graficos_b3, embutida = _curva_di(ctx, meta[-1][1])
+            cartoes.extend(cartoes_di)
+            graficos_di = [*graficos_b3, *graficos_di]
+            origem = "nos juros futuros (DI)"
+        except Exception as erro:
+            print(f"    juros futuros ficaram de fora: {str(erro)[:120]}")
+
     inicio = date(ctx.hoje.year - 20, 1, 1)
+    trajetoria = [
+        serie("meta", "Selic meta", _mudancas(meta), desde=inicio),
+        serie("focus", "Focus, por reunião (mediana)", esperada, papel="consenso"),
+    ]
+    nota_selic = (
+        "O Focus pergunta a Selic de cada reunião do Copom. As reuniões futuras estão "
+        "no mês em que caiu a reunião de mesma ordem no último calendário conhecido."
+    )
+    if embutida:
+        trajetoria.append(serie("curva", f"Embutida {origem}", embutida, papel="previsao"))
+        nota_selic += (
+            f" Embutida {origem}: taxa a termo entre vencimentos consecutivos (dias úteis, "
+            "base 252), somada a distância de hoje entre a Selic meta e o CDI; carrega prêmio "
+            "de risco, e por isso costuma ficar acima do que os economistas projetam."
+        )
     graficos = [
         grafico(
             "selic-trajetoria",
             "Selic: a decidida e a que o mercado espera",
-            [
-                serie("meta", "Selic meta", _mudancas(meta), desde=inicio),
-                serie("focus", "Focus, por reunião (mediana)", esperada, papel="consenso"),
-            ],
+            trajetoria,
             tipo="degrau",
             unidade="% a.a.",
             casas=2,
@@ -160,13 +452,12 @@ def montar(ctx: Contexto) -> Secao:
             fonte=(
                 f"{ctx.fonte_sgs('SELIC_META')}; Focus de {periodo(edicao, 'D')} "
                 "(ExpectativasMercadoSelic)"
+                + ("; B3, DI1" if "DI" in origem else "; Tesouro Direto" if origem else "")
             ),
-            nota=(
-                "O Focus pergunta a Selic de cada reunião do Copom. As reuniões futuras estão "
-                "no mês em que caiu a reunião de mesma ordem no último calendário conhecido."
-            ),
+            nota=nota_selic,
             largura="inteira",
         ),
+        *graficos_di,
         grafico(
             "juro-real",
             "Juro real: Selic descontada da inflação",
