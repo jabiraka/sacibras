@@ -114,6 +114,21 @@ crescimento entre ocupação e produtividade; déficit do INSS (RTN).
 | Envelhecimento contra outros países (idosos por 100, fecundidade) | Banco Mundial (lento) ou ONU | ligaria com "Brasil no mundo" |
 | Ficha do estado com a pirâmide e o ano do pico da população | a mesma projeção do IBGE, por UF | dado já baixado |
 
+## Impostos: o que mais cabe (sugestões de 14/11/2026, esperando o "sim" do Caio)
+
+| Ideia | De onde viria | Observação |
+|-------|---------------|------------|
+| Linha do tempo da reforma do consumo (CBS/IBS, 2026 a 2033) | EC 132/2023 e LC 214/2025, lidas no Planalto | Só do PC (a nuvem não alcança o Planalto). |
+| Quem paga: imposto em % da renda, por faixa de renda | Receita, Grandes Números do IRPF (planilha); estudos do Ipea para o imposto sobre consumo | O IRPF é dado; o do consumo é estudo lido à mão. |
+| Alíquotas do Brasil contra outros países (IRPJ + CSLL, IRPF máximo, imposto sobre consumo, sobre salário) | OCDE (Tax Database, Taxing Wages), mesma API | Brasil nem sempre está nas bases da OCDE: conferir cobertura. |
+| Imposto por estado: arrecadação federal e ICMS por habitante, e quanto volta em FPE/FPM | CSV da Receita (já lido por UF), SICONFI, IBGE | Entra na ficha do estado e num ranking em Impostos. |
+| Previsto × realizado da arrecadação no ano | Relatório bimestral (já lido para a meta) e o CSV da Receita | Liga com a parte Meta fiscal. |
+| Gasto tributário: previsto no orçamento ao lado do realizado, e por região | DGT do PLOA (mesmo formato de planilha), aba Q IV | O PLOA 2026 está no ar; o de 2027 ainda não. |
+| Arrecadação por setor da economia | Receita, arrecadação por CNAE (dados abertos) | A testar. |
+| Carga tributária como métrica em Brasil no mundo | OCDE, já lida | Rápido: uma métrica a mais. |
+| Custo de pagar imposto e dívida ativa (o que a União tem a receber) | PGFN (dados abertos) | A testar. |
+| Calendário: o dia da divulgação mensal da arrecadação | Receita | Hoje o calendário só tem o IBGE. |
+
 ## Outras
 
 - Previsões próprias de IPCA e desocupação (modelo sazonal), sempre ao lado do Focus.
