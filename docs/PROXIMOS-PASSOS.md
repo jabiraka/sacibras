@@ -5,7 +5,7 @@ passos sempre anotado num .md, assim a próxima sessão sabe o que fazer"*). O p
 no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em espera, no
 [PROPOSTAS](PROPOSTAS.md). Aqui fica só o que vem a seguir, em ordem, e o que espera decisão.
 
-Última atualização: 14/11/2026 (o efeito da Selic, o simulador dela com faixas de erro e o gancho da proposta de Lara Resende, juntos no `main` com Impostos, Estados em partes e tradução).
+Última atualização: 14/11/2026 (o simulador da reforma do consumo em Impostos; antes, no mesmo dia, o efeito da Selic com faixas de erro e o gancho de Lara Resende; tudo no `main`).
 
 ---
 
@@ -43,6 +43,27 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
   a partir de 1024 px de largura; abaixo disso fica o botão "Assuntos" na faixa do topo.
 - Prévia privada: https://claude.ai/artifact/YPR6sEPLQNHPSkzxektAMS — republicar depois de
   mudança visível.
+
+## Reforma do consumo (14/11/2026, mesma sessão e branch da Selic, publicada no `main`)
+
+Pedido do Caio: *"dá pra fazer simulador de impostos? A reforma tributária vai chegar"*.
+
+- **Impostos › Reforma do consumo** (parte nova, `#impostos/reforma`): o simulador "Quanto de
+  imposto vai numa compra?" (`simulador_reforma` no JSON, `web/src/simulador-reforma.ts`, a
+  conta em `modelos/reforma.py`), três números, o calendário da transição de 2026 a 2033, as
+  contas oficiais da alíquota cheia e os descontos da lei com a devolução à baixa renda.
+- **Normas lidas da nuvem** (`leis.py`): a EC 132/2023 no Senado e a LC 214/2025 no texto
+  atualizado da Câmara (o Planalto deu 429). Regra nova no `CLAUDE.md`.
+- **Alíquotas** (`relatorios.py`): Fazenda (26,47 %, de 25,65 a 27,29, jul/2024; mais 1,47 pela
+  Câmara, ago/2024), Comitê Gestor do IBS (27,91 %, IBS de 18,7 %, jul/2026) e o cálculo do
+  TCU para a CBS de 2027 (11,3 %, 28/10/2026), lido pela Agência Senado.
+- **Reler em dezembro**: a resolução do Senado que fixa a CBS de 2027 (prazo: 15 ou 22/12,
+  as duas notícias do Senado divergem; sem resolução, vale o cálculo do TCU) e trocar
+  `CBS_REFERENCIA_2027` e o texto "o Senado ainda fixa". O acórdão do TCU não abriu daqui:
+  ler no PC. A cada ano, as alíquotas do ano seguinte; o IBS de referência só sai em 2028.
+- Busca ("simulador de impostos", "cashback", "ibs", e em inglês, espanhol e francês) e seis
+  verbetes (IBS, CBS, ISS, alíquota cheia, cashback, Imposto Seletivo).
+- Conferido a 1280 e a 390 px. Prévia privada republicada.
 
 ## Sessão da Selic (14/11/2026, na nuvem, branch `ccr-567b9de5-xode7j`, publicada no `main`)
 
@@ -265,9 +286,9 @@ o essencial"*.
 3. **Estados no tempo.** A ficha é uma foto. Faltam a série de cada estado contra o Brasil, a
    nota CAPAG, a previdência do estado (RREO Anexo 04). Cuidado com o custo: cada período a
    mais são 54 chamadas ao SICONFI; usar só o 3º quadrimestre de cada ano.
-4. **O que falta de Impostos** (lista no [PROPOSTAS](PROPOSTAS.md)): a linha do tempo da
-   reforma do consumo (CBS/IBS de 2026 a 2033) depende de **ler a EC 132/2023 e a LC 214/2025
-   no Planalto, do PC** (a nuvem não alcança); a carga como métrica em Brasil no mundo (a OCDE
+4. **O que falta de Impostos** (lista no [PROPOSTAS](PROPOSTAS.md)): da reforma, o imposto de
+   hoje ao lado (alíquota modal do ICMS por estado), os regimes próprios e o Imposto Seletivo;
+   a carga como métrica em Brasil no mundo (a OCDE
    já está lida); arrecadação federal e ICMS na ficha do estado; o PLOA ao lado do gasto
    tributário. **Reler** o DGT quando sair a edição 2024 (prevista para 2027) e o
    multiplicador de receita da SPE, se a nota metodológica do Boletim Impulso Estrutural do
@@ -308,6 +329,11 @@ o essencial"*.
 - O calendário mostra só o dia da divulgação: a API traz a hora sem dizer o fuso. Se a API do
   IBGE não responder em 6 s, a linha não aparece.
 
+- O simulador da reforma não compara com o imposto de hoje (não há número oficial por
+  produto) e mostra só o IBS e a CBS: em 2027 e 2028 falta somar o ICMS ou o ISS. A alíquota
+  de 2033 é faixa, não número; a ponta de cima (30 %) soma o IBS do Comitê Gestor com a CBS
+  que o TCU calculou para 2027, conta nossa. Regimes próprios, Simples e Imposto Seletivo
+  ficam de fora; o desconto vale para as listas da lei, não para tudo o que o nome sugere.
 - No simulador da Selic, a faixa do IPCA é de uma versão anterior do modelo (dez/2021), e a
   da dívida soma pontas (larga de propósito). O erro do Focus compara com o dado revisado de
   hoje: na dívida são só sete anos, e parte do erro é o PIB revisado depois. O gancho de Lara

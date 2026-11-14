@@ -23,6 +23,7 @@ import { montarPiramide } from "./piramide";
 import { montarRetornos } from "./retornos";
 import { el, guardar } from "./pecas";
 import { montarSimulador } from "./simulador";
+import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
 import type {
   Cartao,
@@ -32,6 +33,7 @@ import type {
   Mundo,
   Painel,
   Secao,
+  SimuladorReforma,
   SimuladorSelic,
   Subcategoria,
   Tabela,
@@ -188,6 +190,17 @@ function caixaDoSimuladorSelic(sim: SimuladorSelic): HTMLElement {
   return caixa;
 }
 
+/** O simulador da reforma do consumo; na parte dele (`#impostos/reforma`) já abre. */
+function caixaDoSimuladorReforma(sim: SimuladorReforma): HTMLElement {
+  const caixa = guardar(
+    "Quanto de imposto vai numa compra?",
+    "Escolha o valor, o tipo de compra e o ano, e veja o IBS e a CBS da reforma",
+    () => montarSimuladorReforma(sim),
+  );
+  caixa.id = "simulador-reforma";
+  return caixa;
+}
+
 function montarSecao(s: Secao, alvo: HTMLElement): void {
   if (s.cartoes.length) {
     const grade = el("div", "cartoes");
@@ -230,6 +243,8 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
   }
   const simuladorSelic = s.simulador_selic;
   if (simuladorSelic) alvo.append(caixaDoSimuladorSelic(simuladorSelic));
+  const simuladorReforma = s.simulador_reforma;
+  if (simuladorReforma) alvo.append(caixaDoSimuladorReforma(simuladorReforma));
   for (const t of s.tabelas) alvo.append(montarTabela(t));
 }
 
@@ -471,7 +486,7 @@ function contagem(p: Subcategoria): string {
     plural(p.cartoes.length, "número", "números"),
     plural(p.graficos.length, "gráfico", "gráficos"),
     plural(p.tabelas.length, "tabela", "tabelas"),
-    p.extras.includes("simulador") || p.extras.includes("simulador-selic") ? "simulador" : "",
+    p.extras.some((e) => e.startsWith("simulador")) ? "simulador" : "",
     p.extras.includes("alertas") ? "painel" : "",
   ]
     .filter(Boolean)
@@ -522,6 +537,12 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   const simuladorSelic = s.simulador_selic;
   if (p.extras.includes("simulador-selic") && simuladorSelic) {
     const caixa = caixaDoSimuladorSelic(simuladorSelic);
+    if (caixa instanceof HTMLDetailsElement) caixa.open = true;
+    alvo.append(caixa);
+  }
+  const simuladorReforma = s.simulador_reforma;
+  if (p.extras.includes("simulador-reforma") && simuladorReforma) {
+    const caixa = caixaDoSimuladorReforma(simuladorReforma);
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;
     alvo.append(caixa);
   }

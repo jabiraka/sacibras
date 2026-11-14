@@ -84,7 +84,31 @@ SINONIMOS: dict[str, list[str]] = {
     ],
     "simples nacional": ["pequenas empresas", "mei", "regime simplificado"],
     "crescimento": ["imposto e crescimento", "multiplicador", "efeito no pib"],
-    "reforma do consumo": ["reforma tributaria", "iva", "ibs", "cbs"],
+    "reforma do consumo": [
+        "reforma tributaria",
+        "iva",
+        "ibs",
+        "cbs",
+        "simulador de impostos",
+        "cashback",
+        "cesta basica",
+        "aliquota",
+        "imposto seletivo",
+    ],
+    "quanto de imposto": [
+        "simulador de impostos",
+        "calculadora de imposto",
+        "reforma tributaria",
+        "ibs",
+        "cbs",
+        "iva",
+        "cashback",
+        "imposto no preco",
+        "aliquota",
+    ],
+    "transicao": ["reforma tributaria", "calendario da reforma", "icms", "iss", "pis", "cofins"],
+    "aliquota cheia": ["aliquota padrao", "aliquota de referencia", "iva", "26,5", "28"],
+    "quem paga menos": ["aliquota reduzida", "desconto", "cashback", "cesta basica", "devolucao"],
     "primario": ["deficit", "superavit", "rombo", "resultado fiscal", "contas do governo"],
     "nominal": ["deficit nominal", "juros da divida"],
     "fiscal": ["contas publicas", "governo", "gastos publicos", "orcamento"],
@@ -180,6 +204,17 @@ SINONIMOS: dict[str, list[str]] = {
 # sem acento e em minúsculas.
 OUTRAS_LINGUAS: dict[str, list[str]] = {
     # assuntos e partes
+    "reforma do consumo": [
+        "tax reform",
+        "vat",
+        "consumption tax",
+        "sales tax",
+        "reforma tributaria",
+        "impuesto al consumo",
+        "reforme fiscale",
+        "tva",
+    ],
+    "quanto de imposto": ["tax calculator", "vat calculator", "calculadora de impuestos"],
     "atividade": ["economic activity", "economy", "actividad economica", "economia", "activite"],
     "pib": [
         "gdp",
@@ -551,6 +586,18 @@ def montar(saida: Path) -> list[Item]:
             alvo = f"{h}/{parte['id']}" if parte else h
             local = f"{nome} › {parte['titulo']}" if parte else nome
             itens.append(_item("E se a Selic mudar?", f"{local} · simulador", alvo))
+        if dados.get("simulador_reforma"):
+            parte = next(
+                (
+                    sub
+                    for sub in dados.get("subcategorias", [])
+                    if "simulador-reforma" in sub.get("extras", [])
+                ),
+                None,
+            )
+            alvo = f"{h}/{parte['id']}" if parte else h
+            local = f"{nome} › {parte['titulo']}" if parte else nome
+            itens.append(_item("Quanto de imposto vai numa compra?", f"{local} · simulador", alvo))
         if dados.get("alertas"):
             # O painel fica guardado e é montado no clique: o resultado leva a ele.
             itens.append(_item("Painel de alerta", f"{nome} · painel", f"{h}/t-alertas"))

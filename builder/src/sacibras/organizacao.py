@@ -17,7 +17,7 @@ from typing import Literal
 
 from sacibras.schema import Categoria, Secao, Subcategoria
 
-Extra = Literal["simulador", "simulador-selic", "alertas"]
+Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]
 
 CATEGORIAS: list[Categoria] = [
     Categoria(
@@ -335,6 +335,14 @@ PARTES: dict[str, list[Parte]] = {
             tabelas=["arrecadacao-tributos"],
         ),
         Parte(
+            "reforma",
+            "Reforma do consumo",
+            "O que muda no imposto das compras de 2026 a 2033, e quanto vai numa compra.",
+            cartoes=["reforma-cbs-2027", "reforma-aliquota-cheia", "reforma-icms-iss"],
+            tabelas=["reforma-calendario", "reforma-aliquota", "reforma-descontos"],
+            extras=["simulador-reforma"],
+        ),
+        Parte(
             "carga",
             "Carga tributária",
             "Quanto do PIB vai para impostos, quem arrecada e como o Brasil se compara.",
@@ -502,6 +510,8 @@ def aplicar(secao: Secao) -> list[str]:
         extras_da_secao.append("simulador")
     if secao.simulador_selic:
         extras_da_secao.append("simulador-selic")
+    if secao.simulador_reforma:
+        extras_da_secao.append("simulador-reforma")
     if secao.alertas:
         extras_da_secao.append("alertas")
     usados: dict[str, set[str]] = {k: set() for k in tem}

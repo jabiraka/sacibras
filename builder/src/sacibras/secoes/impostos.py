@@ -20,7 +20,7 @@ from datetime import date
 
 import pycountry
 
-from sacibras import contas, relatorios
+from sacibras import contas, leis, relatorios
 from sacibras.fontes import fmi, ocde_receita, receita_arrecadacao, receita_gastos
 from sacibras.fontes.ocde_receita import BASES, ESFERAS
 from sacibras.fontes.receita_arrecadacao import COMPLETO_DESDE, NOMES
@@ -28,11 +28,15 @@ from sacibras.schema import (
     Cartao,
     Dispersao,
     EixoDispersao,
+    EtapaDaReforma,
     Grafico,
     LinhaTabela,
+    MarcaDeAliquota,
     PontoDispersao,
     Secao,
+    SimuladorReforma,
     Tabela,
+    TipoDeCompra,
 )
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.secoes.mundo import nome_do_pais
@@ -609,6 +613,325 @@ def _gasto_tributario() -> tuple[list[Cartao], list[Grafico], list[Tabela], str]
 # ------------------------------------------------------------------ seção
 
 
+def _reforma(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], SimuladorReforma]:
+    """A reforma do consumo: o calendário da lei, as contas oficiais da alíquota e o simulador.
+
+    Nada aqui é estimativa nossa: as regras saem da emenda e da lei lidas (`leis.py`) e as
+    alíquotas, das contas da Fazenda, do Comitê Gestor do IBS e do TCU (`relatorios.py`). Nossa
+    é só a aritmética (somar e multiplicar), dita onde aparece."""
+    r = relatorios
+    cbs_2027 = round(r.CBS_REFERENCIA_2027 - leis.CBS_DESCONTO_2027_2028, 2)
+    centro, piso, teto = r.ALIQUOTA_FAZENDA_2024
+    mais, mais_piso, mais_teto = r.ALIQUOTA_MUDANCAS_DA_CAMARA
+    soma_recente = r.IBS_COMITE_GESTOR + r.CBS_REFERENCIA_2027
+    anos = leis.REFORMA_ANOS
+
+    cartoes = [
+        cartao(
+            "reforma-cbs-2027",
+            "CBS em 2027",
+            [(r.CBS_REFERENCIA_2027_EM, cbs_2027)],
+            unidade="%",
+            periodicidade="D",
+            casas=1,
+            detalhe=f"cálculo do TCU ({br(r.CBS_REFERENCIA_2027, 1)} − 0,1); o Senado ainda fixa",
+            fonte=f"{r.FONTE_CBS_2027}; ADCT, art. 127, parágrafo único",
+            secao="impostos",
+        ),
+        cartao(
+            "reforma-aliquota-cheia",
+            "IBS + CBS em 2033: alíquota cheia estimada",
+            [(r.ALIQUOTA_COMITE_GESTOR_EM, r.ALIQUOTA_COMITE_GESTOR)],
+            unidade="%",
+            periodicidade="D",
+            casas=1,
+            detalhe=f"entre {br(leis.TETO_IBS_CBS, 1)} (teto da lei) e {br(soma_recente, 1)}",
+            fonte=f"{r.FONTE_ALIQUOTA_COMITE}; {leis.TETO_IBS_CBS_NORMA}; {r.FONTE_CBS_2027}",
+            procedencia="calculado",
+            secao="impostos",
+        ),
+        cartao(
+            "reforma-icms-iss",
+            f"ICMS e ISS em {ctx.hoje.year + 1}: quanto continua",
+            [(date(2023, 12, 20), float(leis.ICMS_ISS_QUE_CONTINUA[ctx.hoje.year + 1]))],
+            unidade="%",
+            periodicidade="D",
+            casas=0,
+            detalhe="caem 10 pontos por ano de 2029 a 2032 e acabam em 2033",
+            fonte="Emenda Constitucional nº 132/2023 (ADCT, arts. 128 e 129)",
+            secao="impostos",
+        ),
+    ]
+
+    def por_ano(valores: dict[int, float | None]) -> list[float | None]:
+        return [valores.get(a) for a in anos]
+
+    cbs_cheia: dict[int, float | None] = {2026: leis.CBS_TESTE_2026, 2027: cbs_2027, 2028: None}
+    ibs_cheio: dict[int, float | None] = {
+        2026: leis.IBS_TESTE_2026,
+        2027: leis.IBS_2027_2028,
+        2028: leis.IBS_2027_2028,
+    }
+    calendario = Tabela(
+        id="reforma-calendario",
+        titulo="O que se cobra em cada ano da transição",
+        subtitulo="Os impostos novos entram e os antigos saem, de 2026 a 2033",
+        colunas=[str(a) for a in anos],
+        linhas=[
+            LinhaTabela(
+                rotulo="CBS: alíquota cheia", valores=por_ano(cbs_cheia), unidade="%", casas=1
+            ),
+            LinhaTabela(
+                rotulo="IBS: alíquota cheia", valores=por_ano(ibs_cheio), unidade="%", casas=1
+            ),
+            LinhaTabela(
+                rotulo="PIS e Cofins",
+                valores=[float(leis.PIS_COFINS_QUE_CONTINUA[a]) for a in anos],
+                unidade="% do que são hoje",
+                casas=0,
+            ),
+            LinhaTabela(
+                rotulo="IPI, fora o que a Zona Franca produz",
+                valores=[float(leis.PIS_COFINS_QUE_CONTINUA[a]) for a in anos],
+                unidade="% do que é hoje",
+                casas=0,
+            ),
+            LinhaTabela(
+                rotulo="ICMS e ISS",
+                valores=[float(leis.ICMS_ISS_QUE_CONTINUA[a]) for a in anos],
+                unidade="% do que são hoje",
+                casas=0,
+            ),
+        ],
+        fonte=f"{leis.REFORMA_NORMAS}; {r.FONTE_CBS_2027}",
+        nota=(
+            "Como ler: 2026 é teste (1 % na nota fiscal, descontado do PIS e da Cofins: o preço "
+            "não muda). Em 2027 a CBS substitui PIS e Cofins e o IPI vai a zero; o IBS fica em "
+            "0,1 %. De 2029 a 2032 o ICMS e o ISS encolhem um décimo por ano e o IBS cresce no "
+            "lugar; em 2033 sobram só IBS, CBS e o Imposto Seletivo (cigarro, bebida, carro e "
+            "outros).\n\n"
+            "O traço é alíquota que ainda não existe: o Senado fixa a de cada ano no ano "
+            "anterior, com a conta do TCU, para a arrecadação ficar igual à dos impostos que "
+            f"saem. A CBS de 2027 é o cálculo do TCU ({br(r.CBS_REFERENCIA_2027, 1)} %) menos "
+            "0,1 ponto; se o Senado não votar até dezembro, vale o cálculo. A de 2028 será "
+            "fixada em 2027. Normas lidas em 14/11/2026 no Senado e na Câmara."
+        ),
+    )
+
+    estimativas = Tabela(
+        id="reforma-aliquota",
+        titulo="A alíquota cheia de 2033: as contas oficiais",
+        subtitulo="IBS mais CBS, para o que não tem desconto; ninguém sabe ainda o número",
+        colunas=["Estimativa", "De", "A"],
+        linhas=[
+            LinhaTabela(
+                rotulo="Fazenda, jul/2024: o projeto como o governo mandou",
+                valores=[centro, piso, teto],
+                unidade="%",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="Fazenda, ago/2024: o que a Câmara acrescentou",
+                valores=[mais, mais_piso, mais_teto],
+                unidade="pp",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="As duas somadas",
+                valores=[
+                    round(centro + mais, 2),
+                    round(piso + mais_piso, 2),
+                    round(teto + mais_teto, 2),
+                ],
+                unidade="%",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="Comitê Gestor do IBS, jul/2026",
+                valores=[r.ALIQUOTA_COMITE_GESTOR, None, None],
+                unidade="%",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="IBS do Comitê Gestor mais a CBS do TCU para 2027",
+                valores=[round(soma_recente, 2), None, None],
+                unidade="%",
+                casas=2,
+            ),
+            LinhaTabela(
+                rotulo="Teto da lei: acima dele, o governo propõe cortar descontos",
+                valores=[leis.TETO_IBS_CBS, None, None],
+                unidade="%",
+                casas=2,
+            ),
+        ],
+        fonte=(
+            f"{r.FONTE_ALIQUOTA_FAZENDA}; {r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; "
+            f"{leis.TETO_IBS_CBS_NORMA}; somas: cálculo próprio"
+        ),
+        nota=(
+            "Como ler: a alíquota cheia é a que repõe a arrecadação dos impostos que saem. "
+            "Quanto mais coisa tem desconto, mais alta ela fica para o resto: só as carnes na "
+            "cesta básica somaram 0,56 ponto. O intervalo da Fazenda vem de duas hipóteses de "
+            "sonegação. A Fazenda avisa que o número definitivo só se conhece no fim da "
+            "transição.\n\n"
+            f"A CBS que o TCU calculou para 2027 ({br(r.CBS_REFERENCIA_2027, 1)} %) ficou acima "
+            f"dos {br(r.CBS_ESTIMATIVA_ANTERIOR, 2)} % esperados; somá-la ao IBS do Comitê Gestor "
+            f"({br(r.IBS_COMITE_GESTOR, 1)} %) é conta nossa, e a CBS de 2033 pode ser outra. O "
+            f"teto de {br(leis.TETO_IBS_CBS, 1)} % não trava a alíquota sozinho: se a estimativa "
+            "de 2030 para 2033 passar dele, o governo tem de mandar ao Congresso um projeto que "
+            "a traga de volta."
+        ),
+    )
+
+    tipos = [
+        TipoDeCompra(
+            id="cheia",
+            rotulo="Compra comum, sem desconto",
+            descricao="A maioria das compras e dos serviços paga a alíquota cheia",
+            paga=100.0,
+            volta_cbs=leis.DEVOLUCAO_GERAL,
+            volta_ibs=leis.DEVOLUCAO_GERAL,
+            norma="LC nº 214/2025, arts. 14 e 118, II",
+        ),
+        TipoDeCompra(
+            id="contas",
+            rotulo="Conta de luz, água, gás, telefone",
+            descricao=(
+                "Luz, água, esgoto, gás encanado, botijão e telefone pagam a alíquota cheia; a "
+                "devolução à baixa renda é maior"
+            ),
+            paga=100.0,
+            volta_cbs=leis.DEVOLUCAO_CBS_CONTAS_DE_CASA,
+            volta_ibs=leis.DEVOLUCAO_IBS_CONTAS_DE_CASA,
+            norma="LC nº 214/2025, art. 118, I",
+        ),
+        TipoDeCompra(
+            id="menos-60",
+            rotulo="Saúde, educação, alimento (−60 %)",
+            descricao=(
+                "60 % de desconto para saúde, educação, remédios, alimentos e higiene das "
+                "listas da lei"
+            ),
+            paga=100.0 - leis.REDUCAO_SAUDE_EDUCACAO_ALIMENTOS,
+            volta_cbs=leis.DEVOLUCAO_GERAL,
+            volta_ibs=leis.DEVOLUCAO_GERAL,
+            norma="LC nº 214/2025, art. 128",
+        ),
+        TipoDeCompra(
+            id="menos-30",
+            rotulo="Advogado, engenheiro… (−30 %)",
+            descricao=(
+                "30 % de desconto para serviços de dezoito profissões com conselho, como "
+                "advogado, engenheiro e contador"
+            ),
+            paga=100.0 - leis.REDUCAO_PROFISSIONAIS,
+            volta_cbs=leis.DEVOLUCAO_GERAL,
+            volta_ibs=leis.DEVOLUCAO_GERAL,
+            norma="LC nº 214/2025, art. 127",
+        ),
+        TipoDeCompra(
+            id="cesta",
+            rotulo="Cesta básica (alíquota zero)",
+            descricao="Alimentos da Cesta Básica Nacional, na lista da lei, não pagam IBS nem CBS",
+            paga=0.0,
+            volta_cbs=0.0,
+            volta_ibs=0.0,
+            norma="LC nº 214/2025, art. 125",
+        ),
+    ]
+    descontos = Tabela(
+        id="reforma-descontos",
+        titulo="Quem paga menos que a alíquota cheia",
+        subtitulo="Os descontos da lei e o que volta para a família de baixa renda",
+        colunas=["Paga da alíquota cheia", "Volta da CBS", "Volta do IBS"],
+        linhas=[
+            LinhaTabela(
+                rotulo=t.descricao, valores=[t.paga, t.volta_cbs, t.volta_ibs], unidade="%", casas=0
+            )
+            for t in tipos
+        ],
+        fonte=leis.REFORMA_NORMAS,
+        nota=(
+            "Como ler: a primeira coluna é quanto da alíquota cheia cada tipo de compra paga. As "
+            "outras duas são o imposto devolvido à família inscrita no Cadastro Único com renda "
+            "de até meio salário mínimo por pessoa (o cashback): a CBS volta para o que for "
+            f"consumido de 2027 em diante, e o IBS, de {leis.DEVOLUCAO_DO_IBS_DESDE}. União, "
+            "estados e municípios podem devolver mais.\n\n"
+            "O desconto vale para o que está nas listas da lei, não para tudo o que o nome "
+            "sugere (nem todo alimento, nem todo remédio). Combustíveis, bancos, planos de saúde, "
+            "imóveis, bares e restaurantes têm regras próprias, que não estão aqui."
+        ),
+    )
+
+    simulador = SimuladorReforma(
+        tipos=tipos,
+        etapas=[
+            EtapaDaReforma(
+                id="2027",
+                rotulo="2027 e 2028: entra a CBS",
+                cbs=round(cbs_2027, 2),
+                ibs=leis.IBS_2027_2028,
+                devolve_ibs=False,
+                aviso=(
+                    "Nestes dois anos o ICMS e o ISS continuam inteiros, e este simulador não os "
+                    "calcula: mudam de estado para estado e de produto para produto. A CBS é o "
+                    "cálculo do TCU; o Senado ainda fixa a alíquota de 2027."
+                ),
+            ),
+            EtapaDaReforma(
+                id="2033",
+                rotulo="2033 em diante: sistema inteiro",
+                cbs=None,
+                ibs=None,
+                devolve_ibs=True,
+                aviso=(
+                    "ICMS, ISS, PIS, Cofins e IPI já saíram: no preço ficam só o IBS e a CBS "
+                    "(e o Imposto Seletivo em cigarro, bebida, carro e outros, fora desta conta)."
+                ),
+            ),
+        ],
+        etapa_inicial="2033",
+        aliquota=round(r.ALIQUOTA_COMITE_GESTOR, 1),
+        aliquota_minima=leis.TETO_IBS_CBS,
+        aliquota_maxima=round(soma_recente, 1),
+        parte_do_ibs=round(r.IBS_COMITE_GESTOR / r.ALIQUOTA_COMITE_GESTOR, 3),
+        marcas=[
+            MarcaDeAliquota(valor=leis.TETO_IBS_CBS, rotulo="Teto da lei"),
+            MarcaDeAliquota(
+                valor=round(r.ALIQUOTA_COMITE_GESTOR, 1), rotulo="Comitê Gestor, jul/2026"
+            ),
+            MarcaDeAliquota(valor=round(soma_recente, 1), rotulo="IBS do Comitê + CBS do TCU"),
+        ],
+        fonte=(
+            f"{leis.REFORMA_NORMAS}; {r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; "
+            "multiplicações: cálculo próprio"
+        ),
+        como_ler=(
+            "Como ler: o valor que você digita é o preço sem IBS nem CBS; o imposto é cobrado "
+            "em cima dele. O número grande usa a alíquota do controle; a faixa logo abaixo vai "
+            f"do teto que a lei manda perseguir ({br(leis.TETO_IBS_CBS, 1)} %) à soma das contas "
+            f"oficiais mais recentes ({br(soma_recente, 1)} %). A alíquota de 2033 ainda não "
+            "existe: o que se sabe é mais ou menos onde ela cai, não o número."
+        ),
+        nota=(
+            "Conta: imposto = valor × alíquota cheia × a parte que o tipo de compra paga (100 "
+            "%, 70 %, 40 % ou zero, pela lei). A devolução à família de baixa renda é o "
+            "percentual da lei sobre o imposto pago; em 2033, para separar a CBS do IBS, usa-se "
+            f"a divisão da conta do Comitê Gestor ({br(r.IBS_COMITE_GESTOR, 1)} de IBS em "
+            f"{br(r.ALIQUOTA_COMITE_GESTOR, 2)}).\n\n"
+            "O que a conta não diz: quanto de imposto há hoje na mesma compra. Não existe "
+            "número oficial por produto (ICMS, ISS, PIS e Cofins se somam de jeitos diferentes "
+            "em cada estado e em cada cadeia), então o simulador não compara o antes com o "
+            "depois. A reforma foi desenhada para arrecadar o mesmo no total; o que muda é "
+            "quanto cada coisa paga. Também ficam de fora os regimes próprios (combustíveis, "
+            "bancos, planos de saúde, imóveis, bares e restaurantes), o Simples Nacional e o "
+            "Imposto Seletivo."
+        ),
+    )
+    return cartoes, [calendario, estimativas, descontos], simulador
+
+
 def montar(ctx: Contexto) -> Secao:
     cartoes: list[Cartao] = []
     graficos: list[Grafico] = []
@@ -639,6 +962,13 @@ def montar(ctx: Contexto) -> Secao:
         tabelas += t
     except Exception as erro:
         print(f"    impostos: carga × crescimento ficou de fora: {str(erro)[:160]}")
+    simulador_reforma: SimuladorReforma | None = None
+    try:
+        c, t, simulador_reforma = _reforma(ctx)
+        cartoes += c
+        tabelas += t
+    except Exception as erro:
+        print(f"    impostos: reforma do consumo ficou de fora: {str(erro)[:160]}")
     if len(falhas) == 2:
         raise RuntimeError("impostos: sem arrecadação e sem carga")
     return Secao(
@@ -648,5 +978,6 @@ def montar(ctx: Contexto) -> Secao:
         cartoes=cartoes,
         graficos=graficos,
         tabelas=tabelas,
+        simulador_reforma=simulador_reforma,
         gerado_em=ctx.agora(),
     )

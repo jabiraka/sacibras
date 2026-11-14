@@ -268,6 +268,60 @@ class SimuladorSelic(Modelo):
     como_ler: str
 
 
+class TipoDeCompra(Modelo):
+    """Um tipo de compra na reforma do consumo: quanto da alíquota cheia paga e quanto volta."""
+
+    id: str
+    rotulo: str
+    """Curto, para caber na lista suspensa do celular."""
+    descricao: str
+    paga: float
+    """% da alíquota cheia que este tipo de compra paga (100, 70, 40 ou 0)."""
+    volta_cbs: float
+    """% da CBS devolvida à família de baixa renda."""
+    volta_ibs: float
+    norma: str
+
+
+class EtapaDaReforma(Modelo):
+    """Um trecho da transição: as alíquotas cheias que valem nele."""
+
+    id: str
+    rotulo: str
+    cbs: float | None
+    """% sobre o valor; None quando ainda não há número (o controle da alíquota decide)."""
+    ibs: float | None
+    devolve_ibs: bool
+    """Se a devolução do IBS à baixa renda já vale nesta etapa."""
+    aviso: str
+    """O que mais se paga nesta etapa e fica fora da conta."""
+
+
+class MarcaDeAliquota(Modelo):
+    valor: float
+    rotulo: str
+
+
+class SimuladorReforma(Modelo):
+    """Quanto de IBS e CBS vai numa compra. Tudo aqui é lei lida ou conta oficial; o navegador
+    multiplica o valor da compra pela alíquota e pela fração que o tipo de compra paga."""
+
+    tipos: list[TipoDeCompra]
+    etapas: list[EtapaDaReforma]
+    etapa_inicial: str
+    aliquota: float
+    """A alíquota cheia (IBS + CBS) em que o controle abre: a conta oficial mais recente."""
+    aliquota_minima: float
+    """A ponta de baixo da faixa: o teto que a lei manda perseguir."""
+    aliquota_maxima: float
+    parte_do_ibs: float
+    """A parte da alíquota cheia que é IBS (0 a 1), pela conta do Comitê Gestor."""
+    marcas: list[MarcaDeAliquota]
+    fonte: str
+    nota: str
+    como_ler: str
+
+
 class Alerta(Modelo):
     """Um indicador do painel de alerta: o valor de hoje na régua da própria história.
 
@@ -319,7 +373,9 @@ class Subcategoria(Modelo):
     cartoes: list[str] = Field(default_factory=list)
     graficos: list[str] = Field(default_factory=list)
     tabelas: list[str] = Field(default_factory=list)
-    extras: list[Literal["simulador", "simulador-selic", "alertas"]] = Field(default_factory=list)
+    extras: list[Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]] = Field(
+        default_factory=list
+    )
 
 
 class Secao(Modelo):
@@ -333,6 +389,7 @@ class Secao(Modelo):
     tabelas: list[Tabela] = Field(default_factory=list)
     simulador: SimuladorDivida | None = None
     simulador_selic: SimuladorSelic | None = None
+    simulador_reforma: SimuladorReforma | None = None
     alertas: list[Alerta] = Field(default_factory=list)
     gerado_em: datetime
 

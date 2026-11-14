@@ -35,7 +35,9 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   coleta automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)).
   Não ligar no workflow nem no compose; o que depende dela fica fora.
 - **Norma se lê na fonte oficial, do PC** (o Planalto e o `servicodados` do IBGE recusam quem
-  está fora do Brasil, como a nuvem e o Actions). No Windows, o `curl` do Planalto precisa de
+  está fora do Brasil, como a nuvem e o Actions). Da nuvem, lei e emenda abrem em outras duas
+  fontes oficiais: o Senado (`legis.senado.leg.br/norma/<id>/publicacao/<id>`) e a Câmara
+  (`www2.camara.leg.br/legin/...-normaatualizada-pl.html`, o texto já com as alterações). No Windows, o `curl` do Planalto precisa de
   `--ssl-no-revoke`. Resolução do Senado: `legis.senado.leg.br/norma/<id>` (o id sai de
   `legis.senado.leg.br/dadosabertos/legislacao/lista?tipo=RSF&numero=N&ano=A`). O trecho lido
   vai como comentário em `leis.py`, com a data.
@@ -122,8 +124,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   do André Lara Resende para baixar o juros"*): proposta pública vira botão que põe o controle
   no tamanho dela, com o texto lido na fonte e citado em `relatorios.py`, o que o autor espera
   dito ao lado do que a conta do BC dá, e sem tomar partido; dela só sai o tamanho do corte,
-  nunca um dado da tela. Fora os dois simuladores, cenário montado pela pessoa não entra sem
-  o "sim" do Caio.
+  nunca um dado da tela. **E o da reforma do consumo** (Caio, 14/11/2026: *"dá pra fazer
+  simulador de impostos? A reforma tributária vai chegar"*), em Impostos › Reforma do consumo:
+  quanto de IBS e CBS vai numa compra, só com a lei lida (`leis.py`) e as contas oficiais da
+  alíquota (`relatorios.py`), com a faixa entre o teto da lei e a soma das contas mais
+  recentes; não compara com o imposto de hoje, porque não há número oficial por produto. Fora
+  os três simuladores, cenário montado pela pessoa não entra sem o "sim" do Caio.
 - **Riscos** (Caio, 14/11/2026): a palavra na tela é *sustentabilidade da dívida*, não
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
   Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de

@@ -121,3 +121,105 @@ AVALIACOES_2026 = [
 # estaduais e transferências (LC 141/2012, art. 6º; Constituição, art. 198, § 2º, II);
 # educação, no mínimo 25 % da receita de impostos, incluídas as transferências
 # (Constituição, art. 212).
+
+# ------------------------------------------------------------------ reforma do consumo
+
+# O Planalto recusa a nuvem (429 em 14/11/2026); as normas abaixo foram lidas em 14/11/2026 em
+# outras duas fontes oficiais:
+# - Emenda Constitucional nº 132, de 20/12/2023, na publicação do Senado
+#   (legis.senado.leg.br/norma/37959796/publicacao/37963893), arts. 125 a 130 do ADCT;
+# - Lei Complementar nº 214, de 16/1/2025, no texto atualizado da Câmara, que já traz as mudanças
+#   da LC nº 227, de 13/1/2026 (www2.camara.leg.br/legin/fed/leicom/2025/
+#   leicomplementar-214-16-janeiro-2025-796905-normaatualizada-pl.html).
+#
+# ADCT, art. 125: "Em 2026, o imposto previsto no art. 156-A [o IBS] será cobrado à alíquota
+#   estadual de 0,1% (um décimo por cento), e a contribuição prevista no art. 195, V [a CBS],
+#   [...] será cobrada à alíquota de 0,9% (nove décimos por cento)." § 1º: "O montante recolhido
+#   na forma do caput será compensado com o valor devido das contribuições" (PIS e Cofins).
+#   LC 214, art. 348, § 1º: "Fica dispensado o recolhimento do IBS e da CBS [de 2026] em relação
+#   aos sujeitos passivos que cumprirem as obrigações acessórias".
+# ADCT, art. 126: "A partir de 2027: I – serão cobrados: a) a contribuição prevista no art.
+#   195, V [CBS]; b) o imposto previsto no art. 153, VIII [o Imposto Seletivo]; II – serão
+#   extintas as contribuições [Cofins e PIS]; III – o imposto previsto no art. 153, IV [IPI]:
+#   a) terá suas alíquotas reduzidas a zero, exceto em relação aos produtos que tenham
+#   industrialização incentivada na Zona Franca de Manaus".
+# ADCT, art. 127: "Em 2027 e 2028, o [IBS] será cobrado à alíquota estadual de 0,05% (cinco
+#   centésimos por cento) e à alíquota municipal de 0,05% (cinco centésimos por cento).
+#   Parágrafo único. No período referido no caput, a alíquota da [CBS] será reduzida em 0,1
+#   (um décimo) ponto percentual."
+# ADCT, art. 128: "De 2029 a 2032, as alíquotas dos impostos previstos nos arts. 155, II
+#   [ICMS], e 156, III [ISS] [...] serão fixadas nas seguintes proporções das alíquotas fixadas
+#   nas respectivas legislações: I – 9/10 (nove décimos), em 2029; II – 8/10 (oito décimos), em
+#   2030; III – 7/10 (sete décimos), em 2031; IV – 6/10 (seis décimos), em 2032."
+# ADCT, art. 129: "Ficam extintos, a partir de 2033, os impostos previstos nos arts. 155, II, e
+#   156, III".
+# ADCT, art. 130: "Resolução do Senado Federal fixará, para todas as esferas federativas, as
+#   alíquotas de referência [...] § 1º As alíquotas de referência serão fixadas no ano anterior
+#   ao de sua vigência [...] com base em cálculo realizado pelo Tribunal de Contas da União."
+REFORMA_ANOS = list(range(2026, 2034))
+IBS_TESTE_2026 = 0.1
+CBS_TESTE_2026 = 0.9
+IBS_2027_2028 = 0.1
+"""0,05 % estadual mais 0,05 % municipal."""
+CBS_DESCONTO_2027_2028 = 0.1
+"""Pontos percentuais tirados da alíquota de referência da CBS em 2027 e 2028."""
+ICMS_ISS_QUE_CONTINUA = {2026: 100, 2027: 100, 2028: 100, 2029: 90, 2030: 80, 2031: 70}
+ICMS_ISS_QUE_CONTINUA |= {2032: 60, 2033: 0}
+PIS_COFINS_QUE_CONTINUA = {ano: (100 if ano == 2026 else 0) for ano in REFORMA_ANOS}
+"""Também o IPI, zerado em 2027 menos no que a Zona Franca de Manaus produz."""
+
+# LC 214, art. 12: "A base de cálculo do IBS e da CBS é o valor da operação"; § 2º: "Não
+#   integram a base de cálculo do IBS e da CBS: I - o montante do IBS e da CBS incidentes sobre
+#   a operação" (o imposto é "por fora": cobrado sobre o valor sem ele) e, até 2032, "V - o
+#   montante [...]" do ICMS, do ISS, da Cofins e do PIS.
+# LC 214, art. 125: "Ficam reduzidas a zero as alíquotas do IBS e da CBS incidentes sobre as
+#   vendas de produtos destinados à alimentação humana relacionados no Anexo I [...] que
+#   compõem a Cesta Básica Nacional de Alimentos".
+# LC 214, art. 127: "Ficam reduzidas em 30% (trinta por cento) as alíquotas do IBS e da CBS
+#   incidentes sobre a prestação de serviços pelos seguintes profissionais [...] submetidas à
+#   fiscalização por conselho profissional: I - administradores; II - advogados; III -
+#   arquitetos e urbanistas; [...] VII - contabilistas; VIII - economistas; [...] XI -
+#   engenheiros e agrônomos" (dezoito profissões).
+# LC 214, art. 128: "ficam reduzidas em 60% (sessenta por cento) as alíquotas do IBS e da CBS
+#   incidentes sobre operações com: I - serviços de educação; II - serviços de saúde; III -
+#   dispositivos médicos; IV - dispositivos de acessibilidade [...]; V - medicamentos; VI -
+#   alimentos destinados ao consumo humano; VII - produtos de higiene pessoal e limpeza
+#   majoritariamente consumidos por famílias de baixa renda; VIII - produtos agropecuários
+#   [...] in natura; IX - insumos agropecuários e aquícolas; X - produções nacionais
+#   artísticas, culturais, de eventos, jornalísticas e audiovisuais; XI - comunicação
+#   institucional; XII - atividades desportivas; e XIII - bens e serviços relacionados à
+#   soberania e à segurança nacional". Cada item tem lista própria nos anexos: a redução vale
+#   para o que está na lista, não para tudo o que o nome sugere.
+# LC 214, arts. 344, parágrafo único, I, e 347, § 1º, I: em 2027 e 2028 as alíquotas valem "com
+#   a respectiva redução no caso das operações sujeitas a alíquota reduzida".
+REDUCAO_PROFISSIONAIS = 30.0
+REDUCAO_SAUDE_EDUCACAO_ALIMENTOS = 60.0
+
+# A devolução a famílias de baixa renda (o "cashback"). LC 214, art. 113: o destinatário é o
+#   responsável por família "cadastrada no Cadastro Único" com "renda familiar mensal per
+#   capita de até meio salário-mínimo nacional". Art. 118: "O percentual [...] será de: I -
+#   100% (cem por cento) para a CBS e 20% (vinte por cento) para o IBS na aquisição de botijão
+#   de até 13 kg [...] de gás liquefeito de petróleo, nas operações de fornecimento domiciliar
+#   de energia elétrica, abastecimento de água, esgotamento sanitário e gás canalizado e nas
+#   operações de fornecimento de telecomunicações; e II - 20% (vinte por cento) para a CBS e
+#   para o IBS, nos demais casos." (§ 1º: União, estados e municípios podem dar mais.) Art.
+#   123: as devoluções contam o "consumo familiar realizado a partir do: I - mês de janeiro de
+#   2027, para a CBS; e II - mês de janeiro de 2029, para o IBS".
+DEVOLUCAO_CBS_CONTAS_DE_CASA = 100.0
+DEVOLUCAO_IBS_CONTAS_DE_CASA = 20.0
+DEVOLUCAO_GERAL = 20.0
+DEVOLUCAO_DO_IBS_DESDE = 2029
+
+# O teto. LC 214, art. 475, § 9º: "A primeira avaliação quinquenal será realizada com base nos
+#   dados disponíveis no ano-calendário de 2030"; § 10: "serão estimadas as alíquotas de
+#   referência de IBS e CBS em 2033"; § 11: "Caso a soma das alíquotas de referência estimadas
+#   [...] resulte em percentual superior a 26,5% (vinte e seis inteiros e cinco décimos por
+#   cento), o Poder Executivo da União, ouvido o Comitê Gestor do IBS, deverá encaminhar ao
+#   Congresso Nacional projeto de lei complementar propondo medidas que reduzam o percentual a
+#   patamar igual ou inferior a 26,5%". Não é limite automático: obriga a propor o ajuste.
+TETO_IBS_CBS = 26.5
+TETO_IBS_CBS_NORMA = "LC nº 214/2025, art. 475, § 11"
+REFORMA_NORMAS = (
+    "Emenda Constitucional nº 132/2023 (ADCT, arts. 125 a 130) e Lei Complementar nº 214/2025 "
+    "(arts. 12, 118, 123, 125, 127, 128, 343 a 349 e 475)"
+)

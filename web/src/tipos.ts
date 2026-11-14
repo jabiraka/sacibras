@@ -105,6 +105,46 @@ export interface SimuladorDivida {
   nota: string;
 }
 
+/** Um tipo de compra na reforma do consumo: quanto da alíquota cheia paga e quanto volta. */
+export interface TipoDeCompra {
+  id: string;
+  rotulo: string;
+  /** O que entra neste tipo, por extenso (o rótulo é curto, para caber na lista). */
+  descricao: string;
+  /** % da alíquota cheia (100, 70, 40 ou 0). */
+  paga: number;
+  /** % devolvido à família de baixa renda. */
+  volta_cbs: number;
+  volta_ibs: number;
+  norma: string;
+}
+
+export interface EtapaDaReforma {
+  id: string;
+  rotulo: string;
+  /** Alíquotas cheias, em %; null quando o controle da alíquota decide. */
+  cbs: number | null;
+  ibs: number | null;
+  devolve_ibs: boolean;
+  aviso: string;
+}
+
+/** Quanto de IBS e CBS vai numa compra: lei lida e contas oficiais; o navegador multiplica. */
+export interface SimuladorReforma {
+  tipos: TipoDeCompra[];
+  etapas: EtapaDaReforma[];
+  etapa_inicial: string;
+  aliquota: number;
+  aliquota_minima: number;
+  aliquota_maxima: number;
+  /** A parte da alíquota cheia que é IBS, de 0 a 1. */
+  parte_do_ibs: number;
+  marcas: { valor: number; rotulo: string }[];
+  fonte: string;
+  nota: string;
+  como_ler: string;
+}
+
 /** Um gancho do simulador da Selic: uma proposta pública, no tamanho de corte que ela dá. */
 export interface CenarioSelic {
   id: string;
@@ -158,7 +198,7 @@ export interface Subcategoria {
   cartoes: string[];
   graficos: string[];
   tabelas: string[];
-  extras: ("simulador" | "simulador-selic" | "alertas")[];
+  extras: ("simulador" | "simulador-selic" | "simulador-reforma" | "alertas")[];
 }
 
 export interface Secao {
@@ -172,6 +212,7 @@ export interface Secao {
   tabelas: Tabela[];
   simulador: SimuladorDivida | null;
   simulador_selic?: SimuladorSelic | null;
+  simulador_reforma?: SimuladorReforma | null;
   alertas?: Alerta[];
   gerado_em: string;
 }

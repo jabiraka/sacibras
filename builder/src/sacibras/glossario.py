@@ -741,6 +741,55 @@ TERMOS: list[Termo] = [
         "junto não quer dizer que uma cause a outra.",
         ("correlação",),
     ),
+    Termo(
+        "ibs",
+        "IBS",
+        "Imposto sobre Bens e Serviços: o imposto dos estados e municípios criado pela reforma "
+        "do consumo, que substitui o ICMS e o ISS aos poucos, de 2029 a 2033.",
+        ("IBS",),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "cbs",
+        "CBS",
+        "Contribuição sobre Bens e Serviços: o tributo federal criado pela reforma do consumo, "
+        "que substitui o PIS e a Cofins a partir de 2027.",
+        ("CBS",),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "iss",
+        "ISS",
+        "O imposto dos municípios sobre serviços (academia, oficina, escola, advogado). Acaba "
+        "em 2033, substituído pelo IBS.",
+        ("ISS",),
+    ),
+    Termo(
+        "aliquota-cheia",
+        "Alíquota cheia",
+        "O percentual do imposto para o que não tem desconto, cobrado sobre o valor sem o "
+        "imposto. Na reforma, a de referência é a que o Senado fixa para a arrecadação ficar "
+        "igual à dos impostos que saem.",
+        ("alíquota cheia", "alíquota de referência", "alíquotas de referência"),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "cashback",
+        "Devolução do imposto (cashback)",
+        "Parte do IBS e da CBS pagos volta para a família de baixa renda inscrita no Cadastro "
+        "Único: 20 % no geral, e toda a CBS nas contas de luz, água, gás e telefone.",
+        ("cashback", "Cadastro Único"),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "imposto-seletivo",
+        "Imposto Seletivo",
+        "Imposto federal criado pela reforma para o que faz mal à saúde ou ao meio ambiente, "
+        "como cigarro, bebida alcoólica e refrigerante. É cobrado além do IBS e da CBS, de "
+        "2027 em diante.",
+        ("Imposto Seletivo",),
+        "#impostos/reforma",
+    ),
     # ---------------------------------------------------------------- estados
     Termo(
         "icms",

@@ -411,3 +411,59 @@ EFEITOS_DE_IMPOSTO: list[EfeitoDeImposto] = [
         ),
     ),
 ]
+
+# ------------------------------------------------------------------ alíquotas da reforma
+
+# Quanto vai ser a alíquota cheia do IBS mais a CBS ninguém sabe: o Senado fixa a de cada ano
+# no ano anterior (ADCT, art. 130), e a de 2033 só no fim da transição. O que existe são contas
+# oficiais, lidas em 14/11/2026:
+# 1. Ministério da Fazenda, Secretaria Extraordinária da Reforma Tributária, nota técnica
+#    "Alíquotas de referência do IBS e da CBS: estimativas atualizadas", de 1/7/2024, p. 13
+#    (gov.br/fazenda/.../notas/nota-tecnica-aliquotas_2024-07-01_sertmf-1.pdf), para o projeto
+#    como o governo mandou: "a estimativa de alíquota de referência cresce gradualmente até
+#    chegar ao valor de 26,47%, dentro do intervalo de 25,65% a 27,29%, após a introdução do
+#    cashback (Cenário L)". O intervalo são "duas hipóteses de hiato de conformidade (factível
+#    ou conservadora)": quanto se sonega.
+# 2. Mesma secretaria, nota "Estimativa de impacto sobre a alíquota de referência do IBS e da
+#    CBS das mudanças introduzidas durante a tramitação", de agosto de 2024, p. 4
+#    (gov.br/fazenda/.../notas-informativas/2024/agosto/nota-tecnica-aliquotas-sertmf.pdf): "um
+#    incremento na alíquota de referência total da ordem de 1,47 ponto percentual, dentro do
+#    intervalo de 1,44 ponto percentual a 1,49 ponto percentual" (carnes na cesta básica: 0,56).
+#    A mesma nota: "as alíquotas de referência definitivas só serão conhecidas após o término
+#    da transição [...] os resultados são condicionais às hipóteses sobre variáveis ainda
+#    desconhecidas e que embutem uma incerteza inerente".
+# 3. Comitê Gestor do IBS, Resolução CGIBS nº 14, de 29/7/2026 (DOU de 31/7/2026, seção 3, p.
+#    188-189), anexo, quadro 2 (cgibs.gov.br/upload/arquivos/202607/31144942-...pdf): "Alíquota
+#    total inicial (SERT) 26,50%; IBS correspondente 17,70%; Nova alíquota total estimada
+#    27,91%; [...] IBS atualizado 18,7%"; "as estimativas públicas passaram a indicar alíquota
+#    de referência em torno de 28%".
+# 4. Agência Senado, 28/10/2026 e 3/11/2026 (www12.senado.leg.br/noticias/materias/2026/10/28/
+#    reforma-tributaria-tcu-calcula-aliquota-da-cbs-em-11-3-para-2027 e .../2026/11/03/
+#    senado-deve-receber-calculo-da-cbs-na-proxima-terca-para-definir-aliquota): "O Tribunal de
+#    Contas da União (TCU) aprovou nesta quarta-feira (28) uma proposta para que a [CBS] seja
+#    de 11,3% no ano que vem. O valor da alíquota precisa ser chancelado pelo Senado até
+#    dezembro. Caso isso não ocorra, a alíquota apresentada pelo TCU será efetivada a partir de
+#    1º de janeiro de 2027."; "percentual superior à estimativa de 9,21% considerada
+#    anteriormente"; "a alíquota de referência do IBS ainda não foi definida". O portal do TCU
+#    não abriu daqui: reler o acórdão no PC.
+# LER DE NOVO: a resolução do Senado com a CBS de 2027 (o prazo é dezembro de 2026) e, a cada
+# ano, as alíquotas do ano seguinte; o IBS de referência só aparece em 2028, para 2029.
+CBS_REFERENCIA_2027 = 11.3
+CBS_REFERENCIA_2027_EM = date(2026, 10, 28)
+CBS_ESTIMATIVA_ANTERIOR = 9.21
+ALIQUOTA_FAZENDA_2024 = (26.47, 25.65, 27.29)
+"""A estimativa e o intervalo para o projeto como o governo mandou (jul/2024)."""
+ALIQUOTA_MUDANCAS_DA_CAMARA = (1.47, 1.44, 1.49)
+"""O que as mudanças da Câmara somam, em pontos (ago/2024)."""
+ALIQUOTA_COMITE_GESTOR = 27.91
+IBS_COMITE_GESTOR = 18.7
+ALIQUOTA_COMITE_GESTOR_EM = date(2026, 7, 29)
+FONTE_ALIQUOTA_FAZENDA = (
+    "Ministério da Fazenda, Secretaria Extraordinária da Reforma Tributária, notas técnicas de "
+    "1/7/2024 (p. 13) e de ago/2024 (p. 4)"
+)
+FONTE_ALIQUOTA_COMITE = "Comitê Gestor do IBS, Resolução nº 14, de 29/7/2026, anexo, quadro 2"
+FONTE_CBS_2027 = (
+    "Tribunal de Contas da União, cálculo aprovado em 28/10/2026 (Agência Senado, 28/10 e "
+    "3/11/2026); o Senado fixa por resolução"
+)

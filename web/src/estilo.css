@@ -2279,6 +2279,48 @@ button.ponto-linha:hover {
   box-shadow: inset 0 0 0 2px var(--tinta-2);
 }
 
+/* O simulador da reforma: o valor digitado segue o desenho das listas, e a caixa de marcar. */
+.simulador .barra-controles {
+  margin: 0;
+}
+
+input.escolha[type="number"] {
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--tinta);
+  height: 42px;
+  width: 11rem;
+  max-width: 100%;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--borda-forte);
+  background: var(--superficie);
+  font-variant-numeric: tabular-nums;
+}
+
+/* `hidden` tem de vencer o display das grades e dos cartões. */
+.simulador [hidden],
+.efeitos [hidden] {
+  display: none;
+}
+
+.marcar {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 0.875rem;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.marcar input {
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  flex: none;
+  accent-color: var(--verde);
+}
+
 /* Os atalhos do simulador: voltar ao Focus e os cenários em debate. */
 .cenarios {
   display: flex;
