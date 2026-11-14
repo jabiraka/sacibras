@@ -63,7 +63,8 @@ no [PLANO](PLANO.md); as fontes testadas, em [FONTES](FONTES.md); as ideias em e
 - **Painel de alerta em quatro vistas** (lista "Ver os alertas"): a própria história; outros
   países (`alertas-paises.ts`, lê `mundo.json` e `mundo-paises.json`; emergentes por padrão);
   o que mudou em um ano (`ha_um_ano` e `pior_que_ha_um_ano` no `Alerta`); e o quadro-resumo.
-- Conferido a 1280 e a 390 px. **Ainda não está no `main`**: publicar quando o Caio disser.
+- Conferido a 1280 e a 390 px. **Publicado no `main`** em 14/11/2026, a pedido do Caio
+  (*"pode juntar no main quando acabar"*).
 
 ## Resolvido no PC em 14/11/2026
 
