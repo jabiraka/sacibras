@@ -243,6 +243,7 @@ Toda previsão aparece com o consenso ao lado, faixa de erro e método em uma fr
 | IPCA próximos 12 meses | SARIMA no IPCA mensal, com sazonalidade; fan chart pelos erros fora da amostra. | Focus mensal e 12m |
 | Selic por reunião | **Implícita na curva prefixada** (taxas a termo entre as datas do Copom, LTN/NTN-F do Tesouro Direto). DI1 futuro da B3 entra se houver acesso estável. | Focus por reunião (`ExpectativasMercadoSelic`) |
 | Desocupação | Modelo sazonal simples na PNAD. | Focus, se houver |
+| **PIB trimestral por estado** (estimativa, não previsão: o trimestre já aconteceu) | `modelos/pib_estados.py`: o IBC-R do estado (ou o da região, nos 14 sem índice) ajustado ao PIB anual do estado pelo Denton proporcional (manual de Contas Nacionais Trimestrais do FMI, 2017, cap. 6) e à soma do PIB trimestral do Brasil por rateio. Faixa: o quanto o trimestre muda quando sai o oficial do ano (teste refeito a cada rodada). | Não há consenso; fecha com o IBGE no ano (estado) e no trimestre (Brasil) |
 | Câmbio | Sem modelo próprio (passeio aleatório é difícil de bater; dizemos isso). | Focus |
 | **Dívida bruta** | Dinâmica da dívida: d₊₁ = d·(1+i)/((1+g)(1+π)) − primário, com insumos do Focus. No navegador, controles para mudar juro, crescimento e primário e ver a trajetória. | Focus (DBGG e primário) e projeções do Tesouro |
 
@@ -404,7 +405,11 @@ O que a tela já diz, ou deveria dizer, sobre o que os números não medem.
   expectativa e prêmio de prazo. Os anualizados de 3 meses da inflação são sem ajuste sazonal.
 - **Trabalho**: o saldo do Caged é a diferença do estoque (set/2026: 121 mil contra 115 mil do
   oficial com ajuste).
-- **Estados**: o primário é o acumulado do ano sobre a RCL de 12 meses.
+- **Estados**: o primário é o acumulado do ano sobre a RCL de 12 meses. O PIB trimestral por
+  estado é conta nossa: o desenho dos trimestres dentro do ano é o do IBC-R, que não é o PIB;
+  nos 14 estados sem IBC-R o desenho é o da região (em MT, o erro médio passa de 3 pontos); a
+  faixa mede a revisão do ano, não o erro do desenho dentro dele; e o teste usa o IBC-R
+  revisado de hoje.
 - **Demografia**: a projeção do IBGE não tem faixa de erro; o PIB por ocupado é por pessoa, não
   por hora (2020 a 2022 distorcidos pela pandemia); o déficit do INSS é só o Regime Geral.
 - **Impostos**: o IRPF por faixa não traz o retido na fonte (o topo paga mais do que a tabela

@@ -69,6 +69,25 @@ TERMOS: list[Termo] = [
         "#estados/mapa",
     ),
     Termo(
+        "pib-trimestral-dos-estados",
+        "PIB trimestral dos estados",
+        "O IBGE só calcula o PIB dos estados uma vez por ano. O número por trimestre é conta "
+        "nossa: reparte o PIB trimestral do Brasil entre os estados pelo IBC-R do Banco "
+        "Central, fechando com o PIB oficial de cada estado nos anos que o IBGE já publicou. "
+        "É estimativa, com faixa de erro.",
+        ("PIB trimestral dos estados", "PIB trimestral por estado"),
+        "#estados/mapa",
+    ),
+    Termo(
+        "contribuicao-para-o-pib",
+        "Contribuição para o crescimento",
+        "Quantos pontos do crescimento do país vieram de uma parte dele (um estado, um "
+        "setor): o peso da parte na economia vezes o quanto ela cresceu. Somadas, as "
+        "contribuições dão o crescimento do todo.",
+        ("Contribuição para o PIB do Brasil", "contribuição para o crescimento"),
+        "#estados/mapa",
+    ),
+    Termo(
         "ajuste-sazonal",
         "Ajuste sazonal",
         "Correção do que se repete todo ano na mesma época (Natal, safra, férias), para "

@@ -3385,6 +3385,10 @@ input.escolha[type="number"] {
   display: none;
 }
 
+.escolha-campo[hidden] {
+  display: none;
+}
+
 .tabela-estados table.dados thead th .sub {
   display: block;
 }

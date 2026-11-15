@@ -4,9 +4,11 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
-fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Tudo publicado no `main`; nenhum branch com trabalho pendente.
+Última atualização: 15/11/2026 (segunda sessão da nuvem do dia). A primeira fez tudo o que
+dava para fazer de fora do Brasil e publicou no `main`. A segunda respondeu ao pedido do Caio
+(*"conseguimos ter alguma estimativa da decomposição do PIB por Estados em cada trimestre?
+Calculado, claro, se tiver alguma boa referência melhor ainda"*) com o PIB trimestral por
+estado, **no branch `ccr-94336676-cxavg1`, ainda não no `main`**: espera o Caio olhar.
 
 ## Releituras com prazo
 
@@ -47,6 +49,19 @@ As próximas:
 
 ## Espera o Caio
 
+- **PIB trimestral por estado** (branch `ccr-94336676-cxavg1`): duas métricas novas em
+  Estados › Mapa e ranking, "PIB no trimestre (estimativa)" e "Contribuição para o PIB do
+  Brasil (estimativa)", com a lista "Trimestre" (de 2011 em diante). O método, os testes e a
+  conferência contra cinco institutos estaduais estão no [FONTES](FONTES.md) e no
+  [PLANO](PLANO.md#6-previsões). Para decidir:
+  1. Entra no `main`? (No mesmo dia o Caio disse *"sem próprias previsões por enquanto"*;
+     isto é estimativa de trimestre que já aconteceu, como a prévia anual pelo IBC-R, mas a
+     decisão é dele.)
+  2. Mostrar na tela a conferência contra os cinco estados que publicam PIB trimestral
+     (diferença média de 1,1 ponto)? Pede linha em `leituras.py` e refazer a conta uma vez
+     por ano; hoje está só no FONTES.
+  3. Pôr o IBC-R dos quatro estados novos (MT, MS, RN e MA; SGS 29701 a 29705, fora do
+     CKAN): muda também a prévia anual e o texto "13 estados". MT é onde a conta mais erra.
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.

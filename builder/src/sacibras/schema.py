@@ -473,6 +473,17 @@ class UF(Modelo):
     regiao: Literal["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"]
 
 
+class PeriodoDaMetrica(Modelo):
+    """Uma métrica dos estados em outro período (um trimestre anterior)."""
+
+    referencia: str
+    valores: dict[str, float | None]
+    brasil: float | None = None
+    intervalos: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    nota: str = ""
+    """A frase do período, que a tela põe antes da descrição da métrica."""
+
+
 class MetricaEstados(Modelo):
     id: str
     nome: str
@@ -507,6 +518,9 @@ class MetricaEstados(Modelo):
     marcas: list[LinhaRef] = Field(default_factory=list)
     """Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. A tela escreve o
     nome no lugar do número."""
+    periodos: list[PeriodoDaMetrica] = Field(default_factory=list)
+    """Só no PIB trimestral dos estados: a mesma métrica em cada trimestre, do mais novo ao
+    mais antigo (o primeiro repete `valores`). A tela põe a lista "Trimestre"."""
 
 
 class HistoricoEstado(Modelo):

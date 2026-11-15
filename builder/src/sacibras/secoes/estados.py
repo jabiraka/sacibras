@@ -1369,9 +1369,20 @@ def _economia(ctx: Contexto) -> list[MetricaEstados]:
             volume = None
         return estados_economia.ibcr(UFS, lambda k: ctx.sgs(k, 24), volume)
 
+    def trimestral() -> list[MetricaEstados]:
+        edicao, corrente, volume = ibge_contas_regionais.pib()
+        tabela, variavel, classificacao = estados_economia.PIB_TRIMESTRAL
+        pib_brasil = ibge_sidra.serie(
+            tabela, variavel, classificacao=classificacao, trimestral=True
+        )
+        return estados_economia.pib_trimestral(
+            UFS, lambda k: ctx.sgs(k, 24), pib_brasil, edicao, corrente, volume
+        )
+
     passos: list[tuple[str, Callable[[], list[MetricaEstados]]]] = [
         ("PIB por UF (Contas Regionais)", lambda: estados_economia.pib(UFS)),
         ("IBC-R", previa),
+        ("PIB trimestral por UF (estimativa)", trimestral),
         ("IPCA por área", lambda: [estados_economia.inflacao(UFS)]),
         (
             "exportações por UF",

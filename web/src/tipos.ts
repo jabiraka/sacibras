@@ -324,6 +324,17 @@ export interface MetricaEstados {
   ano_previsto?: number | null;
   /** Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. */
   marcas?: { valor: number; rotulo: string }[];
+  /** Só no PIB trimestral dos estados: a métrica em cada trimestre, do mais novo ao mais antigo. */
+  periodos?: PeriodoDaMetrica[];
+}
+
+export interface PeriodoDaMetrica {
+  referencia: string;
+  valores: Record<string, number | null>;
+  brasil: number | null;
+  intervalos?: Record<string, [number, number]>;
+  /** A frase do período, que vai antes da descrição ("No 2º tri/2026, o PIB do Brasil…"). */
+  nota?: string;
 }
 
 /** Uma conta do estado no fim de cada ano: {ano: valor}. */

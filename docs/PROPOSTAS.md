@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 15/11/2026. Na sessão da nuvem de 15/11 entrou quase tudo o que estava
+Última atualização: 15/11/2026 (segunda sessão do dia: PIB trimestral por estado). Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava
 aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -47,6 +47,11 @@ repetido no PROXIMOS-PASSOS.
 
 **Estados**
 - Mínimos de saúde e educação (SIOPS e SIOPE; **do PC**).
+- PIB trimestral por estado (feito em 15/11/2026, no branch, à espera do Caio). O que ficou
+  de fora: o IBC-R de MT, MS, RN e MA (conferir os códigos no SGS); a série do estado no tempo
+  na ficha ("Um estado por dentro"); a conferência automática contra os institutos estaduais
+  (o arquivo muda de nome a cada trimestre); e agropecuária por estado para corrigir o
+  trimestre da safra (LSPA), onde a conta mais erra (RS, MT).
 
 **Setor externo**
 - Preço × quantidade das exportações (índices do MDIC; **do PC**, certificado vencido).

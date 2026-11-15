@@ -28,7 +28,8 @@ from sacibras.catalogo import (
     SGS,
 )
 from sacibras.fontes import comexstat, ibge_contas_regionais, ibge_projecao, ibge_sidra
-from sacibras.schema import BlocoDeConta, Cartao, Fatia, MetricaEstados
+from sacibras.modelos import pib_estados
+from sacibras.schema import BlocoDeConta, Cartao, Fatia, MetricaEstados, PeriodoDaMetrica
 from sacibras.secoes.base import br, periodo
 from sacibras.tipos import Ponto
 
@@ -318,6 +319,177 @@ def ibcr(
         como_ler=como_ler,
     )
     return [doze, previa]
+
+
+# ------------------------------------------------------------------ PIB trimestral (estimativa)
+
+PIB_TRIMESTRAL = (1620, 583, "c11255/90707")
+"""SIDRA 1620, variável 583: série encadeada do índice de volume trimestral do PIB do Brasil
+(média de 1995 = 100, sem ajuste sazonal), a mesma de `demografia.PIB_VOLUME`."""
+FONTE_PIB_TRIMESTRAL = "IBGE, Contas Nacionais Trimestrais (SIDRA 1620)"
+
+
+def pib_trimestral(
+    ufs: UFs,
+    sgs: Callable[[str], list[Ponto]],
+    pib_brasil: list[Ponto],
+    edicao: int,
+    corrente: dict[str, dict[int, float]],
+    volume: dict[str, dict[int, float]],
+) -> list[MetricaEstados]:
+    """PIB trimestral de cada estado, estimativa nossa (`modelos/pib_estados.py`): o
+    crescimento contra o mesmo trimestre do ano anterior e a contribuição de cada estado para
+    o crescimento do Brasil, em cada trimestre desde 2011.
+
+    `pib_brasil` é o índice de volume trimestral do país; `corrente` e `volume` são as
+    Contas Regionais (por nome do local, com "Brasil"). A faixa de erro só existe nos
+    trimestres depois do último ano oficial: nos anteriores, o ano já fecha com o IBGE.
+    """
+    por_nome = _por_nome(ufs)
+    siglas = [s for _, s, _, _ in ufs]
+    regiao = {s: REGIOES[r] for _, s, _, r in ufs}
+    proprio = {s: pib_estados.trimestral(sgs(f"IBCR_{s}")) for s in IBCR_UF}
+    da_regiao = {r: pib_estados.trimestral(sgs(f"IBCR_REGIAO_{r}")) for r in IBCR_REGIAO}
+    serie = {s: proprio.get(s) or da_regiao[regiao[s]] for s in siglas}
+    brasil = dict(pib_brasil)
+    primeiro = min(volume["Brasil"])
+    trimestres = sorted(
+        t for t in brasil if t.year >= primeiro and all(t in serie[s] for s in siglas)
+    )
+    if len(trimestres) < 12 or (trimestres[0].month, len(set(trimestres))) != (1, len(trimestres)):
+        raise ValueError("PIB trimestral dos estados: série curta ou sem o 1º trimestre")
+    indicador = {s: [serie[s][t] for t in trimestres] for s in siglas}
+    pib = [brasil[t] for t in trimestres]
+    vol = {s: volume[n] for n, s in por_nome.items()}
+    cor = {s: corrente[n] for n, s in por_nome.items()}
+    e = pib_estados.estimar(trimestres, indicador, vol, cor, pib, corrente["Brasil"])
+    cresc = {s: pib_estados.crescimento(e.indice[s]) for s in siglas}
+    contrib = pib_estados.contribuicoes(e, pib)
+    cresc_br = pib_estados.crescimento(pib)
+
+    # A faixa: quanto o número do trimestre mudou quando saiu o PIB oficial do ano.
+    revisoes = pib_estados.revisoes(trimestres, indicador, vol, cor, pib, corrente["Brasil"], e)
+    sem_indice = sorted(s for s in siglas if s not in IBCR_UF)
+    faixa: dict[str, tuple[float, float]] = {}
+    como_ler = ""
+    com = [x for s in IBCR_UF for x in revisoes[s]]
+    sem = [x for s in sem_indice for x in revisoes[s]]
+    if len(com) >= MINIMO_DE_ERROS and len(sem) >= MINIMO_DE_ERROS:
+        f_com = (_quantil(com, 0.1), _quantil(com, 0.9))
+        f_sem = (_quantil(sem, 0.1), _quantil(sem, 0.9))
+        faixa = {s: f_sem if s in sem_indice else f_com for s in siglas}
+        como_ler = (
+            "O traço é a faixa de erro. Refizemos a conta como se o IBGE ainda não tivesse "
+            "publicado o PIB do ano: em 8 de cada 10 trimestres, o número refeito depois do "
+            f"oficial ficou entre {br(abs(f_com[0]))} ponto abaixo e {br(f_com[1])} acima do "
+            "estimado antes; nos estados sem IBC-R (ponto vazado), entre "
+            f"{br(abs(f_sem[0]))} abaixo e {br(f_sem[1])} acima. O teste não vê o erro de "
+            "repartir o ano entre os trimestres: seca ou safra forte num estado pode cair no "
+            "trimestre errado."
+        )
+
+    def periodos(
+        valores: dict[str, list[float | None]],
+        casas: int,
+        largura: Callable[[str, int], float],
+        brasil_no_ranking: bool,
+    ) -> list[PeriodoDaMetrica]:
+        """Do trimestre mais novo ao mais antigo. `largura` multiplica a faixa de erro (1 no
+        crescimento; a fatia do estado na contribuição)."""
+        saida = []
+        for t in range(len(trimestres) - 1, 3, -1):
+            tri = trimestres[t]
+            estimado = tri.year > e.ultimo_oficial
+            vals = {s: valores[s][t] for s in siglas}
+            do_brasil = cresc_br[t]
+            nota = ""
+            if do_brasil is not None and not brasil_no_ranking:
+                nota = (
+                    f"No {periodo(tri, 'T')}, o PIB do Brasil "
+                    f"{'cresceu' if do_brasil >= 0 else 'caiu'} {br(abs(do_brasil))} % contra o "
+                    f"mesmo trimestre de {tri.year - 1} (IBGE): é a soma dos 27 estados."
+                )
+            saida.append(
+                PeriodoDaMetrica(
+                    referencia=periodo(tri, "T") + (" (estimativa)" if estimado else ""),
+                    valores={s: None if v is None else round(v, casas) for s, v in vals.items()},
+                    brasil=round(do_brasil, casas)
+                    if brasil_no_ranking and do_brasil is not None
+                    else None,
+                    intervalos={
+                        s: (
+                            round(v + faixa[s][0] * largura(s, t), casas),
+                            round(v + faixa[s][1] * largura(s, t), casas),
+                        )
+                        for s, v in vals.items()
+                        if estimado and v is not None and s in faixa
+                    },
+                    nota=nota,
+                )
+            )
+        return saida
+
+    codigos = ", ".join(str(SGS[f"IBCR_{s}"].codigo) for s in sorted(IBCR_UF))
+    cods_reg = ", ".join(str(SGS[f"IBCR_REGIAO_{c}"].codigo) for c in REGIOES.values())
+    fonte = (
+        f"Conta nossa sobre {ibge_contas_regionais.FONTE} (edição {edicao}), "
+        f"{FONTE_PIB_TRIMESTRAL} e Banco Central, IBC-R (SGS {codigos}; regiões: {cods_reg})"
+    )
+    metodo = (
+        "O IBGE não publica PIB trimestral por estado: só o do Brasil, a cada trimestre, e o "
+        f"dos estados uma vez por ano (o último é {e.ultimo_oficial}). A conta reparte o PIB "
+        "trimestral do Brasil entre os estados pelo IBC-R do Banco Central, fechando com o "
+        f"PIB oficial de cada estado até {e.ultimo_oficial}; os {len(sem_indice)} estados sem "
+        "IBC-R (ponto vazado) andam como a região. Não é número oficial."
+    )
+    p_cresc = periodos(cresc, 2, lambda s, t: 1.0, True)
+    p_contrib = periodos(contrib, 3, lambda s, t: e.pesos[s][t], False)
+    return [
+        MetricaEstados(
+            id="pib_trimestre",
+            nome="PIB no trimestre (estimativa)",
+            descricao=(
+                "Estimativa nossa de quanto a economia do estado cresceu no trimestre contra "
+                f"o mesmo trimestre do ano anterior. {metodo}"
+            ),
+            unidade="%",
+            casas=1,
+            referencia=p_cresc[0].referencia,
+            maior_e_melhor=True,
+            fonte=fonte,
+            valores=p_cresc[0].valores,
+            brasil=p_cresc[0].brasil,
+            grupo=ECONOMIA,
+            intervalos=p_cresc[0].intervalos,
+            estimados=sem_indice,
+            como_ler=como_ler,
+            periodos=p_cresc,
+        ),
+        MetricaEstados(
+            id="pib_trimestre_contribuicao",
+            nome="Contribuição para o PIB do Brasil (estimativa)",
+            descricao=(
+                "Quantos pontos do crescimento do PIB do Brasil vieram de cada estado: o peso "
+                f"do estado na economia vezes o quanto ele cresceu. {metodo}"
+            ),
+            unidade="ponto percentual",
+            casas=2,
+            referencia=p_contrib[0].referencia,
+            maior_e_melhor=None,
+            fonte=fonte,
+            valores=p_contrib[0].valores,
+            grupo=ECONOMIA,
+            intervalos=p_contrib[0].intervalos,
+            estimados=sem_indice,
+            como_ler=como_ler
+            and (
+                "O traço é a faixa de erro: a do crescimento do estado (veja a métrica "
+                '"PIB no trimestre") vezes o peso dele na economia do país. Estado grande '
+                "pesa mais, e por isso o traço dele é mais largo."
+            ),
+            periodos=p_contrib,
+        ),
+    ]
 
 
 # ------------------------------------------------------------------ PNAD por UF

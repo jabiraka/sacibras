@@ -135,6 +135,53 @@ def test_estado_sem_ibcr_cresce_como_a_regiao_com_a_faixa_do_teste() -> None:
     assert "cresce como a região" in previa.descricao
 
 
+def test_pib_trimestral_reparte_o_pib_do_brasil_e_so_poe_faixa_depois_do_oficial() -> None:
+    # IBC-R: 0,5 % por trimestre nos estados e 1 % nas regiões, de 2010 a jun/2026.
+    def sgs(chave: str) -> list[Ponto]:
+        taxa = 0.01 if chave.startswith("IBCR_REGIAO_") else 0.005
+        return _meses(date(2010, 1, 1), [100.0 * (1 + taxa) ** (i // 3) for i in range(198)])
+
+    # O oficial (até 2024): 2 % ao ano em quem tem IBC-R; 4 %, e 6 % nos anos pares, nos outros.
+    anos = range(2010, 2025)
+    volume: dict[str, dict[int, float]] = {}
+    for _, sigla, nome, _ in UFS:
+        nivel, serie = 100.0, {2010: 100.0}
+        for a in range(2011, 2025):
+            nivel *= 1.02 if sigla in IBCR_UF else (1.06 if a % 2 == 0 else 1.04)
+            serie[a] = nivel
+        volume[nome] = serie
+    corrente = {n: {a: 1000.0 * volume[n][a] / 100 for a in anos} for n in NOMES}
+    corrente["Brasil"] = {a: sum(corrente[n][a] for n in NOMES) for a in anos}
+    volume["Brasil"] = {a: 100 * corrente["Brasil"][a] / corrente["Brasil"][2010] for a in anos}
+    # O PIB trimestral do Brasil: 0,7 % por trimestre, até o 2º tri/2026.
+    pib_brasil = [(date(2010 + i // 4, 3 * (i % 4) + 1, 1), 170.0 * 1.007**i) for i in range(66)]
+
+    cresc, contrib = estados_economia.pib_trimestral(UFS, sgs, pib_brasil, 2024, corrente, volume)
+    assert (cresc.id, contrib.id) == ("pib_trimestre", "pib_trimestre_contribuicao")
+    assert cresc.referencia == "2º tri/2026 (estimativa)" and cresc.grupo == "Economia"
+    assert len(cresc.estimados) == 14 and "MT" in cresc.estimados and "SP" not in cresc.estimados
+    assert all(v is not None for v in cresc.valores.values())
+    assert cresc.brasil == pytest.approx((1.007**4 - 1) * 100, abs=0.01)
+    # Quem não tem IBC-R anda pela região, que cresce mais.
+    assert cresc.valores["MT"] > cresc.valores["SP"]  # type: ignore[operator]
+    # Um período por trimestre desde 2011, do mais novo ao mais antigo; o primeiro é o de cima.
+    assert len(cresc.periodos) == 62 and cresc.periodos[0].valores == cresc.valores
+    assert cresc.periodos[-1].referencia == "1º tri/2011"
+    # A faixa de erro só existe depois do último ano oficial (2025 e 2026: seis trimestres).
+    assert [bool(p.intervalos) for p in cresc.periodos] == [True] * 6 + [False] * 56
+    de, ate = cresc.intervalos["SP"]
+    assert de <= cresc.valores["SP"] <= ate  # type: ignore[operator]
+    assert "8 de cada 10" in cresc.como_ler and "IBC-R" in cresc.descricao
+    # As contribuições somam o crescimento do Brasil em todo trimestre.
+    for p_contrib, p_cresc in zip(contrib.periodos, cresc.periodos, strict=True):
+        soma = sum(v for v in p_contrib.valores.values() if v is not None)
+        assert soma == pytest.approx(p_cresc.brasil, abs=0.02)
+        assert p_contrib.brasil is None and "é a soma dos 27 estados" in p_contrib.nota
+    # A faixa da contribuição é a do crescimento vezes o peso: mais estreita que a do estado.
+    c_de, c_ate = contrib.intervalos["SP"]
+    assert 0 < c_ate - c_de < ate - de
+
+
 def test_crescimento_anual_ignora_ano_incompleto() -> None:
     pontos = _meses(date(2024, 1, 1), [100.0] * 12 + [105.0] * 12 + [110.0] * 8)
     assert estados_economia.crescimento_anual(pontos) == {2025: pytest.approx(5.0)}
@@ -178,7 +225,15 @@ def test_metricas_saem_na_ordem_dos_grupos(monkeypatch: pytest.MonkeyPatch) -> N
     def cai(*a: Any, **k: Any) -> Any:
         raise estados.siconfi.FonteForaDoArError("fora")
 
-    for nome in ("ibcr", "inflacao", "exportacoes", "concentracao", "trabalho", "credito"):
+    for nome in (
+        "ibcr",
+        "pib_trimestral",
+        "inflacao",
+        "exportacoes",
+        "concentracao",
+        "trabalho",
+        "credito",
+    ):
         monkeypatch.setattr(estados_economia, nome, cai)
     deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)

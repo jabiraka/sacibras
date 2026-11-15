@@ -24,7 +24,7 @@ import {
 } from "./pontos";
 import { montarFicha, type Regiao } from "./ficha";
 import { remarcar } from "./glossario";
-import type { Estados, EstadosContas, MetricaEstados } from "./tipos";
+import type { Estados, EstadosContas, MetricaEstados, PeriodoDaMetrica } from "./tipos";
 import { protegerNomeDeEstado } from "./traducao";
 
 type PropriedadesUF = { uf: string; area: number };
@@ -141,6 +141,55 @@ function naJanela(m: MetricaEstados, todas: MetricaEstados[]): MetricaEstados {
         ? "Ponto vazado: estado sem IBC-R, que no último ano cresce como a região."
         : "",
   };
+}
+
+// O PIB trimestral dos estados (estimativa nossa) vem com um valor por trimestre: a pessoa
+// escolhe o trimestre numa lista (Caio, 15/11/2026: "a decomposição do PIB por estados em cada
+// trimestre"). A escolha vale para as métricas que têm o mesmo trimestre e fica ao trocar.
+let trimestre = "";
+
+function periodoDe(m: MetricaEstados): PeriodoDaMetrica | undefined {
+  return m.periodos?.find((p) => p.referencia === trimestre) ?? m.periodos?.[0];
+}
+
+/** A métrica no trimestre escolhido; sem `periodos`, passa como veio. */
+function noTrimestre(m: MetricaEstados): MetricaEstados {
+  const p = periodoDe(m);
+  if (!p) return m;
+  const semFaixa = !Object.keys(p.intervalos ?? {}).length;
+  return {
+    ...m,
+    descricao: p.nota ? `${p.nota} ${m.descricao}` : m.descricao,
+    referencia: p.referencia,
+    valores: p.valores,
+    brasil: p.brasil,
+    intervalos: p.intervalos,
+    // Ano que o IBGE já publicou: a soma do ano fecha com o oficial e não há faixa a mostrar.
+    como_ler: semFaixa
+      ? "Neste trimestre, a soma do ano já fecha com o PIB oficial do estado (IBGE); só a divisão entre os trimestres é estimada. Ponto vazado: estado sem IBC-R, repartido pelo índice da região."
+      : m.como_ler,
+  };
+}
+
+/** A lista "Trimestre"; some quando a métrica só tem um período. */
+function controleDoTrimestre(
+  id: string,
+  aoMudar: () => void,
+): { caixa: HTMLElement; pintar: (m: MetricaEstados | undefined) => void } {
+  const lista = listaSuspensa(id, "Trimestre", [], "", (v) => {
+    trimestre = v;
+    aoMudar();
+  });
+  function pintar(m: MetricaEstados | undefined): void {
+    const periodos = m?.periodos ?? [];
+    lista.caixa.hidden = periodos.length < 2;
+    if (!m || periodos.length < 2) return;
+    lista.trocar(
+      periodos.map((p) => ({ valor: p.referencia, rotulo: p.referencia })),
+      periodoDe(m)?.referencia ?? "",
+    );
+  }
+  return { caixa: lista.caixa, pintar };
 }
 
 /** As listas "Crescimento de" e "até"; somem quando a métrica não tem série. */
@@ -298,12 +347,14 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   const comRanking = parte === "mapa";
   const barra = el("div", "barra-controles");
   const janelaMapa = controlesDaJanela("estados-janela", () => pintar());
+  const trimestreMapa = controleDoTrimestre("estados-trimestre", () => pintar());
   barra.append(
     listaSuspensa("estados-metrica", "Métrica", opcoes, escolhida.id, (id) => {
       escolhida = e.metricas.find((m) => m.id === id) ?? escolhida;
       pintar();
     }).caixa,
     janelaMapa.caixa,
+    trimestreMapa.caixa,
   );
   const sobre = el("p", "secao-resumo");
   const grade = el("div", comRanking ? "mundo-grade" : "estados-so-mapa");
@@ -424,8 +475,9 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   }
 
   function pintar(): void {
-    metrica = naJanela(escolhida, e.metricas);
+    metrica = noTrimestre(naJanela(escolhida, e.metricas));
     janelaMapa.pintar(escolhida);
+    trimestreMapa.pintar(escolhida);
     sobre.textContent = metrica.descricao;
     tituloMapa.textContent = metrica.nome;
     // O texto mudou: o glossário marca de novo (o "?" do título, o sublinhado da descrição).
