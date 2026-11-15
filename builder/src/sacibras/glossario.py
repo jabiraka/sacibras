@@ -471,6 +471,13 @@ TERMOS: list[Termo] = [
         "#juros",
     ),
     Termo(
+        "tips",
+        "TIPS",
+        "O título do Tesouro americano que paga a inflação dos EUA mais um juro fixo: o "
+        "IPCA+ de lá. A taxa dele é o juro real americano.",
+        ("TIPS",),
+    ),
+    Termo(
         "premio-de-prazo",
         "Prêmio de prazo",
         "O juro a mais que se cobra para emprestar por mais tempo, pelo risco de as coisas "
@@ -602,6 +609,22 @@ TERMOS: list[Termo] = [
         "tendência de longo prazo. Muito acima de zero, o crédito cresceu rápido demais, o "
         "que costuma vir antes de crise bancária.",
         ("hiato de crédito",),
+    ),
+    Termo(
+        "indice-de-liquidez",
+        "Índice de Liquidez",
+        "Conta do Banco Central: o dinheiro de pronto dos bancos (caixa e títulos fáceis de "
+        "vender) sobre o que eles poderiam perder em 30 dias de saques fortes. Acima de 1, "
+        "sobra.",
+        ("Índice de Liquidez",),
+    ),
+    Termo(
+        "lcr",
+        "LCR",
+        "Indicador de Liquidez de Curto Prazo, a regra internacional de Basileia: ativos "
+        "líquidos sobre as saídas de 30 dias de estresse, em %. Abaixo de 100 %, o banco não "
+        "aguentaria sozinho.",
+        ("LCR",),
     ),
     Termo(
         "servico-da-divida",

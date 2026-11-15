@@ -535,8 +535,9 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "mercado-externo",
             "Mercado e contas externas",
-            "Volatilidade, nota de crédito, reservas e dívida externa.",
+            "Volatilidade, juro real contra os EUA, nota de crédito, reservas e dívida externa.",
             cartoes=[
+                "juro-real-brasil-eua",
                 "vol-dolar",
                 "queda-ibovespa",
                 "nota-de-credito",
@@ -545,6 +546,7 @@ PARTES: dict[str, list[Parte]] = {
                 "swaps-cambiais",
             ],
             graficos=[
+                "juro-real-brasil-eua",
                 "vol-dolar",
                 "queda-ibovespa",
                 "cambio-real",

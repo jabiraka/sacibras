@@ -437,7 +437,8 @@ function vistaPaises(alertas: Alerta[], d: Dados, grupo: string): HTMLElement[] 
       "nota",
       "Cada linha põe o Brasil entre os outros países no mesmo número, da mesma fonte e do " +
         "mesmo ano (o último que o FMI já dá como realizado; o juro, no último mês do BIS; o " +
-        "crédito privado, no último trimestre que o BIS publicou de cada país). " +
+        "crédito privado, no último trimestre que o BIS publicou de cada país; o câmbio, nos " +
+        "últimos 21 dias úteis do BIS). " +
         "\"Pior que 97 %\" quer dizer que 97 % dos países do grupo estão melhor que o Brasil; " +
         "▲ a partir de 80 %. A régua vai do 5º ao 95º percentil dos " +
         "países, para um caso extremo não esconder o resto.\n\n" +

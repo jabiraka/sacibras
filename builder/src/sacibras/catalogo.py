@@ -451,6 +451,26 @@ SGS: dict[str, SerieSGS] = {
     "CAPITAL_PRINCIPAL": SerieSGS(
         29663, "Índice de Capital Principal no Sistema Financeiro Nacional", "%", "M", "14/11/2026"
     ),
+    # Liquidez dos bancos. O CKAN não lista (count 0); conferidas em 15/11/2026 no serviço de
+    # metadados do SGS (FachadaWSSGS, getUltimoValorXML): 29407 "Índice de Liquidez", T,
+    # "Índice" (2º tri/2026: 2,38; desde o 4º tri/2015); 29408 "Indicador de Liquidez de Curto
+    # Prazo (LCR)", T, "%" (2º tri/2026: 197,3; desde o 1º tri/2016). As duas são as do
+    # Relatório de Estabilidade Financeira: ativos líquidos sobre as saídas de 30 dias de
+    # estresse (o IL, conta do BC; acima de 1, sobra) e o LCR de Basileia. O lado ruim é o
+    # baixo. O vizinho 29409 é o NSFR (liquidez de longo prazo), fora daqui.
+    "LIQUIDEZ_IL": SerieSGS(
+        29407, "Índice de Liquidez do sistema bancário", "índice", "T", "15/11/2026"
+    ),
+    "LIQUIDEZ_LCR": SerieSGS(
+        29408, "Indicador de Liquidez de Curto Prazo (LCR)", "%", "T", "15/11/2026"
+    ),
+    # A meta de cada ano, para medir a distância da expectativa e da inflação implícita. O CKAN
+    # não lista; conferida em 15/11/2026 no serviço de metadados do SGS: "Meta para a
+    # inflação", A, "%" (de 8,00 em 1999 a 3,00 em 2026; bate com a Resolução CMN 5.141 de
+    # `leis.META_CONTINUA`).
+    "META_INFLACAO": SerieSGS(
+        13521, "Meta para a inflação (centro), por ano", "%", "A", "15/11/2026"
+    ),
 }
 
 # ---- estados. Conferidas uma a uma em 14/11/2026 no serviço de metadados do próprio SGS

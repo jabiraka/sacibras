@@ -143,6 +143,21 @@ EXPLICACOES: dict[str, Explicacao] = {
         "Difusão alta quer dizer alta de preços generalizada, não de poucos produtos.",
         "Inflação mais persistente, que custa mais juros para cair.",
     ),
+    "expectativa-12m": Explicacao(
+        "Quanto o mercado espera de inflação para os próximos 12 meses (a mediana do Focus) "
+        "menos a meta desses meses, em pontos percentuais.",
+        "Se as pessoas passam a esperar inflação acima da meta, reajustam preços e salários "
+        "por ela, e a inflação vem mesmo.",
+        "Juros altos por mais tempo para trazer as expectativas de volta à meta.",
+    ),
+    "implicita-longa": Explicacao(
+        "A inflação média por ano dos próximos 8 anos que o preço dos títulos do Tesouro "
+        "embute (prefixado contra IPCA+) menos a meta desses anos.",
+        "Mostra se quem empresta ao governo por muitos anos acredita que a meta será "
+        "cumprida; inclui um prêmio pelo risco de errar.",
+        "Juro longo mais alto para o governo, as empresas e o crédito imobiliário, e menos "
+        "força do Banco Central para baixar a inflação.",
+    ),
     # ---------------------------------------------------------------- crédito e bancos
     "inadimplencia": Explicacao(
         "A parte do crédito com parcela atrasada há mais de 90 dias.",
@@ -187,6 +202,30 @@ EXPLICACOES: dict[str, Explicacao] = {
         "pelo risco.",
         "É o colchão que absorve os prejuízos; perto do mínimo, o banco tem pouca folga.",
         "Bancos cortando crédito para se proteger e, no limite, risco de quebra.",
+    ),
+    "hiato-credito": Explicacao(
+        "Quanto o crédito a famílias e empresas, em proporção do PIB, está acima ou abaixo da "
+        "tendência de longo prazo, pela conta do BIS.",
+        "Crédito crescendo muito acima da tendência quer dizer gente e empresas se "
+        "endividando mais rápido do que a economia aguenta.",
+        "No mundo, hiatos altos costumam vir antes de crises bancárias: calotes em série, "
+        "bancos cortando crédito e recessão.",
+    ),
+    "liquidez": Explicacao(
+        "Quanto dinheiro de pronto os bancos têm (caixa e títulos fáceis de vender) sobre o "
+        "que poderiam perder em 30 dias de corrida aos saques, pela conta do Banco Central. "
+        "Acima de 1, sobra.",
+        "Banco com pouco dinheiro de pronto pode não conseguir pagar os saques numa "
+        "desconfiança, mesmo tendo capital.",
+        "Bancos vendendo ativos às pressas, crédito cortado e, no limite, o Banco Central "
+        "socorrendo bancos.",
+    ),
+    "liquidez-lcr": Explicacao(
+        "A mesma ideia do Índice de Liquidez, na regra internacional de Basileia (LCR): ativos "
+        "líquidos sobre as saídas de 30 dias de estresse, em %.",
+        "Abaixo de 100 %, o banco não aguentaria sozinho 30 dias de saques fortes.",
+        "Bancos segurando crédito para guardar caixa e mais dependência do Banco Central "
+        "numa crise.",
     ),
     # ---------------------------------------------------------------- mercado
     "vol-dolar": Explicacao(

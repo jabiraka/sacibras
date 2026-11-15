@@ -3,6 +3,12 @@
 Uma chamada traz todos os países e indicadores pedidos, com o realizado e as projeções da
 edição corrente (abril e outubro de cada ano). A data da edição vem no atributo
 PUBLICATION_DATE; o último ano realizado de cada série, em LATEST_ACTUAL_ANNUAL_DATA.
+
+Da mesma API, os conjuntos do departamento de estatística (IMF.STA), anuais e com todos os
+países numa chamada (testados em 15/11/2026): reservas internacionais (IL,
+`<país>.TRGMV_REVS.USD.A`, total com o ouro a preço de mercado, US$, no fim do ano) e
+importação de bens e serviços do balanço de pagamentos (BOP, `<país>.DB_T.GS.USD.A`, US$ no
+ano). Valores em dólares, sem multiplicador.
 """
 
 from __future__ import annotations
@@ -14,6 +20,9 @@ from typing import Any
 from sacibras.rede import baixar_json
 
 BASE = "https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO,9.0.0"
+BASE_STA = "https://api.imf.org/external/sdmx/2.1/data/IMF.STA,"
+RESERVAS = ("IL", "TRGMV_REVS.USD.A")
+IMPORTACOES = ("BOP", "DB_T.GS.USD.A")
 HIERARQUIAS = "https://api.imf.org/external/sdmx/2.1/hierarchicalcodelist/all/all/latest"
 HIERARQUIA_PAISES = "H_WEO_COUNTRIES"
 
@@ -68,6 +77,37 @@ def weo(paises: list[str], indicadores: list[str], inicio: int, fim: int) -> Weo
     )
     quando = date.fromisoformat(publicado[:10]) if publicado else date.today()
     return Weo(quando, valores, realizado)
+
+
+def anuais_por_pais(bruto: dict[str, Any]) -> dict[str, dict[int, float]]:
+    """{país: {ano: valor}} de uma resposta SDMX-JSON com o país na primeira dimensão e uma
+    série só por país."""
+    estrutura, dados = bruto["structure"], bruto["dataSets"][0]
+    paises = estrutura["dimensions"]["series"][0]["values"]
+    anos = [int(v["id"][:4]) for v in estrutura["dimensions"]["observation"][0]["values"]]
+    saida: dict[str, dict[int, float]] = {}
+    for chave, serie in dados["series"].items():
+        iso = paises[int(chave.split(":")[0])]["id"]
+        saida[iso] = {
+            anos[int(t)]: float(obs[0])
+            for t, obs in serie["observations"].items()
+            if obs and obs[0] not in (None, "")
+        }
+    return saida
+
+
+def estatistica(conjunto: tuple[str, str], inicio: int) -> dict[str, dict[int, float]]:
+    """{ISO3: {ano: valor}} de todos os países num conjunto do IMF.STA (`RESERVAS`,
+    `IMPORTACOES`)."""
+    fluxo, resto = conjunto
+    bruto = baixar_json(
+        f"{BASE_STA}{fluxo}/.{resto}",
+        params={"startPeriod": str(inicio)},
+        cabecalhos={"Accept": "application/json"},
+        validade=24 * 3600,
+        tempo_limite=120,
+    )
+    return anuais_por_pais(bruto)
 
 
 def _codigo(no: dict[str, Any]) -> str:
