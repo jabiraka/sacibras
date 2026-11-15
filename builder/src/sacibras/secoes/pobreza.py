@@ -1009,12 +1009,19 @@ def topo_no_tempo() -> Grafico:
         id_: [(date(a, 1, 1), receita_centis.fatia(c, numeros)) for a, c in por_ano.items()]
         for id_, _, numeros in TOPO_NO_TEMPO
     }
-    series_ = [serie(id_, nome, fatias[id_], casas=1) for id_, nome, _ in TOPO_NO_TEMPO]
     anos = list(por_ano)
+    # Ano fora da curva fica em branco nas três linhas: o salto do 0,01 % infla também a renda
+    # total do ano (2018: R$ 948 bi no 0,01 %, contra 115 e 162 nos vizinhos, e a renda total
+    # de R$ 3,9 tri contra 2,9 e 3,3), então as outras fatias do ano também saem tortas.
     saltos = fora_da_curva(fatias[TOPO_NO_TEMPO[-1][0]])
+    fora = {d for d, _ in saltos}
+    series_ = [
+        serie(id_, nome, [(d, v) for d, v in fatias[id_] if d not in fora], casas=1)
+        for id_, nome, _ in TOPO_NO_TEMPO
+    ]
     aviso = "".join(
-        f" Em {d.year}, a fatia do 0,01 % de cima salta para {br(v)} % e volta no ano seguinte: "
-        "é o que está no arquivo da Receita, que não explica o salto."
+        f" {d.year} fica em branco: no arquivo da Receita, a fatia do 0,01 % de cima salta "
+        f"para {br(v)} % e volta no ano seguinte, sem explicação; parece erro no arquivo."
         for d, v in saltos
     )
     return grafico(
