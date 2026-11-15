@@ -5,8 +5,8 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 15/11/2026 (segunda sessão do dia: PIB trimestral por estado e decomposições). Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava
-aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
+Última atualização: 15/11/2026 (por último, o PIB trimestral por estado e as decomposições).
+Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
 busca, tradução e acabamento). Abaixo, só o que ficou: o que depende do PC está marcado e
@@ -23,6 +23,14 @@ repetido no PROXIMOS-PASSOS.
   simuladores.
 - **Previsões próprias** (15/11/2026, *"sem próprias previsões por enquanto"*): IPCA e
   desocupação por modelo sazonal e o PIB agora com indústria, varejo e serviços.
+- **FGV IBRE** (15/11/2026; Caio: *"podemos só mostrar se for permitido"*): os termos de
+  uso vedam reproduzir e divulgar sem autorização
+  ([FONTES](FONTES.md#licença-do-dado-o-privado-só-vai-à-tela-se-a-licença-deixar-e-nunca-com-download)).
+  Saíram da tela o IGP-M (Inflação › Outros índices) e a utilização da capacidade instalada
+  (Atividade); ficam fora a decomposição do IGP-M (IPA, IPC e INCC; o detalhe por grupo e
+  item é por assinatura) e o Observatório da Produtividade (PTF trimestral, por setor e
+  regional). A PTF anual entrou pela Penn World Table, de licença aberta. Com autorização
+  por escrito: `mostra=True` em `licencas.FGV_IBRE` e os gráficos de volta.
 
 ## Falta, por assunto
 
@@ -78,6 +86,31 @@ oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de f
 - Domínio (com ele, trocar `ENDERECO` em `web/vite.config.ts` e `anterior.SITE`).
 - Agenda: as reuniões do Copom na caixa "O que sai esta semana" (não há API de datas
   futuras; só lendo o calendário publicado pelo BC).
+
+## Achados da revisão das telas (15/11/2026)
+
+Caio: *"toque nas telas, veja se consegue pensar em algo que está faltando ou alguma tela
+quebrando [...] que eles encontrem oq estão procurando"*. Corrigido: o menu lateral que
+escondia Previsões e Riscos, a busca (palavras de ligação, busca por parte das palavras,
+linhas das tabelas curtas, IPCA por grupo, o glossário), o número separado do "%" na quebra
+de linha, as frases do PIB dos estados e da Selic, as tabelas no celular (sombra na borda
+enquanto há coluna escondida; as que passavam 10 px agora cabem) e a página do glossário
+(`#glossario`, no menu e no rodapé). E o que a busca procurava e o painel não tinha (Caio,
+15/11/2026: *"coloque os itens que as pessoas procuram e o painel não tem"*): o juro de cada
+modalidade das pessoas físicas, do cartão rotativo ao consignado (Crédito › Volume e custo);
+o salário mínimo, em reais, e um comparador contra o IPCA no período que a pessoa escolhe,
+com os prazos fixos de 1, 5, 10 e 20 anos e desde 1995 e o gráfico do mínimo do início
+corrigido pela inflação (Trabalho › Renda); os 15 subitens que mais
+pesam no IPCA e a gasolina, a luz e o aluguel em 12 meses (Inflação › Por tipo de preço); e
+o IPCA-15 no gráfico dos outros índices. Fica:
+
+- **Estados** (Caio, 15/11/2026: *"anote [...] dos Estados em propostas mas não mexa"*; fica
+  para a sessão de Estados):
+  - a tela abre no crescimento do PIB de 2024, o número oficial mais novo, com quase dois
+    anos (a prévia de 2025 só aparece escolhendo em "até"). Abrir na desocupação do
+    trimestre, na prévia de 2025, ou deixar como está?
+  - o mapa, a 1280 px, ocupa meia largura e o resto fica vazio; as siglas dos estados
+    pequenos (RN, PB, PE, AL, SE, ES, RJ, DF) somem ou se sobrepõem.
 
 ## Em espera
 

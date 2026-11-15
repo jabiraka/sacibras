@@ -17,7 +17,7 @@ from typing import Literal
 
 from sacibras.schema import Categoria, Elo, Secao, Subcategoria
 
-Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]
+Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
 
 CATEGORIAS: list[Categoria] = [
     Categoria(
@@ -90,9 +90,9 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "confianca",
-            "Confiança e capacidade",
-            "Confiança do consumidor e uso da capacidade da indústria.",
-            graficos=["confianca", "uci"],
+            "Confiança do consumidor",
+            "Como o consumidor vê a economia agora e o que espera dela.",
+            graficos=["confianca"],
         ),
     ],
     "trabalho": [
@@ -112,9 +112,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "renda",
             "Renda",
-            "O rendimento médio e a massa de rendimento, já descontada a inflação.",
-            cartoes=["rendimento", "massa"],
+            "O rendimento médio e a massa de rendimento, já descontada a inflação, e o salário "
+            "mínimo.",
+            cartoes=["rendimento", "massa", "salario-minimo"],
             graficos=["rendimento", "massa"],
+            extras=["salario-minimo"],
         ),
         Parte(
             "quem-trabalha",
@@ -163,6 +165,23 @@ PARTES: dict[str, list[Parte]] = {
             "PIB por pessoa ocupada e por hora trabalhada, e de onde veio o crescimento.",
             cartoes=["produtividade", "produtividade-hora"],
             graficos=["produtividade", "crescimento-decomposto"],
+        ),
+        Parte(
+            "eficiencia",
+            "Eficiência (PTF)",
+            "De onde veio o crescimento desde 1955 (capital, horas, estudo e eficiência) e a "
+            "eficiência do Brasil contra a dos EUA e a de outros emergentes.",
+            cartoes=["ptf-eua", "ptf-desde-o-pico", "ptf-estimativa"],
+            graficos=["ptf-brasil", "ptf-paises"],
+            tabelas=["pwt-contabilidade"],
+            veja=[
+                Elo(
+                    endereco="#mundo/m-ptf",
+                    titulo="PTF no mundo",
+                    resumo="O Brasil ao lado de 120 países, e o produto por hora, o capital e "
+                    "o estudo de cada um.",
+                )
+            ],
         ),
     ],
     "pobreza": [
@@ -257,15 +276,16 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "grupos",
             "Por tipo de preço",
-            "Serviços, livres, administrados e cada grupo do IPCA.",
+            "Serviços, livres, administrados, cada grupo do IPCA e os itens que mais pesam, "
+            "como gasolina, luz e aluguel.",
             cartoes=["servicos-12m"],
-            graficos=["ipca-contribuicoes", "ipca-aberturas"],
-            tabelas=["ipca-grupos"],
+            graficos=["ipca-contribuicoes", "ipca-aberturas", "ipca-itens"],
+            tabelas=["ipca-grupos", "ipca-itens"],
         ),
         Parte(
             "outros-indices",
             "Outros índices e o Focus",
-            "INPC e IGP-M ao lado do IPCA, e o que o mercado espera.",
+            "O INPC ao lado do IPCA, e o que o mercado espera.",
             cartoes=["focus-ipca"],
             graficos=["outros-indices"],
         ),
@@ -319,9 +339,16 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "volume-custo",
             "Volume e custo",
-            "Quanto crédito há, quanto custa, o spread e a inadimplência.",
-            cartoes=["credito-pib", "credito-taxa", "credito-spread", "inadimplencia"],
-            graficos=["credito-pib", "credito-custo", "inadimplencia"],
+            "Quanto crédito há, quanto custa, o spread, a inadimplência e o juro de cada "
+            "modalidade, do cartão ao consignado.",
+            cartoes=[
+                "credito-pib",
+                "credito-taxa",
+                "credito-spread",
+                "inadimplencia",
+                "juro-cartao",
+            ],
+            graficos=["credito-pib", "credito-custo", "inadimplencia", "juros-modalidades"],
         ),
         Parte(
             "familias",
@@ -693,6 +720,8 @@ def aplicar(secao: Secao) -> list[str]:
         extras_da_secao.append("simulador-reforma")
     if secao.alertas:
         extras_da_secao.append("alertas")
+    if secao.salario_minimo:
+        extras_da_secao.append("salario-minimo")
     usados: dict[str, set[str]] = {k: set() for k in tem}
     subcategorias: list[Subcategoria] = []
     for p in partes:

@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
+from sacibras import licencas
 from sacibras.catalogo import SGS
 from sacibras.fontes import bcb_sgs
 from sacibras.schema import Cartao, Grafico, Procedencia, Serie
@@ -23,6 +24,8 @@ class Contexto:
 
     def sgs(self, chave: str, anos: int = 16) -> list[Ponto]:
         """A série do catálogo, dos últimos `anos` até hoje."""
+        if SGS[chave].origem and (motivo := licencas.nao_mostra(SGS[chave].origem)):
+            raise ValueError(f"{chave} não pode ir à tela: {motivo} (licencas.py)")
         if (chave, anos) not in self._sgs:
             inicio = date(self.hoje.year - anos, 1, 1)
             self._sgs[(chave, anos)] = bcb_sgs.ler(SGS[chave], inicio, self.hoje)
@@ -30,7 +33,8 @@ class Contexto:
 
     def fonte_sgs(self, *chaves: str) -> str:
         codigos = ", ".join(str(SGS[c].codigo) for c in chaves)
-        return f"Banco Central, SGS {codigos}"
+        origens = "".join(f"; {SGS[c].origem}" for c in chaves if SGS[c].origem)
+        return f"Banco Central, SGS {codigos}{origens}"
 
     def agora(self) -> datetime:
         return datetime.now(UTC)

@@ -428,16 +428,51 @@ font[style] {
     display: none;
   }
 
+  /* Numa tela de 1280 × 900, Previsões e Riscos ficavam abaixo da dobra do menu sem nada
+     dizer que ele rola (15/11/2026): itens mais juntos, e o texto se apaga na ponta enquanto
+     houver o que rolar para aquele lado (as classes vêm de `marcarRolagem` em main.ts). */
   .menu {
     display: block;
     flex: 1;
+    min-height: 0;
     max-height: none;
     margin: 0 -14px;
     padding: 0 14px 12px;
+    --apaga-cima: 0px;
+    --apaga-baixo: 0px;
+    -webkit-mask-image: linear-gradient(
+      transparent,
+      #000 var(--apaga-cima),
+      #000 calc(100% - var(--apaga-baixo)),
+      transparent
+    );
+    mask-image: linear-gradient(
+      transparent,
+      #000 var(--apaga-cima),
+      #000 calc(100% - var(--apaga-baixo)),
+      transparent
+    );
+  }
+
+  .menu.mais-acima {
+    --apaga-cima: 36px;
+  }
+
+  .menu.mais-abaixo {
+    --apaga-baixo: 56px;
+  }
+
+  .menu-inicio,
+  .menu-assunto {
+    padding: 5px 10px;
+  }
+
+  .menu-parte {
+    padding: 4px 10px 4px 12px;
   }
 
   .menu-grupo {
-    margin-top: 18px;
+    margin-top: 12px;
   }
 
   .idioma {
@@ -1500,7 +1535,15 @@ main {
   overflow: auto;
   border: 1px solid var(--borda);
   border-radius: 12px;
-  background: var(--superficie);
+  /* Sombra na borda direita enquanto houver coluna escondida (15/11/2026: a 390 px, 23
+     tabelas rolavam para o lado sem sinal). A primeira camada anda com o conteúdo e cobre a
+     sombra quando se chega ao fim; sem nada a rolar, cobre desde o começo. */
+  background:
+    linear-gradient(to left, var(--superficie) 40%, rgb(253 252 247 / 0)) right center / 36px
+      100% no-repeat local,
+    linear-gradient(to left, rgb(0 0 0 / 0.13), rgb(0 0 0 / 0)) right center / 18px 100%
+      no-repeat scroll,
+    var(--superficie);
 }
 
 /* Tabela guardada: abre no clique. */
@@ -1709,6 +1752,37 @@ table.dados thead th:first-child {
   table.dados td {
     padding: 7px 8px;
   }
+}
+
+/* Num celular de 390 px, várias tabelas passavam só 10 px da largura (o IPCA por grupo cortava
+   o "Peso no índice"): um pouco menos de folga entre as colunas e elas cabem. */
+@media (max-width: 420px) {
+  table.dados th,
+  table.dados td {
+    padding: 7px 5px;
+  }
+
+  table.dados th:first-child,
+  table.dados td:first-child {
+    padding-left: 10px;
+  }
+
+  /* 7,5 rem da primeira coluna e 4,5 rem de cada número davam 336 px numa caixa de 326. */
+  table.dados thead th {
+    min-width: 3.5rem;
+  }
+
+  table.dados thead th:first-child {
+    min-width: 0;
+  }
+
+  /* "tr" a mais: este bloco vem antes do de 520 px, que põe 7,5 rem. */
+  table.dados tbody tr th {
+    min-width: 7rem;
+  }
+}
+
+@media (max-width: 520px) {
 
   table.dados td.texto {
     min-width: 11.5rem;
@@ -3550,4 +3624,129 @@ table.dados.limites-tabela td {
 
 .ficha-tempo .barra-controles {
   margin-bottom: 8px;
+}
+
+/* ------------------------------------------------------------------ glossário (#glossario) */
+
+.rodape a {
+  color: var(--tinta-2);
+}
+
+.glossario-letras {
+  position: sticky;
+  top: 64px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 18px 0 16px;
+  padding: 8px 0;
+  background: color-mix(in srgb, var(--superficie) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glossario-letras .pilula {
+  min-width: 2.25rem;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.glossario-grupo {
+  margin-bottom: 14px;
+  padding: 18px 22px 10px;
+  border-radius: 20px;
+  scroll-margin-top: 130px;
+}
+
+.glossario-letra {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--tinta-3);
+}
+
+.glossario-grupo dl {
+  margin: 0;
+}
+
+.glossario-grupo dt {
+  margin-top: 12px;
+  font-weight: 500;
+  color: var(--tinta);
+  scroll-margin-top: 130px;
+}
+
+.glossario-grupo dd {
+  margin: 3px 0 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--fio);
+  line-height: 1.55;
+  color: var(--tinta-2);
+  max-width: 46rem;
+}
+
+.glossario-grupo dd:last-child {
+  border-bottom: 0;
+}
+
+.glossario-elo {
+  white-space: nowrap;
+  color: var(--verde);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .glossario-letras {
+    top: 0;
+  }
+
+  .glossario-grupo,
+  .glossario-grupo dt {
+    scroll-margin-top: 70px;
+  }
+}
+
+/* No celular, as letras em duas linhas (com três, a faixa parada comia a tela). */
+@media (max-width: 520px) {
+  .glossario-letras {
+    gap: 4px 3px;
+  }
+
+  .glossario-letras .pilula {
+    min-width: 1.65rem;
+    padding: 4px 0;
+    font-size: 0.8125rem;
+  }
+
+  .glossario-grupo,
+  .glossario-grupo dt {
+    scroll-margin-top: 150px;
+  }
+
+  .glossario-grupo {
+    padding: 16px 18px 8px;
+  }
+}
+
+/* Salário mínimo contra a inflação: "de" numa linha e "até" na outra, mês e ano lado a lado
+   (no celular, as quatro listas empilhadas comiam a tela). */
+.comparador-controles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.comparador-resumo {
+  margin: 14px 0 12px;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .comparador-controles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

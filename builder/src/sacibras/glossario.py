@@ -150,6 +150,41 @@ TERMOS: list[Termo] = [
         "#demografia",
     ),
     Termo(
+        "ptf",
+        "PTF (produtividade total dos fatores)",
+        "O quanto o país produz além do que explicam as máquinas, as horas trabalhadas e o "
+        "estudo de quem trabalha: tecnologia, organização, gente e capital no lugar certo. É "
+        "calculada como o que sobra da conta, por isso também sobe e desce com o ciclo.",
+        ("PTF", "produtividade total dos fatores", "eficiência da economia"),
+        "#demografia/eficiencia",
+    ),
+    Termo(
+        "capital-humano",
+        "Capital humano",
+        "O estudo de quem trabalha visto como um fator de produção. Na Penn World Table, um "
+        "índice feito dos anos de estudo da população e do quanto cada ano a mais costuma "
+        "render no salário.",
+        ("capital humano",),
+        "#demografia/eficiencia",
+    ),
+    Termo(
+        "parte-do-trabalho",
+        "Parte do trabalho na renda",
+        "Quanto da renda do país fica com quem trabalha (salários e o ganho dos autônomos com "
+        "o próprio trabalho); o resto remunera o capital: lucros, juros e aluguéis.",
+        ("parte do trabalho na renda",),
+        "#mundo",
+    ),
+    Termo(
+        "pwt",
+        "Penn World Table",
+        "Base de dados da Universidade de Groningen com PIB, capital, horas, estudo e PTF de "
+        "185 países desde 1950, com o mesmo método para todos. Sai a cada dois anos, mais ou "
+        "menos, sob licença aberta (CC BY 4.0).",
+        ("Penn World Table", "PWT"),
+        "#demografia/eficiencia",
+    ),
+    Termo(
         "ibge",
         "IBGE",
         "O Instituto Brasileiro de Geografia e Estatística, do governo federal: faz o PIB, o "
@@ -359,6 +394,14 @@ TERMOS: list[Termo] = [
         "#inflacao/grupos",
     ),
     Termo(
+        "subitem",
+        "Subitem",
+        "O nível mais fino do IPCA: gasolina, aluguel residencial, plano de saúde. Cada um tem "
+        "um peso, a parte dele no gasto das famílias; os pesos de todos somam 100 %.",
+        ("subitem", "subitens"),
+        "#inflacao/grupos",
+    ),
+    Termo(
         "ipca-15",
         "IPCA-15",
         "O mesmo IPCA, do IBGE, com preços coletados de meados do mês anterior a meados do mês "
@@ -381,7 +424,7 @@ TERMOS: list[Termo] = [
         "consumidor e da construção. Sobem e descem com dólar e commodities. O IGP-M corrige "
         "muitos aluguéis e contratos.",
         ("IGP-M", "IGP-DI", "IGP"),
-        "#inflacao/outros-indices",
+        "#fiscal/divida",
     ),
     Termo(
         "cmn",
@@ -612,6 +655,31 @@ TERMOS: list[Termo] = [
         "A diferença entre o juro que o banco cobra de quem pega emprestado e o que ele paga "
         "para conseguir o dinheiro. Cobre o risco de calote, impostos, despesas e o lucro.",
         ("spread",),
+    ),
+    # Revisão das telas (15/11/2026): o juro de cada modalidade, em Crédito.
+    Termo(
+        "rotativo",
+        "Rotativo do cartão",
+        "O crédito que entra quando se paga menos que o total da fatura do cartão: o que falta "
+        "vira dívida, com o juro mais alto das pessoas físicas.",
+        ("rotativo", "cartão rotativo"),
+        "#credito/volume-custo",
+    ),
+    Termo(
+        "consignado",
+        "Consignado",
+        "Empréstimo com a parcela descontada direto do salário, da aposentadoria ou da pensão. "
+        "Como o risco de calote é menor, o juro é dos mais baixos para pessoas físicas.",
+        ("consignado",),
+        "#credito/volume-custo",
+    ),
+    Termo(
+        "recursos-livres",
+        "Recursos livres",
+        "Crédito com juro e destino combinados entre o banco e o cliente. O contrário são os "
+        "recursos direcionados, como o financiamento imobiliário com dinheiro da poupança e o "
+        "crédito rural, que seguem regras do governo.",
+        ("recursos livres",),
     ),
     Termo(
         "concessoes",

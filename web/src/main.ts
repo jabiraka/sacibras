@@ -14,6 +14,7 @@ import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDaSemana, agendaDoAssunto } from "./calendario";
 import { ligarGlossario } from "./glossario";
+import { vistaGlossario } from "./glossario-pagina";
 import { ligarNomesProprios, ligarTraducao, protegerNomeDeEstado } from "./traducao";
 import { novoDesdeAUltimaVisita, seloNovo } from "./novidades";
 import { montarEstados } from "./estados";
@@ -26,6 +27,7 @@ import { el, guardar } from "./pecas";
 import { montarSimulador } from "./simulador";
 import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
+import { montarComparadorSalario } from "./salario-minimo";
 import type {
   Cartao,
   Estados,
@@ -35,6 +37,7 @@ import type {
   Painel,
   Secao,
   SimuladorReforma,
+  ComparadorSalario,
   SimuladorSelic,
   Subcategoria,
   Tabela,
@@ -195,6 +198,17 @@ function caixaDoSimuladorSelic(sim: SimuladorSelic): HTMLElement {
   return caixa;
 }
 
+/** O salário mínimo contra a inflação, no período que a pessoa escolhe (Trabalho › Renda). */
+function caixaDoSalarioMinimo(c: ComparadorSalario): HTMLElement {
+  const caixa = guardar(
+    "Salário mínimo contra a inflação",
+    "Escolha o período e compare o reajuste do mínimo com o IPCA",
+    () => montarComparadorSalario(c),
+  );
+  caixa.id = "salario-minimo-comparador";
+  return caixa;
+}
+
 /** O simulador da reforma do consumo; na parte dele (`#impostos/reforma`) já abre. */
 function caixaDoSimuladorReforma(sim: SimuladorReforma): HTMLElement {
   const caixa = guardar(
@@ -250,6 +264,8 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
   if (simuladorSelic) alvo.append(caixaDoSimuladorSelic(simuladorSelic));
   const simuladorReforma = s.simulador_reforma;
   if (simuladorReforma) alvo.append(caixaDoSimuladorReforma(simuladorReforma));
+  const comparador = s.salario_minimo;
+  if (comparador) alvo.append(caixaDoSalarioMinimo(comparador));
   for (const t of s.tabelas) alvo.append(montarTabela(t));
 }
 
@@ -382,6 +398,14 @@ function montarMenu(painel: Painel): void {
     grupo.append(ul);
     menu.append(grupo);
   }
+  // O glossário inteiro, de A a Z (revisão das telas, 15/11/2026).
+  const consulta = el("div", "menu-grupo");
+  consulta.append(el("p", "menu-categoria", "Consulta"));
+  const glossario = el("a", "menu-assunto", "Glossário");
+  glossario.href = "#glossario";
+  glossario.dataset.assunto = "glossario";
+  consulta.append(glossario);
+  menu.append(consulta);
 }
 
 /** Marca no menu onde a pessoa está e abre as partes do assunto aberto. */
@@ -403,6 +427,31 @@ function marcarMenu(assunto: string, parte: string): void {
     if (aqui) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   }
+  // O menu rola por dentro: o assunto aberto (Riscos, no pé) fica à vista, sem mexer na página.
+  marcarRolagem(menu);
+  const ativo = menu.querySelector<HTMLElement>("a.ativo[data-parte], a.ativo[data-assunto]");
+  if (ativo && menu.scrollHeight > menu.clientHeight) {
+    const m = menu.getBoundingClientRect();
+    const a = ativo.getBoundingClientRect();
+    if (a.top < m.top || a.bottom > m.bottom) {
+      menu.scrollTop += a.top - m.top - menu.clientHeight / 3;
+    }
+  }
+}
+
+/** Diz ao CSS se o menu tem o que rolar para cima ou para baixo (o texto se apaga na ponta). */
+function marcarRolagem(menu: HTMLElement): void {
+  const marcar = (): void => {
+    const resto = menu.scrollHeight - menu.clientHeight - menu.scrollTop;
+    menu.classList.toggle("mais-acima", menu.scrollTop > 2);
+    menu.classList.toggle("mais-abaixo", resto > 2);
+  };
+  if (!menu.dataset.rolagem) {
+    menu.dataset.rolagem = "1";
+    menu.addEventListener("scroll", marcar, { passive: true });
+    window.addEventListener("resize", marcar);
+  }
+  window.requestAnimationFrame(marcar);
 }
 
 function abrirMenu(abrir: boolean): void {
@@ -527,6 +576,7 @@ function contagem(p: Subcategoria): string {
     plural(p.tabelas.length, "tabela", "tabelas"),
     p.extras.some((e) => e.startsWith("simulador")) ? "simulador" : "",
     p.extras.includes("alertas") ? "painel" : "",
+    p.extras.includes("salario-minimo") ? "comparador" : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -582,6 +632,12 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   const simuladorReforma = s.simulador_reforma;
   if (p.extras.includes("simulador-reforma") && simuladorReforma) {
     const caixa = caixaDoSimuladorReforma(simuladorReforma);
+    if (caixa instanceof HTMLDetailsElement) caixa.open = true;
+    alvo.append(caixa);
+  }
+  const comparador = s.salario_minimo;
+  if (p.extras.includes("salario-minimo") && comparador) {
+    const caixa = caixaDoSalarioMinimo(comparador);
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;
     alvo.append(caixa);
   }
@@ -821,6 +877,15 @@ async function iniciar(): Promise<void> {
     const assunto = item ? alvo : "";
     const chave = assunto ? `${assunto}/${peca}` : "";
     abrirMenu(false);
+    if (alvo === "glossario") {
+      if (vistaAtual !== "glossario" || !conteudo.firstChild) {
+        vistaAtual = "glossario";
+        vistaGlossario(conteudo, peca);
+        marcarMenu("glossario", "");
+        window.scrollTo(0, 0);
+      } else if (peca) document.getElementById(`termo-${peca}`)?.scrollIntoView();
+      return;
+    }
     if (chave !== vistaAtual || !conteudo.firstChild) {
       vistaAtual = chave;
       if (assunto) vistaAssunto(painel, assunto, peca, conteudo);

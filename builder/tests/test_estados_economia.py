@@ -280,7 +280,7 @@ def test_metricas_saem_na_ordem_dos_grupos(monkeypatch: pytest.MonkeyPatch) -> N
     assert e.metricas[0].id == "pib_crescimento"
     # Depois do trabalho, só o acordo da dívida (lido à mão, sempre presente), das contas.
     assert [m.grupo for m in e.metricas][-2:] == ["Trabalho e renda", estados.CONTAS]
-    assert e.resumo.startswith("Em 2024, o PIB cresceu de")
+    assert e.resumo.startswith("Em 2024, o PIB ")
 
 
 def test_previa_entra_na_serie_do_pib_so_no_ano_seguinte(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -304,3 +304,27 @@ def test_previa_entra_na_serie_do_pib_so_no_ano_seguinte(monkeypatch: pytest.Mon
     outro = next(x for x in estados_economia.pib(UFS) if x.id == "pib_crescimento")
     estados_economia.encadear_previa(outro, previa.model_copy(update={"referencia": "2026"}))
     assert outro.ano_previsto is None
+
+
+def test_frase_do_pib_diz_queda_quando_um_estado_cai() -> None:
+    """15/11/2026, na entrada: "o PIB cresceu de -4,4 % (MS)" não se lê."""
+    from sacibras.schema import MetricaEstados
+
+    def metrica(valores: dict[str, float | None]) -> MetricaEstados:
+        return MetricaEstados(
+            id="pib_crescimento",
+            nome="Crescimento do PIB",
+            unidade="%",
+            referencia="2024",
+            fonte="IBGE",
+            valores=valores,
+            brasil=3.4,
+        )
+
+    caiu = estados_economia.frase_pib(metrica({"MS": -4.4, "PB": 6.5, "SP": 3.3}))
+    assert caiu == (
+        "Em 2024, o PIB foi de uma queda de 4,4 % (MS) a uma alta de 6,5 % (PB), "
+        "contra 3,4 % no país."
+    )
+    subiu = estados_economia.frase_pib(metrica({"MS": 1.0, "PB": 6.5}))
+    assert subiu.startswith("Em 2024, o PIB cresceu de 1,0 % (MS) a 6,5 % (PB)")

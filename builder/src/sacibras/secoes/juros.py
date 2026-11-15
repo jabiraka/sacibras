@@ -1325,9 +1325,12 @@ def montar(ctx: Contexto) -> Secao:
             fonte=ctx.fonte_sgs("SELIC_META", "IPCA_12M"),
         ),
     ]
+    # "desde 17/09 (reunião de 04/11)" parecia contradição: a última reunião manteve a taxa,
+    # ou a mudou (e então vale do dia seguinte a ela).
+    acao = "mudou" if desde_quando > ultima.data else "manteve"
     resumo = (
-        f"A Selic está em {br(meta[-1][1], 2)} % ao ano desde {periodo(desde_quando, 'D')} "
-        f"(reunião nº {ultima.numero} do Copom, em {periodo(ultima.data, 'D')}). Descontada a "
+        f"A Selic está em {br(meta[-1][1], 2)} % ao ano desde {periodo(desde_quando, 'D')}, e o "
+        f"Copom a {acao} na reunião de {periodo(ultima.data, 'D')}. Descontada a "
         f"inflação esperada para os próximos 12 meses, o juro real é de {br(real_ex_ante, 1)} % "
         "ao ano." + frase_premio
     )

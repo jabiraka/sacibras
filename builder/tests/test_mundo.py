@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from sacibras.fontes import bis, fmi, ocde_juros
+from sacibras.fontes import bis, fmi, ocde_juros, pwt
 from sacibras.secoes import mundo
 
 
@@ -127,3 +127,23 @@ def test_le_o_juro_longo_da_ocde() -> None:
         "x,EA20,M,IRLT,2026-10,\n"
     )
     assert ocde_juros.ler(texto) == {"USA": [(date(2026, 9, 1), 4.12), (date(2026, 10, 1), 4.06)]}
+
+
+def test_metricas_da_pwt_por_pais_e_sem_os_anos_que_a_pwt_nao_tem() -> None:
+    ano = {"rgdpo": 4000.0, "emp": 100.0, "avh": 2000.0, "cn": 17_000.0, "hc": 3.3}
+    dados: pwt.PorPais = {
+        "BRA": {2022: ano | {"ctfp": 0.5, "labsh": 0.51}, 2023: ano | {"ctfp": 0.497}},
+        "USA": {2023: {"rgdpo": 9000.0, "emp": 50.0, "ctfp": 1.0}},
+    }
+    metricas = {
+        m.id: m for m in mundo.metricas_pwt(dados, ["BRA", "USA", "G001"], [2022, 2023, 2024])
+    }
+    ptf = metricas["ptf"]
+    assert ptf.anos == [2022, 2023] and ptf.valores == {"BRA": [50.0, 49.7], "USA": [None, 100.0]}
+    assert "vai até 2023" in ptf.descricao and "CC BY 4.0" in ptf.fonte
+    # US$ por hora: 4000 milhões / (100 milhões de pessoas × 2000 horas) = US$ 0,02
+    assert metricas["produtividade_hora"].valores == {"BRA": [0.02, 0.02]}
+    assert metricas["capital_ocupado"].valores["BRA"] == [0.17, 0.17]
+    parte = metricas["parte_trabalho"]
+    assert parte.anos == [2022] and parte.valores == {"BRA": [51.0]}
+    assert "G001" not in ptf.valores  # a PWT não tem os grupos do FMI

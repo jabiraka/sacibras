@@ -9,8 +9,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from sacibras import licencas
 from sacibras.tipos import Periodicidade, Ponto
 
 Procedencia = Literal["oficial", "mercado", "calculado"]
@@ -135,6 +136,14 @@ class Grafico(Modelo):
     """Com ela, o site desenha um ponto por país no lugar das séries."""
     secao: str = ""
     """O assunto de onde o gráfico veio: só na página inicial, para o elo "abrir"."""
+    sem_download: str = ""
+    """Por que não há CSV nem PNG: a fonte cita dado privado cujos termos vedam reproduzir
+    (`licencas.py`). Sai sozinho da `fonte`; não se escreve à mão."""
+
+    @model_validator(mode="after")
+    def _licenca(self) -> Grafico:
+        self.sem_download = licencas.sem_download(self.fonte)
+        return self
 
 
 class Meta(Modelo):
@@ -303,6 +312,19 @@ class MarcaDeAliquota(Modelo):
     rotulo: str
 
 
+class ComparadorSalario(Modelo):
+    """O salário mínimo contra a inflação no período que a pessoa escolhe (Caio, 15/11/2026:
+    "um parâmetro na tabela [...] para colocar outros períodos" e, no gráfico, "o salário
+    mínimo inicial ajustado pela inflação"). Só dado oficial: o navegador divide e multiplica."""
+
+    meses: list[tuple[date, float, float]]
+    """(mês, salário mínimo em R$ da época, nível do IPCA no fim do mês; o primeiro é 1)."""
+    prazos: list[int]
+    """Os prazos fixos da tabela, em anos, contados do último mês."""
+    fonte: str
+    nota: str
+
+
 class SimuladorReforma(Modelo):
     """Quanto de IBS e CBS vai numa compra. Tudo aqui é lei lida ou conta oficial; o navegador
     multiplica o valor da compra pela alíquota e pela fração que o tipo de compra paga."""
@@ -382,9 +404,9 @@ class Subcategoria(Modelo):
     cartoes: list[str] = Field(default_factory=list)
     graficos: list[str] = Field(default_factory=list)
     tabelas: list[str] = Field(default_factory=list)
-    extras: list[Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]] = Field(
-        default_factory=list
-    )
+    extras: list[
+        Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
+    ] = Field(default_factory=list)
     veja: list[Elo] = Field(default_factory=list)
     """Atalhos para partes de outros assuntos que tratam do mesmo ("Veja também")."""
 
@@ -401,6 +423,7 @@ class Secao(Modelo):
     simulador: SimuladorDivida | None = None
     simulador_selic: SimuladorSelic | None = None
     simulador_reforma: SimuladorReforma | None = None
+    salario_minimo: ComparadorSalario | None = None
     alertas: list[Alerta] = Field(default_factory=list)
     gerado_em: datetime
 

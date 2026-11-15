@@ -48,6 +48,8 @@ export interface Grafico {
   dispersao?: Dispersao | null;
   /** Só na página inicial: o assunto de onde o gráfico veio. */
   secao?: string;
+  /** Por que não há CSV nem PNG (dado privado cujos termos vedam reproduzir; licencas.py). */
+  sem_download?: string;
 }
 
 /** Um ponto por país: uma métrica em cada eixo (`chave` é o ISO3; o Brasil é BRA). */
@@ -195,7 +197,7 @@ export interface Subcategoria {
   cartoes: string[];
   graficos: string[];
   tabelas: string[];
-  extras: ("simulador" | "simulador-selic" | "simulador-reforma" | "alertas")[];
+  extras: ("simulador" | "simulador-selic" | "simulador-reforma" | "alertas" | "salario-minimo")[];
   /** Atalhos para partes de outros assuntos ("Veja também"). */
   veja?: Elo[];
 }
@@ -218,8 +220,18 @@ export interface Secao {
   simulador: SimuladorDivida | null;
   simulador_selic?: SimuladorSelic | null;
   simulador_reforma?: SimuladorReforma | null;
+  salario_minimo?: ComparadorSalario | null;
   alertas?: Alerta[];
   gerado_em: string;
+}
+
+/** O salário mínimo contra a inflação no período escolhido (salario-minimo.ts). */
+export interface ComparadorSalario {
+  /** [mês, salário mínimo em R$ da época, nível do IPCA no fim do mês]. */
+  meses: [string, number, number][];
+  prazos: number[];
+  fonte: string;
+  nota: string;
 }
 
 /** Um indicador do painel de alerta: o valor de hoje na régua da própria história. */

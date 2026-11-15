@@ -19,7 +19,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras import organizacao, rede
+from sacibras import licencas, organizacao, rede
 from sacibras.catalogo import SGS
 from sacibras.schema import (
     AoVivo,
@@ -248,6 +248,9 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
             mantidos = completar(secao, saida / arquivo) if len(rede.FALHAS) > falhas_antes else []
             if mantidos:
                 print(f"  aviso: {id}: da rodada anterior (fonte falhou): {', '.join(mantidos)}")
+            tirados = licencas.tirar_o_que_nao_pode(secao)
+            if tirados:
+                print(f"  aviso: {id}: fora da tela pela licença: {', '.join(tirados)}")
             contas = ctx.memo.pop(f"{id}_contas", None)  # as contas de cada estado, à parte
             if contas is not None:
                 try:

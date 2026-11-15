@@ -981,6 +981,12 @@ def frase_pib(m: MetricaEstados) -> str:
         return ""
     alto, baixo = max(v, key=lambda u: v[u]), min(v, key=lambda u: v[u])
     brasil = f", contra {br(m.brasil)} % no país" if m.brasil is not None else ""
+    # "cresceu de -4,4 %" não se lê: com estado em queda, a frase diz queda e alta.
+    if v[baixo] < 0:
+        return (
+            f"Em {m.referencia}, o PIB foi de uma queda de {br(-v[baixo])} % ({baixo}) a "
+            f"uma alta de {br(v[alto])} % ({alto}){brasil}."
+        )
     return (
         f"Em {m.referencia}, o PIB cresceu de {br(v[baixo])} % ({baixo}) a "
         f"{br(v[alto])} % ({alto}){brasil}."

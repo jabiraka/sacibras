@@ -51,6 +51,15 @@ LEITURAS: list[Leitura] = [
         "ou a nota da Conorf no site do Senado. A cada bimestre.",
     ),
     Leitura(
+        "Salário mínimo do ano (o decreto de 2027 sai em dezembro)",
+        "leis.SALARIO_MINIMO_NORMAS",
+        date(2026, 11, 15),
+        date(2027, 1, 10),
+        "Senado, lista de decretos (dadosabertos/legislacao/lista?tipo=DEC&ano=2026), o que "
+        "'dispõe sobre o valor do salário mínimo'; ler o art. 1º, conferir que o SGS 1619 dá o "
+        "mesmo valor e pôr o ano novo no dicionário. Uma vez por ano.",
+    ),
+    Leitura(
         "Meta do Marco do Saneamento (99 % água, 90 % esgoto até 2033)",
         "leis.META_SANEAMENTO",
         date(2026, 11, 14),
@@ -142,6 +151,39 @@ LEITURAS: list[Leitura] = [
         date(2026, 11, 14),
         date(2027, 3, 31),
         "Relatório de Política Monetária: novo boxe de repasse cambial. Uma vez por ano.",
+    ),
+    # ------------------------------------------------------------- licenças de dado
+    Leitura(
+        "Licença da Penn World Table (CC BY 4.0) e versão nova",
+        "licencas.PWT",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "rug.nl/ggdc/productivity/pwt/: conferir a licença e se saiu versão nova (a 12.0 virá "
+        "com outro DOI: trocar `pwt.DOI` e `pwt.VERSAO`). Uma vez por ano.",
+    ),
+    Leitura(
+        "Termos de uso da FGV IBRE (IGP-M e capacidade instalada fora da tela)",
+        "licencas.FGV_IBRE",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "portalibre.fgv.br/termos-de-uso e /fgv-dados: se passarem a deixar divulgar com a "
+        "fonte, trocar `mostra` (e `exporta`, se deixarem reproduzir). Uma vez por ano.",
+    ),
+    Leitura(
+        "Licença do Índice de Confiança do Consumidor (Fecomercio-SP)",
+        "licencas.FECOMERCIO",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "fecomercio.com.br e o catálogo do BC (série 4393): ver se a Fecomercio publicou "
+        "termo de uso dos dados. Uma vez por ano.",
+    ),
+    Leitura(
+        "Licença dos dados da B3 (Ibovespa na tela, sem download)",
+        "licencas.B3",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "b3.com.br, termos de uso e Política Comercial de Market Data; registrar o trecho que "
+        "permite gráfico informativo (decisão do Caio, 15/11/2026). Uma vez por ano.",
     ),
     # ------------------------------------------------------------- impostos
     Leitura(

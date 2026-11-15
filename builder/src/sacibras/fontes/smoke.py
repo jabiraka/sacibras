@@ -22,6 +22,7 @@ from sacibras.fontes import (
     fmi,
     ibge_sidra,
     ocde_receita,
+    pwt,
     receita_arrecadacao,
     receita_gastos,
     receita_irpf,
@@ -92,6 +93,10 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     (
         "IPEADATA",
         _texto("https://www.ipeadata.gov.br/api/odata4/Metadados('GM366_IBVSP366')"),
+    ),
+    (
+        "Penn World Table (Dataverse)",
+        _texto(pwt.API, params={"persistentId": pwt.DOI}),
     ),
     (
         "Tesouro Direto (CSV)",

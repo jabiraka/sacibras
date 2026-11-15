@@ -33,7 +33,7 @@ def test_indice_le_os_json_gravados(tmp_path: Path) -> None:
     }
     for nome, dados in [("painel", painel), ("juros", juros), ("estados", estados)]:
         (tmp_path / f"{nome}.json").write_text(json.dumps(dados), encoding="utf-8")
-    assert busca.gravar(tmp_path) == 7  # a seção sem JSON fica de fora
+    assert busca.gravar(tmp_path) == 8  # a seção sem JSON fica de fora; o glossário entra
     itens = {i["h"]: i for i in json.loads((tmp_path / "busca.json").read_text("utf-8"))}
     assert set(itens) == {
         "#juros",
@@ -43,6 +43,7 @@ def test_indice_le_os_json_gravados(tmp_path: Path) -> None:
         "#estados",
         "#estados/m-icms",
         "#estados/uf-RJ",
+        "#glossario",
     }
     assert "copom" in itens["#juros/c-selic-meta"]["p"]
     assert itens["#estados/uf-RJ"]["o"] == "Estados · RJ"
@@ -112,3 +113,47 @@ def test_assuntos_em_chines_japones_e_arabe() -> None:
     # Árabe sem as vogais curtas, como o navegador compara.
     assert busca.normalizar("التَّضَخُّم") == "التضخم"
     assert "مؤشر أسعار المستهلك" in busca.OUTRAS_ESCRITAS["ipca"]
+
+
+def test_linhas_das_tabelas_curtas_vao_ao_indice(tmp_path: Path) -> None:
+    """15/11/2026: "gasolina", "aluguel" e "alimentos" não achavam a tabela do IPCA por grupo,
+    e "Derivados de petróleo (diesel, gasolina)" só existia como linha de tabela."""
+    painel = {"secoes": [{"id": "inflacao", "titulo": "Inflação", "arquivo": "inflacao.json"}]}
+    grupos = [{"rotulo": r, "valores": [1.0]} for r in ("Alimentação e bebidas", "Transportes")]
+    longa = [
+        {"rotulo": f"Estado {i}", "valores": [1.0]} for i in range(busca.LINHAS_POR_TABELA + 1)
+    ]
+    inflacao = {
+        "tabelas": [
+            {"id": "ipca-grupos", "titulo": "IPCA por grupo em out/2026", "linhas": grupos},
+            {"id": "longa", "titulo": "Longa", "linhas": longa},
+        ]
+    }
+    (tmp_path / "painel.json").write_text(json.dumps(painel), encoding="utf-8")
+    (tmp_path / "inflacao.json").write_text(json.dumps(inflacao), encoding="utf-8")
+    itens = {i.h: i for i in busca.montar(tmp_path)}
+    p = itens["#inflacao/t-ipca-grupos"].p
+    assert "alimentacao e bebidas transportes" in p
+    assert all(w in p for w in ("gasolina", "aluguel", "conta de luz", "alimentos"))
+    assert "estado 3" not in itens["#inflacao/t-longa"].p
+
+
+def test_glossario_entra_na_busca(tmp_path: Path) -> None:
+    (tmp_path / "painel.json").write_text(json.dumps({"secoes": []}), encoding="utf-8")
+    item = next(i for i in busca.montar(tmp_path) if i.h == "#glossario")
+    assert "dicionario" in item.p and "siglas" in item.p
+
+
+def test_comparador_do_salario_minimo_entra_na_busca(tmp_path: Path) -> None:
+    painel = {"secoes": [{"id": "trabalho", "titulo": "Trabalho", "arquivo": "trabalho.json"}]}
+    trabalho = {
+        "subcategorias": [
+            {"id": "renda", "titulo": "Renda", "resumo": "", "extras": ["salario-minimo"]}
+        ],
+        "salario_minimo": {"meses": [], "prazos": [1], "fonte": "", "nota": ""},
+    }
+    (tmp_path / "painel.json").write_text(json.dumps(painel), encoding="utf-8")
+    (tmp_path / "trabalho.json").write_text(json.dumps(trabalho), encoding="utf-8")
+    item = next(i for i in busca.montar(tmp_path) if i.t == "Salário mínimo contra a inflação")
+    assert item.h == "#trabalho/renda"
+    assert item.o == "Trabalho › Renda · comparador"

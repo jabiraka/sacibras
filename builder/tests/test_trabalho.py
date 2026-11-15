@@ -52,7 +52,21 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     for chave, _ in trabalho.SETORES_CAGED:
         c._sgs[(chave, 16)] = vigesimo
     c._sgs[("EMPREGO_SERVICOS", 16)] = [(d, v * 14 / 20) for d, v in estoque]
+    anos = 2026 - trabalho.SALARIO_MINIMO_DESDE.year + 1
+    c._sgs[("SALARIO_MINIMO", anos)] = _salario()
+    c._sgs[("IPCA", anos)] = (
+        [(date(2024, m, 1), 0.5) for m in range(1, 13)]
+        + [(date(2025, m, 1), 0.5) for m in range(1, 13)]
+        + [(date(2026, m, 1), 0.5) for m in range(1, 11)]
+    )
     return c
+
+
+def _salario() -> list[Ponto]:
+    """R$ 1.518 em 2025 e R$ 1.621 em 2026, com os meses já decretados até dez/2026."""
+    return [(date(2025, m, 1), 1518.0) for m in range(1, 13)] + [
+        (date(2026, m, 1), 1621.0) for m in range(1, 13)
+    ]
 
 
 def test_montar(ctx: Contexto) -> None:
@@ -60,13 +74,20 @@ def test_montar(ctx: Contexto) -> None:
     ids = [c.id for c in secao.cartoes]
     # Os quatro de sempre na frente; os novos depois, atrás de "Mais números".
     assert ids[:4] == ["desocupacao", "rendimento", "massa", "emprego-formal"]
-    assert ids[4:] == ["subutilizacao", "participacao", "nivel-ocupacao", "informalidade"]
+    assert ids[4:] == [
+        "subutilizacao",
+        "participacao",
+        "nivel-ocupacao",
+        "informalidade",
+        "salario-minimo",
+    ]
     assert "média de 3 meses: 100 mil" in secao.cartoes[3].detalhe
     graficos = [g.id for g in secao.graficos]
     assert graficos[:4] == ["desocupacao", "emprego-formal", "rendimento", "massa"]
     caged = secao.graficos[1]
     assert [s.id for s in caged.series] == ["saldo", "saldo-3m"]
     tabela, setores = secao.tabelas
+    assert secao.salario_minimo is not None
     assert setores.id == "emprego-setores"
     assert setores.linhas[-1].rotulo == "Total"
     # 17 setores, os "demais serviços" e o total; a coluna das vagas fecha no total.
@@ -109,3 +130,32 @@ def test_somar_so_nas_datas_comuns() -> None:
     a = [(date(2026, 1, 1), 1.0), (date(2026, 2, 1), 2.0)]
     b = [(date(2026, 2, 1), 10.0)]
     assert trabalho.somar([a, b]) == [(date(2026, 2, 1), 12.0)]
+
+
+def test_salario_minimo_ate_hoje_e_o_comparador(ctx: Contexto) -> None:
+    """Revisão das telas (15/11/2026): quem buscava "salário mínimo" não achava nada."""
+    cartao, comparador = trabalho.salario_minimo(ctx)
+    # O SGS traz dez/2026 já decretado; o cartão para no mês de hoje (nov/2026).
+    assert cartao.valor == 1621.0
+    assert cartao.referencia == date(2026, 11, 1)
+    assert cartao.detalhe == "2025: R$ 1.518, alta de 6,8 %"
+    assert "Decreto nº 12.797" in cartao.fonte
+    # O comparador vai até o último mês com IPCA (out/2026), desde 1995 (aqui, jan/2025).
+    assert comparador.meses[0][:2] == (date(2025, 1, 1), 1518.0)
+    assert comparador.meses[-1][0] == date(2026, 10, 1)
+    assert comparador.prazos == [1, 5, 10, 20]
+
+
+def test_salario_minimo_contra_a_inflacao(ctx: Contexto) -> None:
+    """Caio, 15/11/2026: "comparar o salário mínimo contra a inflação acumulada no período",
+    com o período à escolha."""
+    _, comparador = trabalho.salario_minimo(ctx)
+    conta = trabalho.comparar(comparador.meses, date(2025, 10, 1), date(2026, 10, 1))
+    assert conta is not None
+    alta, ipca, acima = conta
+    assert alta == pytest.approx((1621 / 1518 - 1) * 100)
+    assert ipca == pytest.approx((1.005**12 - 1) * 100)
+    assert acima == pytest.approx((1621 / 1518 / 1.005**12 - 1) * 100)
+    # Fora da série ou de trás para a frente: sem conta.
+    assert trabalho.comparar(comparador.meses, date(2026, 10, 1), date(2025, 10, 1)) is None
+    assert trabalho.comparar(comparador.meses, date(2020, 1, 1), date(2026, 10, 1)) is None

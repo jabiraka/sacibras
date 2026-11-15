@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from datetime import date
 
-from sacibras import contas
+from sacibras import contas, leis
 from sacibras.fontes import ibge_sidra
 from sacibras.modelos import decomposicoes
-from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela
+from sacibras.schema import Cartao, ComparadorSalario, Grafico, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
 from sacibras.tipos import Periodicidade, Ponto
 
@@ -256,6 +256,79 @@ def _cartao_taxa(id: str, rotulo: str, pontos: list[Ponto], tabela: int) -> Cart
         secao="trabalho",
         mini=60,
     )
+
+
+SALARIO_MINIMO_DESDE = date(1995, 1, 1)
+"""Antes do real (jul/1994) a série está em outras moedas; 1995 é o primeiro ano inteiro."""
+
+
+def salario_minimo(ctx: Contexto) -> tuple[Cartao, ComparadorSalario]:
+    """O salário mínimo em reais (o cartão) e o comparador contra a inflação, em que a pessoa
+    escolhe o período (Caio, 15/11/2026). A série do SGS traz os meses já decretados adiante;
+    o cartão para no mês de hoje e o comparador no último mês com IPCA."""
+    anos = ctx.hoje.year - SALARIO_MINIMO_DESDE.year + 1
+    minimo = [
+        (d, v) for d, v in ctx.sgs("SALARIO_MINIMO", anos) if SALARIO_MINIMO_DESDE <= d <= ctx.hoje
+    ]
+    nivel, indice = 1.0, {}
+    for d, v in ctx.sgs("IPCA", anos):
+        if d >= SALARIO_MINIMO_DESDE:
+            nivel *= 1 + v / 100
+            indice[d] = nivel
+    agora = minimo[-1]
+    antes = next((v for d, v in reversed(minimo) if d.year < agora[0].year), None)
+    detalhe = (
+        f"{agora[0].year - 1}: R$ {br(antes, 0)}, alta de {br((agora[1] / antes - 1) * 100)} %"
+        if antes
+        else ""
+    )
+    norma = leis.SALARIO_MINIMO_NORMAS.get(agora[0].year)
+    fonte = ctx.fonte_sgs("SALARIO_MINIMO") + (
+        f"; valor de {agora[0].year}: {norma}" if norma else ""
+    )
+    c = cartao(
+        "salario-minimo",
+        "Salário mínimo",
+        minimo,
+        unidade="R$",
+        periodicidade="M",
+        casas=0,
+        detalhe=detalhe,
+        fonte=fonte,
+        secao="trabalho",
+        mini=60,
+    )
+    comparador = ComparadorSalario(
+        meses=[(d, v, round(indice[d], 8)) for d, v in minimo if d in indice],
+        prazos=PRAZOS_SALARIO_MINIMO,
+        fonte=f"{fonte}; IPCA: {ctx.fonte_sgs('IPCA')}",
+        nota=(
+            "O mínimo do início corrigido pelo IPCA é o que ele valeria se só tivesse "
+            "acompanhado a inflação; a distância até a outra linha é o ganho (ou a perda) "
+            "acima dela. Acima da inflação: (1 + alta do mínimo) ÷ (1 + IPCA) − 1. O IPCA do "
+            "período vai do fim do mês de início ao fim do mês final. Conta nossa, desde "
+            f"{SALARIO_MINIMO_DESDE.year}, o primeiro ano inteiro do real."
+        ),
+    )
+    return c, comparador
+
+
+# Os prazos fixos da tabela, contados do último mês com IPCA; a pessoa escolhe outros
+# períodos no próprio comparador (Caio, 15/11/2026).
+PRAZOS_SALARIO_MINIMO = [1, 5, 10, 20]
+
+
+def comparar(
+    meses: list[tuple[date, float, float]], de: date, ate: date
+) -> tuple[float, float, float] | None:
+    """A alta do mínimo, o IPCA e o ganho acima da inflação entre dois meses, em %. A mesma
+    conta está em `web/src/salario-minimo.ts`, que roda no navegador."""
+    por_mes = {d: (s, i) for d, s, i in meses}
+    if de not in por_mes or ate not in por_mes or de >= ate:
+        return None
+    (s0, i0), (s1, i1) = por_mes[de], por_mes[ate]
+    alta, ipca = s1 / s0 - 1, i1 / i0 - 1
+    return alta * 100, ipca * 100, ((1 + alta) / (1 + ipca) - 1) * 100
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -548,6 +621,12 @@ def montar(ctx: Contexto) -> Secao:
     except Exception as erro:  # a conta a mais não derruba a seção
         print(f"  aviso: trabalho sem os fatores da desocupação: {str(erro)[:120]}")
     tabelas = [tabela]
+    comparador: ComparadorSalario | None = None
+    try:
+        c_minimo, comparador = salario_minimo(ctx)
+        cartoes.append(c_minimo)
+    except Exception as erro:
+        print(f"    trabalho: salário mínimo ficou de fora: {str(erro)[:160]}")
     try:
         g_setores, t_setores = _caged_por_setor(ctx, formal, inicio)
         graficos.append(g_setores)
@@ -568,5 +647,6 @@ def montar(ctx: Contexto) -> Secao:
         cartoes=cartoes,
         graficos=graficos,
         tabelas=tabelas,
+        salario_minimo=comparador,
         gerado_em=ctx.agora(),
     )

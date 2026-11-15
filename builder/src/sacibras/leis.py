@@ -627,3 +627,14 @@ META_SANEAMENTO = MetaDeSaneamento(
     prazo=date(2033, 12, 31),
     referencia="Lei 11.445/2007, art. 11-B (Lei 14.026/2020)",
 )
+
+
+# O salário mínimo do ano: o número vem do SGS 1619 (catalogo.py) e a norma de cada ano fica
+# aqui, para a tela citá-la (revisão das telas, 15/11/2026). Lido em 15/11/2026 no Senado
+# (legis.senado.leg.br/norma/41882097/publicacao/41888369; o Planalto não abre da nuvem).
+# Decreto nº 12.797, de 23/12/2025, art. 1º: "A partir de 1º de janeiro de 2026, o valor do
+# salário mínimo será de R$ 1.621,00 (mil seiscentos e vinte e um reais)." O SGS 1619 dá
+# 1.621,00 de jan a dez/2026. Ano sem norma lida aqui: a tela cita só o SGS.
+SALARIO_MINIMO_NORMAS: dict[int, str] = {
+    2026: "Decreto nº 12.797, de 23/12/2025, art. 1º",
+}

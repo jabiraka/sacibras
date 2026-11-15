@@ -636,7 +636,7 @@ def _leque(
 def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto], list[Ponto]]:
     dolar = ctx.sgs("DOLAR", HIST + 2)
     ibov = ipeadata.serie(ipeadata.IBOVESPA, date(1999, 1, 1))
-    fonte_ibov = "IPEADATA (série GM366_IBVSP366, fechamento do Ibovespa)"
+    fonte_ibov = ipeadata.FONTE_IBOVESPA
     vol_dolar = risco.volatilidade(dolar)
     vol_ibov = risco.volatilidade(ibov)
     queda = risco.queda_desde_o_pico(ibov)

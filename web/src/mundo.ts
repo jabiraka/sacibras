@@ -48,9 +48,18 @@ const TEMAS: Record<string, string> = {
   cambio: "Contas externas",
   servico_divida: "Crédito",
   hiato_credito: "Crédito",
+  ptf: "Produtividade",
+  produtividade_hora: "Produtividade",
+  capital_ocupado: "Produtividade",
+  capital_humano: "Produtividade",
+  horas_ano: "Produtividade",
+  parte_trabalho: "Produtividade",
+  retorno_capital: "Produtividade",
+  preco_investimento: "Produtividade",
 };
 const ORDEM_DOS_TEMAS = [
   "Atividade e emprego",
+  "Produtividade",
   "Preços e juros",
   "Crédito",
   "Contas públicas",
@@ -300,7 +309,18 @@ export function montarMundo(m: Mundo): HTMLElement {
           : () => alternarPais(iso),
       );
     });
-    if (linhas.length > LISTA_CURTA) {
+    if (!linhas.length) {
+      // A Penn World Table não faz média de grupo, e nenhuma fonte cobre todos os anos.
+      ranking.replaceChildren(
+        el(
+          "p",
+          "posicao",
+          conjunto === MEDIAS
+            ? "A fonte desta métrica não publica médias de grupos: escolha os países principais ou um grupo para ver os países dele."
+            : `Sem ${metrica.nome.toLowerCase()} em ${ano} para estes países.`,
+        ),
+      );
+    } else if (linhas.length > LISTA_CURTA) {
       // Lista longa (um grupo do FMI inteiro): rola dentro da caixa, com o Brasil à vista.
       const caixa = el("div", "ponto-membros lista-longa");
       caixa.append(...linhas);
@@ -562,7 +582,7 @@ export function montarMundo(m: Mundo): HTMLElement {
         rolavel.append(tabela);
         const pe = el("footer", "grafico-pe");
         pe.append(
-          el("span", "fonte", `Fonte: FMI, ${m.edicao}; juro básico, inflação em 12 meses e câmbio: BIS; juro de 10 anos: OCDE e Tesouro Nacional.`),
+          el("span", "fonte", `Fonte: FMI, ${m.edicao}; juro básico, inflação em 12 meses e câmbio: BIS; juro de 10 anos: OCDE e Tesouro Nacional; carga tributária: OCDE; produtividade: Penn World Table (CC BY 4.0).`),
         );
         return [rolavel, pe];
       }),

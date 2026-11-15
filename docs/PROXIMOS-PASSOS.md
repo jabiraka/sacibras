@@ -4,12 +4,16 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 15/11/2026 (segunda sessão da nuvem do dia). A primeira fez tudo o que
-dava para fazer de fora do Brasil. A segunda fez o PIB trimestral por estado, as decomposições
+Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
+que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
+Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
+com dados do IBGE, e oito métricas de produtividade em Brasil no mundo), e o dado privado
+ficou sem CSV nem PNG, e na tela só se a licença deixar (a FGV saiu), com as licenças em
+`licencas.py`. Outra sessão do mesmo dia fez o PIB trimestral por estado, as decomposições
 (IPCA por grupo, PIB por componente, fatores da dívida e da desocupação, carrego do PIB), o
-IBC-R dos quatro estados novos e a conferência contra os institutos estaduais. O Caio olhou e
-mandou juntar (*"junte no main e pode fazer oq recomendar"*). Tudo publicado no `main`; nenhum
-branch com trabalho pendente.
+IBC-R dos quatro estados novos e a conferência contra os institutos estaduais; o Caio olhou e
+mandou juntar (*"junte no main e pode fazer oq recomendar"*). Tudo no `main`.
 
 ## Releituras com prazo
 
@@ -26,6 +30,8 @@ As próximas:
 - **até 23/12**: resolução do Senado que fixa a CBS de 2027 → `CBS_REFERENCIA_2027` e o texto
   "o Senado ainda fixa" em `impostos.py`.
 - **até 31/12**: RPM de dezembro → modelos e faixa do efeito da Selic.
+- **até 10/01/2027**: decreto do salário mínimo de 2027 → `leis.SALARIO_MINIMO_NORMAS`
+  (o valor vem do SGS 1619; a tela só cita a norma do ano que estiver no dicionário).
 - **até 30/11/2027**: a conferência do PIB trimestral por estado contra RS, PR, MG, BA e ES
   (`relatorios.CONFERENCIA_PIB_ESTADOS`; `scripts/conferir_pib_estados.py` refaz).
 
@@ -52,6 +58,12 @@ As próximas:
 
 ## Espera o Caio
 
+- **Trecho da B3 sobre gráficos informativos**: o Ibovespa fica na tela por decisão do
+  Caio (15/11/2026, *"Os termos da B3 permitem gráficos informativos"*), mas a cláusula não
+  apareceu nos termos de uso nem na Política Comercial de Market Data 2027. Com o elo,
+  copiar o trecho para `licencas.B3` e `docs/FONTES.md`.
+- **FGV**: IGP-M e capacidade instalada saíram da tela (os termos vedam divulgar). Voltam
+  com autorização por escrito da FGV ([PROPOSTAS](PROPOSTAS.md)).
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.
@@ -62,6 +74,15 @@ As próximas:
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).
+- **Estados**: em que métrica Estados abre e o mapa a 1280 px; no [PROPOSTAS](PROPOSTAS.md),
+  "Achados da revisão das telas", para uma sessão própria (Caio, 15/11/2026).
+- Para olhar: a PTF estendida (2024 e 2025) é estimativa do que já passou, com dado oficial,
+  não previsão. O ponto usa o capital humano da PNAD, que sobe mais devagar que o da PWT; a
+  barra vai até a versão com o ritmo da PWT. Quando sair a PWT 12, comparar e, se a
+  diferença for grande, rever a escolha.
+- Para olhar: em Brasil no mundo, a PTF da Turquia (109 % da dos EUA) e a da Argentina
+  passam a de vários países ricos; é o número da Penn World Table (PPC de cada ano), não erro
+  daqui. O elo `#mundo/m-…` leva uns 4 s para trocar a métrica (já era assim).
 - Para olhar: a ficha do estado tem agora 9 abas (quatro números à vista, o resto em "Mais
   números"); a CAPAG e o acordo da dívida aparecem com posição no ranking, como se fossem
   número.
