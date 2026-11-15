@@ -4,8 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 15/11/2026. A página inicial com gráficos e a saída dos estudos avulsos
-estão no branch `ccr-bf38480b-wr13df`, à espera de ir ao `main`.
+Última atualização: 15/11/2026. Tudo publicado no `main`; nenhum branch com trabalho pendente.
 
 ## Releituras com prazo
 
