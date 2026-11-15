@@ -13,7 +13,8 @@ INDICADORES = {
     *("swaps-cambiais", "ipca", "nucleos", "difusao", "inadimplencia", "inadimplencia-pf"),
     *("inadimplencia-pj", "atrasos", "spread", "comprometimento", "endividamento", "basileia"),
     *("vol-dolar", "vol-ibovespa", "queda-ibovespa", "deficit-inss", "beneficios-inss"),
-    "reservatorios",
+    *("reservatorios", "expectativa-12m", "implicita-longa", "hiato-credito", "liquidez"),
+    "liquidez-lcr",
 }
 
 

@@ -43,11 +43,16 @@ def curvas(desde: date) -> Curvas:
         base = _data(linha["Data Base"])
         compra = linha["Taxa Compra Manha"].replace(",", ".")
         venda = linha["Taxa Venda Manha"].replace(",", ".")
-        if base < desde or not (compra or venda):
+        # Linha sem preço é linha sem dado (em 29/01/2010 a NTN-F 2021 veio com taxa 0,06 e
+        # preço 0,00, conferido em 15/11/2026); taxa 0,00 é o lado que o Tesouro não negociou
+        # naquele dia (só o Tesouro Selic tem taxa zero de verdade, e ele não entra em curva).
+        if base < desde or linha.get("PU Base Manha", "").strip() in ("0,00", "0"):
             continue
         # A taxa média entre compra e venda (o "mid", como no finance_agent): usar só um lado
         # embute metade do spread do Tesouro Direto (~12 bps) como viés.
-        taxas = [float(t) for t in (compra, venda) if t]
+        taxas = [float(t) for t in (compra, venda) if t and float(t) != 0]
+        if not taxas:
+            continue
         saida.setdefault(linha["Tipo Titulo"].strip(), {}).setdefault(base, []).append(
             (_data(linha["Data Vencimento"]), sum(taxas) / len(taxas))
         )

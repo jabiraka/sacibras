@@ -59,6 +59,31 @@ export const PARES: Record<string, Par> = {
     pior_quando: "baixo",
     conceito: "Pelo FMI, no ano; o número do painel é o do Banco Central em 12 meses.",
   },
+  "reservas-importacoes": {
+    metrica: "reservas_meses",
+    nome: "Reservas em meses de importação",
+    pior_quando: "baixo",
+    unidade: "meses",
+    conceito:
+      "Pelo FMI, para todos: reservas no fim do ano (o ouro a preço de mercado) sobre a " +
+      "importação de bens e serviços do ano. O número do painel é o do Banco Central, sobre a " +
+      "importação só de bens, por isso dá mais meses.",
+  },
+  "vol-dolar": {
+    metrica: "vol_cambio",
+    nome: "Volatilidade da moeda contra o dólar",
+    pior_quando: "alto",
+    unidade: "% a.a.",
+    conceito:
+      "O mesmo cálculo do painel (21 dias úteis, levado ao ano) sobre o câmbio diário do BIS " +
+      "para todos; os países do euro têm todos o euro, e os EUA ficam de fora.",
+  },
+  "hiato-credito": {
+    metrica: "hiato_credito",
+    nome: "Hiato de crédito",
+    pior_quando: "alto",
+    conceito: "O mesmo número do painel (BIS), no último trimestre que o BIS publicou de cada país.",
+  },
   ipca: {
     metrica: "inflacao",
     nome: "Inflação ao consumidor",
@@ -86,14 +111,6 @@ export const EXTRAS: (Par & { id: string; explica: string })[] = [
       "Juros e amortizações de famílias e empresas sobre a renda (BIS). O painel mede só as " +
       "famílias, pelo Banco Central; o BIS não separa as famílias para o Brasil.",
     explica: "Quanto mais da renda vai para pagar dívida, menos sobra para gastar e investir.",
-  },
-  {
-    id: "hiato-credito",
-    metrica: "hiato_credito",
-    nome: "Hiato de crédito",
-    pior_quando: "alto",
-    conceito: "Crédito ao setor privado em % do PIB menos a tendência de longo prazo (BIS).",
-    explica: "Crédito que cresce muito acima da tendência costuma vir antes de crise bancária.",
   },
   {
     id: "crescimento",

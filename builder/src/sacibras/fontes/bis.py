@@ -7,6 +7,10 @@ Trimestrais (testados em 14/11/2026, docs/FONTES.md): serviço da dívida do set
 financeiro (WS_DSR, Q.<país>.P, % da renda) e hiato de crédito (WS_CREDIT_GAP, Q.<país>.P.A.C,
 pontos do PIB). Neles o país vem em BORROWERS_CTY e o período em "2025-Q3"; a ordem das
 colunas muda entre os conjuntos, então se lê pelo nome.
+
+Diário (testado em 15/11/2026): câmbio contra o dólar (WS_XRU, D.<país>..A, moeda local por
+US$, média do dia), 74 áreas; os países da zona do euro vêm cada um com o euro. O período
+vem em "2026-11-10".
 """
 
 from __future__ import annotations
@@ -21,10 +25,13 @@ from sacibras.tipos import Ponto
 BASE = "https://stats.bis.org/api/v2/data/dataflow/BIS"
 
 
-def _ler(fluxo: str, chave: str, inicio: date) -> dict[str, list[Ponto]]:
+def _ler(fluxo: str, chave: str, inicio: date, *, diario: bool = False) -> dict[str, list[Ponto]]:
     corpo = baixar(
         f"{BASE}/{fluxo}/1.0/{chave}",
-        params={"startPeriod": inicio.strftime("%Y-%m"), "format": "csv"},
+        params={
+            "startPeriod": inicio.isoformat() if diario else inicio.strftime("%Y-%m"),
+            "format": "csv",
+        },
         validade=24 * 3600,
         tempo_limite=120,
     )
@@ -41,8 +48,12 @@ def _ler(fluxo: str, chave: str, inicio: date) -> dict[str, list[Ponto]]:
 
 
 def _periodo(texto: str) -> date:
-    """ "2025-07" → 1º/07/2025; "2025-Q3" → 1º/07/2025 (o primeiro mês do trimestre)."""
-    ano, resto = texto.split("-")[:2]
+    """ "2025-07" → 1º/07/2025; "2025-Q3" → 1º/07/2025 (o primeiro mês do trimestre);
+    "2026-11-10" → o próprio dia."""
+    partes = texto.split("-")
+    if len(partes) == 3:
+        return date.fromisoformat(texto)
+    ano, resto = partes[:2]
     mes = (int(resto[1:]) - 1) * 3 + 1 if resto.startswith("Q") else int(resto)
     return date(int(ano), mes, 1)
 
@@ -67,3 +78,8 @@ def hiato_de_credito(paises: list[str], inicio: date) -> dict[str, list[Ponto]]:
     """{ISO2: [(trimestre, pontos do PIB)]}: crédito ao setor privado sobre o PIB menos a
     tendência de longo prazo (o "credit-to-GDP gap" do BIS)."""
     return _ler("WS_CREDIT_GAP", "Q." + "+".join(paises) + ".P.A.C", inicio)
+
+
+def cambio_diario(inicio: date) -> dict[str, list[Ponto]]:
+    """{ISO2: [(dia, moeda local por US$)]} de todos os países do BIS."""
+    return _ler("WS_XRU", "D...A", inicio, diario=True)

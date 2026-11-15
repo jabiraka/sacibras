@@ -21,8 +21,17 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 
-from sacibras import alertas, contas, leis, relatorios
-from sacibras.fontes import bcb_focus, ibge_projecao, ipeadata, ons, tesouro_rtn
+from sacibras import alertas, contas, curvas, leis, relatorios
+from sacibras.fontes import (
+    bcb_focus,
+    bis,
+    fred,
+    ibge_projecao,
+    ipeadata,
+    ons,
+    tesouro_direto,
+    tesouro_rtn,
+)
 from sacibras.modelos import divida, risco
 from sacibras.schema import (
     Alerta,
@@ -1030,6 +1039,254 @@ def _inflacao(ctx: Contexto) -> Bloco:
     return bloco
 
 
+def ultimo_de_cada_mes(pontos: list[Ponto]) -> list[Ponto]:
+    """O último ponto de cada mês, na data dele."""
+    saida: dict[tuple[int, int], Ponto] = {}
+    for d, v in sorted(pontos):
+        saida[(d.year, d.month)] = (d, v)
+    return list(saida.values())
+
+
+def meta_media(metas: dict[int, float], depois_de: date, meses: int) -> float:
+    """O centro da meta, em média, nos `meses` que seguem o mês de `depois_de` (cada ano
+    pesa pelos meses dele no prazo). Ano sem meta fixada ainda leva a última que há; ano
+    antes da primeira, a primeira."""
+    anos = sorted(metas)
+    soma = 0.0
+    for k in range(1, meses + 1):
+        ano = depois_de.year + (depois_de.month - 1 + k) // 12
+        fixadas = [a for a in anos if a <= ano]
+        soma += metas[fixadas[-1] if fixadas else anos[0]]
+    return soma / meses
+
+
+def acima_da_meta(pontos: list[Ponto], metas: dict[int, float], meses: int) -> list[Ponto]:
+    """Cada ponto menos a meta média do prazo que ele cobre, em pontos percentuais."""
+    return [(d, v - meta_media(metas, d, meses)) for d, v in pontos]
+
+
+def _anos_depois(d: date, anos: int) -> date:
+    try:
+        return d.replace(year=d.year + anos)
+    except ValueError:  # 29 de fevereiro
+        return d.replace(year=d.year + anos, day=28)
+
+
+def real_no_prazo(real: curvas.Curva, anos: int) -> float | None:
+    """O juro real (% a.a.) da curva zero `anos` à frente da data dela, se a curva cobre."""
+    du = real.du_de(_anos_depois(real.base, anos))
+    return real.taxa(du) * 100 if curvas.tem_real(real, du) else None
+
+
+def implicita_no_prazo(nominal: curvas.Curva, real: curvas.Curva, anos: int) -> float | None:
+    """A inflação implícita (% a.a.) de hoje até `anos` à frente, se as duas pernas cobrem."""
+    r = real_no_prazo(real, anos)
+    du = nominal.du_de(_anos_depois(nominal.base, anos))
+    if r is None or du > nominal.fim:
+        return None
+    return ((1 + nominal.taxa(du)) / (1 + r / 100) - 1) * 100
+
+
+def diferenca_por_mes(a: list[Ponto], b: list[Ponto]) -> list[Ponto]:
+    """`a` − `b` nos meses em que os dois têm ponto, na data do ponto de `a`."""
+    de_b = {(d.year, d.month): v for d, v in b}
+    return [(d, v - de_b[(d.year, d.month)]) for d, v in a if (d.year, d.month) in de_b]
+
+
+PRAZO_JURO_REAL = 10
+PRAZO_IMPLICITA = 8
+"""Anos. O prefixado de 10 anos falta em metade dos meses (a NTN-F mais longa do Tesouro
+Direto às vezes vence antes); 8 anos é o prazo mais longo que as duas pernas cobrem quase
+todo mês desde 2007 (conferido em 15/11/2026: 223 meses)."""
+FONTE_CURVA = (
+    "Tesouro Direto (taxa média entre compra e venda; curva zero com os títulos com cupom por "
+    "bootstrap, o método do Jabs)"
+)
+
+
+def _curvas_de_fim_de_mes() -> tuple[list[Ponto], list[Ponto]]:
+    """(juro real de 10 anos, inflação implícita de 8 anos) no último dia de cada mês com
+    taxa no Tesouro Direto, desde 2004."""
+    td = tesouro_direto.curvas(date(2004, 1, 1))
+    datas = [d for d, _ in ultimo_de_cada_mes([(d, 0.0) for d in td[tesouro_direto.IPCA]])]
+    juro_real: list[Ponto] = []
+    implicita: list[Ponto] = []
+    for dia in datas:
+        do_dia = {tipo: td.get(tipo, {}).get(dia, []) for tipo in td}
+        try:
+            real = curvas.montar(
+                dia,
+                do_dia[tesouro_direto.IPCA],
+                do_dia.get(tesouro_direto.IPCA_JUROS, []),
+                curvas.CUPOM_NTNB,
+            )
+        except ValueError:
+            continue
+        if (r := real_no_prazo(real, PRAZO_JURO_REAL)) is not None:
+            juro_real.append((dia, r))
+        try:
+            nominal = curvas.montar(
+                dia,
+                do_dia.get(tesouro_direto.PREFIXADO, []),
+                do_dia.get(tesouro_direto.PREFIXADO_JUROS, []),
+                curvas.CUPOM_NTNF,
+            )
+        except ValueError:
+            continue
+        if (i := implicita_no_prazo(nominal, real, PRAZO_IMPLICITA)) is not None:
+            implicita.append((dia, i))
+    return juro_real, implicita
+
+
+def _metas(ctx: Contexto) -> dict[int, float]:
+    return {d.year: v for d, v in ctx.sgs("META_INFLACAO", 30)}
+
+
+def _juro_real_e_implicita(ctx: Contexto) -> Bloco:
+    """O juro real de 10 anos contra o dos EUA (cartão e gráfico) e a inflação implícita
+    longa contra a meta (painel)."""
+    brasil, implicita = _curvas_de_fim_de_mes()
+    bloco = Bloco()
+    if implicita:
+        bloco.alertas.append(
+            alerta(
+                "implicita-longa",
+                INFLACAO,
+                f"Inflação implícita de {PRAZO_IMPLICITA} anos acima da meta",
+                acima_da_meta(implicita, _metas(ctx), PRAZO_IMPLICITA * 12),
+                pior_quando="alto",
+                unidade="pp",
+                periodicidade="M",
+                casas=2,
+                fonte=(
+                    "Tesouro Direto (curva zero, o método de Juros); "
+                    f"{ctx.fonte_sgs('META_INFLACAO')}; cálculo próprio"
+                ),
+                procedencia="calculado",
+            )
+        )
+    try:  # o FRED às vezes demora (docs/FONTES.md): sem ele, fica só o painel
+        eua = ultimo_de_cada_mes(fred.serie(fred.TIPS_10_ANOS, date(2004, 1, 1)))
+    except Exception as erro:
+        print(f"    riscos: sem o juro real dos EUA ({str(erro)[:100]})")
+        return bloco
+    diferenca = diferenca_por_mes(brasil, eua)
+    if not diferenca:
+        return bloco
+    fonte = f"{FONTE_CURVA}; {fred.FONTE_TIPS}; cálculo próprio"
+    bloco.cartoes.append(
+        cartao(
+            "juro-real-brasil-eua",
+            "Juro real de 10 anos: Brasil menos EUA",
+            diferenca,
+            unidade="pp",
+            periodicidade="M",
+            casas=1,
+            detalhe=f"Brasil {br(brasil[-1][1])} % a.a.; EUA {br(eua[-1][1])} % a.a.",
+            fonte=fonte,
+            procedencia="calculado",
+            secao="riscos",
+            mini=120,
+        )
+    )
+    bloco.graficos.append(
+        grafico(
+            "juro-real-brasil-eua",
+            "Juro real de 10 anos: Brasil e EUA",
+            [
+                serie("brasil", "Brasil, Tesouro IPCA+", brasil),
+                serie("eua", "EUA, título do Tesouro indexado à inflação (TIPS)", eua),
+                serie("diferenca", "Diferença (Brasil menos EUA)", diferenca),
+            ],
+            unidade="% a.a.",
+            casas=2,
+            periodicidade="M",
+            fonte=fonte,
+            nota=(
+                "Um ponto por mês, no último dia com taxa. Brasil: a curva zero do Tesouro "
+                "IPCA+ lida 10 anos à frente da data (o mesmo método de Juros). EUA: o "
+                "rendimento do título de 10 anos indexado à inflação, prazo constante, do "
+                "Federal Reserve. A diferença é quanto o Brasil paga a mais, acima da "
+                "inflação de cada país, para tomar dinheiro por 10 anos."
+            ),
+        )
+    )
+    return bloco
+
+
+def _expectativa(ctx: Contexto) -> Bloco:
+    """A expectativa de inflação dos 12 meses seguintes (Focus) contra a meta."""
+    meta = leis.META_CONTINUA
+    focus = ultimo_de_cada_mes(bcb_focus.inflacao_12_meses(date(2001, 1, 1)))
+    bloco = Bloco()
+    bloco.alertas.append(
+        alerta(
+            "expectativa-12m",
+            INFLACAO,
+            "Inflação esperada para 12 meses acima da meta",
+            acima_da_meta(focus, _metas(ctx), 12),
+            pior_quando="alto",
+            unidade="pp",
+            periodicidade="M",
+            casas=2,
+            limite=LinhaRef(
+                valor=meta.intervalo,
+                rotulo=f"Teto da meta, em pontos acima do centro ({meta.referencia})",
+            ),
+            fonte=(
+                "Banco Central, Focus (mediana do IPCA dos 12 meses seguintes, suavizada); "
+                f"{ctx.fonte_sgs('META_INFLACAO')}; cálculo próprio"
+            ),
+            procedencia="calculado",
+        )
+    )
+    return bloco
+
+
+def _liquidez_e_hiato(ctx: Contexto) -> Bloco:
+    """A liquidez dos bancos (Banco Central) e o hiato de crédito do Brasil (BIS)."""
+    bloco = Bloco()
+    hiato = bis.hiato_de_credito(["BR"], date(1990, 1, 1)).get("BR", [])
+    if hiato:
+        bloco.alertas.append(
+            alerta(
+                "hiato-credito",
+                CREDITO,
+                "Hiato de crédito (crédito sobre o PIB contra a tendência)",
+                hiato,
+                pior_quando="alto",
+                unidade="pp do PIB",
+                periodicidade="T",
+                fonte="BIS, hiato de crédito sobre o PIB (WS_CREDIT_GAP)",
+            )
+        )
+    bloco.alertas += [
+        alerta(
+            "liquidez",
+            CREDITO,
+            "Liquidez dos bancos (Índice de Liquidez)",
+            ctx.sgs("LIQUIDEZ_IL", HIST),
+            pior_quando="baixo",
+            unidade="",  # o índice não tem unidade: 2,38 quer dizer 2,38 vezes
+            periodicidade="T",
+            casas=2,
+            fonte=ctx.fonte_sgs("LIQUIDEZ_IL"),
+        ),
+        alerta(
+            "liquidez-lcr",
+            CREDITO,
+            "Liquidez de curto prazo dos bancos (LCR)",
+            ctx.sgs("LIQUIDEZ_LCR", HIST),
+            pior_quando="baixo",
+            unidade="%",
+            periodicidade="T",
+            casas=0,
+            fonte=ctx.fonte_sgs("LIQUIDEZ_LCR"),
+        ),
+    ]
+    return bloco
+
+
 # ------------------------------------------------------------------ 6. estresse
 
 
@@ -1460,6 +1717,9 @@ def montar(ctx: Contexto) -> Secao:
         ("contas externas", lambda: _externo(ctx)),
         ("crédito", lambda: _credito(ctx)),
         ("inflação", lambda: _inflacao(ctx)),
+        ("expectativa de inflação", lambda: _expectativa(ctx)),
+        ("juro real e inflação implícita", lambda: _juro_real_e_implicita(ctx)),
+        ("liquidez e hiato de crédito", lambda: _liquidez_e_hiato(ctx)),
         (
             "estresse",
             lambda: _estresse(ctx, base, anos, dolar, ibov) if dolar and ibov else Bloco(),

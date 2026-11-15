@@ -93,6 +93,22 @@ def historia_anual(
     return semanais
 
 
+def inflacao_12_meses(desde: date) -> list[tuple[date, float]]:
+    """A mediana do IPCA dos 12 meses seguintes, suavizada (a que o BC usa: pesa os dois anos
+    do calendário pelos meses de cada um), um ponto por dia de coleta. Conferido em
+    15/11/2026: `ExpectativasMercadoInflacao12Meses`, desde 12/12/2001."""
+    filtro = (
+        "Indicador eq 'IPCA' and Suavizada eq 'S' and baseCalculo eq 0 "
+        f"and Data ge '{desde.isoformat()}'"
+    )
+    linhas = _consulta("ExpectativasMercadoInflacao12Meses", filtro, topo=10000, ordem="Data asc")
+    return [
+        (date.fromisoformat(linha["Data"]), float(linha["Mediana"]))
+        for linha in linhas
+        if linha["Mediana"] is not None
+    ]
+
+
 def selic_por_reuniao() -> tuple[date, list[tuple[str, float]]]:
     """(data da edição, [(reunião 'R8/2026', mediana da Selic meta)]) em ordem de reunião."""
     desde = date.today() - timedelta(days=21)

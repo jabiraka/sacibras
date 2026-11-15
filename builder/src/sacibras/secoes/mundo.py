@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import contextlib
 import gettext
-from datetime import date
+from datetime import date, timedelta
 
 import pycountry
 
 from sacibras.fontes import bis, fmi, ocde_receita
+from sacibras.modelos import risco
 from sacibras.schema import GrupoMundo, MetricaMundo, Mundo, MundoPaises, Pais
 from sacibras.secoes.base import Contexto, br
 from sacibras.tipos import Ponto
@@ -364,6 +365,115 @@ def _metrica_da_carga(
     )
 
 
+def reservas_em_meses(
+    reservas: dict[str, dict[int, float]], importacoes: dict[str, dict[int, float]], anos: list[int]
+) -> dict[str, list[float | None]]:
+    """{ISO3: um valor por ano}: as reservas no fim do ano sobre a importação média de um mês
+    do ano (bens e serviços), em meses."""
+    saida: dict[str, list[float | None]] = {}
+    for iso, por_ano in reservas.items():
+        compras = importacoes.get(iso, {})
+        valores: list[float | None] = [
+            round(por_ano[a] / (compras[a] / 12), 2) if a in por_ano and compras.get(a) else None
+            for a in anos
+        ]
+        if any(v is not None for v in valores):
+            saida[iso] = valores
+    return saida
+
+
+def sem_anos_vazios(
+    anos: list[int], valores: dict[str, list[float | None]]
+) -> tuple[list[int], dict[str, list[float | None]]]:
+    """Corta os últimos anos com menos da metade dos países do ano mais cheio: a tela compara
+    no último ano, e o ano que o FMI ainda não fechou viria vazio."""
+    contagem = [sum(1 for v in valores.values() if v[i] is not None) for i in range(len(anos))]
+    fim = len(anos)
+    while fim and contagem[fim - 1] < max(contagem, default=0) / 2:
+        fim -= 1
+    return anos[:fim], {
+        iso: v[:fim] for iso, v in valores.items() if any(x is not None for x in v[:fim])
+    }
+
+
+def volatilidade_do_cambio(
+    cambio: dict[str, list[Ponto]], janela: int = 21, folga_dias: int = 10
+) -> tuple[dict[str, float], date]:
+    """{ISO3: volatilidade da moeda contra o dólar nos últimos `janela` dias úteis, % a.a.} e
+    a data mais recente. Fica de fora quem está parado há mais de `folga_dias` (a Argentina
+    no BIS), quem não tem país (a zona do euro, XM) e os EUA (o dólar contra ele mesmo)."""
+    ultimo = max(p[-1][0] for p in cambio.values() if p)
+    saida: dict[str, float] = {}
+    for iso2, pontos in cambio.items():
+        iso3 = _iso2_do_bis(iso2)
+        if iso3 in (None, "USA") or not pontos or (ultimo - pontos[-1][0]).days > folga_dias:
+            continue
+        vol = risco.volatilidade(pontos, janela)
+        if vol:
+            saida[str(iso3)] = round(vol[-1][1], 2)
+    return saida, ultimo
+
+
+def _metricas_de_risco(ctx: Contexto, ano: int, manter: set[str]) -> list[MetricaMundo]:
+    """Só no arquivo de todos os países, para o painel de alerta contra outros países:
+    reservas em meses de importação (FMI) e volatilidade do câmbio (BIS). Cada uma que falha
+    fica de fora."""
+    saida: list[MetricaMundo] = []
+    anos = list(range(ano - 6, ano + 1))
+    try:
+        anos_r, meses = sem_anos_vazios(
+            anos,
+            reservas_em_meses(
+                fmi.estatistica(fmi.RESERVAS, anos[0]),
+                fmi.estatistica(fmi.IMPORTACOES, anos[0]),
+                anos,
+            ),
+        )
+        saida.append(
+            MetricaMundo(
+                id="reservas_meses",
+                nome="Reservas em meses de importação",
+                descricao=(
+                    "Reservas internacionais no fim do ano (com o ouro a preço de mercado) "
+                    "sobre a importação média de um mês de bens e serviços no ano."
+                ),
+                unidade="meses",
+                casas=1,
+                maior_e_melhor=True,
+                fonte=(
+                    "FMI, International Liquidity (reservas) e Balance of Payments "
+                    "(importação de bens e serviços); cálculo próprio"
+                ),
+                anos=anos_r,
+                valores={iso: v for iso, v in sorted(meses.items()) if iso in manter},
+            )
+        )
+    except Exception as erro:
+        print(f"  aviso: mundo: reservas do FMI indisponíveis ({str(erro)[:120]})")
+    try:
+        vol, quando = volatilidade_do_cambio(bis.cambio_diario(ctx.hoje - timedelta(days=60)))
+        saida.append(
+            MetricaMundo(
+                id="vol_cambio",
+                nome="Volatilidade da moeda contra o dólar",
+                descricao=(
+                    "Desvio-padrão das variações diárias da moeda contra o dólar nos últimos "
+                    f"21 dias úteis até {quando.strftime('%d/%m/%Y')}, levado ao ano. Os "
+                    "países do euro têm todos o euro."
+                ),
+                unidade="% a.a.",
+                casas=1,
+                maior_e_melhor=False,
+                fonte="BIS, câmbio diário contra o dólar (WS_XRU); cálculo próprio",
+                anos=[ano],
+                valores={iso: [v] for iso, v in sorted(vol.items()) if iso in manter},
+            )
+        )
+    except Exception as erro:
+        print(f"  aviso: mundo: câmbio diário do BIS indisponível ({str(erro)[:120]})")
+    return saida
+
+
 def _todos_os_paises(
     ctx: Contexto,
     ano: int,
@@ -418,6 +528,7 @@ def _todos_os_paises(
         saida.append(
             m.model_copy(update={"anos": anos, "valores": valores, "descricao": descricao})
         )
+    saida += _metricas_de_risco(ctx, ano, manter)
     return MundoPaises(metricas=saida, gerado_em=ctx.agora())
 
 
