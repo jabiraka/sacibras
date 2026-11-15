@@ -1108,6 +1108,30 @@ TERMOS: list[Termo] = [
         "#impostos/reforma",
     ),
     Termo(
+        "regime-especifico",
+        "Regime específico",
+        "Na reforma do consumo, o setor em que o IBS e a CBS têm conta própria: outra base (só "
+        "a margem, nos bancos), outra alíquota (em reais por litro, nos combustíveis) ou sem "
+        "crédito para quem compra.",
+        ("regime específico", "regimes específicos", "regra própria"),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "iva",
+        "IVA",
+        "Imposto sobre Valor Adicionado: o imposto sobre o consumo em que cada empresa paga só "
+        "sobre o que acrescentou, abatendo o que já se pagou antes. É o modelo do IBS e da CBS.",
+        ("IVA",),
+    ),
+    Termo(
+        "redutor-social",
+        "Redutor social",
+        "Valor fixo da lei que se tira da base do IBS e da CBS na venda de casa nova ou de lote "
+        "e em cada mês de aluguel de moradia, para pesar menos nos imóveis mais baratos.",
+        ("redutor social", "redutor de ajuste"),
+        "#impostos/reforma",
+    ),
+    Termo(
         "imposto-seletivo",
         "Imposto Seletivo",
         "Imposto federal criado pela reforma de 2023 sobre produtos que fazem mal à saúde ou "
@@ -1634,6 +1658,30 @@ TERMOS: list[Termo] = [
         "A Pesquisa de Orçamentos Familiares, do IBGE: o que as famílias compram e quanto gastam "
         "em cada coisa. Dela saem os pesos de cada item no IPCA.",
         ("POF",),
+    ),
+    Termo(
+        "sinisa",
+        "SINISA",
+        "O Sistema Nacional de Informações em Saneamento Básico, do Ministério das Cidades: o "
+        "que as empresas e prefeituras que cuidam de água, esgoto e lixo informam todo ano. "
+        "Substituiu o SNIS em 2024.",
+        ("SINISA", "SNIS"),
+        "#pobreza/saneamento",
+    ),
+    Termo(
+        "centil",
+        "Centil",
+        "Cada um dos cem grupos do mesmo tamanho em que se dividem as pessoas, da menor renda "
+        "para a maior. O último centil é o 1 % de cima.",
+        ("centil", "centis"),
+    ),
+    Termo(
+        "militares-inativos",
+        "Militares inativos",
+        "Os militares da reserva e os reformados. Continuam recebendo a remuneração, paga pelo "
+        "Tesouro; a contribuição dos militares vai só para as pensões.",
+        ("militares inativos", "militares da reserva", "reserva e dos reformados"),
+        "#demografia/envelhecimento",
     ),
     # ---------------------------------------------------------------- demografia
     Termo(

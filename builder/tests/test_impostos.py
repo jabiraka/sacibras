@@ -237,6 +237,30 @@ def test_reforma_esta_inteira() -> None:
     assert all(p.muda and p.norma.startswith("ADCT") for p in leis.REFORMA_DO_CONSUMO)
 
 
+def test_regimes_proprios_tem_o_artigo_de_cada_um() -> None:
+    temas = [r.tema for r in leis.REGIMES_PROPRIOS]
+    assert len(temas) == len(set(temas))
+    assert all(r.norma.startswith("LC 214/2025, art") and r.diz for r in leis.REGIMES_PROPRIOS)
+    assert any("10,85 %" in r.diz for r in leis.REGIMES_PROPRIOS)  # art. 233, LC 227/2026
+
+
+def test_bases_contra_outros_paises_no_ano_comum() -> None:
+    """O Brasil vai até 2024; as médias, até 2023: vale 2023. O salário soma contribuições
+    sociais e folha."""
+    dados: ocde_receita.Tabela = {}
+    for pais, anos in (("BRA", (2023, 2024)), ("OECD_REP", (2023,)), ("A9", (2022, 2023))):
+        for ano in anos:
+            for cat, v in (("T_1100", 3.0), ("T_1200", 3.6), ("T_5110", 10.9), ("T_2000", 8.0)):
+                dados.setdefault((pais, "S13", cat), {})[ano] = v
+    dados[("BRA", "S13", "T_3000")] = {2023: 0.56}
+    dados[("CHL", "S13", "T_1100")] = {2023: 1.5}
+    ano, linhas = impostos.tabela_de_bases(dados, ["BRA", "OECD_REP", "A9", "CHL", "XXX"], str)
+    assert ano == 2023
+    assert [li.rotulo for li in linhas] == ["BRA", "OECD_REP", "A9", "CHL"]  # sem dado, fora
+    assert linhas[0].valores == [3.0, 3.6, 10.9, None, 8.6]
+    assert linhas[3].valores == [1.5, None, None, None, None]
+
+
 def test_setores_le_meses_abreviados_e_so_ano_fechado() -> None:
     cab = "Ano;Mês;Seção - Sigla;Seção - Nome;II;IRPJ"
     meses = ["Jan", "Fev ", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]

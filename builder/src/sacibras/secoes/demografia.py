@@ -17,7 +17,14 @@ from datetime import date
 from typing import NamedTuple
 
 from sacibras import contas
-from sacibras.fontes import banco_mundial, ibge_projecao, ibge_sidra, onu_wpp, tesouro_rtn
+from sacibras.fontes import (
+    banco_mundial,
+    ibge_projecao,
+    ibge_sidra,
+    onu_wpp,
+    siconfi,
+    tesouro_rtn,
+)
 from sacibras.fontes.ibge_projecao import FONTE as PROJECAO
 from sacibras.fontes.ibge_projecao import ULTIMO_ANO_AJUSTADO, PorAno
 from sacibras.schema import (
@@ -71,6 +78,37 @@ NOTA_PROJECAO = (
 
 
 # ------------------------------------------------------------------ contas
+
+
+def soma_do_ano(mensal: list[Ponto]) -> dict[int, float]:
+    """{ano: soma dos 12 meses}, só nos anos com os 12 meses."""
+    por_ano: dict[int, list[float]] = {}
+    for d, v in mensal:
+        por_ano.setdefault(d.year, []).append(v)
+    return {a: sum(vs) for a, vs in por_ano.items() if len(vs) == 12}
+
+
+def pib_do_ano(pib_12m: list[Ponto]) -> dict[int, float]:
+    """{ano: PIB do ano, R$ milhões}: o acumulado em 12 meses de dezembro."""
+    return {d.year: v for d, v in pib_12m if d.month == 12}
+
+
+def previdencia_em_pct_do_pib(
+    anos: list[siconfi.PrevidenciaUniao], inss_deficit: dict[int, float], pib: dict[int, float]
+) -> dict[str, list[Ponto]]:
+    """O déficit (positivo) de cada regime em % do PIB do ano: o INSS (R$ milhões, do RTN) e
+    os servidores civis e os militares da União (R$, do RREO)."""
+    saida: dict[str, list[Ponto]] = {"inss": [], "civis": [], "militares": []}
+    for p in anos:
+        if p.ano not in pib:
+            continue
+        base = pib[p.ano] * 1e6
+        d = date(p.ano, 1, 1)
+        saida["civis"].append((d, -p.civis_resultado / base * 100))
+        saida["militares"].append((d, -p.militares_resultado / base * 100))
+        if p.ano in inss_deficit:
+            saida["inss"].append((d, inss_deficit[p.ano] / pib[p.ano] * 100))
+    return saida
 
 
 def pontos(por_ano: PorAno, escala: float = 1.0, ate: int | None = None) -> list[Ponto]:
@@ -367,6 +405,14 @@ def montar(ctx: Contexto) -> Secao:
         print(f"    RTN ficou de fora da demografia: {str(erro)[:120]}")
     if cartao_inss:
         cartoes.append(cartao_inss)
+    tabelas_prev: list[Tabela] = []
+    try:
+        c_prev, g_prev, t_prev = _previdencia_uniao(ctx)
+        cartoes.append(c_prev)
+        graficos_inss.append(g_prev)
+        tabelas_prev.append(t_prev)
+    except Exception as erro:
+        print(f"    a previdência da União ficou de fora: {str(erro)[:120]}")
 
     # --- Produtividade: PIB por pessoa ocupada (Contas Trimestrais e PNAD) ---
     pib_vol = ibge_sidra.serie(
@@ -674,6 +720,7 @@ def montar(ctx: Contexto) -> Secao:
         print(f"    o Banco Mundial ficou de fora da demografia: {str(erro)[:120]}")
 
     tabelas = [_tabela_marcos(agora, ind, br_grupos), _tabela_estados(agora, grupos)]
+    tabelas += tabelas_prev
 
     resumo = (
         f"O Brasil tem {br(populacao[agora] / 1e6)} milhões de habitantes em {agora} e, "
@@ -693,6 +740,108 @@ def montar(ctx: Contexto) -> Secao:
         tabelas=tabelas,
         gerado_em=ctx.agora(),
     )
+
+
+def _previdencia_uniao(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
+    """O INSS ao lado da previdência dos servidores civis e dos militares da União."""
+    anos = siconfi.previdencia_uniao(ctx.hoje)
+    rtn = tesouro_rtn.serie_historica()
+    beneficios = soma_do_ano(rtn["rgps"])
+    arrecadacao = soma_do_ano(rtn["arrecadacao_rgps"])
+    inss = {a: beneficios[a] - arrecadacao[a] for a in beneficios if a in arrecadacao}
+    pib = pib_do_ano(ctx.sgs("PIB_12M", 30))
+    pct = previdencia_em_pct_do_pib(anos, inss, pib)
+    if not pct["civis"]:
+        raise RuntimeError("sem o PIB dos anos da previdência da União")
+    ultimo = next(p for p in reversed(anos) if p.ano in pib)
+    a = ultimo.ano
+    civis, militares = pct["civis"][-1][1], pct["militares"][-1][1]
+    fonte_rreo = (
+        "Tesouro Nacional, SICONFI: RREO da União, 6º bimestre (Anexo 04: servidores civis e "
+        "militares)"
+    )
+    fonte = (
+        f"{fonte_rreo}; INSS: Resultado do Tesouro Nacional (tabela 1.1); "
+        f"PIB: {ctx.fonte_sgs('PIB_12M')}"
+    )
+    cartao_ = Cartao(
+        id="deficit-servidores-militares",
+        rotulo="Déficit de servidores e militares da União",
+        valor=round(civis + militares, 2),
+        unidade="% do PIB",
+        casas=2,
+        referencia=date(a, 1, 1),
+        periodicidade="A",
+        detalhe=f"civis {br(civis, 2)} %; militares {br(militares, 2)} %",
+        fonte=fonte,
+        procedencia="calculado",
+        mini=[
+            (d, round(v + m, 2))
+            for (d, v), (_, m) in zip(pct["civis"], pct["militares"], strict=True)
+        ],
+        secao="demografia",
+    )
+    grafico_ = grafico(
+        "previdencia-uniao",
+        "Déficit da previdência: INSS, servidores e militares",
+        [
+            serie("inss", "INSS", pct["inss"], casas=2),
+            serie("civis", "Servidores civis da União", pct["civis"], casas=2),
+            serie("militares", "Militares", pct["militares"], casas=2),
+        ],
+        unidade="% do PIB",
+        casas=2,
+        periodicidade="A",
+        fonte=fonte,
+        nota=(
+            "O que falta para pagar aposentadorias e pensões depois das contribuições, em cada "
+            "ano. Servidores civis: o regime próprio da União (dos três Poderes). Militares: "
+            "pensões e militares da reserva e reformados (estes não contribuem). Os números da "
+            "União são as despesas liquidadas no ano; os do INSS, os benefícios pagos. Fora: "
+            "policiais e bombeiros do DF, que a União paga pelo Fundo Constitucional do DF, e "
+            "os servidores de estados e municípios."
+        ),
+    )
+
+    def linha(nome: str, receita: float, despesa: float) -> LinhaTabela:
+        """Em R$ bilhões; o déficit também em % do PIB."""
+        deficit = despesa - receita
+        return LinhaTabela(
+            rotulo=nome,
+            valores=[
+                round(receita / 1e9, 1),
+                round(despesa / 1e9, 1),
+                round(deficit / 1e9, 1),
+                round(deficit / (pib[a] * 1e6) * 100, 2),
+            ],
+            unidade="",
+            casas=1,
+        )
+
+    linhas = []
+    if a in beneficios and a in arrecadacao:
+        linhas.append(linha("INSS", arrecadacao[a] * 1e6, beneficios[a] * 1e6))
+    linhas += [
+        linha("Servidores civis da União", ultimo.civis_receita, ultimo.civis_despesa),
+        linha("Militares", ultimo.militares_receita, ultimo.militares_despesa),
+    ]
+    tabela = Tabela(
+        id="previdencia-uniao",
+        titulo="As três previdências que a União paga",
+        subtitulo=f"{a}; R$ bilhões e o déficit em % do PIB",
+        colunas=["contribuições", "benefícios", "déficit", "% do PIB"],
+        linhas=linhas,
+        fonte=fonte,
+        nota=(
+            "Contribuições: o que se recolhe para cada regime (no dos servidores civis, com "
+            "a parte que a União paga como empregadora; no dos militares, só a dos próprios "
+            "militares, para as pensões). Benefícios: aposentadorias, pensões e, nos "
+            "militares, a remuneração da reserva e dos reformados. INSS: arrecadação líquida "
+            "e benefícios pagos no ano, do RTN; União: receitas realizadas e despesas "
+            "liquidadas, do RREO."
+        ),
+    )
+    return cartao_, grafico_, tabela
 
 
 def _tabela_marcos(agora: int, ind: dict[str, PorAno], g: dict[str, PorAno]) -> Tabela:

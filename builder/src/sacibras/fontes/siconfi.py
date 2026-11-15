@@ -857,3 +857,116 @@ def coletar_capitais(cods: list[int], hoje: date, minimo: int = 20) -> ColetaCap
             break
         return coleta
     return None
+
+
+# ------------------------------------------------------------------ a previdência da União
+#
+# RREO da União (`id_ente=1`, `co_esfera=U`, sem `co_poder`: o relatório é de todos os poderes),
+# 6º bimestre (o ano fechado). Conferido em 15/11/2026, de 2016 a 2025: o Anexo 04 se divide em
+# 04.1, 04.2 e 04.3, e a numeração MUDA com os anos (até 2022, os civis no 04.1 e os militares
+# no 04.2; desde 2023, os civis no 04.2 e os militares no 04.3). As contas têm o mesmo código:
+# - `RREO4ResultadoRPPSPrevidenciario` e `TotalReceitasRPPSPrevidenciario`: os servidores civis
+#   (o RPPS da União);
+# - `ResultadoRPPSPrevidenciarioFCDF`: as aposentadorias e pensões que o Fundo Constitucional
+#   do DF paga (policiais e bombeiros do DF, que a União sustenta);
+# - `RREO4ResultadoRPPSFinanceiro` e `TotalReceitasRPPSFinanceiro`: as pensões militares, com a
+#   contribuição dos militares; `ResultadoInativosMilitares`: os militares da reserva e
+#   reformados, sem receita própria. Militares inativos só aparecem separados desde 2019.
+# O resultado vem na coluna das despesas liquidadas do ano ("DESPESAS LIQUIDADAS ATÉ O
+# BIMESTRE / 2025"; em 2021 e 2022, sem o ano), a receita na das realizadas; nos anos com o ano
+# anterior ao lado, vale a coluna com o ano do relatório.
+UNIAO = 1
+ANEXOS_PREVIDENCIA_UNIAO = ("RREO-Anexo 04.1", "RREO-Anexo 04.2", "RREO-Anexo 04.3")
+PREVIDENCIA_UNIAO_DESDE = 2019
+COL_RESULTADO_UNIAO = ("DESPESAS LIQUIDADAS ATÉ O BIMESTRE",)
+COL_RECEITA_UNIAO = ("RECEITAS REALIZADAS ATÉ O BIMESTRE", "ATÉ O BIMESTRE")
+"""A receita, em 2019 e 2020, vem em "Até o Bimestre / 2020"."""
+
+
+@dataclass(frozen=True)
+class PrevidenciaUniao:
+    """Um ano fechado, em R$ (resultado negativo é déficit)."""
+
+    ano: int
+    civis_receita: float
+    civis_resultado: float
+    militares_receita: float
+    militares_resultado: float
+    """Pensões militares e militares inativos somados."""
+    fcdf_resultado: float
+
+    @property
+    def civis_despesa(self) -> float:
+        return self.civis_receita - self.civis_resultado
+
+    @property
+    def militares_despesa(self) -> float:
+        return self.militares_receita - self.militares_resultado
+
+
+def rreo_uniao(
+    ano: int, anexo: str, validade: float = VALIDADE_ANO_FECHADO
+) -> list[dict[str, Any]]:
+    params = {
+        "an_exercicio": str(ano),
+        "in_periodicidade": "B",
+        "nr_periodo": "6",
+        "co_tipo_demonstrativo": "RREO",
+        "no_anexo": anexo,
+        "co_esfera": "U",
+        "id_ente": str(UNIAO),
+    }
+    itens = baixar_json(f"{BASE}/rreo", params=params, validade=validade)["items"]
+    time.sleep(PAUSA)
+    return list(itens)
+
+
+def do_ano(
+    itens: list[dict[str, Any]], conta: str, colunas: tuple[str, ...], ano: int
+) -> float | None:
+    """O valor da `conta` na coluna que começa por um de `colunas` e é a do ano do relatório."""
+    for i in itens:
+        col = re.sub(r"\s+", " ", str(i.get("coluna") or "")).strip().upper()
+        if i["cod_conta"] != conta or i["valor"] is None:
+            continue
+        for coluna in colunas:
+            if col == coluna or (col.startswith(coluna) and re.search(rf"/ ?{ano}$", col)):
+                return float(i["valor"])
+    return None
+
+
+def parse_previdencia_uniao(itens: list[dict[str, Any]], ano: int) -> PrevidenciaUniao | None:
+    def res(conta: str) -> float | None:
+        return do_ano(itens, conta, COL_RESULTADO_UNIAO, ano)
+
+    def rec(conta: str) -> float | None:
+        return do_ano(itens, conta, COL_RECEITA_UNIAO, ano)
+
+    civis = res("RREO4ResultadoRPPSPrevidenciario")
+    pensoes = res("RREO4ResultadoRPPSFinanceiro")
+    inativos = res("ResultadoInativosMilitares")
+    if civis is None or pensoes is None or inativos is None:
+        return None
+    return PrevidenciaUniao(
+        ano=ano,
+        civis_receita=rec("TotalReceitasRPPSPrevidenciario") or 0.0,
+        civis_resultado=civis,
+        militares_receita=rec("TotalReceitasRPPSFinanceiro") or 0.0,
+        militares_resultado=pensoes + inativos,
+        fcdf_resultado=res("ResultadoRPPSPrevidenciarioFCDF") or 0.0,
+    )
+
+
+def previdencia_uniao(hoje: date) -> list[PrevidenciaUniao]:
+    """Os anos fechados desde 2019, do mais velho ao mais novo. O 6º bimestre sai em janeiro:
+    o ano passado só entra quando a União entregou."""
+    saida: list[PrevidenciaUniao] = []
+    for ano in range(PREVIDENCIA_UNIAO_DESDE, hoje.year):
+        validade = VALIDADE if ano == hoje.year - 1 else VALIDADE_ANO_FECHADO
+        itens = [i for a in ANEXOS_PREVIDENCIA_UNIAO for i in rreo_uniao(ano, a, validade)]
+        achado = parse_previdencia_uniao(itens, ano)
+        if achado:
+            saida.append(achado)
+    if not saida:
+        raise FonteForaDoArError("SICONFI: o RREO da União não trouxe a previdência")
+    return saida

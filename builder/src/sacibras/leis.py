@@ -462,6 +462,146 @@ SELETIVO_E_SIMPLES: list[Regra] = [
 ]
 
 
+# ------------------------------------------------------------------ reforma: regimes próprios
+#
+# Lei Complementar nº 214/2025, Título V do Livro I ("Dos regimes específicos do IBS e da CBS",
+# arts. 172 a 307) e partes do Título IV ("Dos regimes diferenciados"), lida em 15/11/2026 no
+# texto atualizado da Câmara (o mesmo endereço de `REFORMA_DO_CONSUMO`, já com a LC 227/2026).
+# Os descontos de 30 % e 60 % e a alíquota zero (arts. 125 a 148) estão em `REDUCAO_*` e na
+# tabela dos descontos; aqui fica o que tem regra própria de base, de alíquota ou de crédito.
+# Trechos:
+# - Art. 172: "O IBS e a CBS incidirão uma única vez sobre as operações [...] com os seguintes
+#   combustíveis" (gasolina, etanol, diesel, biodiesel, GLP, querosene de aviação, gás natural
+#   e outros); art. 173: "A base de cálculo [...] será a quantidade de combustível"; art. 174:
+#   alíquotas "uniformes em todo o território nacional, específicas por unidade de medida e
+#   diferenciadas por produto"; § 1º: "As alíquotas da CBS em 2027 serão fixadas de forma a não
+#   exceder a carga tributária incidente sobre os combustíveis dos tributos federais extintos
+#   ou reduzidos"; art. 176: contribuintes são o produtor de biocombustível, a refinaria, a
+#   central petroquímica, a UPGN, o formulador e o importador.
+# - Art. 192: nas operações de crédito, câmbio e títulos, a base é a receita "com a dedução de:
+#   I - despesas financeiras com a captação de recursos; [...] V - perdas incorridas no
+#   recebimento de créditos"; art. 233 (redação da LC 227/2026): "a soma das alíquotas do IBS e
+#   da CBS incidentes sobre os serviços financeiros [...] corresponderá: I - em 2027 e 2028, a
+#   10,85% [...]; II - em 2029, a 11,00%; III - em 2030, a 11,15%; IV - em 2031, a 11,30%; V -
+#   em 2032, a 11,50%; e VI - em 2033, a 12,50%".
+# - Art. 235: nos planos de saúde, a base é a receita "com a dedução: a) das indenizações
+#   correspondentes a eventos ocorridos, efetivamente pagas"; art. 237: as alíquotas
+#   "correspondem às alíquotas de referência de cada esfera federativa, reduzidas em 60%"; art.
+#   238: "Fica vedado o crédito de IBS e de CBS para os adquirentes de planos de assistência à
+#   saúde" (o parágrafo único abre a exceção do plano dos empregados, art. 57, § 3º, IV, f).
+# - Art. 245: nos concursos de prognósticos, a base é "o produto da arrecadação, com a dedução
+#   de: I - premiações pagas; e II - destinações obrigatórias por lei"; parágrafo único: "As
+#   premiações pagas não ficam sujeitas à incidência"; art. 246: alíquotas que "correspondem à
+#   soma das alíquotas de referência".
+# - Art. 251, § 1º: a pessoa física que aluga só entra se "a) a receita total com essas
+#   operações exceda R$ 240.000 [...]; e b) tenham por objeto mais de 3 (três) bens imóveis
+#   distintos"; art. 257: o "redutor de ajuste" vinculado a cada imóvel a partir de 2027 reduz a
+#   base da venda; art. 259: "redutor social no valor de R$ 100.000,00 [...] por bem imóvel
+#   residencial novo e de R$ 30.000,00 [...] por lote residencial"; art. 260 (redação da LC
+#   227/2026): no aluguel residencial, "redutor social no valor de R$ 600,00 (seiscentos
+#   reais), por mês, por bem imóvel"; art. 261: as alíquotas "ficam reduzidas em 50%" e, no
+#   aluguel, "em 70%".
+# - Art. 271: as cooperativas "poderão optar por regime específico [...] no qual ficam
+#   reduzidas a zero as alíquotas" na operação do associado com a cooperativa e da cooperativa
+#   com o associado que paga pelo regime regular.
+# - Arts. 273, 275 e 276: bares e restaurantes, "reduzidas em 40%", e "Fica vedada a
+#   apropriação de créditos [...] pelos adquirentes"; arts. 277, 281 e 283: hotelaria, parques
+#   de diversão e temáticos, também 40 % e sem crédito para quem compra; art. 289: a agência de
+#   turismo paga sobre "o valor da operação, deduzidos os valores repassados para os
+#   fornecedores", na alíquota da hotelaria.
+# - Art. 286: transporte coletivo de passageiros "rodoviário, ferroviário e hidroviário
+#   intermunicipais e interestaduais", alíquotas "reduzidas em 40%"; art. 287: o mesmo para o
+#   "transporte aéreo regional coletivo de passageiros ou de carga".
+# - Art. 157: "Fica isento do IBS e da CBS o fornecimento de serviços de transporte público
+#   coletivo de passageiros rodoviário e metroviário de caráter urbano, semiurbano e
+#   metropolitano"; art. 285: no ferroviário e hidroviário urbano, alíquotas "reduzidas em 100%".
+# - Art. 293, § 4º (redação da LC 227/2026): a SAF paga numa guia só "4% (quatro por cento)
+#   para os tributos federais unificados" (IRPJ, CSLL e as contribuições do art. 22 da Lei
+#   8.212), "1% (um por cento) para a CBS" e "1% (um por cento) para o IBS".
+# - Art. 164: o produtor rural com "receita inferior a R$ 3.600.000,00 [...] e o produtor rural
+#   integrado não serão considerados contribuintes"; art. 168: quem compra dele pode
+#   "apropriar créditos presumidos".
+REGIMES_PROPRIOS: list[Regra] = [
+    Regra(
+        "Combustíveis",
+        "Cobrado uma vez só, de quem refina, produz ou importa, em reais por litro ou por "
+        "quilo, igual no país todo. A CBS de 2027 não pode passar o PIS e a Cofins de hoje.",
+        "LC 214/2025, arts. 172 a 174 e 176",
+    ),
+    Regra(
+        "Bancos e serviços financeiros",
+        "Imposto sobre a margem: a receita menos o custo de captar o dinheiro e as perdas com "
+        "calote. Alíquota própria, somando IBS e CBS: 10,85 % em 2027 e 2028, subindo até "
+        "12,5 % em 2033.",
+        "LC 214/2025, arts. 181, 192 e 233",
+    ),
+    Regra(
+        "Planos de saúde",
+        "Imposto sobre o que a operadora recebe menos o que paga de consultas e internações, "
+        "com 60 % de desconto. Quem paga o plano não abate (a não ser a empresa, no plano dos "
+        "empregados).",
+        "LC 214/2025, arts. 234, 235, 237 e 238",
+    ),
+    Regra(
+        "Loterias e apostas",
+        "Imposto sobre o que fica com a empresa depois dos prêmios e dos repasses que a lei "
+        "manda, na alíquota cheia. O prêmio não paga.",
+        "LC 214/2025, arts. 244 a 246",
+    ),
+    Regra(
+        "Compra e venda de imóveis",
+        "Desconto de 50 %. Na venda, abate-se o valor do imóvel (o redutor de ajuste) e mais "
+        "R$ 100 mil por casa nova ou R$ 30 mil por lote (o redutor social).",
+        "LC 214/2025, arts. 251, 257, 259 e 261",
+    ),
+    Regra(
+        "Aluguel",
+        "Desconto de 70 % e R$ 600 por mês abatidos de cada aluguel de moradia. A pessoa física "
+        "só paga se receber mais de R$ 240 mil por ano de aluguel de mais de três imóveis.",
+        "LC 214/2025, arts. 251, § 1º, 260 e 261, parágrafo único",
+    ),
+    Regra(
+        "Cooperativas",
+        "Podem escolher alíquota zero no que o associado vende à cooperativa e no que ela "
+        "fornece ao associado que paga pelas regras gerais.",
+        "LC 214/2025, art. 271",
+    ),
+    Regra(
+        "Bares e restaurantes",
+        "Desconto de 40 %; quem compra a refeição não abate o imposto.",
+        "LC 214/2025, arts. 273, 275 e 276",
+    ),
+    Regra(
+        "Hotéis, parques e agências de turismo",
+        "Desconto de 40 %. A agência paga só sobre o que fica com ela, depois de repassar ao "
+        "hotel e à companhia aérea.",
+        "LC 214/2025, arts. 277, 281, 288 e 289",
+    ),
+    Regra(
+        "Ônibus, trem e barco entre cidades; avião regional",
+        "Desconto de 40 %.",
+        "LC 214/2025, arts. 284, 286 e 287",
+    ),
+    Regra(
+        "Transporte público na cidade",
+        "Ônibus e metrô urbanos isentos; trem e barco urbanos com alíquota zero.",
+        "LC 214/2025, arts. 157 e 285",
+    ),
+    Regra(
+        "Clubes de futebol (SAF)",
+        "Uma guia só sobre a receita: 4 % para IRPJ, CSLL e INSS da empresa, 1 % de CBS e 1 % "
+        "de IBS.",
+        "LC 214/2025, art. 293, § 4º",
+    ),
+    Regra(
+        "Produtor rural pequeno",
+        "Quem fatura menos de R$ 3,6 milhões por ano não paga; quem compra dele abate um "
+        "crédito presumido.",
+        "LC 214/2025, arts. 164 e 168",
+    ),
+]
+
+
 # ---- Meta de universalização do saneamento (o Marco Legal do Saneamento).
 @dataclass(frozen=True)
 class MetaDeSaneamento:

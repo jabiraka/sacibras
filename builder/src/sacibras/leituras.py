@@ -172,6 +172,15 @@ LEITURAS: list[Leitura] = [
         "ela, e trocar a linha das alíquotas quando sair. A cada três meses até 2027.",
     ),
     Leitura(
+        "Regimes específicos da reforma: combustíveis, bancos, saúde, imóveis (LC 214)",
+        "leis.REGIMES_PROPRIOS",
+        date(2026, 11, 15),
+        date(2027, 2, 15),
+        "Câmara, LC 214/2025 em texto atualizado (arts. 157, 164, 168, 172 a 176, 181, 192, "
+        "233 a 238, 244 a 246, 251 a 261, 271, 273 a 289 e 293): ver se lei complementar nova "
+        "mexeu, como a LC 227/2026 fez nos bancos, no aluguel e na SAF. Depois, uma vez por ano.",
+    ),
+    Leitura(
         "CBS de 2027: o cálculo do TCU e a resolução do Senado",
         "relatorios.CBS_REFERENCIA_2027",
         date(2026, 11, 14),
