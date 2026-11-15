@@ -2159,8 +2159,9 @@ def _governanca(ctx: Contexto) -> Bloco:
     return bloco
 
 
-def _inss_ate_2100(ctx: Contexto) -> Bloco:
-    """A projeção atuarial do INSS do PLDO, com o realizado do RTN na frente."""
+def inss_ate_2100(ctx: Contexto, secao: str = "riscos") -> Bloco:
+    """A projeção atuarial do INSS do PLDO, com o realizado do RTN na frente. Sai também em
+    Demografia › O custo do envelhecimento (`secao` vai no cartão)."""
     projecao = relatorios.RGPS_PROJECAO
     primeiro = min(projecao)
     rtn = tesouro_rtn.serie_historica()
@@ -2192,7 +2193,7 @@ def _inss_ate_2100(ctx: Contexto) -> Bloco:
             ),
             fonte=relatorios.FONTE_RGPS_PROJECAO,
             procedencia="oficial",
-            secao="riscos",
+            secao=secao,
             mini=[(date(a, 1, 1), v) for a, v in sorted(necessidade.items())],
         )
     )
@@ -2274,7 +2275,7 @@ def montar(ctx: Contexto) -> Secao:
         ("vencimento da dívida", lambda: _vencimento(ctx)),
         ("ações na Justiça", lambda: _justica(ctx)),
         ("governança", lambda: _governanca(ctx)),
-        ("INSS até 2100", lambda: _inss_ate_2100(ctx)),
+        ("INSS até 2100", lambda: inss_ate_2100(ctx)),
         ("estados perto dos limites", lambda: _estados(ctx)),
     ]
     for nome, montar_bloco in demais:

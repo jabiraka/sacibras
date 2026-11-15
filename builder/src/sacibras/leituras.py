@@ -242,6 +242,22 @@ LEITURAS: list[Leitura] = [
         "ano.",
     ),
     Leitura(
+        "Projeção atuarial do INSS até 2100, em reais",
+        "relatorios.RGPS_PROJECAO_REAIS",
+        date(2026, 11, 15),
+        date(2027, 4, 30),
+        "O mesmo anexo IV.10 do PLDO, tabela 5.2, colunas de despesa e necessidade de "
+        "financiamento em R$ milhões correntes. Junto com a de % do PIB.",
+    ),
+    Leitura(
+        "Inflação (INPC) da projeção atuarial do INSS",
+        "relatorios.INPC_PROJECAO",
+        date(2026, 11, 15),
+        date(2027, 4, 30),
+        "O mesmo anexo IV.10 do PLDO, tabela 5.1, coluna do INPC acumulado no ano (e o valor "
+        "dos anos seguintes, `INPC_PROJECAO_DEPOIS`). Junto com a de % do PIB.",
+    ),
+    Leitura(
         "Dívida ativa da União: recuperado no ano",
         "relatorios.DIVIDA_ATIVA_RECUPERADO",
         date(2026, 11, 14),

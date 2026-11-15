@@ -186,6 +186,17 @@ def _projecao() -> onu_wpp.Projecao:
     )
 
 
+def _idosos_onu() -> onu_wpp.Projecao:
+    anos = range(2024, 2101)
+    return onu_wpp.Projecao(
+        mediana={a: 20.0 + (a - 2024) * 0.5 for a in anos},
+        inferior80={a: 20.0 + (a - 2024) * 0.4 for a in anos},
+        superior80={a: 20.0 + (a - 2024) * 0.6 for a in anos},
+        inferior95={a: 20.0 + (a - 2024) * 0.3 for a in anos},
+        superior95={a: 20.0 + (a - 2024) * 0.8 for a in anos},
+    )
+
+
 def test_barras_da_onu_em_milhoes() -> None:
     barras = demografia.barras_onu(_projecao(), [2030, 2100, 2110])
     assert barras == [(date(2030, 1, 1), 199.4, 220.6), (date(2100, 1, 1), 192.4, 227.6)]
@@ -216,6 +227,93 @@ def test_piramide_traz_o_ano_corrente_e_o_contorno() -> None:
     assert 2026 in p.anos and p.ano_inicial == 2026 and p.ano_contorno == 2000
     assert p.homens[0] == [1.0, 2.0, 3.0, 4.0, 5.0]  # mil pessoas
     assert p.primeiro_ano_projetado == 2023
+
+
+# ------------------------------------------------------------------ o custo do envelhecimento
+
+
+def _piramide_plana() -> dict[str, dict[int, float]]:
+    """Mil pessoas em cada grupo de cinco anos de 0 a 89 e ninguém com 90 ou mais."""
+    grupos = {f"{i:02d}-{i + 4:02d}": {2030: 1000.0} for i in range(0, 90, 5)}
+    return {**grupos, "90+": {2030: 0.0}}
+
+
+def test_idade_de_corte_que_mantem_a_proporcao() -> None:
+    piramide = _piramide_plana()
+    # 65 a 89: 5 grupos; 15 a 64: 10 grupos: meia pessoa idosa por pessoa em idade de trabalhar
+    assert demografia.acima_de(piramide, 2030, 65) == 5000
+    assert demografia.acima_de(piramide, 2030, 67.5) == 4500  # meio grupo
+    assert demografia.idade_que_mantem(piramide, 2030, 0.5) == pytest.approx(65, abs=1e-6)
+    # 1/3: (90 - x) / (x - 15) = 1/3 → x = 71,25
+    assert demografia.idade_que_mantem(piramide, 2030, 1 / 3) == pytest.approx(71.25, abs=1e-6)
+
+
+def test_ambos_os_sexos_soma_e_tira_os_espacos() -> None:
+    q = {
+        "Homens": {" 00-04": {2030: 1.0}, "90+": {2030: 2.0}},
+        "Mulheres": {" 00-04": {2030: 3.0}, "90+": {2030: 4.0}},
+    }
+    assert demografia.ambos_os_sexos(q) == {"00-04": {2030: 4.0}, "90+": {2030: 6.0}}
+
+
+def test_inss_por_pessoa_em_reais_do_primeiro_ano() -> None:
+    reais = {2026: (12_000.0, 6_000.0), 2028: (13_200.0, 0.0), 2030: (1.0, 1.0)}
+    pessoas = {2026: 1000.0, 2028: 1000.0}  # mil pessoas; 2030 sem população fica de fora
+    v = demografia.por_pessoa_por_mes(reais, pessoas, {2027: 10.0}, 0.0)
+    # R$ 12 bi / 1 milhão de pessoas / 12 meses = R$ 1.000; em 2028, 13.200 / 1,1 = 12.000
+    assert v["beneficios"] == [(date(2026, 1, 1), 1000.0), (date(2028, 1, 1), 1000.0)]
+    assert v["deficit"][0] == (date(2026, 1, 1), 500.0)
+    nivel = demografia.nivel_de_precos([2026, 2029], {2027: 10.0}, 5.0)
+    assert nivel[2029] == pytest.approx(1.1 * 1.05 * 1.05)
+
+
+def test_freio_em_pontos_percentuais_ao_ano() -> None:
+    parte = {2026: 70.0, 2050: 70.0 * 0.99**24}
+    assert demografia.freio(parte, 2026, 2050) == pytest.approx(-1.0)
+
+
+def _livro_onu(abas: list[str], cabecalho: list[str], linhas: list[list[Any]]) -> bytes:
+    livro = openpyxl.Workbook()
+    livro.remove(livro.active)
+    for aba in abas:
+        ws = livro.create_sheet(aba)
+        ws.append(["United Nations"])
+        ws.append([None])
+        ws.append(cabecalho)
+        for linha in linhas:
+            ws.append([*linha[:-1], linha[-1] + abas.index(aba)])
+    saida = io.BytesIO()
+    livro.save(saida)
+    return saida.getvalue()
+
+
+def test_le_os_idosos_por_100_da_onu_so_os_dois_sexos() -> None:
+    cabecalho = ["Index", "Variant", "Region", "Notes", "Location code", "Year", "Sex", "15-64"]
+    linhas = [
+        [1, "x", "World", "", 900, 2024, "Total", 15.0],
+        [2, "x", "Brazil", "", 76, 2024, "Male", 14.0],
+        [3, "x", "Brazil", "", 76, 2024, "Total", 16.6],
+        [4, "x", "Brazil", "", 76, 2050, "Total", 35.8],
+        [5, "x", "Chile", "", 152, 2024, "Total", 99.0],
+    ]
+    p = onu_wpp.ler_idosos_por_100(_livro_onu(list(onu_wpp.ABAS.values()), cabecalho, linhas))
+    assert p.inferior95 == {2024: 16.6, 2050: 35.8}  # a 1ª aba
+    assert p.mediana[2050] == pytest.approx(37.8)  # a 3ª aba soma 2
+    with pytest.raises(onu_wpp.FonteForaDoArError, match="país 32"):
+        onu_wpp.ler_idosos_por_100(
+            _livro_onu(list(onu_wpp.ABAS.values()), cabecalho, linhas), pais=32
+        )
+
+
+def test_le_as_variantes_da_onu_pelo_nome_da_coluna() -> None:
+    cabecalho = ["Index", "Variant", "Region", "Notes", "Location code", "Year", "Outra"]
+    cabecalho += [onu_wpp.COLUNA_IDOSOS]
+    linhas = [[1, "x", "Brazil", "", 76, 2050, 1.0, 35.0]]
+    abas = list(onu_wpp.VARIANTES.values())
+    v = onu_wpp.ler_variantes(_livro_onu(abas, cabecalho, linhas))
+    assert v["media"] == {2050: 35.0} and v["alta"] == {2050: 39.0}
+    with pytest.raises(onu_wpp.FonteForaDoArError, match="abas que sumiram"):
+        onu_wpp.ler_variantes(_livro_onu(abas[:2], cabecalho, linhas))
 
 
 # ------------------------------------------------------------------ a seção inteira
@@ -298,6 +396,22 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
         },
     )
     monkeypatch.setattr(onu_wpp, "populacao", _projecao)
+    monkeypatch.setattr(onu_wpp, "idosos_por_100", _idosos_onu)
+    monkeypatch.setattr(onu_wpp, "populacao_15_64", _projecao)
+    monkeypatch.setattr(
+        onu_wpp,
+        "variantes",
+        lambda: {
+            k: {a: 20.0 + (a - 2024) * f for a in range(2024, 2101)}
+            for k, f in (
+                ("media", 0.5),
+                ("constante", 0.5),
+                ("reposicao", 0.3),
+                ("baixa", 0.8),
+                ("alta", 0.35),
+            )
+        },
+    )
     monkeypatch.setattr(
         siconfi,
         "previdencia_uniao",
@@ -352,6 +466,39 @@ def test_monta_a_secao_com_o_ano_corrente_e_o_inss(ctx: Contexto) -> None:
     assert [li.rotulo for li in tabela.linhas] == ["INSS", "Servidores civis da União", "Militares"]
     assert tabela.linhas[1].valores == [40.0, 100.0, 60.0, 0.5]
     assert tabela.linhas[2].valores == [9.0, 57.0, 48.0, 0.4]
+
+    # o custo do envelhecimento
+    for id_ in ("inss-ate-2100", "inss-por-pessoa", "trabalhadores-por-idoso"):
+        assert id_ in graficos, id_
+    assert {"fecundidade-cenarios", "idade-mesma-proporcao", "idade-de-trabalhar-parte"} <= set(
+        graficos
+    )
+    novos = {c.id: c for c in secao.cartoes}
+    for id_ in (
+        "inss-deficit-2060",
+        "inss-por-pessoa",
+        "trabalhadores-por-idoso",
+        "idade-mesma-proporcao",
+        "freio-demografico",
+    ):
+        assert len(novos[id_].detalhe) <= 60, id_
+    assert novos["inss-deficit-2060"].secao == "demografia"
+    # ONU: 20 + 26 × 0,5 = 33 idosos por 100 em 2050 → 3,03 por idoso
+    assert novos["trabalhadores-por-idoso"].valor == pytest.approx(100 / 33, abs=1e-3)
+    faixa = graficos["trabalhadores-por-idoso"].intervalos[0]
+    assert faixa.serie == "onu" and len(faixa.pontos) == len(faixa.meio) == 8
+    _, baixo, alto = faixa.pontos[0]
+    assert baixo < alto  # a ponta de cima de idosos vira a de baixo de pessoas por idoso
+    assert [s.id for s in graficos["fecundidade-cenarios"].series] == [
+        "ibge",
+        "media",
+        "constante",
+        "reposicao",
+        "baixa",
+        "alta",
+    ]
+    assert novos["inss-por-pessoa"].procedencia == "calculado"
+    assert novos["idade-mesma-proporcao"].valor > 60
 
     estados = next(t for t in secao.tabelas if t.id == "demografia-estados")
     assert [linha.rotulo for linha in estados.linhas] == ["Brasil", "São Paulo", "Acre"]

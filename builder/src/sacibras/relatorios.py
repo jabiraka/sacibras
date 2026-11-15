@@ -512,6 +512,41 @@ FONTE_RGPS_PROJECAO = (
     "Previdência Social (Ministério da Previdência, abr/2026), tabela 5.2"
 )
 
+# Mesma tabela 5.2, colunas "Despesa" e "Necessidade de Fin." em R$ milhões correntes, nos
+# mesmos anos (lido em 15/11/2026): "2026 ... 1.123.937 ... 338.649"; "2050 2.789.621 6,44%
+# 4.429.523 10,23% 1.639.902 3,79%"; "2070 5.828.440 6,37% 12.127.386 13,26% 6.298.946
+# 6,89%"; "2100 ... 45.793.855 ... 28.442.839". Servem para o INSS por pessoa de 15 a 64 anos
+# em reais de 2026, com a inflação da própria projeção (abaixo).
+RGPS_PROJECAO_REAIS: dict[int, tuple[float, float]] = {
+    # ano: (despesa, necessidade de financiamento), R$ milhões correntes
+    2026: (1_123_937, 338_649),
+    2027: (1_204_633, 324_833),
+    2028: (1_283_732, 311_929),
+    2029: (1_364_679, 290_888),
+    2030: (1_449_146, 262_415),
+    2035: (1_933_975, 439_749),
+    2040: (2_543_764, 685_242),
+    2045: (3_367_994, 1_081_166),
+    2050: (4_429_523, 1_639_902),
+    2055: (5_726_229, 2_350_003),
+    2060: (7_569_752, 3_512_454),
+    2065: (9_963_911, 5_100_722),
+    2070: (12_127_386, 6_298_946),
+    2075: (15_327_213, 8_347_746),
+    2080: (19_213_687, 10_855_858),
+    2085: (23_983_422, 13_963_401),
+    2090: (29_748_508, 17_729_122),
+    2095: (37_020_800, 22_594_972),
+    2100: (45_793_855, 28_442_839),
+}
+# Mesmo anexo, tabela 5.1, p. 60-61, coluna "Taxa de Inflação Anual (INPC Acumulado)": "2026
+# ... 3,76%"; "2027 ... 3,06%"; de 2028 a 2100, "3,00%" em todas as linhas (lido em
+# 15/11/2026). É o índice que reajusta os benefícios; de 2026 a 2030, da grade de parâmetros
+# da SPE/MF de 05/03/2026.
+INPC_PROJECAO: dict[int, float] = {2026: 3.76, 2027: 3.06}
+INPC_PROJECAO_DEPOIS = 3.00
+"""% ao ano de 2028 a 2100."""
+
 
 # ------------------------------------------------------------------ acordos da dívida dos estados
 

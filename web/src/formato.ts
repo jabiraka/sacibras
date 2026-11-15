@@ -22,6 +22,8 @@ export function comUnidade(valor: number, unidade: string, casas = 1): string {
   if (unidade.startsWith("%")) return `${n} ${unidade}`;
   if (unidade === "pp") return `${n} pp`;
   if (unidade === "R$/US$" || unidade === "R$") return `R$ ${n}`;
+  // "R$ por pessoa", "R$ por mês, em reais de 2026": o símbolo antes do número.
+  if (unidade.startsWith("R$ por ")) return `R$ ${n} ${unidade.slice(3)}`;
   if (unidade === "US$") return `US$ ${n}`;
   if (unidade === "R$ milhões") return dinheiro(valor * 1e6, "R$");
   if (unidade === "R$ bilhões") return dinheiro(valor * 1e9, "R$");

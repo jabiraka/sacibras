@@ -1723,6 +1723,46 @@ TERMOS: list[Termo] = [
         ("pirâmide etária",),
         "#demografia",
     ),
+    Termo(
+        "idade-de-trabalhar",
+        "Idade de trabalhar",
+        "De 15 a 64 anos, o recorte que o IBGE e a ONU usam para medir quanta gente pode "
+        "trabalhar. Nem todos dessa idade trabalham, e há quem trabalhe fora dela.",
+        ("idade de trabalhar",),
+        "#demografia/populacao",
+    ),
+    Termo(
+        "fecundidade-constante",
+        "Fecundidade constante",
+        "Cenário da ONU em que as mulheres continuam tendo, até 2100, a média de filhos de 2023 "
+        "(1,62 por mulher). Mostra o que acontece se a fecundidade não mudar mais.",
+        ("fecundidade constante",),
+        "#demografia/custo",
+    ),
+    Termo(
+        "cenarios-da-onu",
+        "Cenários da ONU",
+        "Projeções da população que a ONU faz trocando uma hipótese de cada vez, como a "
+        "fecundidade. Não dizem o que é mais provável; para isso, a ONU publica a faixa.",
+        ("cenário da ONU", "cenários da ONU", "variantes"),
+        "#demografia/custo",
+    ),
+    Termo(
+        "idade-de-corte",
+        "Idade de corte",
+        "A idade a partir da qual a conta trata alguém como idoso; hoje se usa 65 anos. Subir o "
+        "corte é o mesmo que contar mais gente na idade de trabalhar e menos idosos.",
+        ("idade de corte",),
+        "#demografia/custo",
+    ),
+    Termo(
+        "reais-de-um-ano",
+        "Em reais de um ano",
+        "O valor do futuro com a inflação descontada até lá: quanto ele valeria com os preços "
+        "do ano escolhido. Assim dá para comparar números de anos diferentes.",
+        ("em reais de",),
+        "#demografia/custo",
+    ),
 ]
 
 

@@ -145,11 +145,32 @@ PARTES: dict[str, list[Parte]] = {
             tabelas=["demografia-estados", "previdencia-uniao"],
         ),
         Parte(
+            "custo",
+            "O custo do envelhecimento",
+            "O INSS até 2100 na projeção do governo e por pessoa em idade de trabalhar, quantas "
+            "pessoas dessa idade haverá por idoso (com a faixa da ONU), e se a fecundidade "
+            "mudar, e a idade que manteria a proporção de hoje.",
+            cartoes=[
+                "inss-deficit-2060",
+                "inss-por-pessoa",
+                "trabalhadores-por-idoso",
+                "idade-mesma-proporcao",
+            ],
+            graficos=[
+                "inss-ate-2100",
+                "inss-por-pessoa",
+                "trabalhadores-por-idoso",
+                "fecundidade-cenarios",
+                "idade-mesma-proporcao",
+            ],
+        ),
+        Parte(
             "produtividade",
             "Produtividade",
-            "PIB por pessoa ocupada e por hora trabalhada, e de onde veio o crescimento.",
-            cartoes=["produtividade", "produtividade-hora"],
-            graficos=["produtividade", "crescimento-decomposto"],
+            "PIB por pessoa ocupada e por hora trabalhada, de onde veio o crescimento e o que "
+            "a idade tira do PIB por habitante.",
+            cartoes=["produtividade", "produtividade-hora", "freio-demografico"],
+            graficos=["produtividade", "crescimento-decomposto", "idade-de-trabalhar-parte"],
         ),
     ],
     "pobreza": [

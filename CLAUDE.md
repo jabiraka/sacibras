@@ -65,6 +65,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   mensal, relatório trimestral ou semestral, resolução anual, série) e a nota de crédito,
   que as agências revisam. O simulador da Selic fica (Caio, mesmo dia): os modelos
   semiestruturais são os do BC, usados em todo Relatório de Política Monetária.
+- **Estimativa nossa só onde não há a oficial** (Caio, 15/11/2026: *"não vamos colocar as
+  nossas estimativas quando temos oficial, só se pedirem"*). Havendo número oficial (o INSS
+  até 2100 do PLDO, as projeções da ONU e do IBGE), entra só ele; a conta nossa entra onde
+  não há nenhum (a idade de corte, o freio da idade no PIB por habitante) ou quando o Caio
+  pedir. Dividir dois números oficiais (o INSS por pessoa) não é estimativa, mas leva
+  "calculado" e a conta na nota.
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 

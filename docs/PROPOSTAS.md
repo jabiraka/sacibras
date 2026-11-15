@@ -23,6 +23,11 @@ repetido no PROXIMOS-PASSOS.
   simuladores.
 - **Previsões próprias** (15/11/2026, *"sem próprias previsões por enquanto"*): IPCA e
   desocupação por modelo sazonal e o PIB agora com indústria, varejo e serviços.
+- **Simulador da previdência** (15/11/2026, *"vamos deixar sem o simulador da previdência por
+  enquanto"*): idade de aposentadoria, cenário de fecundidade e reajuste dos benefícios.
+- **"Só a idade" contra a conta oficial do INSS** (15/11/2026): o gasto se o benefício por
+  idoso acompanhasse a renda (26 % do PIB em 2070, contra 13 % do PLDO). Com o oficial ao
+  lado, a estimativa nossa só entra se pedirem.
 
 ## Falta, por assunto
 
@@ -56,43 +61,6 @@ repetido no PROXIMOS-PASSOS.
 
 **Demografia**
 - Contribuintes por beneficiário (tabela do SIDRA; **do PC**).
-- **O custo do envelhecimento** (Caio, 15/11/2026: *"estimativas de risco [...] quanto
-  custaria a aposentadoria, mantendo a taxa de fecundidade constante, quanto cada trabalhador
-  futuro iria pagar, qual o déficit da previdência"*). Testado da nuvem em 15/11/2026, tudo
-  abre de fora do Brasil; espera o Caio escolher quais entram. Numa parte nova ("O custo do
-  envelhecimento"), para não lotar "Envelhecimento e Previdência":
-  1. **Projeção oficial do INSS até 2100**: PLDO 2027, anexo IV.10 (SRGPS/MPS, abr/2026;
-     sai todo ano com a LDO, por exigência da LRF): déficit de 2,49 % do PIB (2026), 3,79 %
-     (2050), 6,89 % (2070) e 10,41 % (2100); despesa de 8,26 % a 16,76 %. Número lido →
-     `relatorios.py` + `leituras.py` (reler no PLDO 2028, abr/2027). Os anexos IV.11
-     (servidores da União) e IV.13 (BPC) vêm do mesmo jeito.
-  2. **Trabalhadores por idoso com faixa de erro**: a ONU publica a razão 65+/15-64 já com
-     as faixas de 80 e 95 % (`UN_PPP2024_Output_Annual_OldAgeDepRatio.xlsx`, mesma pasta e
-     quase o mesmo formato da planilha de população; uma linha por ano, uma coluna por faixa
-     de idade). Hoje 5,8 por idoso; 2050: 2,8 (2,6 a 3,0); 2070: 1,9 (1,6 a 2,3).
-  3. **Fecundidade constante e as outras variantes da ONU**: 65+ por 100 de 15-64 em 2070:
-     IBGE (fecundidade cai a 1,44) 54; ONU mediana 51; fecundidade constante em 1,62: 51;
-     volta imediata a 2,1: 42; meio filho a menos: 62. Antes de 2045 a fecundidade quase não
-     muda nada (quem trabalha em 2045 já nasceu). Custo: o arquivo das variantes por idade
-     tem 231 MB (`WPP2024_PopulationByAge5GroupSex_OtherVariants.csv.gz`); cache de 30 dias
-     ou o arquivo por idade simples só da fecundidade constante.
-  4. **Quanto cada um paga**: o INSS custou R$ 581 por mês por pessoa de 15 a 64 anos em
-     2025 (R$ 180 de déficit). Com o mesmo benefício por idoso de hoje, em reais de hoje:
-     R$ 1.270 em 2050 e R$ 1.890 em 2070. Estimativa nossa, só com a pirâmide do IBGE.
-  5. **A idade que manteria a proporção de hoje** (5,8 em idade de trabalhar por idoso):
-     70 anos em 2040, 73 em 2050, 79 em 2070 (IBGE; com a ONU, 78 a 79 em 2070 em qualquer
-     fecundidade). Estimativa nossa, interpolando os grupos de cinco anos.
-  6. **Só a idade × a conta oficial**: se o gasto por idoso acompanhasse a renda por pessoa
-     em idade de trabalhar, a despesa iria de 8,3 % do PIB a 17,5 % em 2050 e 26 % em 2070;
-     a LDO chega a 13,3 %. A diferença é o que as regras seguram (idade mínima de 2019,
-     benefício acima do mínimo só com a inflação): em 2070, o gasto por idoso relativo à
-     renda fica na metade do de hoje. Delicado: entra como nota ou gráfico só com o "sim".
-  7. **O freio no PIB por pessoa**: a parte da população de 15 a 64 anos cai de 68,9 % para
-     63,2 % (2050) e 57,0 % (2070): -0,36 pp por ano no PIB por pessoa até 2050 e -0,51 pp
-     depois, com a mesma produtividade. Vai na parte Produtividade.
-  8. **Simulador da previdência** (idade de aposentadoria, variante de fecundidade, reajuste
-     dos benefícios): seria o quarto simulador, então só com o "sim" do Caio.
-
 **Tela, busca e tradução**
 - Domínio (com ele, trocar `ENDERECO` em `web/vite.config.ts` e `anterior.SITE`).
 - Agenda: as reuniões do Copom na caixa "O que sai esta semana" (não há API de datas

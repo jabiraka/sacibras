@@ -6,8 +6,8 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 
 Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Tudo publicado no `main`, menos as propostas do custo do envelhecimento (só docs,
-no branch `ccr-bd2d88f7-8r0acn`).
+PC"*). Depois, a parte nova Demografia › O custo do envelhecimento (Caio, 15/11/2026),
+no branch `ccr-bd2d88f7-8r0acn`, que espera ir ao `main`.
 
 ## Releituras com prazo
 
@@ -53,14 +53,16 @@ As próximas:
   `anterior.SITE`.
 - **Previsões próprias** de IPCA, desocupação e o PIB agora com indústria, varejo e serviços:
   fora por enquanto (Caio, 15/11/2026: *"sem próprias previsões por enquanto"*).
-- **O custo do envelhecimento** (Demografia): oito propostas testadas, com os números, no
-  [PROPOSTAS](PROPOSTAS.md#falta-por-assunto); escolher quais entram (a 8, simulador, pede o "sim").
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).
 - Para olhar: a ficha do estado tem agora 9 abas (quatro números à vista, o resto em "Mais
   números"); a CAPAG e o acordo da dívida aparecem com posição no ranking, como se fossem
   número.
+
+- Para olhar: Demografia › O custo do envelhecimento (o INSS até 2100 aparece também lá,
+  além de Riscos) e o freio da idade em Produtividade. O build lê duas planilhas grandes da
+  ONU (55 e 29 MB, ~25 s; cache de 30 dias).
 
 ## Dados estranhos na fonte (anotados na tela)
 

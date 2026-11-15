@@ -16,7 +16,7 @@ from collections.abc import Callable
 from datetime import date
 from typing import NamedTuple
 
-from sacibras import contas
+from sacibras import contas, relatorios
 from sacibras.fontes import (
     banco_mundial,
     ibge_projecao,
@@ -174,6 +174,89 @@ def barras_onu(projecao: onu_wpp.Projecao, anos: list[int]) -> list[tuple[date, 
         for a in anos
         if a in projecao.inferior80 and a in projecao.superior80
     ]
+
+
+def ambos_os_sexos(quinquenal: dict[str, dict[str, PorAno]]) -> dict[str, PorAno]:
+    """{grupo: {ano: pessoas}}, homens mais mulheres."""
+    homens, mulheres = quinquenal["Homens"], quinquenal["Mulheres"]
+    return {
+        g.strip(): {a: v + mulheres[g].get(a, 0.0) for a, v in por_ano.items()}
+        for g, por_ano in homens.items()
+        if g in mulheres
+    }
+
+
+def _limites(grupo: str) -> tuple[int, int | None]:
+    """ "00-04" → (0, 5); "90+" → (90, None)."""
+    if grupo.endswith("+"):
+        return int(grupo[:-1]), None
+    inicio, fim = grupo.split("-")
+    return int(inicio), int(fim) + 1
+
+
+def acima_de(piramide: dict[str, PorAno], ano: int, idade: float) -> float:
+    """Pessoas com `idade` anos ou mais; dentro de um grupo de cinco anos, as pessoas se
+    repartem por igual entre as idades."""
+    total = 0.0
+    for grupo, por_ano in piramide.items():
+        inicio, fim = _limites(grupo)
+        v = por_ano.get(ano, 0.0)
+        if idade <= inicio:
+            total += v
+        elif fim is not None and idade < fim:
+            total += v * (fim - idade) / (fim - inicio)
+    return total
+
+
+def idade_que_mantem(piramide: dict[str, PorAno], ano: int, alvo: float) -> float:
+    """A idade de corte x em que, no ano, as pessoas de x anos ou mais divididas pelas de 15 até
+    x dão `alvo` (a razão de hoje com o corte em 65). Busca por bisseção entre 15 e 100."""
+    de_15 = acima_de(piramide, ano, 15)
+    baixo, alto = 15.0, 100.0
+    for _ in range(60):
+        meio = (baixo + alto) / 2
+        idosos = acima_de(piramide, ano, meio)
+        if de_15 - idosos <= 0 or idosos / (de_15 - idosos) > alvo:
+            baixo = meio
+        else:
+            alto = meio
+    return (baixo + alto) / 2
+
+
+def nivel_de_precos(anos: list[int], inflacao: dict[int, float], depois: float) -> dict[int, float]:
+    """{ano: preços do ano sobre os do primeiro}, com a inflação de cada ano (% ao ano; o que
+    faltar em `inflacao` usa `depois`)."""
+    base = min(anos)
+    nivel, fator = {base: 1.0}, 1.0
+    for a in range(base + 1, max(anos) + 1):
+        fator *= 1 + inflacao.get(a, depois) / 100
+        nivel[a] = fator
+    return nivel
+
+
+def por_pessoa_por_mes(
+    reais: dict[int, tuple[float, float]],
+    pessoas_mil: dict[int, float],
+    inflacao: dict[int, float],
+    depois: float,
+) -> dict[str, list[Ponto]]:
+    """Despesa e déficit (R$ milhões correntes) por pessoa (mil pessoas), por mês, em reais do
+    primeiro ano."""
+    anos = sorted(a for a in reais if a in pessoas_mil)
+    nivel = nivel_de_precos(anos, inflacao, depois)
+    saida: dict[str, list[Ponto]] = {"beneficios": [], "deficit": []}
+    for a in anos:
+        por_pessoa = 1e6 / nivel[a] / (pessoas_mil[a] * 1e3) / 12
+        saida["beneficios"].append((date(a, 1, 1), reais[a][0] * por_pessoa))
+        saida["deficit"].append((date(a, 1, 1), reais[a][1] * por_pessoa))
+    return saida
+
+
+def freio(parte: PorAno, de: int, ate: int) -> float:
+    """Quanto a mudança da parte da população em idade de trabalhar soma (ou tira) do
+    crescimento do PIB por habitante, em pontos percentuais ao ano, com o PIB por pessoa
+    dessa idade crescendo igual."""
+    return float((parte[ate] / parte[de]) ** (1 / (ate - de)) - 1) * 100
 
 
 class Ano(NamedTuple):
@@ -718,6 +801,12 @@ def montar(ctx: Contexto) -> Secao:
         graficos.append(_grafico_idosos_paises(agora))
     except Exception as erro:
         print(f"    o Banco Mundial ficou de fora da demografia: {str(erro)[:120]}")
+    c_custo, g_custo = _custo_do_envelhecimento(ctx, quinquenal, dep_idosos, fecundidade)
+    cartoes += c_custo
+    graficos += g_custo
+    c_freio, g_freio = _freio(agora, populacao, pia)
+    cartoes.append(c_freio)
+    graficos.append(g_freio)
 
     tabelas = [_tabela_marcos(agora, ind, br_grupos), _tabela_estados(agora, grupos)]
     tabelas += tabelas_prev
@@ -988,3 +1077,335 @@ def _grafico_idosos_paises(agora: int) -> Grafico:
             "não bate exatamente com o do IBGE, que já usa o Censo de 2022."
         ),
     )
+
+
+# ------------------------------------------------------------------ o custo do envelhecimento
+
+ANOS_DAS_BARRAS_IDOSOS = list(range(2030, 2101, 10))
+NOMES_DAS_VARIANTES = {
+    "media": "ONU, a média",
+    "constante": "Fecundidade constante",
+    "reposicao": "Volta já a 2,1 filhos",
+    "baixa": "Meio filho a menos",
+    "alta": "Meio filho a mais",
+}
+
+
+def por_idoso(idosos_por_100: PorAno) -> PorAno:
+    """De idosos por 100 pessoas de 15 a 64 anos a pessoas de 15 a 64 por idoso."""
+    return {a: 100 / v for a, v in idosos_por_100.items() if v}
+
+
+def _custo_do_envelhecimento(
+    ctx: Contexto,
+    quinquenal: dict[str, dict[str, PorAno]],
+    dep_idosos: PorAno,
+    fecundidade: PorAno,
+) -> tuple[list[Cartao], list[Grafico]]:
+    """Demografia › O custo do envelhecimento: o INSS até 2100 do PLDO (o mesmo de Riscos), o
+    INSS por pessoa em idade de trabalhar, quantas pessoas dessa idade por idoso (com a faixa
+    da ONU), os cenários de fecundidade e a idade que manteria a proporção de hoje.
+
+    Só número oficial onde há (Caio, 15/11/2026: *"não vamos colocar as nossas estimativas
+    quando temos oficial, só se pedirem"*); a idade de corte é conta nossa porque não há
+    número oficial dela."""
+    agora = ctx.hoje.year
+    cartoes: list[Cartao] = []
+    graficos: list[Grafico] = []
+    por_idoso_ibge = por_idoso(dep_idosos)
+    hoje = por_idoso_ibge[agora]
+
+    def bloco(nome: str, montar_bloco: Callable[[], tuple[list[Cartao], list[Grafico]]]) -> None:
+        try:
+            c, g = montar_bloco()
+        except Exception as erro:  # uma fonte fora do ar não derruba as outras
+            print(f"    {nome} ficou de fora da demografia: {str(erro)[:120]}")
+            return
+        cartoes.extend(c)
+        graficos.extend(g)
+
+    def inss() -> tuple[list[Cartao], list[Grafico]]:
+        from sacibras.secoes import riscos  # riscos importa estados, que importa daqui
+
+        b = riscos.inss_ate_2100(ctx, secao="demografia")
+        return b.cartoes, b.graficos
+
+    def faixa() -> tuple[list[Cartao], list[Grafico]]:
+        onu = onu_wpp.idosos_por_100()
+        meio = por_idoso(onu.mediana)
+        # A ponta de cima de idosos é a de baixo de pessoas por idoso, e vice-versa.
+        barras = [
+            (date(a, 1, 1), round(100 / onu.superior95[a], 2), round(100 / onu.inferior95[a], 2))
+            for a in ANOS_DAS_BARRAS_IDOSOS
+            if a in onu.superior95 and a in onu.inferior95
+        ]
+        barras80 = [
+            (date(a, 1, 1), round(100 / onu.superior80[a], 2), round(100 / onu.inferior80[a], 2))
+            for a in ANOS_DAS_BARRAS_IDOSOS
+            if a in onu.superior80 and a in onu.inferior80
+        ]
+        a = 2050
+        cartao_ = Cartao(
+            id="trabalhadores-por-idoso",
+            rotulo=f"Pessoas de 15 a 64 anos por idoso em {a}",
+            valor=round(meio[a], 3),
+            unidade="",
+            casas=1,
+            referencia=date(a, 1, 1),
+            periodicidade="A",
+            detalhe=(
+                f"hoje {br(hoje)}; 8 em 10 futuros: {br(100 / onu.superior80[a])} "
+                f"a {br(100 / onu.inferior80[a])}"
+            ),
+            fonte=onu_wpp.FONTE,
+            procedencia="oficial",
+            secao="demografia",
+            mini=[(date(x, 1, 1), round(v, 3)) for x, v in sorted(meio.items())],
+        )
+        primeiro = date(min(meio), 1, 1)
+        grafico_ = grafico(
+            "trabalhadores-por-idoso",
+            "Quantas pessoas em idade de trabalhar para cada idoso",
+            [
+                serie(
+                    "ibge",
+                    "IBGE",
+                    pontos(por_idoso_ibge),
+                    casas=2,
+                    tracejado_desde=PROJETADO_DESDE,
+                ),
+                serie(
+                    "onu", "ONU, o meio da faixa", pontos(meio), casas=2, tracejado_desde=primeiro
+                ),
+            ],
+            unidade="por idoso (65 anos ou mais)",
+            casas=1,
+            periodicidade="A",
+            fonte=f"{onu_wpp.FONTE}; {PROJECAO} (tabela 4, RDI65)",
+            intervalos=[
+                Intervalo(
+                    nome="19 em cada 20 futuros da ONU ficam entre as pontas",
+                    serie="onu",
+                    pontos=barras,
+                    meio=barras80,
+                    nome_meio="8 em cada 10 ficam na parte grossa",
+                )
+            ],
+            nota=(
+                "Quem está em idade de trabalhar paga, pelas contribuições e pelos impostos, a "
+                "aposentadoria de quem não está. Como ler: a ONU sorteia milhares de futuros "
+                "para a fecundidade e a esperança de vida; a linha é o do meio e a barra, onde "
+                f"ficam os futuros. Hoje são {br(hoje)} pessoas de 15 a 64 anos para cada "
+                f"idoso; em 2070, {br(meio[2070])} pela ONU e {br(por_idoso_ibge[2070])} pelo "
+                "IBGE, que não publica faixa e supõe a fecundidade mais baixa que a ONU. Até "
+                f"{ULTIMO_ANO_AJUSTADO}, a linha do IBGE é dado ajustado aos Censos."
+            ),
+            largura="inteira",
+        )
+        return [cartao_], [grafico_]
+
+    def cenarios() -> tuple[list[Cartao], list[Grafico]]:
+        var = {k: por_idoso(v) for k, v in onu_wpp.variantes().items()}
+        inicio = min(var["media"])
+        series = [
+            serie(
+                "ibge",
+                "IBGE",
+                [(d, v) for d, v in pontos(por_idoso_ibge) if d.year >= inicio],
+                casas=2,
+            ),
+            *(
+                serie(k, NOMES_DAS_VARIANTES[k], pontos(var[k]), casas=2)
+                for k in NOMES_DAS_VARIANTES
+                if k in var
+            ),
+        ]
+        juntas = max(
+            (
+                a
+                for a in sorted(var["media"])
+                if max(var[k][a] for k in var) / min(var[k][a] for k in var) < 1.05
+            ),
+            default=inicio,
+        )
+        a = 2070
+        nota = (
+            f"Pessoas de 15 a 64 anos para cada idoso em cada cenário da ONU. Até {juntas}, as "
+            "linhas quase não se separam (menos de 5 % entre a mais alta e a mais baixa): "
+            "quase todos os que estarão em idade de trabalhar até lá já nasceram. Em "
+            f"{a}: {br(var['constante'][a])} com a fecundidade de hoje mantida, "
+            f"{br(var['reposicao'][a])} se ela voltasse já aos 2,1 filhos por mulher que "
+            f"repõem a população, {br(var['baixa'][a])} com meio filho a menos que a média da "
+            f"ONU e {br(por_idoso_ibge[a])} pelo IBGE, que supõe "
+            f"{br(fecundidade[2050], 2)} filho por mulher em 2050; hoje, {br(hoje)}. "
+            "Fecundidade constante: a de 2023 (1,62 filho por mulher) até 2100; meio filho a "
+            "menos e a mais: meio filho em volta da média da ONU. São cenários da ONU, sem "
+            "probabilidade; a faixa está no gráfico de cima."
+        )
+        return [], [
+            grafico(
+                "fecundidade-cenarios",
+                "E se a fecundidade mudar? Pessoas em idade de trabalhar por idoso",
+                series,
+                unidade="por idoso (65 anos ou mais)",
+                casas=1,
+                periodicidade="A",
+                fonte=f"{onu_wpp.FONTE_VARIANTES}; {PROJECAO} (tabela 4, RDI65)",
+                nota=nota,
+                largura="inteira",
+            )
+        ]
+
+    def por_pessoa() -> tuple[list[Cartao], list[Grafico]]:
+        pessoas = onu_wpp.populacao_15_64().mediana
+        valores = por_pessoa_por_mes(
+            relatorios.RGPS_PROJECAO_REAIS,
+            pessoas,
+            relatorios.INPC_PROJECAO,
+            relatorios.INPC_PROJECAO_DEPOIS,
+        )
+        beneficios, deficit = dict(valores["beneficios"]), dict(valores["deficit"])
+        base = valores["beneficios"][0][0]
+        d50 = date(2050, 1, 1)
+        fonte = (
+            f"{relatorios.FONTE_RGPS_PROJECAO} e 5.1 (INPC); pessoas de 15 a 64 anos: "
+            f"{onu_wpp.FONTE}, o meio da faixa; conta nossa"
+        )
+        cartao_ = Cartao(
+            id="inss-por-pessoa",
+            rotulo="INSS por pessoa de 15 a 64 anos em 2050, por mês",
+            valor=round(beneficios[d50], 0),
+            unidade="R$",
+            casas=0,
+            referencia=d50,
+            periodicidade="A",
+            detalhe=(
+                f"R$ {br(beneficios[base], 0)} em {base.year}; déficit: R$ {br(deficit[d50], 0)}"
+            ),
+            fonte=fonte,
+            procedencia="calculado",
+            secao="demografia",
+            mini=[(d, round(v, 0)) for d, v in valores["beneficios"]],
+        )
+        grafico_ = grafico(
+            "inss-por-pessoa",
+            "O INSS por pessoa em idade de trabalhar, na projeção do governo",
+            [
+                serie("beneficios", "Benefícios", valores["beneficios"], casas=0),
+                serie("deficit", "Déficit", valores["deficit"], casas=0),
+            ],
+            unidade=f"R$ por mês, em reais de {base.year}",
+            casas=0,
+            periodicidade="A",
+            fonte=fonte,
+            nota=(
+                "A despesa e o déficit do INSS da projeção que o Ministério da Previdência "
+                "manda com o projeto da LDO, divididos pelas pessoas de 15 a 64 anos da "
+                "projeção da ONU (a mesma população que o ministério usa) e por 12 meses. Em "
+                f"reais de {base.year}, descontada a inflação (INPC) da própria projeção. "
+                "Déficit é a parte que as contribuições não cobrem e sai dos impostos. Sobe "
+                "por dois motivos: há mais idosos por pessoa em idade de trabalhar e o "
+                "benefício mínimo, que é um salário mínimo, sobe com o PIB."
+            ),
+        )
+        return [cartao_], [grafico_]
+
+    def idade() -> tuple[list[Cartao], list[Grafico]]:
+        piramide = ambos_os_sexos(quinquenal)
+        alvo = acima_de(piramide, agora, 65) / (
+            acima_de(piramide, agora, 15) - acima_de(piramide, agora, 65)
+        )
+        anos = [a for a in range(agora, 2071)]
+        corte = [(date(a, 1, 1), idade_que_mantem(piramide, a, alvo)) for a in anos]
+        valores = dict(corte)
+        a50, a70 = date(2050, 1, 1), date(2070, 1, 1)
+        fonte = f"{PROJECAO} (tabela 2, grupos de cinco anos); conta nossa"
+        cartao_ = Cartao(
+            id="idade-mesma-proporcao",
+            rotulo="Idade que manteria a proporção de hoje, em 2050",
+            valor=round(valores[a50], 2),
+            unidade="anos",
+            casas=0,
+            referencia=a50,
+            periodicidade="A",
+            detalhe=f"hoje 65 anos; em 2070, {br(valores[a70], 0)}",
+            fonte=fonte,
+            procedencia="calculado",
+            secao="demografia",
+            mini=[(d, round(v, 2)) for d, v in corte],
+        )
+        grafico_ = grafico(
+            "idade-mesma-proporcao",
+            "A idade de corte que manteria a proporção de hoje",
+            [serie("idade", "Idade de corte", corte, casas=1)],
+            unidade="anos",
+            casas=0,
+            periodicidade="A",
+            fonte=fonte,
+            linhas=[LinhaRef(valor=65, rotulo="65 anos, o corte de hoje")],
+            nota=(
+                f"Hoje há {br(1 / alvo)} pessoas de 15 a 64 anos para cada pessoa de 65 ou "
+                "mais. A linha é a idade que, contada como o começo da velhice, manteria essa "
+                "mesma proporção em cada ano da projeção do IBGE: tudo o que está acima dela "
+                "conta como idoso, e de 15 até ela, como idade de trabalhar. É uma régua da "
+                "pirâmide, não a idade de aposentadoria da lei. Conta nossa: dentro de cada "
+                "grupo de cinco anos, as pessoas se repartem por igual entre as idades."
+            ),
+        )
+        return [cartao_], [grafico_]
+
+    bloco("o INSS até 2100", inss)
+    bloco("a faixa da ONU dos idosos", faixa)
+    bloco("o INSS por pessoa", por_pessoa)
+    bloco("a idade que manteria a proporção", idade)
+    bloco("os cenários de fecundidade da ONU", cenarios)
+    return cartoes, graficos
+
+
+def _freio(agora: int, populacao: PorAno, pia: PorAno) -> tuple[Cartao, Grafico]:
+    """Produtividade: a parte da população em idade de trabalhar e o que a queda dela tira do
+    PIB por habitante."""
+    parte = {a: pia[a] / v * 100 for a, v in populacao.items() if v and a in pia}
+    ate_2050, depois = freio(parte, agora, 2050), freio(parte, 2050, 2070)
+    fonte = f"{PROJECAO} (tabela 3, grupos etários)"
+    cartao_ = Cartao(
+        id="freio-demografico",
+        rotulo="O que a idade tira do PIB por habitante até 2050",
+        valor=round(ate_2050, 4),
+        unidade="pp ao ano",
+        casas=2,
+        referencia=date(agora, 1, 1),
+        periodicidade="A",
+        detalhe=f"de 2050 a 2070: {br(depois, 2)} pp ao ano",
+        fonte=f"{fonte}; conta nossa",
+        procedencia="calculado",
+        secao="demografia",
+        mini=[(d, round(v, 3)) for d, v in pontos(parte)],
+    )
+    pico_ano, pico_valor = pico(parte)
+    grafico_ = grafico(
+        "idade-de-trabalhar-parte",
+        "Quanto da população está em idade de trabalhar",
+        [
+            serie(
+                "parte",
+                "15 a 64 anos, % da população",
+                pontos(parte),
+                casas=1,
+                tracejado_desde=PROJETADO_DESDE,
+            )
+        ],
+        unidade="% da população",
+        casas=1,
+        periodicidade="A",
+        fonte=fonte,
+        nota=(
+            f"O pico foi em {pico_ano}, com {br(pico_valor)} %; em 2070 serão "
+            f"{br(parte[2070])} %. PIB por habitante = PIB por pessoa de 15 a 64 anos × a "
+            "parte da população nessa idade. Se o primeiro crescer como antes, a queda da "
+            f"segunda tira {br(-ate_2050, 2)} ponto percentual por ano do crescimento do PIB "
+            f"por habitante de {agora} a 2050 e {br(-depois, 2)} de 2050 a 2070 (conta "
+            f"nossa, com a projeção do IBGE). {NOTA_PROJECAO}"
+        ),
+    )
+    return cartao_, grafico_
