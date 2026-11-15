@@ -389,9 +389,10 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "divida",
             "Dívida pública",
-            "Dívida bruta e líquida, o que o mercado projeta e de que ela é feita.",
-            cartoes=["dbgg", "dlsp", "divida-selic"],
-            graficos=["divida", "divida-indexador"],
+            "Dívida bruta e líquida, o que o mercado projeta, de que ela é feita, quanto "
+            "custa e quando vence.",
+            cartoes=["dbgg", "dlsp", "divida-selic", "juro-implicito"],
+            graficos=["divida", "divida-indexador", "divida-vencimento"],
             veja=[
                 Elo(
                     endereco=EFEITO_DA_SELIC,
@@ -519,11 +520,21 @@ PARTES: dict[str, list[Parte]] = {
                 "divida-sobe-em-5-anos",
                 "juro-menos-crescimento",
                 "juro-da-divida",
-                "juros-em-reais",
-                "prazo-da-divida",
             ],
             graficos=["divida-leque", "primario-necessario", "juro-crescimento"],
             tabelas=["elasticidades-da-divida"],
+        ),
+        Parte(
+            "custo",
+            "Custo e rolagem da dívida",
+            "Quanto se paga de juros, quanto da receita eles levam e quanto vence logo.",
+            cartoes=[
+                "juros-em-reais",
+                "juros-sobre-receita",
+                "vence-em-12-meses",
+                "prazo-da-divida",
+            ],
+            graficos=["juros-sobre-receita", "vence-em-12-meses"],
         ),
         Parte(
             "estresse",
@@ -531,6 +542,14 @@ PARTES: dict[str, list[Parte]] = {
             "A dívida se cada crise do passado se repetisse agora.",
             graficos=["estresse-divida"],
             tabelas=["estresse-episodios"],
+        ),
+        Parte(
+            "juridico",
+            "Riscos fiscais e jurídicos",
+            "Ações na Justiça, precatórios, garantias, o que a União tem a receber e a governança.",
+            cartoes=["acoes-perda-provavel", "sentencas-pagas"],
+            graficos=["acoes-judiciais", "sentencas-judiciais"],
+            tabelas=["riscos-fiscais-uniao", "governanca"],
         ),
         Parte(
             "mercado-externo",
@@ -561,10 +580,10 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "energia-populacao",
-            "Energia e população",
-            "Os reservatórios das hidrelétricas e o envelhecimento.",
-            cartoes=["reservatorios", "idosos-por-100"],
-            graficos=["reservatorios"],
+            "Previdência, população e energia",
+            "O INSS até 2100, o envelhecimento e os reservatórios das hidrelétricas.",
+            cartoes=["inss-deficit-2060", "idosos-por-100", "reservatorios"],
+            graficos=["inss-ate-2100", "reservatorios"],
         ),
     ],
 }

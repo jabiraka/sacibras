@@ -384,3 +384,130 @@ FONTE_DIVIDA_ATIVA = (
     "Projeto da LDO 2027, Anexo de Riscos Fiscais (tabela 39, com dados do Balanço Geral da "
     "União e da PGFN); PGFN em Números 2025 e 2026"
 )
+
+# ------------------------------------------------------------------ riscos fiscais da União
+
+# Projeto da LDO 2027, Anexo V (Riscos Fiscais), elaborado pela STN/MF e enviado em abril de
+# 2026 (art. 4º, § 3º, da LRF). Lido em 15/11/2026 em gov.br/planejamento, orçamentos anuais,
+# 2027, PLDO, arquivo anexo-v-riscos-fiscais.pdf (abre da nuvem).
+# Tabela 26, p. 49-50, "Demandas Judiciais de Risco Possível e Risco Provável", R$ bilhões
+# (fonte: AGU, SEST e BCB): "Risco Possível 1.195,1 1.528,0 1.540,1 1.316,1 1.260,4 2.741,8
+# 2.586,1 2.101,5 1.740,0"; "Risco Provável 162,6 117,6 659,7 707,2 871,9 1.016,9 1.015,7
+# 559,0 533,2" (2017 a 2025). Texto, p. 49: "Em 2025, o risco total de demandas judiciais,
+# incluindo risco provável e possível, alcançou R$ 2.273,2 bilhões"; a queda do possível
+# "decorre, principalmente, da reclassificação de ações previdenciárias de risco possível
+# para risco remoto" (p. 14).
+# LER DE NOVO a cada PLDO (enviado até 15 de abril).
+ANO_DO_ANEXO_DE_RISCOS = 2027
+"""O ano da LDO cujo projeto trouxe os números abaixo (os dados vão até o ano anterior)."""
+ACOES_JUDICIAIS: dict[int, tuple[float, float]] = {
+    # ano: (risco possível, risco provável), R$ bilhões
+    2017: (1195.1, 162.6),
+    2018: (1528.0, 117.6),
+    2019: (1540.1, 659.7),
+    2020: (1316.1, 707.2),
+    2021: (1260.4, 871.9),
+    2022: (2741.8, 1016.9),
+    2023: (2586.1, 1015.7),
+    2024: (2101.5, 559.0),
+    2025: (1740.0, 533.2),
+}
+
+# Mesmo anexo, Tabela 27, p. 50, "Despesas Judiciais em relação à Despesa Primária", R$
+# bilhões (fonte: AGU, PGFN, SEST, BCB, STN): "Ações Judiciais (Valores pagos) 31,7 36,5 41,3
+# 50,3 54,9 58,7 151,9 70,3 101,2 121,3"; "Despesa Primária Total 1.279,6 1.352,5 1.442,3
+# 1.947,6 1.614,2 1.809,7 2.129,9 2.204,7 2.394,2 2.613,5" (2017 a 2026). Nota 1: "Valores
+# pagos referem-se a todas as despesas da União em cumprimento a sentenças judiciais, com
+# exceção para 2026: dotação atualizada em fev/26"; nota 2: despesa de 2026 "Conforme a LOA
+# 2026". Texto: "um pico de pagamentos em 2023, em decorrência dos efeitos da decisão proferida
+# na Ação Direta de Inconstitucionalidade (ADI) 7064".
+SENTENCAS_PAGAS: dict[int, tuple[float, float]] = {
+    # ano: (pago em sentenças judiciais, despesa primária total), R$ bilhões
+    2017: (31.7, 1279.6),
+    2018: (36.5, 1352.5),
+    2019: (41.3, 1442.3),
+    2020: (50.3, 1947.6),
+    2021: (54.9, 1614.2),
+    2022: (58.7, 1809.7),
+    2023: (151.9, 2129.9),
+    2024: (70.3, 2204.7),
+    2025: (101.2, 2394.2),
+    2026: (121.3, 2613.5),
+}
+SENTENCAS_PREVISTAS_DESDE = 2026
+"""Deste ano em diante, dotação do orçamento, não valor pago."""
+
+
+@dataclass(frozen=True)
+class RiscoFiscal:
+    """Um item da tabela-resumo dos riscos fiscais específicos, estoque em R$ bilhões."""
+
+    item: str
+    efeito: str
+    """"mais despesa" ou "menos receita", como o anexo classifica."""
+    anterior: float
+    ultimo: float
+
+
+# Mesmo anexo, Tabela 2, p. 16, "Base de Atuação dos Riscos Fiscais Específicos
+# Consolidados", estoque em R$ bilhões, 2024 e 2025: "Garantias da União ↑ despesa 333,9
+# 336,6"; "Haveres Finan. Relacionados a Entes Federativos ↓ receita 811,1 888,8"; "Fundos
+# Constitucionais ↓ receita 266,3 300,0"; "Passivos relacionados a Demandas Judiciais (Riscos
+# Possíveis) ↑ despesa 2.101,5 1.740,0"; "(Riscos Prováveis) ↑ despesa 559,0 533,2"; "Fundo de
+# Financiamento Estudantil – Fies ↓ receita 93,2 90,2"; "Total Geral 5.088,2 4.828,6". Ficam
+# de fora os itens menores (passivos em reconhecimento, contragarantias, seguro de crédito à
+# exportação, fundos garantidores) e a dívida ativa, que já está em Impostos.
+RISCOS_FISCAIS = [
+    RiscoFiscal("Ações na Justiça, perda possível", "mais despesa", 2101.5, 1740.0),
+    RiscoFiscal("Ações na Justiça, perda provável", "mais despesa", 559.0, 533.2),
+    RiscoFiscal("Dívidas de estados e municípios com a União", "menos receita", 811.1, 888.8),
+    RiscoFiscal("Garantias da União a empréstimos", "mais despesa", 333.9, 336.6),
+    RiscoFiscal("Fundos constitucionais (FNO, FNE, FCO)", "menos receita", 266.3, 300.0),
+    RiscoFiscal("Fies, crédito a receber", "menos receita", 93.2, 90.2),
+]
+FONTE_RISCOS_FISCAIS = (
+    "Projeto da LDO 2027, Anexo V (Riscos Fiscais), da Secretaria do Tesouro Nacional, "
+    "tabelas 2, 26 e 27 (dados de AGU, PGFN, SEST, BCB e STN)"
+)
+
+# ------------------------------------------------------------------ o INSS até 2100
+
+# Projeto da LDO 2027, Anexo IV.10, "Projeções Atuariais para o Regime Geral de Previdência
+# Social" (art. 4º, § 2º, IV, "a", da LRF), Secretaria de Regime Geral de Previdência Social
+# do Ministério da Previdência, abril de 2026. Lido em 15/11/2026 em gov.br/planejamento,
+# arquivo anexo-iv-10-avaliacao-atuarial-rgps.pdf. Tabela 5.2, p. 62-63, "Evolução da
+# receita, despesa e necessidade de financiamento do RGPS (em R$ mi correntes e em % do PIB)
+# ― 2026/2100", colunas "Receita / PIB", "Despesa / PIB" e "Necessidade de Fin. / PIB";
+# linhas usadas, por exemplo: "2026 785.289 5,77% 1.123.937 8,26% 338.649 2,49%"; "2060
+# 4.057.299 6,40% 7.569.752 11,94% 3.512.454 5,54%"; "2100 17.351.016 6,35% 45.793.855
+# 16,76% 28.442.839 10,41%". (O texto da p. 61 diz "R$ 338.275 milhões em 2025"; a tabela
+# começa em 2026 e traz 338.649: vale a tabela.) Elaboração com a grade de parâmetros da
+# SPE/MF de 05/03/2026 para 2026 a 2030; de 2031 em diante, modelo de longo prazo com a
+# população projetada pela ONU. Aqui, 2026 a 2030 ano a ano e depois de cinco em cinco anos.
+# LER DE NOVO a cada PLDO (abril).
+RGPS_PROJECAO: dict[int, tuple[float, float, float]] = {
+    # ano: (receita, despesa, necessidade de financiamento), % do PIB
+    2026: (5.77, 8.26, 2.49),
+    2027: (6.01, 8.23, 2.22),
+    2028: (6.18, 8.16, 1.98),
+    2029: (6.36, 8.08, 1.72),
+    2030: (6.54, 7.99, 1.45),
+    2035: (6.51, 8.42, 1.92),
+    2040: (6.48, 8.87, 2.39),
+    2045: (6.46, 9.51, 3.05),
+    2050: (6.44, 10.23, 3.79),
+    2055: (6.43, 10.90, 4.47),
+    2060: (6.40, 11.94, 5.54),
+    2065: (6.38, 13.08, 6.70),
+    2070: (6.37, 13.26, 6.89),
+    2075: (6.37, 13.98, 7.61),
+    2080: (6.36, 14.62, 8.26),
+    2085: (6.36, 15.22, 8.86),
+    2090: (6.36, 15.74, 9.38),
+    2095: (6.35, 16.31, 9.95),
+    2100: (6.35, 16.76, 10.41),
+}
+FONTE_RGPS_PROJECAO = (
+    "Projeto da LDO 2027, Anexo IV.10, Projeções Atuariais para o Regime Geral de "
+    "Previdência Social (Ministério da Previdência, abr/2026), tabela 5.2"
+)

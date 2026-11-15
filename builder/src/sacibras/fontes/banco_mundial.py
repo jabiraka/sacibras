@@ -68,6 +68,47 @@ def indicador(codigo: str, desde: int, ate: int) -> list[dict[str, Any]]:
     return list(bruto[1])
 
 
+GOVERNANCA = {
+    "GOV_WGI_GE.SC": "Eficácia do governo",
+    "GOV_WGI_RL.SC": "Estado de direito",
+    "GOV_WGI_RQ.SC": "Qualidade da regulação",
+    "GOV_WGI_CC.SC": "Controle da corrupção",
+}
+"""Worldwide Governance Indicators (fonte 3 da API), a nota de 0 a 100. Conferido em
+15/11/2026 na lista `sources/3/indicators`: "Government Effectiveness - Governance score
+(0-100)" e os pares de Rule of Law, Regulatory Quality e Control of Corruption; cada um tem a
+ponta de baixo e a de cima da faixa de 90 % (`.SC_LB`, `.SC_UB`). Anual, edição de set/2026
+com dados até 2025. Uma chamada com os quatro (e as pontas) levou 64 s."""
+FONTE_GOVERNANCA = "Banco Mundial, Worldwide Governance Indicators"
+
+
+def varios(
+    paises: list[str], indicadores: list[str], desde: int, ate: int, fonte: int = 3
+) -> dict[tuple[str, str], dict[int, float]]:
+    """{(ISO3, indicador): {ano: valor}} de vários países e indicadores numa chamada só."""
+    bruto = baixar_json(
+        f"{BASE}/country/{';'.join(paises)}/indicator/{';'.join(indicadores)}",
+        params={
+            "source": str(fonte),
+            "format": "json",
+            "date": f"{desde}:{ate}",
+            "per_page": "5000",
+        },
+        validade=VALIDADE,
+        tempo_limite=300,
+    )
+    if not isinstance(bruto, list) or len(bruto) < 2 or not bruto[1]:
+        raise FonteForaDoArError(f"Banco Mundial {indicadores}: sem dados: {str(bruto)[:200]}")
+    saida: dict[tuple[str, str], dict[int, float]] = {}
+    for linha in bruto[1]:
+        iso, valor = str(linha.get("countryiso3code") or ""), linha.get("value")
+        if valor is None or not iso:
+            continue
+        chave = (iso, str(linha["indicator"]["id"]))
+        saida.setdefault(chave, {})[int(linha["date"])] = float(valor)
+    return saida
+
+
 def serie_do_pais(pais: str, codigo: str, desde: int, ate: int) -> list[tuple[int, float]]:
     """(ano, valor) de um indicador para um país, do mais velho ao mais novo."""
     bruto = baixar_json(

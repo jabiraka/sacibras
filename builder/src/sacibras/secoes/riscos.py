@@ -22,7 +22,16 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from sacibras import alertas, contas, leis, relatorios
-from sacibras.fontes import bcb_focus, ibge_projecao, ipeadata, ons, tesouro_rtn
+from sacibras.fontes import (
+    banco_mundial,
+    bcb_fiscal,
+    bcb_focus,
+    fmi,
+    ibge_projecao,
+    ipeadata,
+    ons,
+    tesouro_rtn,
+)
 from sacibras.modelos import divida, risco
 from sacibras.schema import (
     Alerta,
@@ -33,10 +42,11 @@ from sacibras.schema import (
     LinhaTabela,
     Procedencia,
     Secao,
+    Serie,
     SimuladorDivida,
     Tabela,
 )
-from sacibras.secoes import inflacao, previsoes
+from sacibras.secoes import inflacao, mundo, previsoes
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Periodicidade, Ponto
 
@@ -183,6 +193,23 @@ def historia_anual(ctx: Contexto, juro_divida: list[Ponto], primario: list[Ponto
 # ------------------------------------------------------------------ 1. a dívida
 
 
+def juro_que_a_divida_paga(
+    ctx: Contexto, dbgg: list[Ponto], juros_pib: list[Ponto]
+) -> tuple[list[Ponto], bool]:
+    """(a taxa implícita da DBGG em 12 meses, True); sem a planilha do BC, (juros de 12 meses
+    do setor público ÷ dívida bruta, False). Fica no memo para quem mais usar."""
+    if "taxa_implicita_dbgg" in ctx.memo:
+        return ctx.memo["taxa_implicita_dbgg"], True
+    try:
+        oficial = bcb_fiscal.taxa_implicita_dbgg()
+        ctx.memo["taxa_implicita_dbgg"] = oficial
+        return oficial, True
+    except Exception as erro:
+        print(f"    riscos: sem a taxa implícita do BC, fica a conta nossa ({str(erro)[:100]})")
+    estoque = dict(dbgg)
+    return [(d, j / estoque[d] * 100) for d, j in juros_pib if estoque.get(d)], False
+
+
 def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, Anos]:
     dbgg = ctx.sgs("DBGG", HIST)
     juros = ctx.sgs("NFSP_JUROS_12M", HIST)
@@ -191,10 +218,14 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
     pib = ctx.sgs("PIB_12M", HIST)
     atrelada = ctx.sgs("DIVIDA_IDX_SELIC", HIST)
 
-    estoque = dict(dbgg)
-    # O juro que a dívida paga: os juros de 12 meses divididos pelo estoque (a mesma conta
-    # do simulador). Juros do setor público consolidado sobre a dívida bruta do governo geral.
-    juro_divida = [(d, j / estoque[d] * 100) for d, j in juros if estoque.get(d)]
+    # O juro que a dívida paga: a taxa implícita da dívida bruta em 12 meses, que o Banco
+    # Central publica (decisão de 15/11/2026: substitui a conta nossa, juros de 12 meses do
+    # setor público ÷ dívida bruta, que punha os juros LÍQUIDOS de todo o setor público, as
+    # estatais e o que o BC ganha nas reservas inclusive, sobre a dívida BRUTA do governo
+    # geral, e saía de 1 a 4 pp abaixo; 10,8 % contra 13,0 % em set/2026). A dívida bruta
+    # cresce pelo juro que ela mesma rende: é essa taxa que entra na conta da estabilização.
+    # Se a planilha do BC falhar, volta a conta nossa, dita no cartão.
+    juro_divida, oficial = juro_que_a_divida_paga(ctx, dbgg, juros)
     crescimento = contas.variacao(pib, 12)
     folga = contas.subtrair(juro_divida, crescimento)
     necessario = risco.serie_do_primario_que_estabiliza(dbgg, juro_divida, crescimento)
@@ -202,9 +233,16 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
     juros_reais = contas.escalar(ctx.sgs("NFSP_JUROS_12M_RS", HIST), 1 / 1000)
     prazo = ctx.sgs("DIVIDA_PRAZO_MEDIO", HIST)
 
+    fonte_juro = bcb_fiscal.FONTE_TAXA if oficial else f"{ctx.fonte_sgs('DBGG', 'NFSP_JUROS_12M')}"
     fonte_conta = (
-        f"{ctx.fonte_sgs('DBGG', 'NFSP_JUROS_12M', 'NFSP_PRIMARIO_12M', 'PIB_12M')}; "
-        "cálculo próprio"
+        f"{fonte_juro}; {ctx.fonte_sgs('DBGG', 'NFSP_PRIMARIO_12M', 'PIB_12M')}; cálculo próprio"
+    )
+    explica_juro = (
+        "a taxa implícita da dívida bruta em 12 meses, que o Banco Central publica (os juros "
+        "que a dívida rendeu ÷ o saldo)"
+        if oficial
+        else "juros do setor público em 12 meses ÷ dívida bruta (a planilha do Banco Central "
+        "com a taxa oficial não respondeu)"
     )
     inicio = date(ctx.hoje.year - 20, 1, 1)
     quando = periodo(necessario[-1][0], "M")
@@ -250,9 +288,13 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             unidade="% a.a.",
             periodicidade="M",
             casas=1,
-            detalhe="juros de 12 meses ÷ dívida bruta",
-            fonte=fonte_conta,
-            procedencia="calculado",
+            detalhe=(
+                "taxa implícita da dívida bruta, 12 meses"
+                if oficial
+                else "juros de 12 meses ÷ dívida bruta"
+            ),
+            fonte=fonte_juro,
+            procedencia="oficial" if oficial else "calculado",
             secao="riscos",
             mini=120,
         ),
@@ -295,8 +337,8 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             janela_anos=10,
             fonte=fonte_conta,
             nota=(
-                "Conta: dívida × (juro − crescimento) ÷ (1 + crescimento). Juro: o que a dívida "
-                "pagou em 12 meses (juros do setor público ÷ dívida bruta). Crescimento: o do "
+                "Conta: dívida × (juro − crescimento) ÷ (1 + crescimento). Juro: "
+                f"{explica_juro}. Crescimento: o do "
                 "PIB em reais em 12 meses, com a inflação dentro. Quando a linha do realizado "
                 "está abaixo, a dívida sobe em % do PIB; acima, cai. É foto do juro e do "
                 "crescimento de cada mês, não projeção."
@@ -317,7 +359,7 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             nota=(
                 "Com o juro acima do crescimento, a dívida cresce sozinha em % do PIB, e só "
                 "superávit primário a segura. Com o crescimento acima, ela cai mesmo com "
-                "pequeno déficit."
+                f"pequeno déficit. Juro: {explica_juro}."
             ),
         ),
     ]
@@ -425,6 +467,57 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
     return bloco, frase, anos
 
 
+@dataclass(frozen=True)
+class LinhaDoFmi:
+    serie: Serie
+    nota: str
+    fonte: str
+
+
+def fmi_da_divida(desde: int, ate: int, bc_dezembro: dict[int, float]) -> LinhaDoFmi | None:
+    """A dívida bruta do governo geral pelo FMI (WEO), realizada e projetada, para o leque.
+
+    Não é o mesmo número do BC (conferido em 15/11/2026): o FMI conta todos os títulos do
+    Tesouro na carteira do Banco Central, e o BC, desde 2008, só as compromissadas. Em 2025,
+    93,3 % (WEO de out/2026) contra 78,6 % (SGS 13762, dez/2025). A linha só entra com a
+    diferença dita na nota; sem um ano em comum para medi-la, fica de fora."""
+    weo = fmi.weo(["BRA"], ["GGXWDG_NGDP"], desde, ate)
+    par = ("BRA", "GGXWDG_NGDP")
+    valores = weo.valores.get(par, {})
+    ultimo_real = weo.ultimo_realizado.get(par, weo.publicado_em.year - 1)
+    gap = divida.diferenca_de_conceito(valores, bc_dezembro, ultimo_real)
+    if gap is None:
+        return None
+    ano, diferenca = gap
+    projetados = sorted(a for a in valores if a > ultimo_real)
+    edicao = weo.publicado_em.strftime("%m/%Y")
+    subida = ""
+    if projetados:
+        fim = projetados[-1]
+        subida = (
+            f" Compare a inclinação, não o nível: de {ultimo_real} a {fim}, o FMI vê a dívida "
+            f"{'subir' if valores[fim] >= valores[ultimo_real] else 'cair'} "
+            f"{br(abs(valores[fim] - valores[ultimo_real]))} pontos do PIB."
+        )
+    return LinhaDoFmi(
+        serie=serie(
+            "fmi",
+            "FMI, outro conceito (com os títulos no BC)",
+            [(date(a, 1, 1), v) for a, v in sorted(valores.items())],
+            casas=1,
+            tracejado_desde=date(ultimo_real + 1, 1, 1) if projetados else None,
+        ),
+        nota=(
+            f"A linha do FMI (WEO de {edicao}, tracejada onde é projeção) mede outra dívida "
+            "bruta: soma todos os títulos do Tesouro que estão na carteira do Banco Central, e "
+            "o Banco Central conta só as operações compromissadas. Por isso fica acima: em "
+            f"{ano}, {br(valores[ano])} % do PIB no FMI contra {br(bc_dezembro[ano])} % no "
+            f"Banco Central, {br(diferenca)} pontos a mais.{subida}"
+        ),
+        fonte=f"FMI, World Economic Outlook de {edicao} (GGXWDG_NGDP)",
+    )
+
+
 def _leque(
     ctx: Contexto,
     bloco: Bloco,
@@ -447,6 +540,15 @@ def _leque(
     realizado = [(date(a, 1, 1), v) for a, v in sorted(em_dezembro(dbgg).items())][-12:]
     focus = [(date(a, 1, 1), v) for a, v in zip(futuros, base.focus_divida, strict=False) if v]
     primeiro, ultimo = min(anos), max(anos)
+    series_fmi, nota_fmi, fonte_fmi = [], "", ""
+    try:  # o FMI fora do ar não derruba o leque: só a linha dele fica de fora
+        do_fmi = fmi_da_divida(realizado[0][0].year, futuros[-1], em_dezembro(dbgg))
+        if do_fmi:
+            series_fmi = [do_fmi.serie]
+            nota_fmi = "\n\n" + do_fmi.nota
+            fonte_fmi = f"; {do_fmi.fonte}"
+    except Exception as erro:
+        print(f"    riscos: leque sem o FMI ({str(erro)[:100]})")
     bloco.graficos.insert(
         0,
         grafico(
@@ -465,6 +567,7 @@ def _leque(
                     casas=1,
                 ),
                 serie("focus", "Focus (mediana do mercado)", [partida, *focus], papel="consenso"),
+                *series_fmi,
             ],
             unidade="% do PIB",
             casas=1,
@@ -484,7 +587,7 @@ def _leque(
                     nome_meio="metade fica na parte grossa",
                 )
             ],
-            fonte=f"{base.fonte}; {ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL')}",
+            fonte=f"{base.fonte}; {ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL')}{fonte_fmi}",
             nota=(
                 "Como ler: ninguém sabe o futuro, então o computador montou 4.000 futuros "
                 "possíveis para a dívida. Cada um parte do cenário do Focus e repete, ano a "
@@ -501,7 +604,7 @@ def _leque(
                 "história (os quatro desvios juntos, como aconteceram). As pontas da barra são "
                 "o 10º e o 90º percentil; a parte grossa, o 25º e o 75º. É conta de ordem de "
                 "grandeza: supõe que o futuro pode errar como o passado errou, e não separa a "
-                "dívida cambial."
+                "dívida cambial." + nota_fmi
             ),
             largura="inteira",
         ),
@@ -1436,6 +1539,413 @@ def _elasticidades() -> Bloco:
     return bloco
 
 
+# ------------------------------------------------------------------ custo e rolagem da dívida
+
+
+def _juros_sobre_receita(ctx: Contexto) -> Bloco:
+    """Juros do Governo Central sobre a receita do Governo Central, em 12 meses.
+
+    Escolha de 15/11/2026: as duas pontas do mesmo governo, e as duas conferíveis mês a mês.
+    Juros: os nominais do Governo Federal e do Banco Central que o BC apura (SGS 4606, por
+    competência, sem o efeito do câmbio; líquidos do que se recebe de juros). Receita: a
+    líquida do Governo Central no RTN (a total menos as transferências a estados e
+    municípios). Os juros do setor público inteiro contra a carga tributária misturariam
+    governos (e a carga só sai uma vez por ano)."""
+    juros = ctx.sgs("NFSP_JUROS_GC_MES", HIST)
+    rtn = tesouro_rtn.serie_historica()
+    razao = divida.juros_sobre_receita(juros, rtn["receita_liquida"])
+    if not razao:
+        return Bloco()
+    fonte = (
+        f"{ctx.fonte_sgs('NFSP_JUROS_GC_MES')}; Tesouro Nacional, Resultado do Tesouro "
+        "Nacional (tabela 1.1, receita líquida); cálculo próprio"
+    )
+    inicio = date(ctx.hoje.year - 20, 1, 1)
+    bloco = Bloco()
+    bloco.cartoes.append(
+        cartao(
+            "juros-sobre-receita",
+            "Juros sobre a receita da União",
+            razao,
+            unidade="%",
+            periodicidade="M",
+            casas=0,
+            detalhe="juros ÷ receita líquida, 12 meses",
+            fonte=fonte,
+            procedencia="calculado",
+            secao="riscos",
+            mini=120,
+        )
+    )
+    bloco.graficos.append(
+        grafico(
+            "juros-sobre-receita",
+            "Quanto da receita da União vai para os juros",
+            [serie("razao", "Juros ÷ receita líquida, 12 meses", razao, desde=inicio)],
+            unidade="% da receita líquida",
+            casas=0,
+            periodicidade="M",
+            janela_anos=20,
+            fonte=fonte,
+            nota=(
+                "Juros: os do Governo Federal e do Banco Central em 12 meses, como o Banco "
+                "Central apura (os que se pagam menos os que se recebem, nas reservas e nos "
+                "empréstimos; o resultado do swap cambial entra). Receita: a líquida do "
+                "Governo Central em 12 meses, do Tesouro (o que arrecada menos o que a lei "
+                "manda repassar a estados e municípios). As duas pontas são do mesmo governo, "
+                "que tem quase toda a dívida. Agências de risco olham a mesma razão: quanto "
+                "maior, menos sobra para o resto e mais o orçamento depende da Selic."
+            ),
+        )
+    )
+    return bloco
+
+
+def _vencimento(ctx: Contexto) -> Bloco:
+    """Quanto da dívida bruta vence em até 12 meses: o que o governo precisa rolar no ano."""
+    total, faixas = bcb_fiscal.cronograma_dbgg()
+    curta = divida.parcela(faixas["até 1 ano"], total)
+    if not curta:
+        return Bloco()
+    pib = dict(ctx.sgs("PIB_12M", HIST))
+    quando, saldo = faixas["até 1 ano"][-1]
+    no_pib = f"; {br(saldo / pib[quando] * 100)} % do PIB" if pib.get(quando) else ""
+    bloco = Bloco()
+    bloco.cartoes.append(
+        cartao(
+            "vence-em-12-meses",
+            "Dívida bruta que vence em até 12 meses",
+            curta,
+            unidade="%",
+            periodicidade="M",
+            casas=1,
+            detalhe=f"R$ {br(saldo / 1e6, 2)} tri{no_pib}",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+            procedencia="calculado",
+            secao="riscos",
+            mini=120,
+        )
+    )
+    bloco.graficos.append(
+        grafico(
+            "vence-em-12-meses",
+            "Quanto da dívida vence em até um ano",
+            [serie("curta", "Vence em até 12 meses", curta, desde=date(2006, 12, 1))],
+            unidade="% da dívida bruta",
+            casas=1,
+            periodicidade="M",
+            janela_anos=20,
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+            nota=(
+                "Saldo da dívida bruta do governo geral com vencimento em até 12 meses, sobre "
+                "o saldo total, pelo cronograma que o Banco Central publica. Inclui as "
+                "operações compromissadas do Banco Central, quase todas de prazo curto. Quanto "
+                "maior a parte que vence logo, mais dívida o governo precisa trocar por nova no "
+                "ano, ao juro do momento."
+            ),
+        )
+    )
+    return bloco
+
+
+# ------------------------------------------------------------------ riscos fiscais e jurídicos
+
+
+def pib_anual_em_bilhoes(ctx: Contexto) -> dict[int, float]:
+    """O PIB de cada ano fechado (o de 12 meses em dezembro), em R$ bilhões."""
+    return {a: v / 1000 for a, v in em_dezembro(ctx.sgs("PIB_12M", 30)).items()}
+
+
+def _justica(ctx: Contexto) -> Bloco:
+    """As ações na Justiça contra a União e o que ela paga por sentença, pelo Anexo de Riscos
+    Fiscais do PLDO; e a tabela-resumo dos riscos fiscais específicos."""
+    pib = pib_anual_em_bilhoes(ctx)
+    acoes = relatorios.ACOES_JUDICIAIS
+    ano = max(acoes)
+    possivel, provavel = acoes[ano]
+    fonte = relatorios.FONTE_RISCOS_FISCAIS
+    fonte_pib = f"{fonte}; PIB: {ctx.fonte_sgs('PIB_12M')}"
+    pagas = relatorios.SENTENCAS_PAGAS
+    ultimo_pago = max(a for a in pagas if a < relatorios.SENTENCAS_PREVISTAS_DESDE)
+    pago, despesa = pagas[ultimo_pago]
+    previsto = [a for a in pagas if a >= relatorios.SENTENCAS_PREVISTAS_DESDE]
+
+    def no_pib(valores: dict[int, float]) -> list[Ponto]:
+        return [(date(a, 1, 1), v / pib[a] * 100) for a, v in sorted(valores.items()) if a in pib]
+
+    provavel_pib = no_pib({a: v[1] for a, v in acoes.items()})
+    possivel_pib = no_pib({a: v[0] for a, v in acoes.items()})
+    if not provavel_pib or provavel_pib[-1][0].year != ano:
+        raise ValueError(f"sem o PIB de {ano} para pôr as ações em % do PIB")
+
+    bloco = Bloco()
+    bloco.cartoes += [
+        Cartao(
+            id="acoes-perda-provavel",
+            rotulo="Ações contra a União com perda provável",
+            valor=provavel,
+            unidade="R$ bilhões",
+            casas=0,
+            referencia=date(ano, 1, 1),
+            periodicidade="A",
+            detalhe=(
+                f"{br(provavel_pib[-1][1])} % do PIB; perda possível: R$ {br(possivel / 1000, 2)} "
+                "tri"
+            ),
+            fonte=fonte,
+            secao="riscos",
+            mini=[(date(a, 1, 1), v[1]) for a, v in sorted(acoes.items())],
+        ),
+        Cartao(
+            id="sentencas-pagas",
+            rotulo="Sentenças judiciais pagas pela União",
+            valor=pago,
+            unidade="R$ bilhões",
+            casas=0,
+            referencia=date(ultimo_pago, 1, 1),
+            periodicidade="A",
+            detalhe=f"{br(pago / despesa * 100)} % da despesa primária"
+            + (
+                f"; {previsto[0]}: R$ {br(pagas[previsto[0]][0], 0)} bi no orçamento"
+                if previsto
+                else ""
+            ),
+            fonte=fonte,
+            secao="riscos",
+            mini=[(date(a, 1, 1), v[0]) for a, v in sorted(pagas.items()) if a <= ultimo_pago],
+        ),
+    ]
+    bloco.graficos += [
+        grafico(
+            "acoes-judiciais",
+            "Ações na Justiça que a União pode perder",
+            [
+                serie("provavel", "Perda provável", provavel_pib, casas=1),
+                serie("possivel", "Perda possível", possivel_pib, casas=1),
+            ],
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte_pib,
+            nota=(
+                "O valor das ações contra a União, as autarquias, as estatais dependentes e o "
+                "Banco Central, como a AGU classifica: perda provável quando o STF, o STJ ou o "
+                "TST já decidiu contra o governo; possível quando o caso está para ser julgado "
+                "nesses tribunais. Entram as ações acima de R$ 1 bilhão (ou as iguais somadas). "
+                "Não é conta a pagar: muda com cada julgamento e com a reclassificação (a "
+                "queda de 2024 e 2025 veio de ações da Previdência que passaram a risco "
+                "remoto). Em reais, dividido pelo PIB do ano."
+            ),
+        ),
+        grafico(
+            "sentencas-judiciais",
+            "O que a União paga por decisão da Justiça",
+            [
+                serie(
+                    "pagas",
+                    "Precatórios e outras sentenças",
+                    [(date(a, 1, 1), p / d * 100) for a, (p, d) in sorted(pagas.items())],
+                    casas=1,
+                ),
+            ],
+            tipo="barras",
+            unidade="% da despesa primária",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            nota=(
+                "Tudo o que a União pagou em cumprimento de sentença judicial (precatórios e "
+                "requisições de pequeno valor), sobre a despesa primária do ano. "
+                + (
+                    f"{', '.join(str(a) for a in previsto)}: o que está no orçamento, não o "
+                    "que foi pago. "
+                    if previsto
+                    else ""
+                )
+                + "O salto de 2023 é o pagamento dos precatórios adiados, depois que o STF "
+                "derrubou o limite (ADI 7064)."
+            ),
+        ),
+    ]
+    anterior = ano - 1
+    bloco.tabelas.append(
+        Tabela(
+            id="riscos-fiscais-uniao",
+            titulo="Os riscos fiscais da União, pelo Tesouro",
+            subtitulo=f"Estoque em R$ bilhões, no fim de {anterior} e de {ano}",
+            colunas=[str(anterior), str(ano), f"{ano}, % do PIB"],
+            linhas=[
+                LinhaTabela(
+                    rotulo=f"{r.item} ({r.efeito})",
+                    valores=[
+                        r.anterior,
+                        r.ultimo,
+                        round(r.ultimo / pib[ano] * 100, 1) if ano in pib else None,
+                    ],
+                    unidade="",
+                    casas=1,
+                )
+                for r in relatorios.RISCOS_FISCAIS
+            ],
+            fonte=fonte_pib,
+            nota=(
+                "Os itens maiores do quadro-resumo do Anexo de Riscos Fiscais da LDO. "
+                '"Mais despesa": o que a União pode ter de pagar (sentenças, garantias '
+                'honradas). "Menos receita": o que tem a receber e pode não receber (dívidas '
+                "dos estados, empréstimos dos fundos e do Fies). São riscos, não perdas: só "
+                "uma parte vira gasto, e o anexo não soma tudo como conta a pagar. A dívida "
+                "ativa está em Impostos."
+            ),
+        )
+    )
+    return bloco
+
+
+# Países parecidos, os da América Latina primeiro (CLAUDE.md: "os parecidos (emergentes,
+# América Latina) primeiro e o mesmo número e fonte para todos").
+PARES_DE_GOVERNANCA = ["MEX", "COL", "CHL", "PER", "ARG", "ZAF", "IND", "IDN", "TUR"]
+
+
+def tabela_de_governanca(
+    dados: dict[tuple[str, str], dict[int, float]], nomes: dict[str, str]
+) -> Tabela | None:
+    """A nota de 0 a 100 do Banco Mundial nas quatro dimensões, o Brasil (agora e dez anos
+    antes) e os pares. Sem o Brasil no ano mais novo, nada."""
+    codigos = list(banco_mundial.GOVERNANCA)
+    anos_br = [a for a in dados.get(("BRA", codigos[0]), {})]
+    if not anos_br:
+        return None
+    ano = max(anos_br)
+    antes = ano - 10
+
+    def linha(iso: str, rotulo: str, quando: int) -> LinhaTabela | None:
+        valores = [dados.get((iso, c), {}).get(quando) for c in codigos]
+        if all(v is None for v in valores):
+            return None
+        return LinhaTabela(
+            rotulo=rotulo,
+            valores=[round(v, 0) if v is not None else None for v in valores],
+            unidade="",
+            casas=0,
+        )
+
+    candidatas = [
+        linha("BRA", f"Brasil, {ano}", ano),
+        linha("BRA", f"Brasil, {antes}", antes),
+        *[linha(iso, nomes[iso], ano) for iso in PARES_DE_GOVERNANCA],
+    ]
+    linhas = [x for x in candidatas if x is not None]
+
+    def faixa(codigo: str) -> str:
+        baixo = dados.get(("BRA", f"{codigo}_LB"), {}).get(ano)
+        alto = dados.get(("BRA", f"{codigo}_UB"), {}).get(ano)
+        return f"de {br(baixo, 0)} a {br(alto, 0)}" if baixo and alto else ""
+
+    faixa_ge, faixa_rl = faixa("GOV_WGI_GE.SC"), faixa("GOV_WGI_RL.SC")
+    erro = (
+        f" A margem de erro é grande: com 90 % de confiança, a nota do Brasil fica {faixa_ge} "
+        f"em eficácia do governo e {faixa_rl} em estado de direito. Diferença de poucos "
+        "pontos entre países não quer dizer muito."
+        if faixa_ge and faixa_rl
+        else ""
+    )
+    return Tabela(
+        id="governanca",
+        titulo="Governança: o Brasil e países parecidos",
+        subtitulo=f"Nota de 0 a 100 do Banco Mundial em {ano}; mais é melhor",
+        colunas=list(banco_mundial.GOVERNANCA.values()),
+        linhas=linhas,
+        fonte=f"{banco_mundial.FONTE_GOVERNANCA} ({', '.join(codigos)})",
+        nota=(
+            "O Banco Mundial junta dezenas de pesquisas e avaliações (de empresas, ONGs, "
+            "organismos e da população) numa nota por país, todo ano, com o mesmo método para "
+            "todos. Eficácia do governo: a qualidade dos serviços públicos e das políticas. "
+            "Estado de direito: se contratos e leis valem e a Justiça funciona. Qualidade da "
+            "regulação: se as regras ajudam o setor privado. Controle da corrupção: o quanto "
+            "o poder público é usado para ganho privado." + erro
+        ),
+    )
+
+
+def _governanca(ctx: Contexto) -> Bloco:
+    codigos = list(banco_mundial.GOVERNANCA)
+    faixas = [f"{c}_{p}" for c in codigos[:2] for p in ("LB", "UB")]
+    dados = banco_mundial.varios(
+        ["BRA", *PARES_DE_GOVERNANCA], [*codigos, *faixas], ctx.hoje.year - 12, ctx.hoje.year
+    )
+    nomes = {iso: mundo.nome_do_pais(iso) for iso in PARES_DE_GOVERNANCA}
+    tabela = tabela_de_governanca(dados, nomes)
+    bloco = Bloco()
+    if tabela:
+        bloco.tabelas.append(tabela)
+    return bloco
+
+
+def _inss_ate_2100(ctx: Contexto) -> Bloco:
+    """A projeção atuarial do INSS do PLDO, com o realizado do RTN na frente."""
+    projecao = relatorios.RGPS_PROJECAO
+    primeiro = min(projecao)
+    rtn = tesouro_rtn.serie_historica()
+    pib_12m = ctx.sgs("PIB_12M", 30)
+    beneficios = em_dezembro(contas.em_pct_do_pib(rtn["rgps"], pib_12m))
+    arrecadacao = em_dezembro(contas.em_pct_do_pib(rtn["arrecadacao_rgps"], pib_12m))
+
+    def junta(realizado: dict[int, float], indice: int) -> list[Ponto]:
+        antes = [(date(a, 1, 1), v) for a, v in sorted(realizado.items()) if 2010 <= a < primeiro]
+        return antes + [(date(a, 1, 1), v[indice]) for a, v in sorted(projecao.items())]
+
+    corte = date(primeiro, 1, 1)
+    meio = 2060
+    necessidade = {a: v[2] for a, v in projecao.items()}
+    fonte = f"{relatorios.FONTE_RGPS_PROJECAO}; realizado: Tesouro Nacional, RTN (tabela 1.1)"
+    bloco = Bloco()
+    bloco.cartoes.append(
+        Cartao(
+            id="inss-deficit-2060",
+            rotulo=f"Déficit do INSS em {meio}, na projeção do governo",
+            valor=necessidade[meio],
+            unidade="% do PIB",
+            casas=1,
+            referencia=date(primeiro, 1, 1),
+            periodicidade="A",
+            detalhe=(
+                f"{br(necessidade[primeiro])} % em {primeiro}; "
+                f"{br(necessidade[max(projecao)])} % em {max(projecao)}"
+            ),
+            fonte=relatorios.FONTE_RGPS_PROJECAO,
+            procedencia="oficial",
+            secao="riscos",
+            mini=[(date(a, 1, 1), v) for a, v in sorted(necessidade.items())],
+        )
+    )
+    bloco.graficos.append(
+        grafico(
+            "inss-ate-2100",
+            "O INSS até 2100: a projeção do governo",
+            [
+                serie("despesa", "Benefícios", junta(beneficios, 1), tracejado_desde=corte),
+                serie("receita", "Contribuições", junta(arrecadacao, 0), tracejado_desde=corte),
+            ],
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            nota=(
+                "Até 2025, o realizado (Tesouro); depois, tracejado, a projeção atuarial que "
+                "o Ministério da Previdência manda com o projeto da LDO todo ano, pela Lei de "
+                "Responsabilidade Fiscal. A distância entre as linhas é o déficit. Método: até "
+                "2030, a grade de parâmetros do Ministério da Fazenda; depois, a população "
+                "projetada pela ONU e as regras de hoje (a reforma de 2019 inclusive), com o "
+                "salário mínimo subindo com o PIB. Não há faixa de erro publicada nem "
+                "projeção de mercado para comparar; a do governo muda a cada ano, com a grade "
+                "e com a população."
+            ),
+            largura="inteira",
+        )
+    )
+    return bloco
+
+
 # ------------------------------------------------------------------ a seção
 
 
@@ -1469,6 +1979,11 @@ def montar(ctx: Contexto) -> Secao:
         ("energia", lambda: _energia(ctx)),
         ("nota de crédito", lambda: _nota(ctx)),
         ("elasticidades", _elasticidades),
+        ("juros sobre a receita", lambda: _juros_sobre_receita(ctx)),
+        ("vencimento da dívida", lambda: _vencimento(ctx)),
+        ("ações na Justiça", lambda: _justica(ctx)),
+        ("governança", lambda: _governanca(ctx)),
+        ("INSS até 2100", lambda: _inss_ate_2100(ctx)),
     ]
     for nome, montar_bloco in demais:
         try:
