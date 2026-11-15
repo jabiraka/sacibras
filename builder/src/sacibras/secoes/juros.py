@@ -228,6 +228,20 @@ def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
     return cartoes, graficos, termo
 
 
+def _degraus_ipca(hoje: date) -> tuple[list[Ponto], dict[int, float]]:
+    """O IPCA do Focus em degraus, para `curvas.media_do_caminho`: o de cada mês que falta no
+    ano (anualizado), depois o de cada ano. Devolve também as medianas anuais."""
+    _, ipca_mes = bcb_focus.mensais_hoje("IPCA")
+    ipca_anual = bcb_focus.mediana_anual_hoje("IPCA")
+    degraus = [
+        (d, ((1 + v / 100) ** 12 - 1) * 100)
+        for d, v in ipca_mes
+        if d.year == hoje.year and d >= hoje.replace(day=1)
+    ]
+    degraus += [(date(a, 1, 1), v) for a, v in sorted(ipca_anual.items()) if a > hoje.year]
+    return degraus, ipca_anual
+
+
 def _mercado_x_focus(
     ctx: Contexto, esperada: list[Ponto], distancia: float
 ) -> tuple[list[Cartao], list[Grafico], str]:
@@ -250,15 +264,7 @@ def _mercado_x_focus(
         if ano in selic_anual and ano - 1 in selic_anual:
             media = (selic_anual[ano - 1] + selic_anual[ano]) / 2
             degraus_selic.append((date(ano, 1, 1), media - distancia))
-    # IPCA: o de cada mês que falta no ano (anualizado), depois o de cada ano.
-    _, ipca_mes = bcb_focus.mensais_hoje("IPCA")
-    ipca_anual = bcb_focus.mediana_anual_hoje("IPCA")
-    degraus_ipca = [
-        (d, ((1 + v / 100) ** 12 - 1) * 100)
-        for d, v in ipca_mes
-        if d.year == ctx.hoje.year and d >= ctx.hoje.replace(day=1)
-    ]
-    degraus_ipca += [(date(a, 1, 1), v) for a, v in sorted(ipca_anual.items()) if a > ctx.hoje.year]
+    degraus_ipca, ipca_anual = _degraus_ipca(ctx.hoje)
     horizonte = date(min(ultimo_ano, max(ipca_anual)) + 1, 1, 1)
     # Só onde o Focus tem previsão: esticar o último ano dele inflaria a diferença.
     alem = horizonte
@@ -515,11 +521,28 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
                 continue
             r_curto = real_curta.taxa(du) * 100
             curtos[k] = (r_curto, ((1 + n_k / 100) / (1 + r_curto / 100) - 1) * 100)
+    # O IPCA do Focus no mesmo prazo (só até onde ele projeta) e o que a implícita tem a mais.
+    degraus_ipca: list[Ponto] = []
+    fim_do_focus = dia
+    with suppress(rede.FonteForaDoArError, ValueError, KeyError):
+        degraus_ipca, ipca_anual = _degraus_ipca(ctx.hoje)
+        fim_do_focus = date(max(ipca_anual) + 1, 1, 1)
+
+    def focus_ate(k: int) -> float | None:
+        ate = _anos_depois(dia, k)
+        if not degraus_ipca or ate > fim_do_focus:
+            return None
+        return curvas.media_do_caminho(degraus_ipca, dia, ate)
+
+    def a_mais(implicita: float | None, focus: float | None) -> float | None:
+        return implicita - focus if implicita is not None and focus is not None else None
+
     linhas: list[LinhaTabela] = []
     for k in sorted({1, 2, 3, 5, longo}):
         n, r, i = _no_prazo(dia, nominal, real, k)
         if k in curtos:
             r, i = curtos[k]
+        focus = focus_ate(k)
         antes = (
             _no_prazo(dia, nominal_ano, real_ano, k)[2]
             if nominal_ano is not None and real_ano is not None
@@ -528,7 +551,7 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
         linhas.append(
             LinhaTabela(
                 rotulo=f"{k} ano{'s' if k > 1 else ''}",
-                valores=[n, r, i, antes],
+                valores=[n, r, i, focus, a_mais(i, focus), antes],
                 unidade="% a.a.",
                 casas=2,
             )
@@ -544,7 +567,7 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
         linhas.append(
             LinhaTabela(
                 rotulo=f"De {meio} a {longo} anos (a termo)",
-                valores=[*termo_hoje, termo_antes[2] if termo_antes else None],
+                valores=[*termo_hoje, None, None, termo_antes[2] if termo_antes else None],
                 unidade="% a.a.",
                 casas=2,
             )
@@ -553,9 +576,17 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
         id="titulos-por-prazo",
         titulo="Juro e inflação implícita por prazo",
         subtitulo=f"Curva zero dos títulos do Tesouro em {periodo(dia, 'D')}",
-        colunas=["Prefixado", "IPCA+ (juro real)", "Inflação implícita", "Implícita há 1 ano"],
+        colunas=[
+            "Prefixado",
+            "IPCA+ (juro real)",
+            "Inflação implícita",
+            "IPCA do Focus no prazo",
+            "Implícita menos Focus (pp)",
+            "Implícita há 1 ano",
+        ],
         linhas=linhas,
         fonte=fonte
+        + (f"; Banco Central, Focus de {periodo(dia, 'D')}" if degraus_ipca else "")
         + (
             "; nos prazos curtos, Banco Central (negócios com NTN-B no mercado secundário, "
             + ", ".join(f"{periodo(v, 'M')} em {periodo(d, 'D')}" for v, d in usados)
@@ -567,7 +598,11 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
             "Cada prazo é contado de hoje. A implícita é (1 + prefixado) / (1 + IPCA+) − 1 no "
             "mesmo prazo e carrega o prêmio pelo risco de inflação. A linha a termo é o que a "
             f"curva cobra de {meio} a {longo} anos daqui, sem os anos até lá: a inflação "
-            "esperada para o longo prazo, a medida que os bancos centrais acompanham."
+            "esperada para o longo prazo, a medida que os bancos centrais acompanham. O IPCA "
+            "do Focus é o de cada ano acumulado de hoje até o prazo, só até onde o Focus "
+            "projeta. O que a implícita tem a mais junta o prêmio pelo risco de inflação, o "
+            "mercado esperar inflação diferente da dos economistas e a diferença de liquidez "
+            "entre os títulos; o preço não separa os três."
             + (
                 " O Tesouro Direto não vende IPCA+ que vença antes de "
                 f"{min(v for v, _ in td[tesouro_direto.IPCA][dia]).year}: nos prazos curtos, o "
