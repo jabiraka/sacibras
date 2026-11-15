@@ -62,12 +62,6 @@ As próximas:
   - O calendário do IBGE na caixa "O que sai esta semana" da entrada: a nuvem é recusada e as
     fotos usaram um calendário fabricado; conferir do PC que a caixa abre com o de verdade.
 
-- **Conferir no próximo build do Actions** se o arquivo do mercado secundário do BC
-  (`bcb_secundario`, entrou em 15/11) abre de fora do Brasil: dele sai o juro real de 1 e 2
-  anos em Juros › Juros dos títulos. Se for recusado, a tabela inteira fica com a do
-  build anterior (a do site no ar, com esses prazos em branco) e a issue `fonte fora do ar`
-  avisa; aí decidir o que fazer com a fonte.
-
 ## Espera o Caio
 
 - **Trecho da B3 sobre gráficos informativos**: o Ibovespa fica na tela por decisão do
