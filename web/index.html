@@ -9,6 +9,22 @@
       content="PIB, inflação, juros, emprego, dólar e dívida do Brasil, por assunto, com fonte oficial e data."
     />
     <meta name="theme-color" content="#f4f2e8" />
+    <!-- O cartão de quem compartilha o link (WhatsApp, redes): a imagem sai de `npm run og`
+         e o %ENDERECO% do vite.config.ts (o domínio próprio ainda depende do Caio). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="sacibras" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="sacibras · status da economia brasileira" />
+    <meta
+      property="og:description"
+      content="PIB, inflação, juros, emprego, dólar e dívida do Brasil, por assunto, com fonte oficial e data."
+    />
+    <meta property="og:url" content="%ENDERECO%" />
+    <meta property="og:image" content="%ENDERECO%og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="sacibras: status da economia brasileira" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   </head>
   <body>
@@ -54,7 +70,9 @@
           enterkeyhint="go"
         />
         <div class="busca-saida" id="busca-saida" hidden>
+          <div class="busca-definicao" hidden></div>
           <p class="busca-aviso"></p>
+          <div class="busca-sugestoes" hidden></div>
           <ol class="busca-resultados"></ol>
         </div>
       </div>

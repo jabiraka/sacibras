@@ -127,6 +127,81 @@ function dia(d: Date): string {
   return `${SEMANA[d.getDay()]}, ${dia}/${MESES[d.getMonth()]}`;
 }
 
+/** As divulgações de hoje até daqui a `dias` dias, uma vez cada (a PNAD por estado entra em
+ *  dois assuntos), em ordem de data, com o primeiro assunto em que entra. */
+export function daSemana(
+  porAssunto: Map<string, Divulgacao[]>,
+  hoje: Date,
+  dias = 7,
+): (Divulgacao & { assunto: string })[] {
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const fim = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + dias);
+  const vistas = new Map<string, Divulgacao & { assunto: string }>();
+  for (const [assunto, lista] of porAssunto) {
+    for (const d of lista) {
+      const chave = `${d.nome}|${d.quando.getTime()}`;
+      if (d.quando >= inicio && d.quando < fim && !vistas.has(chave)) {
+        vistas.set(chave, { ...d, assunto });
+      }
+    }
+  }
+  return [...vistas.values()].sort((a, b) => a.quando.getTime() - b.quando.getTime());
+}
+
+/** "O que sai esta semana", na entrada, guardado atrás de um clique: o calendário do IBGE só
+ *  é lido quando a pessoa abre. Cada divulgação leva ao assunto dela. */
+export function agendaDaSemana(assuntos: { id: string; titulo: string }[]): HTMLElement {
+  const caixa = el("details", "vidro agenda-semana");
+  const resumo = el("summary");
+  resumo.append(
+    el("span", "agenda-semana-titulo", "O que sai esta semana"),
+    el("span", "agenda-semana-sub", "As próximas divulgações do IBGE, nos próximos 7 dias"),
+  );
+  const corpo = el("div", "agenda-semana-corpo");
+  caixa.append(resumo, corpo);
+  let pedido = false;
+  caixa.addEventListener("toggle", () => {
+    if (!caixa.open || pedido) return;
+    pedido = true;
+    corpo.replaceChildren(el("p", "agenda-semana-vazio", "Lendo o calendário do IBGE…"));
+    void proximas().then((porAssunto) => {
+      if (!porAssunto.size) {
+        pedido = false; // tenta de novo no próximo clique
+        corpo.replaceChildren(
+          el("p", "agenda-semana-vazio", "O calendário do IBGE não respondeu agora. Tente mais tarde."),
+        );
+        return;
+      }
+      const semana = daSemana(porAssunto, new Date());
+      if (!semana.length) {
+        corpo.replaceChildren(
+          el("p", "agenda-semana-vazio", "Nenhuma das pesquisas do painel sai nos próximos 7 dias."),
+        );
+      } else {
+        const lista = el("ul", "agenda-semana-lista");
+        for (const d of semana) {
+          const li = el("li");
+          const elo = el("a", "agenda-semana-item");
+          elo.href = `#${d.assunto}`;
+          const oQue = el("span", "agenda-semana-o-que");
+          oQue.append(
+            el("strong", "", d.nome),
+            document.createTextNode(d.referente ? ` de ${d.referente}` : ""),
+          );
+          elo.append(el("span", "agenda-semana-dia", dia(d.quando)), oQue);
+          const assunto = assuntos.find((a) => a.id === d.assunto);
+          if (assunto) elo.append(el("span", "agenda-semana-assunto", assunto.titulo));
+          li.append(elo);
+          lista.append(li);
+        }
+        corpo.replaceChildren(lista);
+      }
+      corpo.append(el("p", "agenda-fonte", "Fonte: calendário de divulgações do IBGE"));
+    });
+  });
+  return caixa;
+}
+
 /** "Próximas divulgações: IPCA de nov/2026, sex, 11/dez · …". Vazio se nada vier. */
 export function agendaDoAssunto(assunto: string): HTMLElement {
   const caixa = el("p", "agenda");
