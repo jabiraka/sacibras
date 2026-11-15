@@ -1,19 +1,22 @@
 """Brasil no mundo: as mesmas métricas para ~20 países, com as projeções do FMI.
 
 Anuais e projeções: World Economic Outlook (FMI). Juro básico, inflação em 12 meses e câmbio
-contra o dólar: BIS. Juro de 10 anos: OCDE (o do Brasil, do Tesouro Direto). Cada métrica
-guarda a fonte; projeção é sempre a da própria fonte.
+contra o dólar: BIS. Juro de 10 anos: OCDE (o do Brasil, do Tesouro Direto). Produtividade
+(PTF, produto por hora, capital por trabalhador, capital humano, horas e parte do trabalho na
+renda): Penn World Table, até 2023 (CC BY 4.0). Cada métrica guarda a fonte; projeção é
+sempre a da própria fonte.
 """
 
 from __future__ import annotations
 
 import contextlib
 import gettext
+from collections.abc import Callable
 from datetime import date, timedelta
 
 import pycountry
 
-from sacibras.fontes import bis, fmi, ocde_juros, ocde_receita, tesouro_direto
+from sacibras.fontes import bis, fmi, ocde_juros, ocde_receita, pwt, tesouro_direto
 from sacibras.modelos import risco
 from sacibras.schema import GrupoMundo, MetricaMundo, Mundo, MundoPaises, Pais
 from sacibras.secoes.base import Contexto, br
@@ -526,6 +529,127 @@ def _metricas_mensais(
     return saida
 
 
+PWT_DESDE = 1970
+"""Os países principais desde 1970 (passa pelo auge da PTF do Brasil, nos anos 1970)."""
+
+PorAnoPWT = dict[str, float]
+
+
+def _por_hora(x: PorAnoPWT) -> float | None:
+    if x.get("rgdpo") and x.get("emp") and x.get("avh"):
+        return x["rgdpo"] / (x["emp"] * x["avh"])
+    return None
+
+
+def _capital_por_ocupado(x: PorAnoPWT) -> float | None:
+    if x.get("cn") and x.get("emp"):
+        return x["cn"] / x["emp"] / 1000
+    return None
+
+
+# (id, nome, descrição, unidade, casas, maior é melhor, conta sobre o ano da PWT)
+METRICAS_PWT: list[
+    tuple[str, str, str, str, int, bool | None, Callable[[PorAnoPWT], float | None]]
+] = [
+    (
+        "ptf",
+        "PTF contra a dos EUA",
+        "Produtividade total dos fatores: o que o país produz além do que explicam as máquinas "
+        "e prédios, as horas e o estudo de quem trabalha, em % da dos EUA no mesmo ano, com os "
+        "preços convertidos pela paridade do poder de compra.",
+        "% da dos EUA",
+        0,
+        True,
+        lambda x: x["ctfp"] * 100 if "ctfp" in x else None,
+    ),
+    (
+        "produtividade_hora",
+        "Produto por hora trabalhada",
+        "O PIB (pela produção, em dólares de paridade do poder de compra de 2021) dividido "
+        "pelas horas que todos os ocupados trabalharam no ano.",
+        "US$ PPC por hora",
+        1,
+        True,
+        _por_hora,
+    ),
+    (
+        "capital_ocupado",
+        "Capital por pessoa ocupada",
+        "Máquinas, prédios e infraestrutura do país (o estoque de capital, a paridade do poder "
+        "de compra do ano) divididos pelas pessoas ocupadas, em mil dólares.",
+        "mil US$ PPC por ocupado",
+        0,
+        True,
+        _capital_por_ocupado,
+    ),
+    (
+        "capital_humano",
+        "Capital humano",
+        "Índice da Penn World Table feito dos anos médios de estudo e do quanto cada ano a mais "
+        "costuma render: 1 é ninguém com estudo; os países mais escolarizados passam de 3,5.",
+        "índice",
+        2,
+        True,
+        lambda x: x.get("hc"),
+    ),
+    (
+        "horas_ano",
+        "Horas trabalhadas no ano",
+        "Média de horas trabalhadas no ano por pessoa ocupada. Mais horas para o mesmo produto "
+        "quer dizer menos produto por hora.",
+        "horas por ocupado",
+        0,
+        None,
+        lambda x: x.get("avh"),
+    ),
+    (
+        "parte_trabalho",
+        "Parte do trabalho na renda",
+        "A parte da renda do país que fica com quem trabalha: salários e a renda do trabalho de "
+        "autônomos, que a Penn World Table estima. Para parte dos países e anos a própria PWT "
+        "completa o dado que falta (o do Brasil de 2021 se repete em 2022 e 2023): compare "
+        "com cuidado.",
+        "% da renda",
+        1,
+        None,
+        lambda x: x["labsh"] * 100 if "labsh" in x else None,
+    ),
+]
+
+
+def metricas_pwt(dados: pwt.PorPais, paises: list[str], anos: list[int]) -> list[MetricaMundo]:
+    """As métricas da PWT dos `paises` nos `anos`; os últimos anos sem dado saem da lista
+    (a PWT vai até 2023). País sem nenhum valor fica de fora da métrica."""
+    saida: list[MetricaMundo] = []
+    for id, nome, descricao, unidade, casas, melhor, conta in METRICAS_PWT:
+        valores: dict[str, list[float | None]] = {}
+        for iso in paises:
+            por_ano = dados.get(iso, {})
+            linha: list[float | None] = []
+            for a in anos:
+                v = conta(por_ano[a]) if a in por_ano else None
+                linha.append(None if v is None else round(v, casas + 2))
+            if any(v is not None for v in linha):
+                valores[iso] = linha
+        if not valores:
+            continue
+        anos_m, valores = sem_anos_vazios(anos, valores)
+        saida.append(
+            MetricaMundo(
+                id=id,
+                nome=nome,
+                descricao=f"{descricao} A Penn World Table vai até {anos_m[-1]}.",
+                unidade=unidade,
+                casas=casas,
+                maior_e_melhor=melhor,
+                fonte=pwt.FONTE,
+                anos=anos_m,
+                valores=valores,
+            )
+        )
+    return saida
+
+
 def _carga_tributaria(ctx: Contexto, inicio: int) -> dict[str, dict[int, float]]:
     """{ISO3: {ano: carga tributária em % do PIB}} de todos os países da OCDE Global Revenue
     Statistics, uma chamada por rodada."""
@@ -695,7 +819,10 @@ def _todos_os_paises(
     manter = set(paises)
     mensais = {x.id: x for x in _metricas_mensais(ctx, date(a0, 1, 1), anos_bis, None)}
     saida: list[MetricaMundo] = []
+    ids_pwt = {x[0] for x in METRICAS_PWT}
     for m in metricas:
+        if m.id in ids_pwt:
+            continue
         if m.id in mensais:
             todos = mensais[m.id].valores
             valores = {iso: todos[iso] for iso in sorted(manter) if iso in todos}
@@ -732,6 +859,10 @@ def _todos_os_paises(
             m.model_copy(update={"anos": anos, "valores": valores, "descricao": descricao})
         )
     saida += _metricas_de_risco(ctx, ano, manter)
+    if any(m.id in ids_pwt for m in metricas):
+        with contextlib.suppress(Exception):  # já veio na rodada: só falha se a rede caiu agora
+            # Os dez anos que a lista de anos da tela oferece, não só os seis do resto.
+            saida += metricas_pwt(pwt.dados(), sorted(manter), list(range(ano - 10, ano + 1)))
     return MundoPaises(metricas=saida, gerado_em=ctx.agora())
 
 
@@ -831,6 +962,12 @@ def montar(ctx: Contexto) -> Mundo:
     except Exception as erro:
         print(f"  aviso: mundo: carga tributária da OCDE indisponível ({str(erro)[:120]})")
 
+    # Produtividade (Penn World Table). Sem ela, segue o resto.
+    try:
+        metricas += metricas_pwt(pwt.dados(set(isos)), isos, list(range(PWT_DESDE, ano + 1)))
+    except Exception as erro:
+        print(f"  aviso: mundo: Penn World Table indisponível ({str(erro)[:120]})")
+
     def do_brasil(id: str, a: int) -> float | None:
         m = next(x for x in metricas if x.id == id)
         return m.valores["BRA"][m.anos.index(a)] if "BRA" in m.valores and a in m.anos else None
@@ -844,8 +981,8 @@ def montar(ctx: Contexto) -> Mundo:
         resumo += f" e de {br(mundo)} % para o mundo"
     resumo += (
         f". Abaixo, o Brasil ao lado de {len([p for p in PAISES if p[3] != 'agregado']) - 1} "
-        "países em crescimento, inflação, juros, contas públicas e contas externas, com as "
-        f"projeções do FMI até {fim}."
+        "países em crescimento, inflação, juros, contas públicas, contas externas e "
+        f"produtividade, com as projeções do FMI até {fim}."
     )
     mundo_obj = Mundo(
         titulo="Brasil no mundo",

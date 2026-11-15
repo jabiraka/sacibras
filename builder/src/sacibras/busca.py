@@ -355,6 +355,16 @@ SINONIMOS: dict[str, list[str]] = {
     "idade mediana": ["idade media", "envelhecimento"],
     "inss": ["previdencia", "aposentadoria", "rgps", "deficit da previdencia", "reforma"],
     "produtividade": ["pib por trabalhador", "eficiencia", "produto por ocupado"],
+    "produto por hora": ["produtividade por hora", "produtividade do trabalho", "pib por hora"],
+    "capital humano": ["escolaridade", "educacao", "anos de estudo", "estudo"],
+    "capital por pessoa": ["estoque de capital", "maquinas por trabalhador", "investimento"],
+    "horas trabalhadas no ano": ["jornada", "horas de trabalho", "quanto se trabalha"],
+    "parte do trabalho": [
+        "participacao dos salarios",
+        "salarios na renda",
+        "distribuicao funcional da renda",
+        "capital e trabalho",
+    ],
     "ptf": [
         "produtividade total dos fatores",
         "eficiencia",
@@ -759,6 +769,10 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
     "esperanca de vida": ["life expectancy", "esperanza de vida", "esperance de vie"],
     "piramide": ["population pyramid", "age pyramid", "piramide de poblacion", "pyramide des ages"],
     "produtividade": ["productivity", "labor productivity", "productividad", "productivite"],
+    "produto por hora": ["labor productivity per hour", "productividad por hora"],
+    "capital humano": ["human capital", "schooling", "capital humano", "capital humain"],
+    "horas trabalhadas no ano": ["hours worked", "horas trabajadas", "heures travaillees"],
+    "parte do trabalho": ["labor share", "labour share", "participacion laboral"],
     "ptf": [
         "total factor productivity",
         "tfp",

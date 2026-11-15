@@ -136,6 +136,14 @@ TERMOS: list[Termo] = [
         "#demografia/eficiencia",
     ),
     Termo(
+        "parte-do-trabalho",
+        "Parte do trabalho na renda",
+        "Quanto da renda do país fica com quem trabalha (salários e o ganho dos autônomos com "
+        "o próprio trabalho); o resto remunera o capital: lucros, juros e aluguéis.",
+        ("parte do trabalho na renda",),
+        "#mundo",
+    ),
+    Termo(
         "pwt",
         "Penn World Table",
         "Base de dados da Universidade de Groningen com PIB, capital, horas, estudo e PTF de "

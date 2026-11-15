@@ -17,6 +17,7 @@ from __future__ import annotations
 import io
 import re
 import warnings
+from functools import cache
 from typing import Any
 
 import openpyxl  # type: ignore[import-untyped]
@@ -31,9 +32,11 @@ FONTE = (
     f"Penn World Table {VERSAO} (Feenstra, Inklaar e Timmer, 2015, American Economic Review "
     "105(10); licença CC BY 4.0)"
 )
-CAMPOS = ("rgdpna", "rnna", "emp", "avh", "hc", "labsh", "rtfpna", "ctfp")
+CAMPOS = ("rgdpna", "rnna", "emp", "avh", "hc", "labsh", "rtfpna", "ctfp", "rgdpo", "cn")
 """PIB e capital a preços nacionais constantes, ocupados (milhões), horas por ano, índice de
-capital humano, parte do trabalho na renda, PTF (2021 = 1) e PTF contra a dos EUA (EUA = 1)."""
+capital humano, parte do trabalho na renda, PTF (2021 = 1), PTF contra a dos EUA (EUA = 1), e
+para comparar países: PIB pela produção a PPC encadeada e capital a PPC corrente, os dois em
+milhões de dólares de 2021."""
 
 PorPais = dict[str, dict[int, dict[str, float]]]
 """{ISO3: {ano: {campo: valor}}}; campo vazio na fonte não entra."""
@@ -77,8 +80,16 @@ def ler_planilha(conteudo: bytes, paises: set[str] | None = None) -> PorPais:
     return saida
 
 
-def dados(paises: set[str] | None = None) -> PorPais:
+@cache
+def _todos() -> PorPais:
+    """A planilha inteira, lida uma vez por rodada (Demografia e Brasil no mundo usam)."""
     validade = 30 * 24 * 3600  # sai uma versão a cada dois anos, mais ou menos
     meta = baixar_json(API, params={"persistentId": DOI}, validade=validade)
     conteudo = baixar(ARQUIVO.format(id=id_da_planilha(meta)), validade=validade, tempo_limite=180)
-    return ler_planilha(conteudo, paises)
+    return ler_planilha(conteudo)
+
+
+def dados(paises: set[str] | None = None) -> PorPais:
+    """{ISO3: {ano: {campo: valor}}} dos `paises` (todos, se None)."""
+    todos = _todos()
+    return {p: v for p, v in todos.items() if paises is None or p in paises}

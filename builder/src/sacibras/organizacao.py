@@ -159,6 +159,14 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["ptf-eua", "ptf-desde-o-pico"],
             graficos=["ptf-brasil", "ptf-paises"],
             tabelas=["pwt-contabilidade"],
+            veja=[
+                Elo(
+                    endereco="#mundo/m-ptf",
+                    titulo="PTF no mundo",
+                    resumo="O Brasil ao lado de 120 países, e o produto por hora, o capital e "
+                    "o estudo de cada um.",
+                )
+            ],
         ),
     ],
     "pobreza": [

@@ -434,9 +434,9 @@ def test_pwt_le_a_aba_data_e_acha_a_planilha_no_dataverse() -> None:
     ws = livro.active
     ws.title = "Data"
     ws.append(["countrycode", "country", "year", *pwt.CAMPOS])
-    ws.append(["BRA", "Brazil", 2023, 1, 2, 3, 4, 5, 0.5, 0.97, 0.49])
-    ws.append(["BRA", "Brazil", 2022, 1, 2, 3, 4, 5, 0.5, 0.96, None])
-    ws.append(["USA", "United States", 2023, 1, 2, 3, 4, 5, 0.6, 1.0, 1.0])
+    ws.append(["BRA", "Brazil", 2023, 1, 2, 3, 4, 5, 0.5, 0.97, 0.49, 6, 7])
+    ws.append(["BRA", "Brazil", 2022, 1, 2, 3, 4, 5, 0.5, 0.96, None, 6, 7])
+    ws.append(["USA", "United States", 2023, 1, 2, 3, 4, 5, 0.6, 1.0, 1.0, 6, 7])
     saida = io.BytesIO()
     livro.save(saida)
     lido = pwt.ler_planilha(saida.getvalue(), {"BRA"})
