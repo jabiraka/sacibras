@@ -23,13 +23,14 @@ repetido no PROXIMOS-PASSOS.
   simuladores.
 - **Previsões próprias** (15/11/2026, *"sem próprias previsões por enquanto"*): IPCA e
   desocupação por modelo sazonal e o PIB agora com indústria, varejo e serviços.
-- **FGV IBRE além do que já está** (15/11/2026; Caio: *"se no final vc achar que não vale a
-  pena usar, então não usamos"*): os termos de uso vedam reproduzir sem autorização
-  ([FONTES](FONTES.md#licença-do-dado-o-que-é-privado-fica-sem-download)). Ficam fora a
-  decomposição do IGP-M (IPA, IPC e INCC; o detalhe por grupo e item é por assinatura) e os
-  indicadores do Observatório da Produtividade (PTF trimestral, produtividade por setor e
-  regional, capital humano trimestral). A PTF anual entrou pela Penn World Table, de licença
-  aberta. Volta se a FGV der autorização por escrito.
+- **FGV IBRE** (15/11/2026; Caio: *"podemos só mostrar se for permitido"*): os termos de
+  uso vedam reproduzir e divulgar sem autorização
+  ([FONTES](FONTES.md#licença-do-dado-o-privado-só-vai-à-tela-se-a-licença-deixar-e-nunca-com-download)).
+  Saíram da tela o IGP-M (Inflação › Outros índices) e a utilização da capacidade instalada
+  (Atividade); ficam fora a decomposição do IGP-M (IPA, IPC e INCC; o detalhe por grupo e
+  item é por assinatura) e o Observatório da Produtividade (PTF trimestral, por setor e
+  regional). A PTF anual entrou pela Penn World Table, de licença aberta. Com autorização
+  por escrito: `mostra=True` em `licencas.FGV_IBRE` e os gráficos de volta.
 
 ## Falta, por assunto
 

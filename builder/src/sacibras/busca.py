@@ -359,6 +359,8 @@ SINONIMOS: dict[str, list[str]] = {
     "capital humano": ["escolaridade", "educacao", "anos de estudo", "estudo"],
     "capital por pessoa": ["estoque de capital", "maquinas por trabalhador", "investimento"],
     "horas trabalhadas no ano": ["jornada", "horas de trabalho", "quanto se trabalha"],
+    "retorno do capital": ["taxa de retorno", "rentabilidade do capital", "lucro do capital"],
+    "preco do investimento": ["preco das maquinas", "custo do investimento", "nivel de preco"],
     "parte do trabalho": [
         "participacao dos salarios",
         "salarios na renda",
@@ -773,6 +775,8 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
     "capital humano": ["human capital", "schooling", "capital humano", "capital humain"],
     "horas trabalhadas no ano": ["hours worked", "horas trabajadas", "heures travaillees"],
     "parte do trabalho": ["labor share", "labour share", "participacion laboral"],
+    "retorno do capital": ["return on capital", "internal rate of return", "rentabilidad"],
+    "preco do investimento": ["price of investment", "price level of capital formation"],
     "ptf": [
         "total factor productivity",
         "tfp",

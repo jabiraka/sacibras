@@ -123,7 +123,6 @@ def montar(ctx: Contexto) -> Secao:
     investimento = ibge_sidra.serie(6727, 2517, trimestral=True)
     poupanca = ibge_sidra.serie(6726, 9774, trimestral=True)
     confianca = ctx.sgs("CONFIANCA_CONSUMIDOR")
-    uci = ctx.sgs("UCI_INDUSTRIA")
 
     trimestre = periodo(tt[-1][0], "T")
     cartoes = [
@@ -339,16 +338,6 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=10,
             fonte=ctx.fonte_sgs("CONFIANCA_CONSUMIDOR"),
-        ),
-        grafico(
-            "uci",
-            "Uso da capacidade instalada na indústria",
-            [serie("uci", "Indústria de transformação", uci, desde=inicio)],
-            unidade="%",
-            casas=1,
-            periodicidade="M",
-            janela_anos=10,
-            fonte=ctx.fonte_sgs("UCI_INDUSTRIA"),
         ),
     ]
 

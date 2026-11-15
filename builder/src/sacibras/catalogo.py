@@ -51,8 +51,9 @@ SGS: dict[str, SerieSGS] = {
     "IPCA": SerieSGS(433, "IPCA, variação mensal", "% no mês", "M", "13/11/2026"),
     "IPCA_12M": SerieSGS(13522, "IPCA acumulado em 12 meses", "% em 12 meses", "M", "14/11/2026"),
     "IPCA15": SerieSGS(7478, "IPCA-15, variação mensal", "% no mês", "M", "14/11/2026"),
-    # O IGP-M é da FGV IBRE: o SGS só repassa (não está no catálogo aberto do BC, licenças em
-    # `licencas.py`). Fica na tela, sem CSV nem PNG.
+    # O IGP-M é da FGV IBRE: o SGS só repassa (não está no catálogo aberto do BC). Os termos
+    # da FGV vedam também a divulgação: fora da tela até autorização (`licencas.FGV_IBRE`,
+    # Caio, 15/11/2026); `ctx.sgs` recusa a série.
     "IGPM": SerieSGS(
         189, "IGP-M, variação mensal", "% no mês", "M", "13/11/2026", origem="IGP-M: FGV IBRE"
     ),

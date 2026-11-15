@@ -54,6 +54,8 @@ const TEMAS: Record<string, string> = {
   capital_humano: "Produtividade",
   horas_ano: "Produtividade",
   parte_trabalho: "Produtividade",
+  retorno_capital: "Produtividade",
+  preco_investimento: "Produtividade",
 };
 const ORDEM_DOS_TEMAS = [
   "Atividade e emprego",

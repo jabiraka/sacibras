@@ -83,9 +83,9 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "confianca",
-            "Confiança e capacidade",
-            "Confiança do consumidor e uso da capacidade da indústria.",
-            graficos=["confianca", "uci"],
+            "Confiança do consumidor",
+            "Como o consumidor vê a economia agora e o que espera dela.",
+            graficos=["confianca"],
         ),
     ],
     "trabalho": [
@@ -269,7 +269,7 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "outros-indices",
             "Outros índices e o Focus",
-            "INPC e IGP-M ao lado do IPCA, e o que o mercado espera.",
+            "O INPC ao lado do IPCA, e o que o mercado espera.",
             cartoes=["focus-ipca"],
             graficos=["outros-indices"],
         ),

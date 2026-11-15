@@ -153,12 +153,12 @@ LEITURAS: list[Leitura] = [
         "com outro DOI: trocar `pwt.DOI` e `pwt.VERSAO`). Uma vez por ano.",
     ),
     Leitura(
-        "Termos de uso da FGV IBRE (IGP-M e capacidade instalada sem download)",
+        "Termos de uso da FGV IBRE (IGP-M e capacidade instalada fora da tela)",
         "licencas.FGV_IBRE",
         date(2026, 11, 15),
         date(2027, 11, 15),
-        "portalibre.fgv.br/termos-de-uso e /fgv-dados: se passarem a deixar reproduzir com a "
-        "fonte, trocar `exporta`. Uma vez por ano.",
+        "portalibre.fgv.br/termos-de-uso e /fgv-dados: se passarem a deixar divulgar com a "
+        "fonte, trocar `mostra` (e `exporta`, se deixarem reproduzir). Uma vez por ano.",
     ),
     Leitura(
         "Licença do Índice de Confiança do Consumidor (Fecomercio-SP)",
@@ -169,11 +169,12 @@ LEITURAS: list[Leitura] = [
         "termo de uso dos dados. Uma vez por ano.",
     ),
     Leitura(
-        "Licença dos dados da B3 (Ibovespa sem download)",
+        "Licença dos dados da B3 (Ibovespa na tela, sem download)",
         "licencas.B3",
         date(2026, 11, 15),
         date(2027, 11, 15),
-        "b3.com.br, termos de uso e Market Data. Uma vez por ano.",
+        "b3.com.br, termos de uso e Política Comercial de Market Data; registrar o trecho que "
+        "permite gráfico informativo (decisão do Caio, 15/11/2026). Uma vez por ano.",
     ),
     # ------------------------------------------------------------- impostos
     Leitura(

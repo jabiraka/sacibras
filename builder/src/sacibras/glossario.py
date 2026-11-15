@@ -384,7 +384,7 @@ TERMOS: list[Termo] = [
         "consumidor e da construção. Sobem e descem com dólar e commodities. O IGP-M corrige "
         "muitos aluguéis e contratos.",
         ("IGP-M", "IGP-DI", "IGP"),
-        "#inflacao/outros-indices",
+        "#fiscal/divida",
     ),
     Termo(
         "cmn",

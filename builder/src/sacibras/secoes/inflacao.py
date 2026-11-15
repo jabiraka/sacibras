@@ -168,7 +168,6 @@ def montar(ctx: Contexto) -> Secao:
     servicos12 = contas.acumulado(ctx.sgs("IPCA_SERVICOS"), 12)
     livres12 = contas.acumulado(ctx.sgs("IPCA_LIVRES"), 12)
     adm12 = contas.acumulado(ctx.sgs("IPCA_ADMINISTRADOS"), 12)
-    igpm12 = contas.acumulado(ctx.sgs("IGPM"), 12)
     inpc12 = contas.acumulado(ctx.sgs("INPC"), 12)
     ipca15 = ctx.sgs("IPCA15")
     difusao = ctx.sgs("IPCA_DIFUSAO")
@@ -375,17 +374,16 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "outros-indices",
-            "IPCA, INPC e IGP-M",
+            "IPCA e INPC",
             [
                 serie("ipca", "IPCA", ipca12, desde=inicio),
                 serie("inpc", "INPC", inpc12, desde=inicio),
-                serie("igpm", "IGP-M", igpm12, desde=inicio),
             ],
             unidade="% em 12 meses",
             casas=2,
             periodicidade="M",
             janela_anos=5,
-            fonte=ctx.fonte_sgs("IPCA_12M", "INPC", "IGPM"),
+            fonte=ctx.fonte_sgs("IPCA_12M", "INPC"),
         ),
         grafico(
             "nucleos-ritmo",

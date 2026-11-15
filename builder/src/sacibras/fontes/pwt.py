@@ -32,11 +32,27 @@ FONTE = (
     f"Penn World Table {VERSAO} (Feenstra, Inklaar e Timmer, 2015, American Economic Review "
     "105(10); licença CC BY 4.0)"
 )
-CAMPOS = ("rgdpna", "rnna", "emp", "avh", "hc", "labsh", "rtfpna", "ctfp", "rgdpo", "cn")
+CAMPOS = (
+    "rgdpna",
+    "rnna",
+    "emp",
+    "avh",
+    "hc",
+    "labsh",
+    "rtfpna",
+    "ctfp",
+    "rgdpo",
+    "cn",
+    "irr",
+    "pl_i",
+)
 """PIB e capital a preços nacionais constantes, ocupados (milhões), horas por ano, índice de
 capital humano, parte do trabalho na renda, PTF (2021 = 1), PTF contra a dos EUA (EUA = 1), e
 para comparar países: PIB pela produção a PPC encadeada e capital a PPC corrente, os dois em
-milhões de dólares de 2021."""
+milhões de dólares de 2021; o retorno real do capital e o nível de preço do investimento."""
+MARCA_DO_RETORNO = "i_irr"
+"""A marca da PWT para cada `irr`: "Regular", "Lower bound", "Outlier"… O que a própria PWT
+marca como "Outlier" não entra."""
 
 PorPais = dict[str, dict[int, dict[str, float]]]
 """{ISO3: {ano: {campo: valor}}}; campo vazio na fonte não entra."""
@@ -60,10 +76,11 @@ def ler_planilha(conteudo: bytes, paises: set[str] | None = None) -> PorPais:
             raise FonteForaDoArError("PWT: sem a aba Data")
         linhas = livro["Data"].iter_rows(values_only=True)
         cabeca = list(next(linhas))
-        faltam = [c for c in ("countrycode", "year", *CAMPOS) if c not in cabeca]
+        precisa = ("countrycode", "year", MARCA_DO_RETORNO, *CAMPOS)
+        faltam = [c for c in precisa if c not in cabeca]
         if faltam:
             raise FonteForaDoArError(f"PWT: colunas que sumiram: {faltam}")
-        col = {c: cabeca.index(c) for c in ("countrycode", "year", *CAMPOS)}
+        col = {c: cabeca.index(c) for c in precisa}
         saida: PorPais = {}
         for linha in linhas:
             pais = linha[col["countrycode"]]
@@ -72,6 +89,8 @@ def ler_planilha(conteudo: bytes, paises: set[str] | None = None) -> PorPais:
             valores = {
                 c: float(linha[col[c]]) for c in CAMPOS if isinstance(linha[col[c]], (int, float))
             }
+            if linha[col[MARCA_DO_RETORNO]] == "Outlier":
+                valores.pop("irr", None)
             saida.setdefault(pais, {})[int(linha[col["year"]])] = valores
     finally:
         livro.close()

@@ -2,9 +2,9 @@
 
 Anuais e projeções: World Economic Outlook (FMI). Juro básico, inflação em 12 meses e câmbio
 contra o dólar: BIS. Juro de 10 anos: OCDE (o do Brasil, do Tesouro Direto). Produtividade
-(PTF, produto por hora, capital por trabalhador, capital humano, horas e parte do trabalho na
-renda): Penn World Table, até 2023 (CC BY 4.0). Cada métrica guarda a fonte; projeção é
-sempre a da própria fonte.
+(PTF, produto por hora, capital por trabalhador, capital humano, horas, parte do trabalho na
+renda, retorno do capital e preço do investimento): Penn World Table, até 2023 (CC BY 4.0).
+Cada métrica guarda a fonte; projeção é sempre a da própria fonte.
 """
 
 from __future__ import annotations
@@ -613,6 +613,30 @@ METRICAS_PWT: list[
         1,
         None,
         lambda x: x["labsh"] * 100 if "labsh" in x else None,
+    ),
+    # As duas abaixo vão com a definição da própria PWT (Caio, 15/11/2026: "mostramos de onde
+    # vem e a definição da fonte, de resto é com a PWT pra se explicar").
+    (
+        "retorno_capital",
+        "Retorno do capital",
+        'Na definição da Penn World Table, "Real internal rate of return": a taxa interna de '
+        "retorno real do estoque de capital. Ficam de fora os anos que a própria PWT marca "
+        'como "Outlier".',
+        "% ao ano",
+        1,
+        None,
+        lambda x: x["irr"] * 100 if "irr" in x else None,
+    ),
+    (
+        "preco_investimento",
+        "Nível de preço do investimento",
+        'Na definição da Penn World Table, "Price level of capital formation, price level of '
+        'USA GDPo in 2021=1": o nível de preço da formação de capital, com o nível de preço '
+        "do PIB dos EUA em 2021 igual a 1.",
+        "(EUA 2021 = 1)",
+        2,
+        None,
+        lambda x: x.get("pl_i"),
     ),
 ]
 

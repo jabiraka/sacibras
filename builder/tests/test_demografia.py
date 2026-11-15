@@ -433,15 +433,18 @@ def test_pwt_le_a_aba_data_e_acha_a_planilha_no_dataverse() -> None:
     livro = openpyxl.Workbook()
     ws = livro.active
     ws.title = "Data"
-    ws.append(["countrycode", "country", "year", *pwt.CAMPOS])
-    ws.append(["BRA", "Brazil", 2023, 1, 2, 3, 4, 5, 0.5, 0.97, 0.49, 6, 7])
-    ws.append(["BRA", "Brazil", 2022, 1, 2, 3, 4, 5, 0.5, 0.96, None, 6, 7])
-    ws.append(["USA", "United States", 2023, 1, 2, 3, 4, 5, 0.6, 1.0, 1.0, 6, 7])
+    ws.append(["countrycode", "country", "year", "i_irr", *pwt.CAMPOS])
+    resto = [6, 7, 0.13, 0.49]  # rgdpo, cn, irr, pl_i
+    ws.append(["BRA", "Brazil", 2023, "Regular", 1, 2, 3, 4, 5, 0.5, 0.97, 0.49, *resto])
+    ws.append(["BRA", "Brazil", 2022, "Outlier", 1, 2, 3, 4, 5, 0.5, 0.96, None, *resto])
+    ws.append(["USA", "United States", 2023, "Regular", 1, 2, 3, 4, 5, 0.6, 1.0, 1.0, *resto])
     saida = io.BytesIO()
     livro.save(saida)
     lido = pwt.ler_planilha(saida.getvalue(), {"BRA"})
     assert set(lido) == {"BRA"}
     assert lido["BRA"][2023]["ctfp"] == 0.49 and "ctfp" not in lido["BRA"][2022]
+    # o retorno que a própria PWT marca como "Outlier" não entra
+    assert lido["BRA"][2023]["irr"] == 0.13 and "irr" not in lido["BRA"][2022]
     meta = {
         "data": {
             "latestVersion": {

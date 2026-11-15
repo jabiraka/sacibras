@@ -65,12 +65,15 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   mensal, relatório trimestral ou semestral, resolução anual, série) e a nota de crédito,
   que as agências revisam. O simulador da Selic fica (Caio, mesmo dia): os modelos
   semiestruturais são os do BC, usados em todo Relatório de Política Monetária.
-- **Dado privado fica sem download** (Caio, 15/11/2026: *"não deixe exportar oq for de
-  fontes privadas, grave a licença de dados desses sites"*): a licença lida de cada fonte que
-  não é do governo mora em `builder/src/sacibras/licencas.py`, com o trecho e a data; o
-  gráfico cuja fonte cita origem com `exporta=False` (FGV, Fecomercio, B3) sai sem CSV nem
-  PNG, sozinho. Série do SGS feita por terceiro leva `origem` no catálogo (o SGS repassa, não
-  relicencia). Fonte privada nova só entra com a licença lida e registrada.
+- **Dado privado: na tela só se a licença deixar, e nunca com download** (Caio, 15/11/2026:
+  *"não deixe exportar oq for de fontes privadas, grave a licença de dados desses sites"* e
+  *"A regra é não exportar, mas podemos só mostrar se for permitido dessas fontes
+  privadas"*): a licença lida de cada fonte que não é do governo mora em
+  `builder/src/sacibras/licencas.py`, com o trecho e a data. `mostra=False` (FGV) tira da
+  tela sozinho (`ctx.sgs` recusa, o `construir` tira a peça); `exporta=False` (FGV,
+  Fecomercio, B3) tira o CSV e o PNG. Série do SGS feita por terceiro leva `origem` no
+  catálogo (o SGS repassa, não relicencia). Fonte privada nova só entra com a licença lida e
+  registrada; quando quem decide é o Caio, vai em `decisao`.
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 

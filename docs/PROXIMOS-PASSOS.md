@@ -6,10 +6,10 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 
 Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Depois, a Penn World Table entrou (Demografia › Eficiência (PTF) e seis métricas de
-produtividade em Brasil no mundo) e o dado privado
-(FGV IBRE, Fecomercio-SP, B3) ficou sem CSV nem PNG, com as licenças em `licencas.py`; isso
-está no branch `ccr-47e59384-8x2d1m`, para juntar ao `main`.
+PC"*). Depois, a Penn World Table entrou (Demografia › Eficiência (PTF) e oito métricas de
+produtividade em Brasil no mundo) e o dado privado ficou sem CSV nem PNG, e na tela só se a
+licença deixar (a FGV saiu), com as licenças em `licencas.py`. Isso está no branch
+`ccr-47e59384-8x2d1m`, para juntar ao `main`.
 
 ## Releituras com prazo
 
@@ -50,12 +50,12 @@ As próximas:
 
 ## Espera o Caio
 
-- **IGP-M e capacidade instalada (FGV IBRE)**: os termos da FGV vedam reproduzir sem
-  autorização, e o BC só repassa (não os põe no catálogo aberto). Hoje ficam na tela, com a
-  fonte e sem download. Escolher: pedir autorização por escrito à FGV (aí entra também a
-  decomposição do IGP-M), manter como está, ou tirar da tela. O mesmo vale, por cautela, para
-  a confiança do consumidor (Fecomercio-SP, sem termo publicado) e o Ibovespa (B3).
-
+- **Trecho da B3 sobre gráficos informativos**: o Ibovespa fica na tela por decisão do
+  Caio (15/11/2026, *"Os termos da B3 permitem gráficos informativos"*), mas a cláusula não
+  apareceu nos termos de uso nem na Política Comercial de Market Data 2027. Com o elo,
+  copiar o trecho para `licencas.B3` e `docs/FONTES.md`.
+- **FGV**: IGP-M e capacidade instalada saíram da tela (os termos vedam divulgar). Voltam
+  com autorização por escrito da FGV ([PROPOSTAS](PROPOSTAS.md)).
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.
