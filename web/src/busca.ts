@@ -134,6 +134,8 @@ export interface Achado {
   nota: number;
   /** O número que casou, quando se buscou um número. */
   numero?: string;
+  /** Casou só com parte das palavras (nada casou com todas). */
+  parcial?: boolean;
 }
 
 function escaparRegex(texto: string): string {
@@ -173,21 +175,65 @@ export function pontuar(item: Indexado, palavras: string[]): Achado | null {
 /** As palavras da busca: sem acento, "4,5 %" junto, letra solta de fora (menos as escritas
  *  em que uma letra é uma palavra: "州", "税"). */
 export function palavrasDe(texto: string): string[] {
-  return normalizar(texto)
+  const palavras = normalizar(texto)
     .replace(/(\d)\s*%/g, "$1")
+    .replace(/[?!¿¡]/g, " ")
     .split(/\s+/)
     .filter((p) => p.length > 1 || /\d/.test(p) || SEM_ESPACO.test(p));
+  // "PIB de São Paulo", "quanto vai ser a inflação": as palavras de ligação ficam de fora
+  // (15/11/2026: o "de" e o "vai" tinham de casar também, e nada aparecia).
+  const cheias = palavras.filter((p) => !VAZIAS.has(p));
+  return cheias.length ? cheias : palavras;
 }
 
-export function buscar(itens: Indexado[], texto: string, limite = 12): Achado[] {
-  const palavras = palavrasDe(texto);
-  if (!palavras.length) return [];
-  return itens
-    .map((i) => pontuar(i, palavras))
-    .filter((x): x is Achado => x !== null && x.nota > 0)
+/** Palavras que não dizem o que se procura, sem acento (português, inglês, espanhol e
+ *  francês). */
+const VAZIAS = new Set(
+  (
+    "de da do das dos na no nas nos em ao aos pra para por pelo pela com sem e ou um uma os as " +
+    "que qual quais quanto quanta quantos como onde quando esta estao vai vao ser sera foi " +
+    "tem hoje agora atual brasil brasileiro brasileira " +
+    "the of in on for and to is what how much del la el los las en y du des le les et"
+  ).split(" "),
+);
+
+function ordenar(achados: Achado[], limite: number): Achado[] {
+  return achados
     .map((x) => ({ ...x, nota: x.nota - (x.item.o === "Assunto" ? 0 : 0.5) }))
     .sort((a, b) => b.nota - a.nota || a.item.t.length - b.item.t.length)
     .slice(0, limite);
+}
+
+export function buscar(itens: Indexado[], texto: string, limite = 12, parcial = true): Achado[] {
+  const palavras = palavrasDe(texto);
+  if (!palavras.length) return [];
+  const todas = itens
+    .map((i) => pontuar(i, palavras))
+    .filter((x): x is Achado => x !== null && x.nota > 0);
+  if (todas.length || !parcial || palavras.length < 2) return ordenar(todas, limite);
+  // Nada com todas as palavras ("PIB de São Paulo", "juros do cartão"): o que casa com mais
+  // delas, cada palavra pesando o que pesaria sozinha. Palavra com número fica de fora.
+  const avulsas = palavras.filter((p) => comoNumero(p) === null);
+  let melhor = 0;
+  const parciais: { achado: Achado; casadas: number }[] = [];
+  for (const item of itens) {
+    let casadas = 0;
+    let nota = 0;
+    for (const p of avulsas) {
+      const um = pontuar(item, [p]);
+      if (um) {
+        casadas += 1;
+        nota += um.nota;
+      }
+    }
+    if (!casadas) continue;
+    melhor = Math.max(melhor, casadas);
+    parciais.push({ achado: { item, nota, parcial: true }, casadas });
+  }
+  return ordenar(
+    parciais.filter((x) => x.casadas === melhor).map((x) => x.achado),
+    limite,
+  );
 }
 
 // ------------------------------------------------------------------ o glossário na busca
@@ -318,7 +364,9 @@ export function sugestoes(
 ): string[] {
   const palavras = palavrasDe(texto);
   const vocab = palavrasDoIndice(itens);
-  const falhas = palavras.filter((p) => comoNumero(p) === null && !buscar(itens, p, 1).length);
+  const falhas = palavras.filter(
+    (p) => comoNumero(p) === null && !buscar(itens, p, 1, false).length,
+  );
   if (!falhas.length) return [];
   const trocas = new Map(falhas.map((f) => [f, parecidas(f, vocab, quantas, deFora)]));
   const montar = (troca: (p: string) => string): string =>
@@ -331,7 +379,7 @@ export function sugestoes(
   const vistas = new Set<string>([palavras.join(" ")]);
   return opcoes
     .filter((o) => {
-      if (vistas.has(o) || !buscar(itens, o, 1).length) return false;
+      if (vistas.has(o) || !buscar(itens, o, 1, false).length) return false;
       vistas.add(o);
       return true;
     })
@@ -484,16 +532,19 @@ export function ligarBusca(): void {
         }),
       );
       const outraLingua = !LINGUAS_DO_INDICE.includes(idiomaAtual().slice(0, 2));
-      const nada = !achados.length && !verbete;
+      const parcial = achados.some((a) => a.parcial);
+      const nada = (!achados.length || parcial) && !verbete;
       const numerico = palavrasDe(texto).some((p) => comoNumero(p) !== null);
       aviso.textContent = !nada
         ? ""
-        : numerico
+        : parcial
+          ? "Nada com todas as palavras. Abaixo, o que tem parte delas:"
+          : numerico
           ? 'Nenhum número da tela é esse. A busca acha o número como ele aparece no cartão ou na tabela ("13,75", "4,5").'
           : outraLingua
             ? 'Nada com esse nome. A busca entende português, inglês, espanhol, francês, chinês, japonês e árabe: tente, por exemplo, "inflation" ou "GDP".'
             : "Nada com esse nome.";
-      if (nada) mostrarSugestoes(todos, texto);
+      if (nada && !parcial) mostrarSugestoes(todos, texto);
       else outras.hidden = true;
       saida.hidden = false;
       campo.setAttribute("aria-expanded", "true");

@@ -70,6 +70,31 @@ repetido no PROXIMOS-PASSOS.
 - Agenda: as reuniões do Copom na caixa "O que sai esta semana" (não há API de datas
   futuras; só lendo o calendário publicado pelo BC).
 
+## Achados da revisão das telas (15/11/2026)
+
+Caio: *"toque nas telas, veja se consegue pensar em algo que está faltando ou alguma tela
+quebrando [...] que eles encontrem oq estão procurando"*. Corrigido: o menu lateral que
+escondia Previsões e Riscos, a busca (palavras de ligação, busca por parte das palavras,
+linhas das tabelas curtas, IPCA por grupo, o glossário), o número separado do "%" na quebra
+de linha, as frases do PIB dos estados e da Selic, as tabelas no celular (sombra na borda
+enquanto há coluna escondida; as que passavam 10 px agora cabem) e a página do glossário
+(`#glossario`, no menu e no rodapé). E o que a busca procurava e o painel não tinha (Caio,
+15/11/2026: *"coloque os itens que as pessoas procuram e o painel não tem"*): o juro de cada
+modalidade das pessoas físicas, do cartão rotativo ao consignado (Crédito › Volume e custo);
+o salário mínimo, em reais, e um comparador contra o IPCA no período que a pessoa escolhe,
+com os prazos fixos de 1, 5, 10 e 20 anos e desde 1995 e o gráfico do mínimo do início
+corrigido pela inflação (Trabalho › Renda); os 15 subitens que mais
+pesam no IPCA e a gasolina, a luz e o aluguel em 12 meses (Inflação › Por tipo de preço); e
+o IPCA-15 no gráfico dos outros índices. Fica:
+
+- **Estados** (Caio, 15/11/2026: *"anote [...] dos Estados em propostas mas não mexa"*; fica
+  para a sessão de Estados):
+  - a tela abre no crescimento do PIB de 2024, o número oficial mais novo, com quase dois
+    anos (a prévia de 2025 só aparece escolhendo em "até"). Abrir na desocupação do
+    trimestre, na prévia de 2025, ou deixar como está?
+  - o mapa, a 1280 px, ocupa meia largura e o resto fica vazio; as siglas dos estados
+    pequenos (RN, PB, PE, AL, SE, ES, RJ, DF) somem ou se sobrepõem.
+
 ## Em espera
 
 - **Selo "dado anterior"** na peça mantida (`mantidos` já está no `painel.json`).

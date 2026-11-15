@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from sacibras import contas
+from sacibras.secoes import inflacao
 from sacibras.secoes.inflacao import MEDIDAS, NUCLEOS, ritmo, tabela_medidas
 
 
@@ -67,3 +68,26 @@ def test_tabela_sem_dados() -> None:
 def test_medidas_comecam_pelo_ipca_e_usam_os_cinco_nucleos() -> None:
     assert MEDIDAS[0] == ("IPCA", ["IPCA"])
     assert MEDIDAS[1] == ("Média dos núcleos", NUCLEOS)
+
+
+def test_subitens_do_ipca_so_os_de_sete_digitos_do_maior_peso_ao_menor() -> None:
+    """Revisão das telas (15/11/2026): "gasolina" e "aluguel" não achavam nada."""
+
+    def linha(codigo: str, nome: str, variavel: str, valor: str) -> dict[str, str]:
+        return {"D4C": codigo, "D4N": nome, "D2C": variavel, "V": valor}
+
+    linhas = [
+        linha("7625", "5.Transportes", "66", "20.17"),  # grupo: fica de fora
+        linha("7656", "5104.Combustíveis (veículos)", "66", "6.08"),  # item: fora
+        linha("7657", "5104001.Gasolina", "63", "-0.56"),
+        linha("7657", "5104001.Gasolina", "2265", "3.10"),
+        linha("7657", "5104001.Gasolina", "66", "5.1485"),
+        linha("7448", "2101001.Aluguel residencial", "63", "0.27"),
+        linha("7448", "2101001.Aluguel residencial", "66", "3.6407"),
+        linha("7448", "2101001.Aluguel residencial", "2265", "..."),  # sem dado: vazio
+        linha("9999", "9999999.Sem peso", "63", "1.0"),  # sem peso: fora
+    ]
+    assert inflacao.subitens(linhas) == [
+        ("Gasolina", [-0.56, 3.10, 5.1485]),
+        ("Aluguel residencial", [0.27, None, 3.6407]),
+    ]

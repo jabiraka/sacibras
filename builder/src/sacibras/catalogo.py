@@ -51,6 +51,13 @@ SGS: dict[str, SerieSGS] = {
     "IPCA": SerieSGS(433, "IPCA, variação mensal", "% no mês", "M", "13/11/2026"),
     "IPCA_12M": SerieSGS(13522, "IPCA acumulado em 12 meses", "% em 12 meses", "M", "14/11/2026"),
     "IPCA15": SerieSGS(7478, "IPCA-15, variação mensal", "% no mês", "M", "14/11/2026"),
+    # O CKAN não lista o 1619 (count 0). Conferido em 15/11/2026 no serviço de metadados do SGS
+    # (FachadaWSSGS, getUltimoValorXML): "Salário mínimo", periodicidade M, unidade "u.m.c."
+    # (moeda corrente; antes de jul/1994, outras moedas: a tela usa desde 1995), último ponto
+    # dez/2026, 1.621,00. E na norma: Decreto nº 12.797, de 23/12/2025, art. 1º, lido no Senado
+    # (legis.senado.leg.br/norma/41882097) em 15/11/2026: "A partir de 1º de janeiro de 2026, o
+    # valor do salário mínimo será de R$ 1.621,00".
+    "SALARIO_MINIMO": SerieSGS(1619, "Salário mínimo", "R$", "M", "15/11/2026"),
     # O IGP-M é da FGV IBRE: o SGS só repassa (não está no catálogo aberto do BC). Os termos
     # da FGV vedam também a divulgação: fora da tela até autorização (`licencas.FGV_IBRE`,
     # Caio, 15/11/2026); `ctx.sgs` recusa a série.
@@ -377,6 +384,44 @@ SGS: dict[str, SerieSGS] = {
     ),
     "CREDITO_SPREAD": SerieSGS(
         20783, "Spread médio das operações de crédito, total", "pp", "M", "14/11/2026"
+    ),
+    # Juros das pessoas físicas por modalidade (recursos livres): conferidos no package_search
+    # do BCB em 15/11/2026, título, "Percentual ao ano" e mensal. Revisão das telas: quem busca
+    # "juros do cartão" ou "cheque especial" não achava nada.
+    "PF_CARTAO_ROTATIVO": SerieSGS(
+        22022,
+        "Taxa média de juros, pessoas físicas, cartão de crédito rotativo",
+        "% a.a.",
+        "M",
+        "15/11/2026",
+    ),
+    "PF_CARTAO_PARCELADO": SerieSGS(
+        22023,
+        "Taxa média de juros, pessoas físicas, cartão de crédito parcelado",
+        "% a.a.",
+        "M",
+        "15/11/2026",
+    ),
+    "PF_CHEQUE_ESPECIAL": SerieSGS(
+        20741,
+        "Taxa média de juros, pessoas físicas, cheque especial",
+        "% a.a.",
+        "M",
+        "15/11/2026",
+    ),
+    "PF_PESSOAL": SerieSGS(
+        20742,
+        "Taxa média de juros, pessoas físicas, crédito pessoal não consignado",
+        "% a.a.",
+        "M",
+        "15/11/2026",
+    ),
+    "PF_CONSIGNADO": SerieSGS(
+        20747,
+        "Taxa média de juros, pessoas físicas, crédito pessoal consignado total",
+        "% a.a.",
+        "M",
+        "15/11/2026",
     ),
     "CREDITO_INADIMPLENCIA": SerieSGS(
         21082, "Inadimplência da carteira de crédito, total", "%", "M", "14/11/2026"

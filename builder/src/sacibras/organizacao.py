@@ -17,7 +17,7 @@ from typing import Literal
 
 from sacibras.schema import Categoria, Elo, Secao, Subcategoria
 
-Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]
+Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
 
 CATEGORIAS: list[Categoria] = [
     Categoria(
@@ -99,9 +99,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "renda",
             "Renda",
-            "O rendimento médio e a massa de rendimento, já descontada a inflação.",
-            cartoes=["rendimento", "massa"],
+            "O rendimento médio e a massa de rendimento, já descontada a inflação, e o salário "
+            "mínimo.",
+            cartoes=["rendimento", "massa", "salario-minimo"],
             graficos=["rendimento", "massa"],
+            extras=["salario-minimo"],
         ),
         Parte(
             "quem-trabalha",
@@ -261,10 +263,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "grupos",
             "Por tipo de preço",
-            "Serviços, livres, administrados e cada grupo do IPCA.",
+            "Serviços, livres, administrados, cada grupo do IPCA e os itens que mais pesam, "
+            "como gasolina, luz e aluguel.",
             cartoes=["servicos-12m"],
-            graficos=["ipca-aberturas"],
-            tabelas=["ipca-grupos"],
+            graficos=["ipca-aberturas", "ipca-itens"],
+            tabelas=["ipca-grupos", "ipca-itens"],
         ),
         Parte(
             "outros-indices",
@@ -323,9 +326,16 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "volume-custo",
             "Volume e custo",
-            "Quanto crédito há, quanto custa, o spread e a inadimplência.",
-            cartoes=["credito-pib", "credito-taxa", "credito-spread", "inadimplencia"],
-            graficos=["credito-pib", "credito-custo", "inadimplencia"],
+            "Quanto crédito há, quanto custa, o spread, a inadimplência e o juro de cada "
+            "modalidade, do cartão ao consignado.",
+            cartoes=[
+                "credito-pib",
+                "credito-taxa",
+                "credito-spread",
+                "inadimplencia",
+                "juro-cartao",
+            ],
+            graficos=["credito-pib", "credito-custo", "inadimplencia", "juros-modalidades"],
         ),
         Parte(
             "familias",
@@ -697,6 +707,8 @@ def aplicar(secao: Secao) -> list[str]:
         extras_da_secao.append("simulador-reforma")
     if secao.alertas:
         extras_da_secao.append("alertas")
+    if secao.salario_minimo:
+        extras_da_secao.append("salario-minimo")
     usados: dict[str, set[str]] = {k: set() for k in tem}
     subcategorias: list[Subcategoria] = []
     for p in partes:

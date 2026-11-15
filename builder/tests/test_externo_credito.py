@@ -157,6 +157,11 @@ CREDITO = {
     "IMOB_CONCESSOES": 20000.0,
     "IVGR": 800.0,
     "IPCA_12M": 4.6,
+    "PF_CARTAO_ROTATIVO": 450.0,
+    "PF_CARTAO_PARCELADO": 190.0,
+    "PF_CHEQUE_ESPECIAL": 139.0,
+    "PF_PESSOAL": 110.0,
+    "PF_CONSIGNADO": 28.0,
 }
 
 
@@ -180,6 +185,19 @@ def test_credito_poe_a_casa_propria_depois_dos_numeros_de_antes() -> None:
         "ivgr",
         "familias-juros",
         "familias-sem-casa",
+        "juros-modalidades",
+    ]
+    # Revisão das telas (15/11/2026): "juros do cartão" e "cheque especial" não achavam nada.
+    cartao = next(c for c in secao.cartoes if c.id == "juro-cartao")
+    assert cartao.unidade == "% a.a."
+    assert cartao.detalhe.startswith("cheque especial: 141,0 % a.a.")
+    modalidades = next(g for g in secao.graficos if g.id == "juros-modalidades")
+    assert [s.nome for s in modalidades.series] == [
+        "Cartão rotativo",
+        "Cartão parcelado",
+        "Cheque especial",
+        "Crédito pessoal",
+        "Consignado",
     ]
     concessoes = next(c for c in secao.cartoes if c.id == "imobiliario-concessoes")
     assert concessoes.unidade == "R$ bilhões"

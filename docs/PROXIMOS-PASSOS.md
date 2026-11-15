@@ -5,12 +5,12 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
 Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
-fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Depois, a Penn World Table entrou (Demografia › Eficiência (PTF), com a PTF estendida
-até 2025 por conta nossa com dados do IBGE, e oito métricas de produtividade em Brasil no
-mundo) e o dado privado ficou sem CSV nem PNG, e na tela só se a licença deixar (a FGV saiu),
-com as licenças em `licencas.py`. Isso está no branch `ccr-47e59384-8x2d1m`, para juntar ao
-`main`.
+fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
+que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
+Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
+com dados do IBGE, e oito métricas de produtividade em Brasil no mundo), e o dado privado
+ficou sem CSV nem PNG, e na tela só se a licença deixar (a FGV saiu), com as licenças em
+`licencas.py`. Tudo no `main`.
 
 ## Releituras com prazo
 
@@ -27,6 +27,8 @@ As próximas:
 - **até 23/12**: resolução do Senado que fixa a CBS de 2027 → `CBS_REFERENCIA_2027` e o texto
   "o Senado ainda fixa" em `impostos.py`.
 - **até 31/12**: RPM de dezembro → modelos e faixa do efeito da Selic.
+- **até 10/01/2027**: decreto do salário mínimo de 2027 → `leis.SALARIO_MINIMO_NORMAS`
+  (o valor vem do SGS 1619; a tela só cita a norma do ano que estiver no dicionário).
 
 ## Só do PC
 
@@ -65,6 +67,8 @@ As próximas:
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).
+- **Estados**: em que métrica Estados abre e o mapa a 1280 px; no [PROPOSTAS](PROPOSTAS.md),
+  "Achados da revisão das telas", para uma sessão própria (Caio, 15/11/2026).
 - Para olhar: a PTF estendida (2024 e 2025) é estimativa do que já passou, com dado oficial,
   não previsão. O ponto usa o capital humano da PNAD, que sobe mais devagar que o da PWT; a
   barra vai até a versão com o ritmo da PWT. Quando sair a PWT 12, comparar e, se a

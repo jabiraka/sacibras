@@ -16,6 +16,16 @@ def real_em_12m(nominal: list[Ponto], ipca_12m: list[Ponto]) -> list[Ponto]:
     return [(d, ((1 + v / 100) / (1 + ipca[d] / 100) - 1) * 100) for d, v in nominal if d in ipca]
 
 
+# Os juros das pessoas físicas no gráfico por modalidade, do mais caro ao mais barato.
+MODALIDADES_PF: list[tuple[str, str, str]] = [
+    ("rotativo", "Cartão rotativo", "PF_CARTAO_ROTATIVO"),
+    ("parcelado", "Cartão parcelado", "PF_CARTAO_PARCELADO"),
+    ("cheque", "Cheque especial", "PF_CHEQUE_ESPECIAL"),
+    ("pessoal", "Crédito pessoal", "PF_PESSOAL"),
+    ("consignado", "Consignado", "PF_CONSIGNADO"),
+]
+
+
 def montar(ctx: Contexto) -> Secao:
     credito_pib = ctx.sgs("CREDITO_PIB")
     saldo = ctx.sgs("CREDITO_SALDO")
@@ -76,6 +86,25 @@ def montar(ctx: Contexto) -> Secao:
             "parcelas sobre a renda do mês",
         ),
     ]
+
+    # ---- os juros das pessoas físicas por modalidade (revisão das telas, 15/11/2026: quem
+    # busca "juros do cartão" ou "cheque especial" não achava nada)
+    rotativo = ctx.sgs("PF_CARTAO_ROTATIVO")
+    cheque = ctx.sgs("PF_CHEQUE_ESPECIAL")
+    cartoes.append(
+        cartao(
+            "juro-cartao",
+            "Juro do cartão rotativo",
+            rotativo,
+            unidade="% a.a.",
+            periodicidade="M",
+            casas=1,
+            detalhe=f"cheque especial: {br(cheque[-1][1])} % a.a.",
+            fonte=ctx.fonte_sgs("PF_CARTAO_ROTATIVO", "PF_CHEQUE_ESPECIAL"),
+            secao="credito",
+            mini=60,
+        )
+    )
 
     # ---- casa própria e bolso das famílias (entra guardado: depois dos números de antes)
     taxa_mercado = ctx.sgs("IMOB_TAXA_MERCADO")
@@ -273,6 +302,21 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=10,
             fonte=ctx.fonte_sgs("FAMILIAS_ENDIVIDAMENTO", "FAMILIAS_ENDIVIDAMENTO_SEM_HABITACAO"),
+        ),
+        grafico(
+            "juros-modalidades",
+            "Juros das pessoas físicas, por modalidade",
+            [serie(id, nome, ctx.sgs(chave), desde=inicio) for id, nome, chave in MODALIDADES_PF],
+            unidade="% a.a.",
+            casas=1,
+            periodicidade="M",
+            janela_anos=10,
+            fonte=ctx.fonte_sgs(*(chave for _, _, chave in MODALIDADES_PF)),
+            nota=(
+                "Taxa média de juros das operações com recursos livres, ao ano. O rotativo é o "
+                "juro de quem paga só parte da fatura do cartão; o parcelado, o de quem divide "
+                "a fatura ou a compra com juros."
+            ),
         ),
     ]
     resumo = (
