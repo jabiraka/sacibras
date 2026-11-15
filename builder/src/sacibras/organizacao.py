@@ -541,17 +541,25 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "juridico",
-            "Riscos fiscais e da Previdência",
-            "Ações na Justiça, precatórios, garantias, governança, o INSS até 2100 e o "
-            "envelhecimento.",
+            "Riscos fiscais: Justiça, Previdência e estados",
+            "Ações na Justiça, precatórios, governança, o INSS até 2100, o envelhecimento e os "
+            "estados perto dos limites da lei.",
             cartoes=[
                 "acoes-perda-provavel",
                 "sentencas-pagas",
                 "inss-deficit-2060",
                 "idosos-por-100",
+                "estados-no-limite",
             ],
             graficos=["acoes-judiciais", "sentencas-judiciais", "inss-ate-2100"],
-            tabelas=["riscos-fiscais-uniao", "governanca"],
+            tabelas=["riscos-fiscais-uniao", "estados-no-limite", "governanca"],
+            veja=[
+                Elo(
+                    endereco="#estados/limites",
+                    titulo="Estados › Perto dos limites",
+                    resumo="Os 27 estados contra os limites da lei, com a nota CAPAG.",
+                )
+            ],
         ),
         Parte(
             "mercado-externo",
@@ -595,7 +603,12 @@ PARTES_ESTADOS: list[Parte] = [
     Parte(
         "estado",
         "Um estado por dentro",
-        "Receita, despesa e dívida de um estado, uma parte de cada vez.",
+        "Receita, gasto, dívida, previdência, a economia por setor e as contas no tempo.",
+    ),
+    Parte(
+        "limites",
+        "Perto dos limites",
+        "Pessoal e dívida contra os limites da lei, com a nota CAPAG do Tesouro.",
     ),
     Parte("duas-metricas", "Duas métricas", "Um ponto por estado, com duas métricas juntas."),
     Parte("tabela", "Tabela completa", "Todas as métricas, estado por estado."),

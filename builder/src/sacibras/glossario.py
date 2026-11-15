@@ -1356,6 +1356,30 @@ TERMOS: list[Termo] = [
         ("RPPS", "regimes próprios", "regime próprio", "fundos de previdência próprios"),
     ),
     Termo(
+        "capitalizacao",
+        "Fundo em capitalização",
+        "A parte da previdência dos servidores que guarda e aplica o dinheiro para pagar as "
+        "aposentadorias de quem entrou mais recentemente. Costuma sobrar; as aposentadorias de "
+        "hoje saem do fundo em repartição, que o Tesouro do estado cobre.",
+        ("fundo em capitalização", "fundo em repartição"),
+    ),
+    Termo(
+        "capag",
+        "CAPAG",
+        "Capacidade de pagamento: a nota que o Tesouro Nacional dá a cada estado, de A+ (a "
+        "melhor) a D, pela dívida, pela poupança corrente e pelo caixa. É a nota que o "
+        "Tesouro olha quando o estado pede empréstimo com garantia da União.",
+        ("CAPAG", "Capag", "capacidade de pagamento"),
+        "#estados/limites",
+    ),
+    Termo(
+        "valor-adicionado",
+        "Valor adicionado",
+        "O que cada atividade produz, descontado o que ela comprou de outras: a soma de todas "
+        "é o PIB sem os impostos sobre os produtos.",
+        ("valor adicionado",),
+    ),
+    Termo(
         "acima-da-linha",
         "Acima da linha",
         "Resultado apurado pelas receitas e despesas do próprio governo. O outro jeito, "

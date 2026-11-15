@@ -322,6 +322,20 @@ export interface MetricaEstados {
   anuais?: Record<string, Record<string, number>>;
   /** O primeiro ano de `anuais` que é prévia (IBC-R), não número do IBGE. */
   ano_previsto?: number | null;
+  /** Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. */
+  marcas?: { valor: number; rotulo: string }[];
+}
+
+/** Uma conta do estado no fim de cada ano: {ano: valor}. */
+export interface HistoricoEstado {
+  id: string;
+  titulo: string;
+  unidade: string;
+  casas: number;
+  pontos: Record<string, number>;
+  fonte: string;
+  nota: string;
+  linhas: { valor: number; rotulo: string }[];
 }
 
 export interface BlocoDeConta {
@@ -340,11 +354,14 @@ export interface ContasEstado {
   nome: string;
   blocos: BlocoDeConta[];
   numeros: Cartao[];
+  historico?: HistoricoEstado[];
 }
 
 export interface EstadosContas {
   id: "estados-contas";
   contas: Record<string, ContasEstado>;
+  /** {id do histórico: {ano: a soma dos estados}}. */
+  historico_brasil?: Record<string, Record<string, number>>;
   gerado_em: string;
 }
 

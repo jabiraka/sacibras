@@ -183,10 +183,12 @@ def test_metricas_saem_na_ordem_dos_grupos(monkeypatch: pytest.MonkeyPatch) -> N
     deso = {str(c): [(date(2026, 4, 1), 5.0)] for c, *_ in UFS}
     monkeypatch.setattr(estados.ibge_sidra, "series", lambda *a, **k: deso)
     monkeypatch.setattr(estados.ibge_sidra, "serie", lambda *a, **k: [(date(2026, 4, 1), 5.4)])
-    for nome in ("coletar", "coletar_rreo", "coletar_anual"):
+    for nome in ("coletar", "coletar_rreo", "coletar_anual", "coletar_historico"):
         monkeypatch.setattr(estados.siconfi, nome, cai)
     monkeypatch.setattr(estados.receita_arrecadacao, "arrecadacao", cai)
     monkeypatch.setattr(estados.ipeadata, "por_territorio", cai)
+    monkeypatch.setattr(estados.tesouro_capag, "capag", cai)
+    monkeypatch.setattr(estados.ibge_contas_regionais, "setores", cai)
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert e.metricas[0].id == "pib_crescimento"
     assert [m.grupo for m in e.metricas][-1] == "Trabalho e renda"

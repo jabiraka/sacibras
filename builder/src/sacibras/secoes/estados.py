@@ -18,7 +18,9 @@ O PIB por habitante usa a população da projeção do IBGE do mesmo ano do PIB.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from statistics import median
 
@@ -29,6 +31,7 @@ from sacibras.fontes import (
     ipeadata,
     receita_arrecadacao,
     siconfi,
+    tesouro_capag,
 )
 from sacibras.schema import (
     UF,
@@ -38,8 +41,11 @@ from sacibras.schema import (
     Estados,
     EstadosContas,
     Fatia,
+    HistoricoEstado,
     LinhaRef,
+    LinhaTabela,
     MetricaEstados,
+    Tabela,
 )
 from sacibras.secoes import estados_economia
 from sacibras.secoes.base import MESES, Contexto, br, periodo
@@ -362,6 +368,482 @@ def _rreo(
         grupo=CONTAS,
     )
     return primario, icms
+
+
+# ---------------------------------------------------------------- CAPAG
+
+
+def _capag(c: tesouro_capag.Capag) -> MetricaEstados:
+    """A nota do Tesouro como métrica: o número (D = 1 a A+ = 6) pinta o mapa, o nome vai na
+    tela (`marcas`)."""
+    valores: dict[str, float | None] = {}
+    for _, sigla, _, _ in UFS:
+        n = c.notas.get(sigla)
+        valores[sigla] = (
+            float(tesouro_capag.ESCALA[n.nota]) if n and n.nota in tesouro_capag.ESCALA else None
+        )
+    return MetricaEstados(
+        id="capag",
+        nome="Nota CAPAG do Tesouro",
+        descricao=(
+            "A nota de capacidade de pagamento que o Tesouro Nacional dá a cada estado, de A+ "
+            "(a melhor) a D, pela dívida, pela poupança corrente (o que sobra da receita depois "
+            "das despesas do dia a dia) e pelo caixa. É a nota que o Tesouro olha quando o "
+            "estado pede empréstimo com garantia da União."
+        ),
+        unidade="nota",
+        casas=0,
+        referencia=_ref_capag(c),
+        maior_e_melhor=True,
+        fonte=f"{tesouro_capag.FONTE}, {_ref_capag(c)}",
+        valores=valores,
+        grupo=CONTAS,
+        marcas=[LinhaRef(valor=float(v), rotulo=k) for k, v in tesouro_capag.ESCALA.items()],
+    )
+
+
+def _ref_capag(c: tesouro_capag.Capag) -> str:
+    return f"{c.ano}, contas de {c.ano - 1}" + (", revisão" if c.revisao else "")
+
+
+def _cartao_capag(sigla: str, c: tesouro_capag.Capag) -> Cartao | None:
+    n = c.notas.get(sigla)
+    if n is None or n.nota not in tesouro_capag.ESCALA:
+        return None
+    return Cartao(
+        id=f"{sigla.lower()}_capag",
+        rotulo="Nota CAPAG do Tesouro",
+        valor=float(tesouro_capag.ESCALA[n.nota]),
+        texto=n.nota,
+        unidade="nota",
+        casas=0,
+        referencia=date(c.ano, 1, 1),
+        periodicidade="A",
+        detalhe=f"Dívida {n.endividamento} · poupança {n.poupanca} · caixa {n.liquidez}",
+        fonte=f"{tesouro_capag.FONTE}, {_ref_capag(c)}",
+    )
+
+
+# ---------------------------------------------------------------- anos fechados
+
+Fracao = tuple[float, float | None, float | None]
+"""(o percentual do estado, o numerador e o denominador em R$, para somar os estados)."""
+
+FONTE_RGF_ANUAL = "Tesouro Nacional, SICONFI, RGF do 3º quadrimestre de cada ano"
+FONTE_RREO_ANUAL = "Tesouro Nacional, SICONFI, RREO do 6º bimestre de cada ano"
+
+
+def _pessoal_anual(a: siconfi.AnoFechado) -> Fracao | None:
+    p = a.pessoal
+    return (p.percentual, p.despesa, p.base) if p else None
+
+
+def _divida_anual(a: siconfi.AnoFechado) -> Fracao | None:
+    d = a.divida
+    return (d.percentual, d.liquida, d.base) if d and d.percentual is not None else None
+
+
+def _primario_anual(a: siconfi.AnoFechado) -> Fracao | None:
+    rcl = a.divida.rcl if a.divida else None
+    return (a.primario / rcl * 100, a.primario, rcl) if a.primario is not None and rcl else None
+
+
+def _previdencia_anual(a: siconfi.AnoFechado) -> Fracao | None:
+    rcl = a.divida.rcl if a.divida else None
+    if a.previdencia is None or not rcl:
+        return None
+    r = a.previdencia.resultado
+    return (r / rcl * 100, r, rcl)
+
+
+NOTA_PREVIDENCIA = (
+    "Fica de fora o fundo em capitalização, que guarda para os servidores mais novos e costuma "
+    "sobrar. Salto de um ano para o outro pode ser mudança no jeito de lançar, não na "
+    "previdência."
+)
+
+HISTORICOS: list[tuple[str, str, str, str, Callable[[siconfi.AnoFechado], Fracao | None]]] = [
+    (
+        "pessoal",
+        "Despesa com pessoal",
+        f"{FONTE_RGF_ANUAL} (Anexo 01, Poder Executivo)",
+        "Em % da receita corrente líquida ajustada, nos 12 meses até dezembro.",
+        _pessoal_anual,
+    ),
+    (
+        "divida",
+        "Dívida consolidada líquida",
+        f"{FONTE_RGF_ANUAL} (Anexo 02)",
+        "Em % da receita corrente líquida, em dezembro.",
+        _divida_anual,
+    ),
+    (
+        "primario",
+        "Resultado primário, com a previdência",
+        f"{FONTE_RREO_ANUAL} (Anexo 06) e RGF Anexo 02 (RCL)",
+        "Receitas menos despesas no ano, sem contar juros, em % da receita corrente líquida. "
+        "Conta a previdência dos servidores, a única conta que o relatório trazia antes de "
+        "2023; por isso difere do primário do mapa, que é sem ela.",
+        _primario_anual,
+    ),
+    (
+        "previdencia",
+        "Resultado da previdência dos servidores",
+        f"{FONTE_RREO_ANUAL} (Anexo 04) e RGF Anexo 02 (RCL)",
+        "Contribuições menos aposentadorias e pensões dos servidores civis e militares no ano, "
+        "em % da receita corrente líquida; negativo é o que o Tesouro do estado cobre. "
+        + NOTA_PREVIDENCIA,
+        _previdencia_anual,
+    ),
+]
+MINIMO_DE_ESTADOS = 24
+"""A soma dos estados só sai no ano em que ao menos este tanto entregou o relatório."""
+
+
+def _historicos(
+    hist: dict[int, dict[int, siconfi.AnoFechado]],
+) -> tuple[dict[str, list[HistoricoEstado]], dict[str, dict[int, float]]]:
+    """Por UF, as quatro contas no fim de cada ano; e, por conta, a soma dos estados (soma dos
+    numeradores sobre a soma dos denominadores, como o país inteiro fosse um estado só)."""
+    linhas_pessoal = [
+        LinhaRef(valor=leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, rotulo="limite máximo"),
+        LinhaRef(valor=leis.PESSOAL_PRUDENCIAL.valor, rotulo="limite prudencial"),
+    ]
+    linhas_divida = [LinhaRef(valor=leis.DIVIDA_ESTADUAL.valor, rotulo="limite")]
+    por_uf: dict[str, list[HistoricoEstado]] = {s: [] for s in SIGLA.values()}
+    brasil: dict[str, dict[int, float]] = {}
+    for id_, titulo, fonte, nota, conta in HISTORICOS:
+        soma: dict[int, float] = {}
+        pontos_uf: dict[str, dict[int, float]] = {s: {} for s in SIGLA.values()}
+        for ano, estados in sorted(hist.items()):
+            num = den = 0.0
+            quantos = 0
+            for cod, a in estados.items():
+                achado = conta(a)
+                if achado is None or cod not in SIGLA:
+                    continue
+                pontos_uf[SIGLA[cod]][ano] = round(achado[0], 2)
+                if achado[1] is not None and achado[2]:
+                    num, den, quantos = num + achado[1], den + achado[2], quantos + 1
+            if quantos >= MINIMO_DE_ESTADOS and den:
+                soma[ano] = round(num / den * 100, 2)
+        if soma:
+            brasil[id_] = soma
+        for sigla, pontos in pontos_uf.items():
+            if len(pontos) >= 2:
+                por_uf[sigla].append(
+                    HistoricoEstado(
+                        id=id_,
+                        titulo=titulo,
+                        unidade="% da RCL",
+                        pontos=pontos,
+                        fonte=fonte,
+                        nota=nota,
+                        linhas={"pessoal": linhas_pessoal, "divida": linhas_divida}.get(id_, []),
+                    )
+                )
+    return por_uf, brasil
+
+
+def _previdencia(
+    hist: dict[int, dict[int, siconfi.AnoFechado]],
+) -> tuple[MetricaEstados, int, dict[str, float]] | None:
+    """O resultado da previdência do ano fechado mais novo em que quase todos entregaram:
+    a métrica (% da RCL), o ano e o resultado em R$ de cada UF."""
+    for ano in sorted(hist, reverse=True):
+        fracoes = {
+            SIGLA[c]: f
+            for c, a in hist[ano].items()
+            if c in SIGLA and (f := _previdencia_anual(a)) is not None
+        }
+        if len(fracoes) < MINIMO_DE_ESTADOS:
+            continue
+        num = sum(f[1] or 0 for f in fracoes.values())
+        den = sum(f[2] or 0 for f in fracoes.values())
+        metrica = MetricaEstados(
+            id="previdencia",
+            nome="Resultado da previdência dos servidores",
+            descricao=(
+                "Contribuições menos aposentadorias e pensões dos servidores civis e militares "
+                "do estado no ano, em proporção da receita corrente líquida. Negativo é déficit: "
+                "o que o Tesouro do estado cobre com outras receitas. " + NOTA_PREVIDENCIA
+            ),
+            unidade="% da RCL",
+            casas=1,
+            referencia=str(ano),
+            maior_e_melhor=True,
+            fonte=(
+                f"Tesouro Nacional, SICONFI, RREO Anexo 04 (6º bimestre de {ano}: fundo em "
+                "repartição, benefícios pagos pelo Tesouro e militares) e RGF Anexo 02 (RCL)"
+            ),
+            valores={
+                s: (round(fracoes[s][0], 2) if s in fracoes else None) for s in SIGLA.values()
+            },
+            brasil=round(num / den * 100, 2) if den else None,
+            grupo=CONTAS,
+        )
+        return metrica, ano, {s: f[1] for s, f in fracoes.items() if f[1] is not None}
+    return None
+
+
+def _cartao_previdencia(
+    sigla: str, metrica: MetricaEstados, ano: int, em_reais: dict[str, float]
+) -> Cartao | None:
+    pct = metrica.valores.get(sigla)
+    if pct is None or sigla not in em_reais:
+        return None
+    deficits = {u: v for u, v in metrica.valores.items() if v is not None and v < 0}
+    detalhe = f"{br(pct)} % da RCL"
+    if sigla in deficits:
+        pos = 1 + sum(1 for v in deficits.values() if v < deficits[sigla])
+        detalhe += f"; {pos}º maior déficit de {len(deficits)}"
+    reais = em_reais[sigla]
+    return Cartao(
+        id=f"{sigla.lower()}_previdencia",
+        rotulo="Resultado da previdência",
+        valor=round(reais / 1e9, 1 if abs(reais) >= 1e9 else 2),
+        unidade="R$ bilhões",
+        casas=1 if abs(reais) >= 1e9 else 2,
+        referencia=date(ano, 1, 1),
+        periodicidade="A",
+        detalhe=detalhe,
+        fonte=metrica.fonte,
+    )
+
+
+# ---------------------------------------------------------------- a economia por atividade
+
+SETORES: list[tuple[str, tuple[str, ...]]] = [
+    ("Agropecuária", ("agropecuária",)),
+    ("Indústria extrativa (petróleo e minérios)", ("indústrias extrativas",)),
+    ("Indústria de transformação", ("indústrias de transformação",)),
+    ("Construção, luz e água", ("construção", "eletricidade e gás")),
+    ("Comércio", ("comércio e reparação",)),
+    ("Governo (administração, saúde e educação públicas)", ("administração, defesa",)),
+]
+"""As fatias da ficha: (nome, começo do nome das atividades da tab07 que somam). O que não
+está aqui (transporte, bancos, aluguéis, informação e outros serviços) vai em "Outras"."""
+
+
+def _blocos_setores(
+    edicao: int,
+    vab: dict[str, dict[int, float]],
+    participacao: dict[str, dict[int, ibge_contas_regionais.Setores]],
+) -> dict[str, BlocoDeConta]:
+    """{sigla: o valor adicionado do último ano dividido por atividade}."""
+    minusculo = {k.lower(): v for k, v in participacao.items()}
+    saida: dict[str, BlocoDeConta] = {}
+    for _, sigla, nome, _ in UFS:
+        total_por_ano, partes_por_ano = vab.get(nome), minusculo.get(nome.lower())
+        if not total_por_ano or not partes_por_ano:
+            continue
+        ano = max(set(total_por_ano) & set(partes_por_ano))
+        total = total_por_ano[ano] * 1e6  # R$ milhões → R$
+        atividades = {k.lower(): v for k, v in partes_por_ano[ano].items()}
+        partes: list[tuple[str, float | None]] = []
+        for rotulo, comecos in SETORES:
+            pct = sum(v for k, v in atividades.items() if k.startswith(comecos))
+            partes.append((rotulo, total * pct / 100))
+        resto = total - sum(v or 0 for _, v in partes)
+        saida[sigla] = BlocoDeConta(
+            id="pib_setor",
+            titulo="O que a economia produz",
+            descricao=(
+                "O valor adicionado de cada atividade no ano. Em “Outras”, os demais "
+                "serviços: transporte, bancos, aluguéis, informação e outros."
+            ),
+            referencia=str(ano),
+            fonte=(
+                f"{ibge_contas_regionais.FONTE} {edicao}, tabelas 4 (valor adicionado bruto a "
+                "preços correntes) e 7 (participação das atividades)"
+            ),
+            fatias=_fatias(partes, resto),
+            total=_mi(total),
+        )
+    return saida
+
+
+# ---------------------------------------------------------------- perto dos limites
+
+
+def _pessoal_diz(v: float) -> tuple[int, str]:
+    """(gravidade, o que dizer) da despesa com pessoal contra os limites da LRF."""
+    if v > leis.PESSOAL_EXECUTIVO_ESTADUAL.valor:
+        return 3, "acima do máximo"
+    if v > leis.PESSOAL_PRUDENCIAL.valor:
+        return 2, "acima do prudencial"
+    if v > leis.PESSOAL_ALERTA.valor:
+        return 1, "acima do alerta"
+    return 0, ""
+
+
+def _divida_diz(v: float) -> tuple[int, str]:
+    if v > leis.DIVIDA_ESTADUAL.valor:
+        return 3, "acima do limite"
+    if v > leis.DIVIDA_ALERTA.valor:
+        return 1, "acima do alerta"
+    return 0, ""
+
+
+def _ref_quadrimestre(referencia: str) -> date:
+    """O último mês do quadrimestre: "2º quadrimestre de 2026" → 01/08/2026."""
+    achado = re.search(r"(\d)º quadrimestre de (\d{4})", referencia)
+    if not achado:
+        raise ValueError(f"sem quadrimestre em {referencia!r}")
+    q, ano = int(achado.group(1)), int(achado.group(2))
+    return date(ano, q * 4, 1)
+
+
+def perto_dos_limites(metricas: list[MetricaEstados]) -> tuple[Cartao, Tabela] | None:
+    """Os estados acima de algum limite de alerta (pessoal ou dívida) ou com CAPAG C ou D:
+    o número de Riscos e a tabela. Os limites são os da lei (`leis.py`)."""
+    por_id = {m.id: m for m in metricas}
+    pessoal, divida, capag = por_id.get("pessoal"), por_id.get("divida"), por_id.get("capag")
+    if pessoal is None or divida is None:
+        return None
+    nomes = {s: n for _, s, n, _ in UFS}
+    nota_de = {m.valor: m.rotulo for m in capag.marcas} if capag else {}
+    fracas = tesouro_capag.ESCALA["C"]
+    linhas: list[tuple[tuple[int, int, float], LinhaTabela]] = []
+    acima = com_nota_fraca = 0
+    for sigla, nome in nomes.items():
+        p, d = pessoal.valores.get(sigla), divida.valores.get(sigla)
+        n = capag.valores.get(sigla) if capag else None
+        gp, fala_p = _pessoal_diz(p) if p is not None else (0, "")
+        gd, fala_d = _divida_diz(d) if d is not None else (0, "")
+        fraca = n is not None and n <= fracas
+        acima += gp > 0 or gd > 0
+        com_nota_fraca += fraca
+        if not (gp or gd or fraca):
+            continue
+
+        def celula(v: float | None, fala: str) -> str:
+            return (
+                "–" if v is None else f"{br(round(v, 1) + 0.0)} %" + (f", {fala}" if fala else "")
+            )
+
+        textos = [celula(p, fala_p), celula(d, fala_d)]
+        if capag:
+            textos.append(nota_de.get(n, "–") if n is not None else "–")
+        linhas.append(
+            (
+                (max(gp, gd), gp + gd + fraca, p or 0.0),
+                LinhaTabela(rotulo=nome, valores=[], unidade="", textos=textos),
+            )
+        )
+    linhas.sort(key=lambda x: x[0], reverse=True)
+    colunas = ["Pessoal (% da RCL)", "Dívida (% da RCL)"] + (["CAPAG"] if capag else [])
+    ref = f"RGF do {pessoal.referencia}" + (f"; CAPAG {capag.referencia}" if capag else "")
+    fontes = f"{pessoal.fonte}; {divida.fonte}" + (f"; {capag.fonte}" if capag else "")
+    tabela = Tabela(
+        id="estados-no-limite",
+        titulo="Estados perto dos limites",
+        subtitulo=ref,
+        colunas=colunas,
+        linhas=[linha for _, linha in linhas],
+        fonte=fontes,
+        nota=(
+            f"Pessoal do Poder Executivo: alerta em {br(leis.PESSOAL_ALERTA.valor)} %, "
+            f"prudencial em {br(leis.PESSOAL_PRUDENCIAL.valor, 2)} % e máximo em "
+            f"{br(leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, 0)} % da receita corrente "
+            f"líquida ({leis.PESSOAL_EXECUTIVO_ESTADUAL.referencia}). Dívida: alerta em "
+            f"{br(leis.DIVIDA_ALERTA.valor, 0)} % e limite em {br(leis.DIVIDA_ESTADUAL.valor, 0)} "
+            f"% ({leis.DIVIDA_ESTADUAL.referencia}). Entra quem passou de um alerta ou tem "
+            "CAPAG C ou D."
+        ),
+    )
+    cartao = Cartao(
+        id="estados-no-limite",
+        rotulo="Estados acima do alerta de pessoal ou de dívida",
+        valor=float(acima),
+        unidade=f"de {len(nomes)}",
+        casas=0,
+        referencia=_ref_quadrimestre(pessoal.referencia),
+        periodicidade="M",
+        detalhe=(f"{com_nota_fraca} com nota CAPAG C ou D" if capag else ""),
+        fonte=fontes,
+        secao="riscos",
+    )
+    return cartao, tabela
+
+
+def metricas_dos_limites(ctx: Contexto) -> list[MetricaEstados]:
+    """Pessoal, dívida e CAPAG, para Riscos: da rodada de Estados, se já houve, ou das fontes."""
+    guardadas: list[MetricaEstados] | None = ctx.memo.get("estados_limites")
+    if guardadas:
+        return guardadas
+    metricas: list[MetricaEstados] = []
+    coleta = siconfi.coletar([c for c, *_ in UFS], ctx.hoje)
+    if coleta is not None:
+        metricas += list(_fiscais(coleta, siconfi.entes())[:2])
+    try:
+        metricas.append(_capag(tesouro_capag.capag()))
+    except Exception as erro:
+        print(f"  aviso: CAPAG indisponível: {str(erro)[:120]}")
+    return metricas
+
+
+@dataclass
+class Extras:
+    """O que vai à ficha de cada estado além da DCA, cada fonte por conta própria."""
+
+    metricas: list[MetricaEstados] = field(default_factory=list)
+    numeros: dict[str, list[Cartao]] = field(default_factory=dict)
+    blocos: dict[str, list[BlocoDeConta]] = field(default_factory=dict)
+    historicos: dict[str, list[HistoricoEstado]] = field(default_factory=dict)
+    brasil: dict[str, dict[int, float]] = field(default_factory=dict)
+
+
+def _extras(ctx: Contexto) -> Extras:
+    x = Extras()
+    try:
+        hist = siconfi.coletar_historico([c for c, *_ in UFS], ctx.hoje)
+        x.historicos, x.brasil = _historicos(hist)
+        previdencia = _previdencia(hist)
+        if previdencia is None:
+            print("  aviso: nenhum ano fechado com 24 estados no RREO Anexo 04")
+        else:
+            metrica, ano, em_reais = previdencia
+            x.metricas.append(metrica)
+            for sigla in SIGLA.values():
+                if c := _cartao_previdencia(sigla, metrica, ano, em_reais):
+                    x.numeros.setdefault(sigla, []).append(c)
+    except Exception as erro:
+        print(f"  aviso: estados no tempo indisponíveis: {str(erro)[:160]}")
+    try:
+        nota = tesouro_capag.capag()
+        x.metricas.append(_capag(nota))
+        for sigla in SIGLA.values():
+            if c := _cartao_capag(sigla, nota):
+                x.numeros.setdefault(sigla, []).insert(0, c)
+    except Exception as erro:
+        print(f"  aviso: CAPAG indisponível: {str(erro)[:160]}")
+    try:
+        edicao, vab, participacao = ibge_contas_regionais.setores()
+        for sigla, bloco in _blocos_setores(edicao, vab, participacao).items():
+            x.blocos[sigla] = [bloco]
+    except Exception as erro:
+        print(f"  aviso: PIB por atividade indisponível: {str(erro)[:160]}")
+    return x
+
+
+def _enriquecer(contas: EstadosContas | None, x: Extras, agora: datetime) -> EstadosContas | None:
+    """Junta à ficha o que veio de fora da DCA (a nota e a previdência primeiro, nos números)."""
+    if not (x.numeros or x.blocos or x.historicos):
+        return contas
+    contas = contas or EstadosContas(contas={}, gerado_em=agora)
+    for _, sigla, nome, _ in UFS:
+        numeros, blocos = x.numeros.get(sigla, []), x.blocos.get(sigla, [])
+        historico = x.historicos.get(sigla, [])
+        if not (numeros or blocos or historico):
+            continue
+        c = contas.contas.get(sigla) or ContasEstado(uf=sigla, nome=nome, blocos=[])
+        c.numeros = numeros + c.numeros
+        c.blocos = c.blocos + blocos
+        c.historico = historico
+        contas.contas[sigla] = c
+    contas.historico_brasil = x.brasil
+    return contas
 
 
 ARQUIVO_CONTAS = "estados-contas.json"
@@ -765,6 +1247,12 @@ def montar(ctx: Contexto) -> Estados:
             faltam = [u for u, v in m.valores.items() if v is None]
             if faltam:
                 print(f"  aviso: {m.nome} sem dado de {', '.join(faltam)}")
+
+    # A ficha de cada estado: CAPAG, previdência, as contas no fim de cada ano e a economia por
+    # atividade. Cada fonte por conta própria.
+    extras = _extras(ctx)
+    metricas += extras.metricas
+    contas = _enriquecer(contas, extras, ctx.agora())
     try:
         metricas.append(_arrecadacao_federal(siconfi.entes()))
     except Exception as erro:
@@ -805,6 +1293,8 @@ def montar(ctx: Contexto) -> Estados:
         )
     if contas:
         ctx.memo["estados_contas"] = contas
+    # Riscos (montado depois) usa os mesmos números para "Estados perto dos limites".
+    ctx.memo["estados_limites"] = [m for m in metricas if m.id in ("pessoal", "divida", "capag")]
     return Estados(
         titulo="Estados",
         resumo=" ".join(frases),

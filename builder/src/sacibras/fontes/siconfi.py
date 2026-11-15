@@ -50,6 +50,7 @@ from __future__ import annotations
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -571,3 +572,179 @@ def coletar_anual(entes_ibge: list[int], hoje: date, minimo: int = 24) -> Coleta
             continue
         return ColetaAnual(ano, contas, rcl)
     return None
+
+
+# ---------------------------------------------------------------- previdência e anos fechados
+#
+# RREO-Anexo 04 (receitas e despesas previdenciárias), visto em SP, RJ, ES e RS em 15/11/2026,
+# 6º bimestre de 2021 a 2025: o resultado de cada plano vem nas colunas de despesa; a de
+# "DESPESAS LIQUIDADAS ATÉ O BIMESTRE (e)" é o ano inteiro no 6º bimestre. Até 2020 o anexo era
+# outro (os militares dentro do plano financeiro, colunas "/ 2019"): a série começa em 2021.
+# - `RREO4ResultadoRPPSFinanceiro`: o fundo em repartição (plano financeiro), quase sempre no
+#   vermelho: o Tesouro do estado cobre a diferença.
+# - `ResultadoDosBeneficiosMantidosPeloTesouro`: aposentadorias pagas direto pelo Tesouro.
+# - `ResultadoAssociadoAInativosEPensionistasMilirares`: inativos e pensionistas militares.
+# - `RREO4ResultadoRPPSPrevidenciario`: o fundo em capitalização (plano previdenciário), que
+#   guarda para os servidores mais novos e costuma sobrar; fica fora do resultado, porque a
+#   sobra fica aplicada para o futuro e não paga as aposentadorias de hoje.
+#
+# Resultado primário nos anos fechados (RREO-Anexo 06): desde 2023 o anexo separa "com RPPS" e
+# "sem RPPS"; até 2022 só havia `RREO6ResultadoPrimarioEstadosMunicipios`, que inclui o RPPS
+# (coluna "VALOR", ou "VALOR INCORRIDO" em 2019 e 2020). A série no tempo usa a "com RPPS" para
+# não mudar de conta no meio.
+
+COL_LIQUIDADA_BIMESTRE = "DESPESAS LIQUIDADAS ATÉ O BIMESTRE (e)"
+PREVIDENCIA_DESDE = 2021
+RGF_DESDE = 2019
+
+
+@dataclass(frozen=True)
+class Previdencia:
+    """RREO-Anexo 04: o resultado da previdência no ano até o bimestre, em R$ (negativo é
+    déficit)."""
+
+    reparticao: float
+    tesouro: float
+    militares: float
+    capitalizacao: float | None
+
+    @property
+    def resultado(self) -> float:
+        """O que o Tesouro do estado cobre: repartição, benefícios do Tesouro e militares."""
+        return self.reparticao + self.tesouro + self.militares
+
+
+def parse_previdencia(itens: list[dict[str, Any]]) -> Previdencia | None:
+    def v(conta: str) -> float | None:
+        return valor(itens, conta, COL_LIQUIDADA_BIMESTRE)
+
+    partes = (
+        v("RREO4ResultadoRPPSFinanceiro"),
+        v("ResultadoDosBeneficiosMantidosPeloTesouro"),
+        v("ResultadoAssociadoAInativosEPensionistasMilirares"),
+    )
+    if all(p is None for p in partes):
+        return None
+    return Previdencia(
+        reparticao=partes[0] or 0.0,
+        tesouro=partes[1] or 0.0,
+        militares=partes[2] or 0.0,
+        capitalizacao=v("RREO4ResultadoRPPSPrevidenciario"),
+    )
+
+
+def parse_primario_com_rpps(itens: list[dict[str, Any]]) -> float | None:
+    """RREO-Anexo 06: o primário com a previdência própria, pela conta de cada edição."""
+    for conta, coluna in (
+        ("ResultadoPrimarioComRPPSAcimaDaLinha", COL_PRIMARIO),
+        ("RREO6ResultadoPrimarioEstadosMunicipios", COL_PRIMARIO),
+        ("RREO6ResultadoPrimarioEstadosMunicipios", "VALOR INCORRIDO"),
+    ):
+        achado = valor(itens, conta, coluna)
+        if achado is not None:
+            return achado
+    return None
+
+
+@dataclass(frozen=True)
+class PessoalAnual:
+    percentual: float
+    despesa: float | None
+    base: float | None
+    """RCL ajustada (a base do limite), em R$."""
+
+
+def parse_pessoal_anual(itens: list[dict[str, Any]]) -> PessoalAnual | None:
+    """RGF-Anexo 01 com os reais: o percentual e a soma de vários estados saem da mesma conta."""
+    despesa = valor(itens, "DespesaComPessoalTotal", "Valor")
+    base = valor(itens, "ReceitaCorrenteLiquidaAjustada", "Valor")
+    pct = valor(itens, "DespesaComPessoalTotal", COL_PCT)
+    if pct is None and despesa is not None and base:
+        pct = despesa / base * 100
+    if pct is None:
+        return None
+    return PessoalAnual(percentual=pct, despesa=despesa, base=base)
+
+
+@dataclass(frozen=True)
+class DividaAnual:
+    percentual: float | None
+    liquida: float | None
+    base: float | None
+    """RCL ajustada para os limites de endividamento, em R$."""
+    rcl: float | None
+
+
+def parse_divida_anual(itens: list[dict[str, Any]], quadrimestre: int = 3) -> DividaAnual | None:
+    coluna = f"Até o {quadrimestre}º Quadrimestre"
+    pct = valor(itens, "PercentualDaDCLSobreARCL", coluna)
+    rcl = valor(itens, "RGF2ReceitaCorrenteLiquida", coluna)
+    if pct is None and rcl is None:
+        return None
+    base = valor(
+        itens, "ReceitaCorrenteLiquidaAjustadaParaCalculoDosLimitesDeEndividamento", coluna
+    )
+    return DividaAnual(
+        percentual=pct,
+        liquida=valor(itens, "DividaConsolidadaLiquida", coluna),
+        base=base if base else rcl,
+        rcl=rcl,
+    )
+
+
+@dataclass
+class AnoFechado:
+    """O que um estado entregou no fim de um ano: RGF do 3º quadrimestre, RREO do 6º bimestre."""
+
+    pessoal: PessoalAnual | None = None
+    divida: DividaAnual | None = None
+    primario: float | None = None
+    """Com RPPS, no ano, em R$."""
+    previdencia: Previdencia | None = None
+
+
+def ultimo_ano_fechado(hoje: date) -> int:
+    """O RGF do 3º quadrimestre e o RREO do 6º bimestre saem até o fim de janeiro."""
+    return hoje.year - 1 if hoje.month >= 3 else hoje.year - 2
+
+
+def coletar_historico(
+    entes_ibge: list[int], hoje: date, trabalhadores: int = 6
+) -> dict[int, dict[int, AnoFechado]]:
+    """{ano: {ente: AnoFechado}} dos anos fechados: o RGF desde `RGF_DESDE`, o RREO desde
+    `PREVIDENCIA_DESDE`. São ~650 chamadas: vão em paralelo (`trabalhadores` de cada vez) e,
+    por serem de ano fechado, ficam 30 dias no cache."""
+    ultimo = ultimo_ano_fechado(hoje)
+    tarefas: list[tuple[str, int, int]] = []
+    for ano in range(RGF_DESDE, ultimo + 1):
+        for e in entes_ibge:
+            tarefas += [("pessoal", ano, e), ("divida", ano, e)]
+            if ano >= PREVIDENCIA_DESDE:
+                tarefas += [("primario", ano, e), ("previdencia", ano, e)]
+
+    def fazer(tarefa: tuple[str, int, int]) -> object:
+        tipo, ano, e = tarefa
+        try:
+            if tipo == "pessoal":
+                return parse_pessoal_anual(
+                    _demonstrativo("RGF", "Q", ano, 3, 1, e, VALIDADE_ANO_FECHADO)
+                )
+            if tipo == "divida":
+                return parse_divida_anual(
+                    _demonstrativo("RGF", "Q", ano, 3, 2, e, VALIDADE_ANO_FECHADO)
+                )
+            if tipo == "primario":
+                return parse_primario_com_rpps(rreo(ano, 6, 6, e, VALIDADE_ANO_FECHADO))
+            return parse_previdencia(rreo(ano, 6, 4, e, VALIDADE_ANO_FECHADO))
+        except FonteForaDoArError as erro:
+            _aviso(e, erro)
+            return None
+
+    with ThreadPoolExecutor(max_workers=trabalhadores) as grupo:
+        resultados = list(grupo.map(fazer, tarefas))
+    saida: dict[int, dict[int, AnoFechado]] = {}
+    for (tipo, ano, e), achado in zip(tarefas, resultados, strict=True):
+        if achado is None:
+            continue
+        setattr(saida.setdefault(ano, {}).setdefault(e, AnoFechado()), tipo, achado)
+    return saida

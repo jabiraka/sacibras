@@ -3068,6 +3068,8 @@ input.escolha[type="number"] {
 
 .ficha-corpo {
   display: grid;
+  /* A coluna não cresce com a tabela larga (a tabela rola dentro da caixa dela). */
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   margin-top: 6px;
 }
@@ -3448,4 +3450,68 @@ html.sem-rolagem {
 /* "Veja também": atalhos para partes de outros assuntos (o efeito da Selic). */
 .partes.veja {
   margin-top: 34px;
+}
+
+/* Estados › Perto dos limites: a frase vai embaixo do número, na cor do degrau (a palavra
+   diz o mesmo que a cor). */
+/* No celular as quatro colunas cabem: o texto quebra em vez de empurrar a tabela. */
+table.dados.limites-tabela th,
+table.dados.limites-tabela td {
+  white-space: normal;
+}
+
+.limites-tabela thead .sub {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  table.dados.limites-tabela {
+    font-size: 0.8125rem;
+  }
+
+  table.dados.limites-tabela th,
+  table.dados.limites-tabela td {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
+  table.dados.limites-tabela thead th {
+    min-width: 0;
+  }
+
+  table.dados.limites-tabela tbody th {
+    min-width: 5.5rem;
+  }
+}
+
+.limites-tabela .limite-diz {
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.tabela-rolavel.inteira {
+  max-height: none;
+}
+
+.limites-tabela .grau-3 {
+  color: var(--vermelho);
+  font-weight: 500;
+}
+
+.limites-tabela .grau-2 {
+  color: var(--alerta);
+}
+
+.limites-tabela .grau-1 {
+  color: var(--tinta-2);
+}
+
+.limites-tabela .nota-fraca {
+  color: var(--alerta);
+  font-weight: 500;
+}
+
+.ficha-tempo .barra-controles {
+  margin-bottom: 8px;
 }

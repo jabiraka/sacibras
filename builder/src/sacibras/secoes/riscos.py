@@ -49,7 +49,7 @@ from sacibras.schema import (
     SimuladorDivida,
     Tabela,
 )
-from sacibras.secoes import inflacao, mundo, previsoes
+from sacibras.secoes import estados, inflacao, mundo, previsoes
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Periodicidade, Ponto
 
@@ -2197,6 +2197,16 @@ def _inss_ate_2100(ctx: Contexto) -> Bloco:
     return bloco
 
 
+def _estados(ctx: Contexto) -> Bloco:
+    """Os estados acima de algum limite de alerta (pessoal ou dívida) ou com CAPAG C ou D: a
+    mesma conta de Estados › Perto dos limites (`estados.perto_dos_limites`)."""
+    achado = estados.perto_dos_limites(estados.metricas_dos_limites(ctx))
+    if achado is None:
+        raise RuntimeError("sem o RGF dos estados")
+    cartao, tabela = achado
+    return Bloco(cartoes=[cartao], tabelas=[tabela])
+
+
 # ------------------------------------------------------------------ a seção
 
 
@@ -2238,6 +2248,7 @@ def montar(ctx: Contexto) -> Secao:
         ("ações na Justiça", lambda: _justica(ctx)),
         ("governança", lambda: _governanca(ctx)),
         ("INSS até 2100", lambda: _inss_ate_2100(ctx)),
+        ("estados perto dos limites", lambda: _estados(ctx)),
     ]
     for nome, montar_bloco in demais:
         try:

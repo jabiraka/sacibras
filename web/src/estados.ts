@@ -22,7 +22,7 @@ import {
   type LinhaDoRanking,
   type PontoDisperso,
 } from "./pontos";
-import { montarFicha } from "./ficha";
+import { montarFicha, type Regiao } from "./ficha";
 import { remarcar } from "./glossario";
 import type { Estados, EstadosContas, MetricaEstados } from "./tipos";
 import { protegerNomeDeEstado } from "./traducao";
@@ -35,6 +35,11 @@ const UFS = feature(topologia, topologia.objects.ufs) as FeatureCollection<
   Geometry,
   PropriedadesUF
 >;
+
+/** O valor escrito: o nome, quando a métrica é uma nota (CAPAG), ou o número. */
+function escrito(m: MetricaEstados, v: number): string {
+  return m.marcas?.find((x) => x.valor === v)?.rotulo ?? numero(v, m.casas);
+}
 
 /** Uma cor entre as duas pontas da escala (hex), com `t` de 0 a 1. */
 function misturar(de: string, ate: string, t: number): string {
@@ -203,7 +208,7 @@ function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<str
     if (v === null) return `${nome}\nsem dado`;
     const f = metrica.intervalos?.[d.properties.uf];
     return (
-      `${nome}\n${numero(v, metrica.casas)} ${metrica.unidade}` +
+      `${nome}\n${metrica.marcas?.length ? `${metrica.unidade} ${escrito(metrica, v)}` : `${numero(v, metrica.casas)} ${metrica.unidade}`}` +
       (f ? `\nfaixa de erro: de ${numero(f[0], metrica.casas)} a ${numero(f[1], metrica.casas)}` : "") +
       (metrica.estimados?.includes(d.properties.uf) ? "\nestimado pela região" : "")
     );
@@ -223,7 +228,7 @@ function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<str
   const texto = (d: UFNoMapa): string => {
     const v = valorDe(d);
     if (!comValor.includes(d) || v === null) return d.properties.uf;
-    return `${d.properties.uf}\n${numero(v, metrica.casas)}`;
+    return `${d.properties.uf}\n${escrito(metrica, v)}`;
   };
 
   const mapa = Plot.plot({
@@ -279,7 +284,13 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
     return raiz;
   }
   if (parte === "duas-metricas") {
-    raiz.append(montarDispersao(e, nomes, opcoes, corDestaque));
+    // Nota (a CAPAG) não vira eixo: seis degraus com nome, não uma régua.
+    const numericas = opcoes.filter((o) => !e.metricas.find((m) => m.id === o.valor)?.marcas?.length);
+    raiz.append(montarDispersao(e, nomes, numericas, corDestaque));
+    return raiz;
+  }
+  if (parte === "limites") {
+    raiz.append(montarLimites(e));
     return raiz;
   }
 
@@ -375,6 +386,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
       cor: x.u.sigla === destaque ? corDestaque() : undefined,
       faixa: faixas[x.u.sigla],
       estimado: estimados.has(x.u.sigla),
+      texto: metrica.marcas?.length ? escrito(metrica, x.v) : undefined,
     }));
     if (metrica.brasil !== null) {
       itens.push({ chave: "BR", nome: "Brasil", valor: metrica.brasil, marca: "brasil", posicao: null });
@@ -423,9 +435,9 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
     const valores = Object.values(metrica.valores).filter((v): v is number => v !== null);
     if (tela.clientWidth) desenharMapa(tela, metrica, nomes);
     escala.replaceChildren(
-      el("span", "", numero(Math.min(...valores), metrica.casas)),
+      el("span", "", escrito(metrica, Math.min(...valores))),
       el("i"),
-      el("span", "", numero(Math.max(...valores), metrica.casas)),
+      el("span", "", escrito(metrica, Math.max(...valores))),
     );
     peMapa.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`));
     pintarRanking();
@@ -550,6 +562,10 @@ function montarParteFicha(e: Estados, ufInicial: string): HTMLElement {
           .catch(() => null)
       : Promise.resolve(null));
   let fichaDe = "";
+  const regiaoDe = (uf: string): Regiao | undefined => {
+    const nome = e.ufs.find((u) => u.sigla === uf)?.regiao;
+    return nome ? { nome, ufs: new Set(e.ufs.filter((u) => u.regiao === nome).map((u) => u.sigla)) } : undefined;
+  };
   const opcoesUf = [
     { valor: "", rotulo: "Escolha um estado" },
     ...[...e.ufs].sort((a, b) => a.nome.localeCompare(b.nome)).map((u) => ({ valor: u.sigla, rotulo: u.nome })),
@@ -572,12 +588,144 @@ function montarParteFicha(e: Estados, ufInicial: string): HTMLElement {
       const c = todas?.contas[uf];
       corpo.replaceChildren(
         ...(todas && c
-          ? montarFicha(c, todas)
+          ? montarFicha(c, todas, regiaoDe(uf))
           : [el("p", "sub", "As contas deste estado não vieram nesta rodada.")]),
       );
     });
   }
   abrir(e.ufs.some((u) => u.sigla === ufInicial) ? ufInicial : "");
+  return painel;
+}
+
+// ------------------------------------------------------------------ perto dos limites
+
+interface Situacao {
+  grau: number;
+  diz: string;
+}
+
+/** Onde o valor está entre os degraus (do mais alto ao mais baixo): o grau e a frase. */
+function situacao(v: number | null, degraus: { valor?: number; diz: string; grau: number }[]): Situacao {
+  if (v === null) return { grau: 0, diz: "" };
+  for (const d of degraus) if (d.valor !== undefined && v > d.valor) return { grau: d.grau, diz: d.diz };
+  return { grau: 0, diz: "" };
+}
+
+/** Os 27 estados contra os limites de pessoal e de dívida, com a CAPAG ao lado: quem passou
+ * de algum alerta primeiro. Os limites são os da lei, que vêm nas próprias métricas. */
+function montarLimites(e: Estados): HTMLElement {
+  const painel = el("div", "painel-mundo limites");
+  const achar = (id: string): MetricaEstados | undefined => e.metricas.find((m) => m.id === id);
+  const pessoal = achar("pessoal");
+  const divida = achar("divida");
+  const capag = achar("capag");
+  if (!pessoal || !divida) {
+    painel.append(el("p", "vazio", "Os relatórios fiscais dos estados não vieram nesta rodada."));
+    return painel;
+  }
+  const limite = (m: MetricaEstados, rotulo: string): number | undefined =>
+    m.limites.find((l) => l.rotulo === rotulo)?.valor;
+  const degrausPessoal = [
+    { valor: limite(pessoal, "limite máximo"), diz: "acima do máximo", grau: 3 },
+    { valor: limite(pessoal, "limite prudencial"), diz: "acima do prudencial", grau: 2 },
+    { valor: limite(pessoal, "limite de alerta"), diz: "acima do alerta", grau: 1 },
+  ];
+  const degrausDivida = [
+    { valor: limite(divida, "limite"), diz: "acima do limite", grau: 3 },
+    { valor: limite(divida, "limite de alerta"), diz: "acima do alerta", grau: 1 },
+  ];
+  const notaFraca = capag?.marcas?.find((m) => m.rotulo === "C")?.valor ?? 0;
+  const linhas = e.ufs.map((u) => {
+    const p = pessoal.valores[u.sigla] ?? null;
+    const d = divida.valores[u.sigla] ?? null;
+    const n = capag?.valores[u.sigla] ?? null;
+    const sp = situacao(p, degrausPessoal);
+    const sd = situacao(d, degrausDivida);
+    const fraca = n !== null && n <= notaFraca;
+    return { u, p, d, n, sp, sd, fraca };
+  });
+  linhas.sort(
+    (a, b) =>
+      Math.max(b.sp.grau, b.sd.grau) - Math.max(a.sp.grau, a.sd.grau) ||
+      b.sp.grau + b.sd.grau + Number(b.fraca) - (a.sp.grau + a.sd.grau + Number(a.fraca)) ||
+      (b.p ?? 0) - (a.p ?? 0),
+  );
+  const acima = linhas.filter((x) => x.sp.grau || x.sd.grau).length;
+  const fracas = linhas.filter((x) => x.fraca).length;
+  painel.append(
+    el("h3", "", "Os estados contra os limites da lei"),
+    el(
+      "p",
+      "sub",
+      `${acima} de ${linhas.length} estados acima de algum alerta` +
+        (capag ? `; ${fracas} com nota CAPAG C ou D.` : ".") +
+        ` Pessoal e dívida: RGF do ${pessoal.referencia}.` +
+        (capag ? ` CAPAG: ${capag.referencia}.` : ""),
+    ),
+  );
+  const tabela = el("table", "dados limites-tabela");
+  const cab = tabela.createTHead().insertRow();
+  const colunas: [string, string][] = [
+    ["Estado", ""],
+    ["Pessoal", "% da RCL"],
+    ["Dívida", "% da RCL"],
+  ];
+  if (capag) colunas.push(["CAPAG", ""]);
+  for (const [nome, sub] of colunas) {
+    const th = el("th", "", nome);
+    if (sub) th.append(el("span", "sub", ` ${sub}`));
+    cab.append(th);
+  }
+  const corpo = tabela.createTBody();
+  const celula = (v: number | null, s: Situacao, m: MetricaEstados): HTMLElement => {
+    const td = el("td");
+    if (v === null) {
+      td.textContent = "–";
+      return td;
+    }
+    // Sem "−0,0": o que arredonda a zero sai zero.
+    td.append(document.createTextNode(numero(Math.abs(v) < 0.05 ? 0 : v, m.casas)));
+    if (s.diz) td.append(el("span", `limite-diz grau-${s.grau}`, s.diz));
+    return td;
+  };
+  for (const x of linhas) {
+    const tr = corpo.insertRow();
+    const th = el("th");
+    if (e.arquivo_contas) {
+      const a = el("a", "", x.u.nome);
+      a.href = `#estados/uf-${x.u.sigla}`;
+      th.append(a);
+    } else {
+      th.textContent = x.u.nome;
+    }
+    protegerNomeDeEstado(th, x.u.nome);
+    tr.append(th, celula(x.p, x.sp, pessoal), celula(x.d, x.sd, divida));
+    if (capag) {
+      const td = el("td", "", x.n === null ? "–" : escrito(capag, x.n));
+      if (x.fraca) td.className = "nota-fraca";
+      tr.append(td);
+    }
+  }
+  // A tabela inteira à vista: são 27 linhas, e quem está bem também conta.
+  const rolavel = el("div", "tabela-rolavel inteira");
+  rolavel.append(tabela);
+  const pe = el("footer", "grafico-pe");
+  const lim = (m: MetricaEstados): string =>
+    m.limites.map((l) => `${l.rotulo} ${numero(l.valor, String(l.valor).split(".")[1]?.length ?? 0)} %`).join(", ");
+  const fontes = [pessoal.fonte, divida.fonte, ...(capag ? [capag.fonte] : [])];
+  pe.append(el("span", "fonte", `Fontes: ${fontes.join("; ")}.`));
+  painel.append(
+    rolavel,
+    pe,
+    el(
+      "p",
+      "nota",
+      `Limites da lei, em % da receita corrente líquida. Pessoal do Poder Executivo: ${lim(pessoal)}. ` +
+        `Dívida: ${lim(divida)}.` +
+        (e.arquivo_contas ? " Toque no nome para abrir as contas do estado." : ""),
+    ),
+  );
+  remarcar(painel);
   return painel;
 }
 
@@ -740,7 +888,7 @@ function montarTabela(e: Estados, metricas: MetricaEstados[]): HTMLTableElement 
       linha.append(nome);
       for (const m of metricas) {
         const v = m.valores[u.sigla] ?? null;
-        const td = el("td", "", v === null ? "–" : numero(v, m.casas));
+        const td = el("td", "", v === null ? "–" : escrito(m, v));
         if (v !== null && m.estimados?.includes(u.sigla)) {
           td.title = "estimado pela região";
           td.append(el("sup", "", "*"));
@@ -753,7 +901,7 @@ function montarTabela(e: Estados, metricas: MetricaEstados[]): HTMLTableElement 
   brasil.className = "brasil";
   brasil.append(el("th", "", "Brasil"));
   for (const m of metricas) {
-    brasil.append(el("td", "", m.brasil === null ? "–" : numero(m.brasil, m.casas)));
+    brasil.append(el("td", "", m.brasil === null ? "–" : escrito(m, m.brasil)));
   }
   if (metricas.some((m) => m.estimados?.length)) {
     const nota = tabela.createTFoot().insertRow();
