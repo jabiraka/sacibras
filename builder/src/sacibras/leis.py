@@ -140,8 +140,11 @@ class PassoDaReforma:
 # e Lei Complementar nº 214, de 16/1/2025. Lidas em 14/11/2026 no Senado, na PUBLICAÇÃO
 # ORIGINAL do Diário Oficial (legis.senado.leg.br/norma/37959796/publicacao/37963893 e
 # legis.senado.leg.br/norma/40180341/publicacao/40181429): o Planalto, que tem o texto
-# compilado, não responde da nuvem. LER DE NOVO no Planalto, do PC, para ver se norma
-# posterior mexeu nestes artigos. Trechos:
+# compilado, não responde da nuvem. Conferidos de novo em 15/11/2026 no TEXTO ATUALIZADO da
+# Constituição na Câmara (www2.camara.leg.br/legin/fed/consti/1988/
+# constituicao-1988-5-outubro-1988-322142-normaatualizada-pl.html): os arts. 124 a 137 do ADCT
+# seguem como a EC 132 os escreveu (só "Artigo acrescido pela Emenda Constitucional nº 132"; a
+# EC 135/2024 acrescentou o art. 138, fora da reforma). Trechos:
 # - ADCT art. 125: "Em 2026, o imposto previsto no art. 156-A será cobrado à alíquota estadual
 #   de 0,1% (um décimo por cento), e a contribuição prevista no art. 195, V, ambos da
 #   Constituição Federal, será cobrada à alíquota de 0,9% (nove décimos por cento)." § 1º: "O
@@ -298,6 +301,152 @@ REFORMA_NORMAS = (
     "Emenda Constitucional nº 132/2023 (ADCT, arts. 125 a 130) e Lei Complementar nº 214/2025 "
     "(arts. 12, 118, 123, 125, 127, 128, 343 a 349 e 475)"
 )
+
+
+# ------------------------------------------------------------------ reforma: o destino
+
+# Para onde vai o IBS de estados e municípios. Lido em 15/11/2026 no texto atualizado da
+# Constituição na Câmara (o mesmo endereço acima), ADCT, art. 131: "De 2029 a 2077, o produto
+# da arrecadação dos Estados, do Distrito Federal e dos Municípios com o imposto de que trata o
+# art. 156-A [...] será distribuído a esses entes federativos conforme o disposto neste
+# artigo. § 1º Serão retidos do produto da arrecadação do imposto de cada Estado, do Distrito
+# Federal e de cada Município [...]: I - de 2029 a 2032, 80% (oitenta por cento); II - em 2033,
+# 90% (noventa por cento); III - de 2034 a 2077, percentual correspondente ao aplicado em 2033,
+# reduzido à razão de 1/45 (um quarenta e cinco avos) por ano. § 2º [...] o montante retido
+# [...] será distribuído entre os Estados, o Distrito Federal e os Municípios proporcionalmente
+# à receita média de cada ente federativo", contada pelo ICMS (estados) e pelo ISS
+# (municípios). § 4º: a parte não retida, depois da retenção do art. 132, vai a cada ente
+# "de acordo com os critérios da lei complementar" (o destino, onde se consome: Constituição,
+# art. 156-A, § 1º, VII, e LC 214).
+# Art. 132: "deduzida a retenção de que trata o art. 131, § 1º, será retido montante
+# correspondente a 5% (cinco por cento) para distribuição aos entes com as menores razões"
+# entre o que recebem e a receita média (o seguro para quem mais perde); § 3º: a redução
+# desse percentual entre 2078 e 2097 fica para lei complementar.
+# Leitura nossa da conta, dita na nota do gráfico: "1/45 por ano" sobre os 90 % de 2033, ou
+# seja, 90 × (1 − n/45) no ano 2033 + n: 88 % em 2034, 2 % em 2077, zero em 2078.
+IBS_PELA_RECEITA_ANTIGA = {ano: 80.0 for ano in range(2029, 2033)} | {
+    ano: round(90.0 * (1 - (ano - 2033) / 45), 4) for ano in range(2033, 2078)
+}
+"""% do IBS de estados e municípios repartido pela receita média de ICMS e ISS de antes."""
+IBS_SEGURO_PARA_QUEM_PERDE = 5.0
+"""% do que sobra depois da retenção do art. 131, para os que mais perdem (ADCT, art. 132)."""
+IBS_DESTINO_NORMA = "ADCT, arts. 131 e 132 (Emenda Constitucional nº 132/2023)"
+
+
+# ------------------------------------------------------------------ reforma: Seletivo e Simples
+
+
+@dataclass(frozen=True)
+class Regra:
+    """Uma regra da lei em palavras de todo dia, com o artigo."""
+
+    tema: str
+    diz: str
+    norma: str
+
+
+# Lei Complementar nº 214/2025, Livro II (arts. 409 a 438), lida em 15/11/2026 no texto
+# atualizado da Câmara (o endereço em `REFORMA_DO_CONSUMO`, já com a LC 227/2026). Trechos:
+# - Art. 409, § 1º: "consideram-se prejudiciais à saúde ou ao meio ambiente os bens
+#   classificados nos códigos da NCM/SH e o carvão mineral, e os serviços listados no Anexo
+#   XVII, referentes a: I - veículos; II - embarcações e aeronaves; III - produtos fumígenos; IV
+#   - bebidas alcoólicas; V - bebidas açucaradas; VI - bens minerais; VII - concursos de
+#   prognósticos e fantasy sport."
+# - Art. 410: "incidirá uma única vez sobre o bem ou serviço, sendo vedado qualquer tipo de
+#   aproveitamento de crédito".
+# - Art. 413: "não incide sobre: [...] II - as operações com energia elétrica e com
+#   telecomunicações; e III - os bens e serviços cujas alíquotas sejam reduzidas nos termos do
+#   § 1º do art. 9º da Emenda Constitucional nº 132". A EC 132, art. 9º (lida no Senado, mesmo
+#   dia), § 1º, é a lista do desconto de 60 %, e o § 9º repete: o Seletivo "não incidirá sobre
+#   os bens ou serviços cujas alíquotas sejam reduzidas nos termos do § 1º deste artigo".
+# - Arts. 419, 421 e 422: as alíquotas de veículos, aeronaves, embarcações e "demais produtos"
+#   "serão estabelecidas em lei ordinária". A LC não fixa número, menos este: art. 422, § 2º
+#   (redação da LC 227/2026): "As alíquotas do Imposto Seletivo respeitarão o percentual máximo
+#   de 0,25% (vinte e cinco centésimos por cento), nas operações com bens minerais extraídos."
+# - Art. 422, § 5º (redação da LC 227/2026): para fumo, bebida alcoólica e bebida açucarada, as
+#   alíquotas "serão fixadas de forma escalonada, de modo a incorporar, a partir de 2029 até
+#   2033, progressivamente, o diferencial entre as alíquotas de ICMS incidentes sobre [esses
+#   produtos] e as alíquotas modais desse imposto".
+# - Art. 420: alíquota zero para o veículo de quem tem o benefício do art. 149 (I, o taxista;
+#   II, a pessoa com deficiência física, visual, auditiva ou mental severa, ou com transtorno do
+#   espectro autista); § 1º: para quem está no inciso II, só o veículo de até
+#   "R$ 200.000,00 (duzentos mil reais)".
+# - Art. 436: "As alíquotas específicas referidas neste Livro serão atualizadas pelo IPCA uma
+#   vez ao ano".
+# - ADCT, art. 126, I, "b": o Seletivo é cobrado "a partir de 2027".
+# Simples Nacional, mesma lei e mesma leitura:
+# - Art. 41, § 2º: "Os contribuintes optantes pelo Simples Nacional ou pelo MEI ficam sujeitos
+#   às regras desses regimes"; § 3º: "poderão exercer a opção de apurar e recolher o IBS e a
+#   CBS pelo regime regular".
+# - Art. 47, § 9º: pagando pelo Simples, "I - não será permitida a apropriação de créditos do
+#   IBS e da CBS pelo optante pelo Simples Nacional; e II - será permitida ao contribuinte
+#   sujeito ao regime regular [...] a apropriação de créditos [...] em montante equivalente ao
+#   devido por meio desse regime".
+# - LC 123/2006, art. 13, §§ 9º e 10 (acrescidos pela LC 227/2026, no texto da LC 214 na
+#   Câmara): a opção pelo regime regular "será exercida para os semestres iniciados em janeiro
+#   e julho de cada ano, sendo irretratável para cada um desses períodos, devendo ser exercida
+#   nos meses de setembro e março imediatamente anteriores a cada semestre".
+SELETIVO_MINERAIS_MAXIMO = 0.25
+"""% máximo do Imposto Seletivo sobre bem mineral extraído (LC 214, art. 422, § 2º)."""
+SELETIVO_VEICULO_PCD_ATE = 200_000.0
+"""R$: até este preço, o carro da pessoa com deficiência não paga o Seletivo (art. 420, § 1º)."""
+SELETIVO_E_SIMPLES: list[Regra] = [
+    Regra(
+        "Seletivo: sobre o quê",
+        "Carros, barcos e aviões; cigarro e outros fumígenos; bebida alcoólica; bebida "
+        "açucarada; minérios extraídos; loterias e apostas de fantasia (fantasy sport).",
+        "LC 214/2025, art. 409, § 1º",
+    ),
+    Regra(
+        "Seletivo: quando",
+        "A partir de 2027, uma vez só na cadeia (de quem fabrica, extrai ou importa), sem "
+        "crédito para a etapa seguinte.",
+        "ADCT, art. 126, I, b; LC 214/2025, arts. 410 e 412",
+    ),
+    Regra(
+        "Seletivo: fora",
+        "Luz e telefone, e o que tem o desconto de 60 % no IBS e na CBS (saúde, educação, "
+        "remédios, alimentos e o resto das listas desse desconto).",
+        "LC 214/2025, art. 413; Emenda Constitucional nº 132/2023, art. 9º, § 9º",
+    ),
+    Regra(
+        "Seletivo: alíquotas",
+        "A lei complementar não fixa: ficam para lei ordinária. O único número dela é o teto "
+        "de 0,25 % para minérios. Os valores em reais por unidade sobem com o IPCA uma vez "
+        "por ano.",
+        "LC 214/2025, arts. 419, 421, 422 e 436",
+    ),
+    Regra(
+        "Seletivo: cigarro e bebida",
+        "De 2029 a 2033, a alíquota sobe aos poucos para cobrir a diferença entre o ICMS que "
+        "esses produtos pagam hoje e o ICMS comum, que acaba.",
+        "LC 214/2025, art. 422, § 5º",
+    ),
+    Regra(
+        "Seletivo: carro sem imposto",
+        "Alíquota zero para o carro de taxista e de pessoa com deficiência ou autismo; para "
+        "estes dois, só até R$ 200 mil.",
+        "LC 214/2025, arts. 149 e 420",
+    ),
+    Regra(
+        "Simples: continua",
+        "A empresa do Simples Nacional e o MEI seguem pagando numa guia só, com o IBS e a CBS "
+        "dentro dela.",
+        "LC 214/2025, art. 41, § 2º",
+    ),
+    Regra(
+        "Simples: crédito de quem compra",
+        "Quem compra de empresa do Simples abate do próprio imposto só o que ela pagou no "
+        "Simples, menos que a alíquota cheia.",
+        "LC 214/2025, art. 47, § 9º",
+    ),
+    Regra(
+        "Simples: pode sair só do IBS e da CBS",
+        "A empresa pode pagar o IBS e a CBS pelas regras gerais e ficar no Simples no resto; "
+        "escolhe a cada semestre, em setembro e em março.",
+        "LC 214/2025, art. 41, § 3º; LC 123/2006, art. 13, §§ 9º e 10",
+    ),
+]
 
 
 # ---- Meta de universalização do saneamento (o Marco Legal do Saneamento).

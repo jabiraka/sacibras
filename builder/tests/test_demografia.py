@@ -9,7 +9,7 @@ from typing import Any
 import openpyxl
 import pytest
 
-from sacibras.fontes import ibge_projecao, ibge_sidra, tesouro_rtn
+from sacibras.fontes import banco_mundial, ibge_projecao, ibge_sidra, onu_wpp, tesouro_rtn
 from sacibras.fontes.ibge_projecao import PlanilhaMudouError, ler_por_ano, ler_quinquenal
 from sacibras.secoes import demografia
 from sacibras.secoes.base import Contexto
@@ -156,6 +156,53 @@ def test_produtividade_tem_100_na_primeira_janela_completa() -> None:
     assert prod["ocupados"][-1][1] == pytest.approx(100.0)
 
 
+def test_por_hora_desconta_as_horas_que_caem() -> None:
+    # PIB sobe 2 % ao ano, os ocupados ficam e as horas por semana caem 1 % ao ano.
+    pib = _trimestres(range(2012, 2015), lambda a, t: 100 * 1.02 ** (a - 2012))
+    ocupados = _trimestres(range(2012, 2015), lambda a, t: 1000.0)
+    horas = _trimestres(range(2012, 2015), lambda a, t: 40 * 0.99 ** (a - 2012))
+    hora = demografia.por_hora(pib, ocupados, horas)
+    assert hora[0] == (date(2012, 10, 1), 100.0)
+    assert hora[-1][1] == pytest.approx(100 * (1.02 / 0.99) ** 2)
+    # Trimestre sem horas fica de fora da janela, em vez de valer zero.
+    assert demografia.por_hora(pib, ocupados, horas[4:])[0][0] == date(2013, 10, 1)
+
+
+def _projecao() -> onu_wpp.Projecao:
+    anos = range(2024, 2101)
+    return onu_wpp.Projecao(
+        mediana={a: 210_000.0 for a in anos},
+        inferior80={a: 200_000.0 - (a - 2024) * 100 for a in anos},
+        superior80={a: 220_000.0 + (a - 2024) * 100 for a in anos},
+        inferior95={a: 190_000.0 for a in anos},
+        superior95={a: 230_000.0 for a in anos},
+    )
+
+
+def test_barras_da_onu_em_milhoes() -> None:
+    barras = demografia.barras_onu(_projecao(), [2030, 2100, 2110])
+    assert barras == [(date(2030, 1, 1), 199.4, 220.6), (date(2100, 1, 1), 192.4, 227.6)]
+
+
+def test_le_a_planilha_da_onu_pelo_codigo_do_pais() -> None:
+    livro = openpyxl.Workbook()
+    livro.remove(livro.active)
+    for k, aba in enumerate(onu_wpp.ABAS.values()):
+        ws = livro.create_sheet(aba)
+        ws.append(["United Nations"])
+        ws.append([None])
+        ws.append(["Index", "Variant", "Region", "Notes", "Location code", "ISO3", 2024, 2025])
+        ws.append([1, aba, "World", "", 900, "", 8e6, 8.1e6])
+        ws.append([2, aba, "Brazil", "", 76, "BRA", 211_000 + k, 212_000 + k])
+    saida = io.BytesIO()
+    livro.save(saida)
+    projecao = onu_wpp.ler_planilha(saida.getvalue())
+    assert projecao.inferior95 == {2024: 211_000, 2025: 212_000}
+    assert projecao.superior95[2025] == 212_004
+    with pytest.raises(onu_wpp.FonteForaDoArError, match="país 32"):
+        onu_wpp.ler_planilha(saida.getvalue(), pais=32)
+
+
 def test_piramide_traz_o_ano_corrente_e_o_contorno() -> None:
     p = demografia.montar_piramide(ler_quinquenal(_quinquenal()), 2026)
     assert p.grupos == ["0 a 4", "5 a 9", "60 a 64", "65 a 69", "90 ou mais"]
@@ -230,6 +277,8 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     def serie(tabela: int, variavel: int, **kw: Any) -> list[Ponto]:
         if tabela == demografia.PIB_VOLUME[0]:
             return _trimestres(range(2012, 2027), lambda a, t: 150 * 1.02 ** (a - 2012))[:-2]
+        if tabela == demografia.HORAS[0]:
+            return _trimestres(range(2012, 2027), lambda a, t: 40.0)
         return [(d, 90_000 * 1.01 ** (d.year - 2012)) for d, _ in _mensal(date(2012, 3, 1), 175, 0)]
 
     monkeypatch.setattr(ibge_sidra, "serie", serie)
@@ -240,6 +289,12 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
             "rgps": _mensal(date(2010, 1, 1), 199, 80_000.0),
             "arrecadacao_rgps": _mensal(date(2010, 1, 1), 199, 55_000.0),
         },
+    )
+    monkeypatch.setattr(onu_wpp, "populacao", _projecao)
+    monkeypatch.setattr(
+        banco_mundial,
+        "series_dos_paises",
+        lambda paises, *a: {p: [(2000, 5.0), (2025, 10.0)] for p in paises},
     )
     c = Contexto(hoje=date(2026, 11, 14))
     c._sgs[("PIB_12M", 30)] = _mensal(date(2010, 1, 1), 199, 12_000_000.0)
@@ -264,6 +319,13 @@ def test_monta_a_secao_com_o_ano_corrente_e_o_inss(ctx: Contexto) -> None:
     assert dependencia.tracejado_desde == date(2023, 1, 1)
     assert dependencia.pontos[-1][0] == date(2070, 1, 1)
     assert "crescimento-decomposto" in graficos and "inss" in graficos
+    onu = graficos["populacao-onu"]
+    assert [s.id for s in onu.series] == ["ibge", "onu"]
+    assert onu.intervalos[0].serie == "onu" and len(onu.intervalos[0].pontos) == 8
+    assert len(graficos["idosos-paises"].series) == 6
+    assert "por-hora" in [s.id for s in graficos["produtividade"].series]
+    hora = next(c for c in secao.cartoes if c.id == "produtividade-hora")
+    assert hora.procedencia == "calculado" and len(hora.detalhe) <= 60
 
     estados = next(t for t in secao.tabelas if t.id == "demografia-estados")
     assert [linha.rotulo for linha in estados.linhas] == ["Brasil", "São Paulo", "Acre"]
@@ -279,3 +341,20 @@ def test_sem_o_rtn_a_secao_sai_sem_o_inss(ctx: Contexto, monkeypatch: pytest.Mon
     secao = demografia.montar(ctx)
     assert "deficit-inss" not in [c.id for c in secao.cartoes]
     assert "inss" not in [g.id for g in secao.graficos]
+
+
+def test_banco_mundial_traduz_o_agregado_sem_codigo_de_tres_letras(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    resposta = [
+        {"page": 1},
+        [
+            {"country": {"id": "XD"}, "countryiso3code": "", "date": "2025", "value": 20.0},
+            {"country": {"id": "XD"}, "countryiso3code": "", "date": "2024", "value": 19.6},
+            {"country": {"id": "BR"}, "countryiso3code": "BRA", "date": "2025", "value": 11.5},
+            {"country": {"id": "BR"}, "countryiso3code": "BRA", "date": "2024", "value": None},
+        ],
+    ]
+    monkeypatch.setattr(banco_mundial, "baixar_json", lambda *a, **k: resposta)
+    series = banco_mundial.series_dos_paises(["BRA", "HIC"], banco_mundial.IDOSOS, 2024, 2025)
+    assert series == {"HIC": [(2024, 19.6), (2025, 20.0)], "BRA": [(2025, 11.5)]}

@@ -113,8 +113,8 @@ TERMOS: list[Termo] = [
         "produtividade",
         "Produtividade",
         "Quanto cada pessoa que trabalha produz, em média. Aqui, o PIB dividido pelo número de "
-        "ocupados. No longo prazo, é o que faz a renda subir.",
-        ("produtividade", "PIB por ocupado", "PIB por pessoa ocupada"),
+        "ocupados ou pelas horas que eles trabalham. No longo prazo, é o que faz a renda subir.",
+        ("produtividade", "PIB por ocupado", "PIB por pessoa ocupada", "PIB por hora trabalhada"),
         "#demografia",
     ),
     Termo(
@@ -985,6 +985,23 @@ TERMOS: list[Termo] = [
         "#impostos/reforma",
     ),
     Termo(
+        "cobranca-no-destino",
+        "Cobrança no destino",
+        "O imposto fica com o estado e o município onde a compra é consumida, e não com os de "
+        "onde a mercadoria saiu. É a regra do IBS; a troca vai de 2029 a 2077.",
+        ("cobrança no destino", "pelo destino"),
+        "#impostos/reforma",
+    ),
+    Termo(
+        "retido-na-fonte",
+        "Imposto retido na fonte",
+        "O Imposto de Renda que a empresa, o INSS ou o banco desconta antes de pagar e repassa "
+        "à Receita. Na declaração, conta como já pago: se passou do devido, volta como "
+        "restituição.",
+        ("retido na fonte", "imposto retido"),
+        "#impostos/quem-paga",
+    ),
+    Termo(
         "iss",
         "ISS",
         "Imposto Sobre Serviços: municipal, cobrado de quem presta serviço.",
@@ -1107,6 +1124,15 @@ TERMOS: list[Termo] = [
         "Fundo de Participação dos Estados: a parte do Imposto de Renda e do IPI que a União "
         "reparte com os estados, mais para os mais pobres.",
         ("FPE",),
+        "#impostos/por-estado",
+    ),
+    Termo(
+        "fpm",
+        "FPM",
+        "Fundo de Participação dos Municípios: a parte do Imposto de Renda e do IPI que a "
+        "União reparte com as prefeituras, com mais peso para as cidades pequenas.",
+        ("FPM",),
+        "#impostos/por-estado",
     ),
     Termo(
         "fundeb",
@@ -1396,6 +1422,31 @@ TERMOS: list[Termo] = [
         "não paga Imposto de Renda sobre eles na declaração.",
         ("lucros e dividendos", "dividendos"),
         "#pobreza/quem-ganha-mais",
+    ),
+    Termo(
+        "patrimonio-declarado",
+        "Patrimônio declarado",
+        "Os bens e direitos que a pessoa lista na declaração do Imposto de Renda: imóveis, "
+        "carros, aplicações, parte em empresas. Em geral vão pelo valor de compra, não pelo de "
+        "mercado.",
+        ("patrimônio declarado", "bens e direitos"),
+        "#pobreza/quem-ganha-mais",
+    ),
+    Termo(
+        "analfabetismo",
+        "Analfabetismo",
+        "A parte das pessoas que não sabem ler e escrever um bilhete simples, pela resposta à "
+        "pesquisa do IBGE.",
+        ("analfabetismo",),
+        "#pobreza/diferencas",
+    ),
+    Termo(
+        "anos-de-estudo",
+        "Anos de estudo",
+        "Quantos anos de escola a pessoa completou, do primeiro ano do fundamental em diante. "
+        "Repetir de ano não conta.",
+        ("anos de estudo",),
+        "#pobreza/diferencas",
     ),
     Termo(
         "fao",

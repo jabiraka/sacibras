@@ -17,7 +17,11 @@ De onde vem cada coisa (tudo conferido em 14/11/2026):
   EBIA): 9552 (por situação do domicílio) e 9751 (por idade).
 - **Ipea (Ipeadata)**: o Gini e a pobreza desde 1995, com a PNAD antiga emendada à
   Contínua (Souza e Hecksher, 2025), e a pobreza por estado (SIS do IBGE).
-- **Receita Federal, Grandes Números do IRPF** (o mesmo arquivo de Impostos › Quem paga).
+- **Receita Federal, Grandes Números do IRPF** (o mesmo arquivo de Impostos › Quem paga) e
+  **Distribuição da Renda por Centis** (as declarações em cem grupos, com o patrimônio).
+- **IBGE, PNAD Contínua anual, educação** (analfabetismo, 7113 e 7125; anos de estudo, 7126),
+  **renda do trabalho por idade e por nível de instrução** (7442 e 7443) e **moradia**
+  (condição de ocupação, 6821). Conferido em 15/11/2026.
 - **Banco Mundial**: o Gini dos outros países e as séries da FAO para o Brasil
   (subalimentação, o critério do Mapa da Fome, e insegurança alimentar grave).
 
@@ -32,7 +36,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from sacibras import leis
-from sacibras.fontes import banco_mundial, ibge_sidra, ipeadata, receita_irpf
+from sacibras.fontes import banco_mundial, ibge_sidra, ipeadata, receita_centis, receita_irpf
 from sacibras.schema import (
     Cartao,
     Dispersao,
@@ -102,6 +106,43 @@ IDADES = {
     "104871": "50 a 64 anos",
     "6798": "65 anos ou mais",
 }
+POR_IDADE = (7442, 10774, "c58/all")
+"""Renda média habitual de todos os trabalhos (R$, preços do último ano) por grupo de idade
+(classificação 58). Conferido pela resposta em 15/11/2026."""
+POR_INSTRUCAO = (7443, 10774, "c1568/all")
+"""O mesmo, por nível de instrução (classificação 1568)."""
+INSTRUCAO = {
+    "18837": "Sem instrução",
+    "11779": "Fundamental incompleto",
+    "11628": "Fundamental completo",
+    "11629": "Médio incompleto",
+    "11630": "Médio completo",
+    "11631": "Superior incompleto",
+    "99713": "Superior completo",
+}
+SEM_INSTRUCAO, FUNDAMENTAL, MEDIO, SUPERIOR = "18837", "11628", "11630", "99713"
+IDADES_RENDA = {
+    "114535": "14 a 17 anos",
+    "33061": "18 a 29 anos",
+    "3299": "30 a 39 anos",
+    "3300": "40 a 49 anos",
+    "3301": "50 a 59 anos",
+    "3302": "60 anos ou mais",
+}
+TODOS_IDADE, TODOS_INSTRUCAO = "95253", "120704"
+ANALFABETISMO = (7113, 10267, "c2/6794/c58/2795,3302")
+"""Taxa de analfabetismo (%) das pessoas de 15 anos ou mais (2795) e de 60 ou mais (3302),
+os dois sexos (classificação 2, 6794)."""
+ANALFABETISMO_COR = (7125, 10267, "c58/2795/c86/2776,119525")
+"""A mesma taxa, 15 anos ou mais, de brancos (2776) e de pretos ou pardos (119525)."""
+ANOS_DE_ESTUDO = (7126, 3593, "c2/6794/c58/108866")
+"""Número médio de anos de estudo das pessoas de 25 anos ou mais (108866)."""
+QUINZE_MAIS, SESSENTA_MAIS, PRETOS_OU_PARDOS = "2795", "3302", "119525"
+MORADIA = (6821, 10117, "c63/all")
+"""% dos moradores por condição de ocupação do domicílio (classificação 63). Os códigos saíram
+tentando cada número de classificação contra a tabela (15/11/2026)."""
+ALUGADO, PROPRIO_PAGANDO, PROPRIO_PAGO, CEDIDO = "1055", "4343", "4342", "2519"
+
 POBREZA_UF = "PNADCA_TXPNUF"
 """Ipea: % das pessoas abaixo de US$ 8,30 por dia, por estado (SIS do IBGE)."""
 
@@ -509,6 +550,12 @@ def montar(ctx: Contexto) -> Secao:
     except Exception as erro:  # a Receita fora do ar não derruba a seção
         topo = None
         avisos.append(f"IRPF: {erro}")
+    try:
+        c_centis, t_centis = topo_por_centis()
+        cartoes += c_centis
+        tabelas += t_centis
+    except Exception as erro:
+        avisos.append(f"centis do IRPF: {erro}")
 
     # ---------------------------------------------------------------- pobreza
     try:
@@ -628,6 +675,15 @@ def montar(ctx: Contexto) -> Secao:
         ),
     ]
 
+    # ---------------------------------------------------------------- escola e idade
+    try:
+        c_esc, g_esc, t_esc = escola_e_renda()
+        cartoes += c_esc
+        graficos += g_esc
+        tabelas += t_esc
+    except Exception as erro:
+        avisos.append(f"escola: {erro}")
+
     # ---------------------------------------------------------------- fome
     fome_grave: list[Ponto] = []
     try:
@@ -647,6 +703,12 @@ def montar(ctx: Contexto) -> Secao:
         tabelas += t_san
     except Exception as erro:
         avisos.append(f"saneamento: {erro}")
+    try:
+        c_casa, g_casa = moradia()
+        cartoes += c_casa
+        graficos += g_casa
+    except Exception as erro:
+        avisos.append(f"moradia: {erro}")
 
     # ---------------------------------------------------------------- estados e países
     try:
@@ -1177,3 +1239,244 @@ def dispersao_paises() -> Grafico:
             pontos=pontos,
         ),
     )
+
+
+def crescimento_real(pontos: list[Ponto]) -> float | None:
+    """Quanto o último valor está acima (ou abaixo) do primeiro, em %."""
+    if len(pontos) < 2 or not pontos[0][1]:
+        return None
+    return round((pontos[-1][1] / pontos[0][1] - 1) * 100, 1)
+
+
+def escola_e_renda() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
+    """Analfabetismo, anos de estudo e a renda do trabalho por nível de instrução e por idade."""
+    analf = _pct(ANALFABETISMO, por="Grupo de idade")
+    analf_cor = _pct(ANALFABETISMO_COR, por="Cor")
+    estudo = ibge_sidra.serie(ANOS_DE_ESTUDO[0], ANOS_DE_ESTUDO[1], classificacao=ANOS_DE_ESTUDO[2])
+    instrucao = _pct(POR_INSTRUCAO, por="Nível")
+    idade = _pct(POR_IDADE, por="Grupo de idade")
+    quinze = analf.get(QUINZE_MAIS, [])
+    superior = instrucao.get(SUPERIOR, [])
+    if not (quinze and superior):
+        raise RuntimeError("SIDRA 7113 ou 7443 sem dados")
+    cartoes = [
+        _cartao_anual(
+            "analfabetismo",
+            "Analfabetismo, 15 anos ou mais",
+            quinze,
+            "% das pessoas",
+            f"{PNADA}, educação (SIDRA 7113)",
+            f"{quinze[0][0].year}: {br(quinze[0][1])} %",
+            1,
+        )
+    ]
+    if estudo:
+        cartoes.append(
+            _cartao_anual(
+                "anos-de-estudo",
+                "Anos de estudo, 25 anos ou mais",
+                estudo,
+                "anos",
+                f"{PNADA}, educação (SIDRA 7126)",
+                f"média; {estudo[0][0].year}: {br(estudo[0][1])}",
+                1,
+            )
+        )
+    razao_sup = razao(superior, instrucao.get(MEDIO, []))
+    if razao_sup:
+        c = _cartao_anual(
+            "superior-medio",
+            "Superior completo, contra médio completo",
+            razao_sup,
+            "vezes",
+            f"{PNADA} (SIDRA 7443); conta nossa",
+            "renda do trabalho com diploma ÷ só com o médio",
+            1,
+        )
+        cartoes.append(c.model_copy(update={"procedencia": "calculado"}))
+    graficos = [
+        grafico(
+            "analfabetismo",
+            "Analfabetismo",
+            [
+                serie("15", "15 anos ou mais", quinze, casas=1),
+                serie("60", "60 anos ou mais", analf.get(SESSENTA_MAIS, []), casas=1),
+                serie("brancos", "Brancos, 15 ou mais", analf_cor.get(BRANCA, []), casas=1),
+                serie(
+                    "pretos-pardos",
+                    "Pretos ou pardos, 15 ou mais",
+                    analf_cor.get(PRETOS_OU_PARDOS, []),
+                    casas=1,
+                ),
+            ],
+            unidade="% das pessoas",
+            periodicidade="A",
+            fonte=f"{PNADA}, educação (SIDRA 7113 e 7125)",
+            nota=(
+                "Quem não sabe ler nem escrever um bilhete simples, pela resposta à pesquisa. "
+                "É bem mais comum entre os mais velhos, que estudaram quando a escola não "
+                "chegava a todos. Em 2020 e 2021 a pesquisa não perguntou sobre educação."
+            ),
+        ),
+        grafico(
+            "renda-escolaridade",
+            "Renda do trabalho por escolaridade",
+            [
+                serie("superior", "Superior completo", superior, casas=0),
+                serie("medio", "Médio completo", instrucao.get(MEDIO, []), casas=0),
+                serie(
+                    "fundamental", "Fundamental completo", instrucao.get(FUNDAMENTAL, []), casas=0
+                ),
+                serie("sem", "Sem instrução", instrucao.get(SEM_INSTRUCAO, []), casas=0),
+            ],
+            unidade="R$ por mês",
+            casas=0,
+            periodicidade="A",
+            fonte=f"{PNADA} (SIDRA 7443)",
+            nota=(
+                "Rendimento médio habitual de todos os trabalhos das pessoas ocupadas de 14 "
+                "anos ou mais, a preços do último ano, pelo nível de instrução mais alto que a "
+                "pessoa concluiu. Compara médias: quem tem diploma também é, em média, mais "
+                "velho, mora mais em cidade grande e trabalha em outros setores."
+            ),
+        ),
+    ]
+    ultimo = superior[-1][0]
+    media = dict(instrucao.get(TODOS_INSTRUCAO, [])).get(ultimo)
+
+    def linha(rotulo: str, pontos: list[Ponto]) -> LinhaTabela:
+        valor = dict(pontos).get(ultimo)
+        return LinhaTabela(
+            rotulo=rotulo,
+            valores=[
+                valor,
+                None if valor is None or not media else round(valor / media * 100, 0),
+                crescimento_real(pontos),
+            ],
+            unidade="",
+            casas=0,
+        )
+
+    inicio = superior[0][0].year
+    tabela = Tabela(
+        id="pobreza-escola-idade",
+        titulo="Renda do trabalho por escolaridade e idade",
+        subtitulo=f"{ultimo.year}; a média de todos é 100",
+        colunas=[f"R$ por mês ({ultimo.year})", "contra a média", f"real desde {inicio}, %"],
+        linhas=[
+            *(linha(nome, instrucao.get(cod, [])) for cod, nome in INSTRUCAO.items()),
+            *(linha(nome, idade.get(cod, [])) for cod, nome in IDADES_RENDA.items()),
+        ],
+        fonte=f"{PNADA} (SIDRA 7443 e 7442); a média e o crescimento: conta nossa",
+        nota=(
+            "Rendimento médio habitual de todos os trabalhos, das pessoas ocupadas de 14 anos "
+            "ou mais, a preços do último ano. As primeiras linhas são pelo nível de instrução "
+            "mais alto concluído; as outras, por idade."
+        ),
+    )
+    return cartoes, graficos, [tabela]
+
+
+def moradia() -> tuple[list[Cartao], list[Grafico]]:
+    """Quem mora de aluguel, em casa própria ainda pagando ou em casa cedida."""
+    condicao = _pct(MORADIA, por="Condição")
+    aluguel = condicao.get(ALUGADO, [])
+    if not aluguel:
+        raise RuntimeError("SIDRA 6821 sem o aluguel")
+    fonte = f"{PNADA}, características dos domicílios (SIDRA 6821)"
+    pago = condicao.get(PROPRIO_PAGO, [])
+    cartao_aluguel = _cartao_anual(
+        "aluguel",
+        "Moram de aluguel",
+        aluguel,
+        "% das pessoas",
+        fonte,
+        f"{aluguel[0][0].year}: {br(aluguel[0][1])} %",
+        1,
+    )
+    graf = grafico(
+        "moradia",
+        "Aluguel, casa própria e casa cedida",
+        [
+            serie("aluguel", "De aluguel", aluguel, casas=1),
+            serie("pagando", "Própria, ainda pagando", condicao.get(PROPRIO_PAGANDO, []), casas=1),
+            serie("cedida", "Cedida", condicao.get(CEDIDO, []), casas=1),
+        ],
+        unidade="% das pessoas",
+        periodicidade="A",
+        fonte=fonte,
+        nota=(
+            (
+                f"Parte dos moradores pela condição da casa onde moram. O resto ({br(pago[-1][1])}"
+                f" % em {pago[-1][0].year}) mora em casa própria já paga. "
+                if pago
+                else "Parte dos moradores pela condição da casa onde moram. "
+            )
+            + "Cedida: emprestada por parente, patrão ou outro, sem aluguel. Em 2020 e 2021 a "
+            "pesquisa não perguntou sobre a casa. O déficit habitacional da Fundação João "
+            "Pinheiro fica de fora: o site dela não abre daqui e as edições não saem todo ano."
+        ),
+    )
+    return [cartao_aluguel], [graf]
+
+
+def topo_por_centis() -> tuple[list[Cartao], list[Tabela]]:
+    """O topo pelas declarações em cem grupos: renda, patrimônio e imposto de cada grupo."""
+    ano, centis = receita_centis.mais_novo()
+    grupos = receita_centis.agrupar(centis)
+    tot = receita_centis.total(centis)
+    um = next(g for g in grupos if g.nome.startswith("1 %"))
+    if not (tot.renda and tot.bens):
+        raise RuntimeError("centis do IRPF sem renda ou sem bens")
+    fonte = f"{receita_centis.FONTE}, ano-calendário {ano} (tabela V); as fatias: conta nossa"
+
+    def media(g: receita_centis.Grupo) -> float:
+        """Renda média por declarante, em R$ mil por ano."""
+        return g.renda / g.declarantes / 1e3 if g.declarantes else 0.0
+
+    cartao_bens = Cartao(
+        id="irpf-1-patrimonio",
+        rotulo="Patrimônio declarado do 1 % de cima",
+        valor=round(um.bens / tot.bens * 100, 2),
+        unidade="% do patrimônio",
+        casas=1,
+        referencia=date(ano, 1, 1),
+        periodicidade="A",
+        detalhe=f"e {br(um.renda / tot.renda * 100)} % da renda declarada",
+        fonte=fonte,
+        procedencia="calculado",
+        secao="pobreza",
+    )
+    tabela = Tabela(
+        id="pobreza-centis",
+        titulo="Renda e patrimônio de quem declara, do pé ao topo",
+        subtitulo=f"declarações de {ano + 1}, renda de {ano}; as pessoas em fila pela renda",
+        colunas=["% da renda", "% do patrimônio", "imposto, % da renda"],
+        linhas=[
+            LinhaTabela(
+                rotulo=g.nome,
+                valores=[
+                    round(g.renda / tot.renda * 100, 1),
+                    round(g.bens / tot.bens * 100, 1),
+                    round(g.imposto / g.renda * 100, 1) if g.renda else None,
+                ],
+                unidade="",
+                casas=1,
+            )
+            for g in grupos
+        ],
+        fonte=fonte,
+        nota=(
+            f"Só quem declarou ({br(tot.declarantes / 1e6)} milhões de pessoas), em fila pela "
+            "renda tributável, isenta e de tributação exclusiva somadas, sem heranças e "
+            "doações. Patrimônio é o total de bens e direitos declarados no fim do ano "
+            f"(R$ {br(tot.bens / 1e12)} tri), sem descontar as dívidas; imóveis e carros entram "
+            "pelo valor de compra, não pelo de mercado. O imposto é o da declaração: falta o "
+            "retido sobre aplicações e outros rendimentos de tributação exclusiva. As três "
+            "primeiras linhas somam todos; as de baixo estão dentro dos 10 % de cima. Renda "
+            f"média por ano: R$ {br(media(grupos[0]), 0)} mil na metade de baixo, "
+            f"R$ {br(media(um) / 1e3, 1)} milhões no 1 % de cima e "
+            f"R$ {br(media(grupos[-1]) / 1e3, 0)} milhões no 0,01 % de cima."
+        ),
+    )
+    return [cartao_bens], [tabela]

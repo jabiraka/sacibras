@@ -7,9 +7,16 @@ import openpyxl
 import pytest
 
 from sacibras import leis, relatorios
-from sacibras.fontes import ocde_receita, receita_arrecadacao, receita_gastos, receita_irpf
+from sacibras.fontes import (
+    ocde_receita,
+    receita_arrecadacao,
+    receita_gastos,
+    receita_irpf,
+    tesouro_transferencias,
+)
 from sacibras.rede import FonteForaDoArError
 from sacibras.secoes import impostos
+from sacibras.secoes.base import Contexto
 
 CABECALHO = (
     "Ano;Mês;UF;IMPOSTO SOBRE IMPORTAÇÃO;IRPF;IRRF - RENDIMENTOS DO TRABALHO;"
@@ -247,3 +254,73 @@ def test_previsto_e_divida_ativa_tem_o_que_a_tela_usa() -> None:
     assert {r.rtn for r in relatorios.RECEITA_PREVISTA} == {"receita_rfb", "arrecadacao_rgps"}
     assert all(r.loa > 0 and r.avaliacao > 0 for r in relatorios.RECEITA_PREVISTA)
     assert set(relatorios.DIVIDA_ATIVA_RECUPERADO) <= set(relatorios.DIVIDA_ATIVA_ESTOQUE)
+
+
+# ------------------------------------------------------------------ FPE, FPM, retido, reforma
+
+
+def _csv_transferencias(linhas: list[str], municipio: bool = False) -> bytes:
+    cab = "UF;ANO;Mês;1º Decêndio;2º Decêndio;3º Decêndio;Item transferência;Transferência;"
+    if municipio:
+        cab = "Município;" + cab
+    return "\r\n".join([cab, *linhas]).encode("latin-1")
+
+
+def test_transferencias_somam_os_decendios_so_das_linhas_pedidas() -> None:
+    corpo = _csv_transferencias(
+        [
+            "AC;2026;09;10.5;20;30;FPE;FPE;",
+            "AC;2026;09;1;1;1;FPE;FUNDEB;",
+            "AC;2026;08;5;0;0;FPE;FPE;",
+            "AL;2026;09;0;0;;FPE;FPE;",
+        ]
+    )
+    lido = tesouro_transferencias.ler_csv(corpo, {("FPE", "FPE")})
+    assert lido == {
+        "AC": {date(2026, 9, 1): 60.5, date(2026, 8, 1): 5.0},
+        "AL": {date(2026, 9, 1): 0.0},
+    }
+    municipios = _csv_transferencias(
+        [
+            "Acrelândia;AC;2026;09;1;2;3;FPM;FPM;",
+            "Bujari;AC;2026;09;4;0;0;FPM 1%;FPM 1%;",
+            "Bujari;AC;2026;09;9;9;9;ITR;ITR;",
+        ],
+        municipio=True,
+    )
+    fpm = tesouro_transferencias.ler_csv(municipios, {("FPM", "FPM"), ("FPM 1%", "FPM 1%")})
+    assert fpm == {"AC": {date(2026, 9, 1): 10.0}}
+
+
+def test_transferencias_doze_meses_ate_o_mes_que_todos_tem() -> None:
+    por_uf = {
+        "AC": {date(2025, m, 1): 1.0 for m in range(1, 13)} | {date(2026, 1, 1): 1.0},
+        "AL": {date(2025, m, 1): 2.0 for m in range(1, 13)},
+    }
+    soma, ate = tesouro_transferencias.doze_meses(por_uf)
+    assert ate == date(2025, 12, 1)
+    assert soma == {"AC": 12.0, "AL": 24.0}
+
+
+def test_irpf_le_o_imposto_pago_antes_e_o_acerto() -> None:
+    faixa = receita_irpf.Faixa("De 5 a 7", tributavel=100.0, imposto=8.0, pago=10.0)
+    faixa.a_restituir = 2.0
+    assert faixa.aliquota == pytest.approx(8.0)
+    assert {"pago", "a_pagar", "a_restituir"} <= set(receita_irpf.COLUNAS)
+
+
+def test_ibs_vai_para_o_destino_pela_conta_do_adct() -> None:
+    retido = leis.IBS_PELA_RECEITA_ANTIGA
+    assert [retido[a] for a in (2029, 2032, 2033, 2034)] == [80.0, 80.0, 90.0, 88.0]
+    assert retido[2077] == pytest.approx(2.0)
+    assert min(retido) == 2029 and max(retido) == 2077
+    _, graficos, tabelas, _ = impostos._reforma_regras(Contexto())
+    destino = next(g for g in graficos if g.id == "reforma-destino")
+    for k in range(len(destino.series[0].pontos)):
+        total = sum(s.pontos[k][1] or 0 for s in destino.series)
+        assert total == pytest.approx(100.0, abs=0.2)  # cada parte arredondada em uma casa
+    seguro = next(s for s in destino.series if s.id == "seguro")
+    assert seguro.pontos[0][1] == pytest.approx(1.0)  # 5 % dos 20 % que sobram em 2029
+    regras = tabelas[0]
+    assert all(len(li.textos) == 2 and li.textos[1] for li in regras.linhas)
+    assert any("0,25 %" in li.textos[0] for li in regras.linhas)
