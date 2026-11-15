@@ -34,6 +34,10 @@ export interface Grafico {
   }[];
   linhas: { valor: number; rotulo: string }[];
   marcas_y?: { valor: number; rotulo: string }[];
+  /** "meses": o eixo conta meses de uma marca (jan/2000 é o mês 0), não datas. */
+  eixo?: "tempo" | "meses";
+  /** No eixo "meses", o nome do mês zero. */
+  marco?: string;
   janela_anos: number | null;
   fonte: string;
   nota: string;
@@ -190,6 +194,14 @@ export interface Subcategoria {
   graficos: string[];
   tabelas: string[];
   extras: ("simulador" | "simulador-selic" | "simulador-reforma" | "alertas")[];
+  /** Atalhos para partes de outros assuntos ("Veja também"). */
+  veja?: Elo[];
+}
+
+export interface Elo {
+  endereco: string;
+  titulo: string;
+  resumo: string;
 }
 
 export interface Secao {

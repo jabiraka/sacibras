@@ -26,6 +26,32 @@ interface Tema {
 
 const DIA = 86400000;
 
+/** No eixo "meses", o mês k desde a marca (jan/2000 é o 0; o builder escreve assim). */
+function mesRelativo(iso: string): number {
+  const d = data(iso);
+  return (d.getUTCFullYear() - 2000) * 12 + d.getUTCMonth();
+}
+
+/** O rótulo de um ponto: o período, ou "mês k" quando o eixo conta meses de uma marca. */
+function rotuloX(g: Grafico, iso: string): string {
+  if (g.eixo !== "meses") return periodo(iso, g.periodicidade);
+  const k = mesRelativo(iso);
+  if (k === 0) return g.marco || "mês 0";
+  return k > 0 ? `${k} ${k === 1 ? "mês" : "meses"} depois` : `${-k} ${k === -1 ? "mês" : "meses"} antes`;
+}
+
+/** Marcas do eixo "meses": de 6 em 6 ou de 12 em 12, sempre com o zero. */
+function marcasDeMeses(xMin: number, xMax: number, quantas: number): Date[] {
+  const k0 = mesRelativo(new Date(xMin).toISOString().slice(0, 10));
+  const k1 = mesRelativo(new Date(xMax).toISOString().slice(0, 10));
+  const passo = [3, 6, 12, 24].find((p) => (k1 - k0) / p <= quantas) ?? 24;
+  const marcas: Date[] = [];
+  for (let k = Math.ceil(k0 / passo) * passo; k <= k1; k += passo) {
+    marcas.push(new Date(Date.UTC(2000 + Math.floor(k / 12), ((k % 12) + 12) % 12, 1)));
+  }
+  return marcas;
+}
+
 export function tema(): Tema {
   const css = getComputedStyle(document.documentElement);
   const v = (nome: string) => css.getPropertyValue(nome).trim();
@@ -99,7 +125,7 @@ function anosProjetados(g: Grafico): number {
 }
 
 function janelas(g: Grafico): { rotulo: string; anos: number | null }[] {
-  if (g.tipo === "curva") return [];
+  if (g.tipo === "curva" || g.eixo === "meses") return [];
   // Projeção longa (a da população vai até 2070): o gráfico é a trajetória inteira, e uma
   // janela contada do fim mostraria só o futuro.
   if (anosProjetados(g) > 10) return [];
@@ -326,6 +352,16 @@ export function montarGrafico(g: Grafico): HTMLElement {
     // A linha de referência (meta, média, limite) vai pontilhada e o nome dela fica na
     // legenda: escrito no desenho, ele se misturava com as séries e cortava no celular
     // (Caio, 14/11/2026).
+    if (g.eixo === "meses") {
+      // O zero (o mês do primeiro corte) marcado como a linha de referência.
+      marcas.push(
+        Plot.ruleX([new Date(Date.UTC(2000, 0, 1))], {
+          stroke: t.tinta2,
+          strokeDasharray: "2,4",
+          strokeWidth: 1.2,
+        }),
+      );
+    }
     for (const linha of g.linhas) {
       marcas.push(
         Plot.ruleY([linha.valor], { stroke: t.tinta2, strokeDasharray: "2,4", strokeWidth: 1.2 }),
@@ -455,15 +491,22 @@ export function montarGrafico(g: Grafico): HTMLElement {
         type: "utc",
         label: null,
         // Quantos rótulos cabem: um ano ("2024") pede uns 52 px; um mês ("out/26"), uns 66.
-        ticks: marcasDoEixo(
-          xMin,
-          xMax,
-          Math.max(3, Math.floor((largura - 60) / ((xMax - xMin) / DIA > 800 ? 52 : 66))),
-        ),
+        ticks:
+          g.eixo === "meses"
+            ? marcasDeMeses(xMin, xMax, Math.max(3, Math.floor((largura - 60) / 40)))
+            : marcasDoEixo(
+                xMin,
+                xMax,
+                Math.max(3, Math.floor((largura - 60) / ((xMax - xMin) / DIA > 800 ? 52 : 66))),
+              ),
         tickSize: 0,
         tickPadding: 8,
         line: false,
         tickFormat: (d: Date) => {
+          if (g.eixo === "meses") {
+            const k = (d.getUTCFullYear() - 2000) * 12 + d.getUTCMonth();
+            return k > 0 ? `+${k}` : String(k).replace("-", "−");
+          }
           if (dias > 800) return String(d.getUTCFullYear());
           if (dias > 100) {
             return d.getUTCMonth() === 0
@@ -656,7 +699,7 @@ function pairar(
       }
     });
     if (!linhas.length) return;
-    dica.replaceChildren(el("div", "dica-data", periodo(iso, g.periodicidade)), ...linhas);
+    dica.replaceChildren(el("div", "dica-data", rotuloX(g, iso)), ...linhas);
     dica.hidden = false;
     camada.style.display = "";
     const larguraTela = tela.clientWidth;
@@ -700,14 +743,15 @@ function descricao(g: Grafico): string {
     const validos = s.pontos.filter((p) => p[1] !== null);
     const u = validos[validos.length - 1];
     if (!u || u[1] === null) return s.nome;
-    return `${s.nome}: ${comUnidade(u[1], g.unidade, g.casas)} em ${periodo(u[0], g.periodicidade)}`;
+    return `${s.nome}: ${comUnidade(u[1], g.unidade, g.casas)} em ${rotuloX(g, u[0])}`;
   });
   return `${g.titulo}. ${partes.join("; ")}. Fonte: ${g.fonte}.`;
 }
 
 function matriz(g: Grafico): { isos: string[]; colunas: Map<string, number | null>[] } {
   const colunas = g.series.map((s) => new Map(s.pontos));
-  const isos = [...new Set(g.series.flatMap((s) => s.pontos.map((p) => p[0])))].sort().reverse();
+  const isos = [...new Set(g.series.flatMap((s) => s.pontos.map((p) => p[0])))].sort();
+  if (g.eixo !== "meses") isos.reverse();
   return { isos, colunas };
 }
 
@@ -720,7 +764,7 @@ function tabelaDoGrafico(g: Grafico): HTMLTableElement {
   const corpo = tabela.createTBody();
   for (const iso of isos) {
     const linha = corpo.insertRow();
-    linha.append(el("th", "", periodo(iso, g.periodicidade)));
+    linha.append(el("th", "", rotuloX(g, iso)));
     for (const c of colunas) {
       const v = c.get(iso);
       linha.append(el("td", "", v === null || v === undefined ? "–" : numero(v, g.casas)));
@@ -733,13 +777,15 @@ function tabelaDoGrafico(g: Grafico): HTMLTableElement {
 function baixarCsv(g: Grafico): void {
   const { isos, colunas } = matriz(g);
   const aspas = (s: string) => `"${s.replaceAll('"', '""')}"`;
-  const linhas = [["data", ...g.series.map((s) => s.nome)].map(aspas).join(";")];
+  const meses = g.eixo === "meses";
+  const cabeca = meses ? "meses desde o primeiro corte" : "data";
+  const linhas = [[cabeca, ...g.series.map((s) => s.nome)].map(aspas).join(";")];
   for (const iso of isos) {
     const valores = colunas.map((c) => {
       const v = c.get(iso);
       return v === null || v === undefined ? "" : String(v).replace(".", ",");
     });
-    linhas.push([iso, ...valores].join(";"));
+    linhas.push([meses ? String(mesRelativo(iso)) : iso, ...valores].join(";"));
   }
   linhas.push("", aspas(`Unidade: ${g.unidade}`), aspas(`Fonte: ${g.fonte}`));
   const blob = new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" });

@@ -3244,3 +3244,8 @@ html.sem-rolagem {
   justify-content: center;
   align-items: center;
 }
+
+/* "Veja também": atalhos para partes de outros assuntos (o efeito da Selic). */
+.partes.veja {
+  margin-top: 34px;
+}

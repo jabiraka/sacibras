@@ -669,6 +669,73 @@ def _arredondar(valores: list[float | None], casas: int) -> list[float | None]:
     return [None if v is None else round(v, casas) for v in valores]
 
 
+CICLOS_NO_GRAFICO = 6
+"""Os últimos ciclos de corte no gráfico alinhado: um por cor da paleta."""
+
+
+def _ciclos_alinhados(ctx: Contexto) -> list[Grafico]:
+    """A Selic e o IPCA de cada ciclo de corte, com o mês do primeiro corte no zero."""
+    meta = ctx.sgs("SELIC_META", anos=24)
+    ipca12 = ctx.sgs("IPCA_12M", anos=24)
+    cortes = [
+        c
+        for c in modelo_selic.ciclos(meta)
+        if c.sentido == "corte" and c.inicio.year >= PRIMEIRO_ANO_DOS_CICLOS
+    ][-CICLOS_NO_GRAFICO:]
+    if not cortes:
+        return []
+    selic_mensal = modelo_selic.fim_do_mes(meta)
+    antes, depois = 6, 36
+    fonte = f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M')}; cálculo próprio"
+    como_ler = (
+        "Cada linha é um ciclo de corte, com o mês do primeiro corte no zero: à esquerda, os "
+        "seis meses antes; à direita, até três anos depois. É o que aconteceu, não o que a "
+        "Selic causou (o Copom corta quando espera inflação em queda)."
+    )
+    nomes = {c.inicio: f"{c.rotulo} (de {_br(c.selic_antes, 2)} %)" for c in cortes}
+    return [
+        grafico(
+            "selic-ciclos-alinhados",
+            "Selic em cada ciclo de corte, do primeiro corte em diante",
+            [
+                serie(
+                    f"c{c.inicio.year}",
+                    nomes[c.inicio],
+                    modelo_selic.alinhado(selic_mensal, c.inicio, antes, depois),
+                )
+                for c in cortes
+            ],
+            tipo="degrau",
+            eixo="meses",
+            marco="mês do primeiro corte",
+            unidade="% a.a., no fim do mês",
+            casas=2,
+            periodicidade="M",
+            fonte=fonte,
+            nota=como_ler,
+        ),
+        grafico(
+            "ipca-ciclos-alinhados",
+            "IPCA em 12 meses em cada ciclo de corte da Selic",
+            [
+                serie(
+                    f"c{c.inicio.year}",
+                    nomes[c.inicio],
+                    modelo_selic.alinhado(ipca12, c.inicio, antes, depois),
+                )
+                for c in cortes
+            ],
+            eixo="meses",
+            marco="mês do primeiro corte",
+            unidade="% em 12 meses",
+            casas=1,
+            periodicidade="M",
+            fonte=fonte,
+            nota=como_ler,
+        ),
+    ]
+
+
 def _ciclos_da_selic(ctx: Contexto) -> list[Tabela]:
     """O que veio depois de cada ciclo de corte e de alta, desde 2003: o fato, não o efeito."""
     # De 2003 em diante, como a amostra dos modelos do BC (o boxe deixa de fora o começo do
@@ -1177,6 +1244,11 @@ def montar(ctx: Contexto) -> Secao:
         tabelas.extend(_ciclos_da_selic(ctx))
     except Exception as erro:
         print(f"    ciclos da Selic ficaram de fora: {str(erro)[:120]}")
+    ciclos_alinhados: list[Grafico] = []
+    try:
+        ciclos_alinhados = _ciclos_alinhados(ctx)
+    except Exception as erro:
+        print(f"    ciclos alinhados ficaram de fora: {str(erro)[:120]}")
     if usar_b3():
         try:
             cartoes_di, graficos_b3, embutida = _curva_di(ctx, meta[-1][1])
@@ -1221,6 +1293,7 @@ def montar(ctx: Contexto) -> Secao:
             largura="inteira",
         ),
         *graficos_di,
+        *ciclos_alinhados,
         grafico(
             "juro-real",
             "Juro real: Selic descontada da inflação",

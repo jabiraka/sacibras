@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from sacibras.schema import Categoria, Secao, Subcategoria
+from sacibras.schema import Categoria, Elo, Secao, Subcategoria
 
 Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]
 
@@ -51,8 +51,10 @@ class Parte:
     graficos: list[str] = field(default_factory=list)
     tabelas: list[str] = field(default_factory=list)
     extras: list[Extra] = field(default_factory=list)
+    veja: list[Elo] = field(default_factory=list)
 
 
+EFEITO_DA_SELIC = "#juros/efeito"
 # Ids de parte não podem começar como os de peça (c-, g-, t-, m-, p-, uf-): o endereço
 # "#assunto/x" é parte ou peça.
 PARTES: dict[str, list[Parte]] = {
@@ -60,9 +62,9 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "pib",
             "PIB",
-            "O crescimento a cada trimestre e pela demanda: consumo, investimento e exterior.",
-            cartoes=["pib-tt", "pib-4t"],
-            graficos=["pib-trimestral", "pib-demanda"],
+            "O crescimento a cada trimestre, pela demanda, pela oferta e o gasto privado.",
+            cartoes=["pib-tt", "pib-4t", "demanda-privada"],
+            graficos=["pib-trimestral", "pib-demanda", "pib-oferta", "demanda-privada"],
             tabelas=["pib-componentes"],
         ),
         Parte(
@@ -208,6 +210,13 @@ PARTES: dict[str, list[Parte]] = {
             "A inflação oficial em 12 meses e no mês, contra a meta.",
             cartoes=["ipca-12m", "ipca-mes"],
             graficos=["ipca-12m", "ipca-mensal"],
+            veja=[
+                Elo(
+                    endereco=EFEITO_DA_SELIC,
+                    titulo="Efeito da Selic",
+                    resumo="Quanto a inflação muda com 1 ponto de Selic, nas contas do BC.",
+                )
+            ],
         ),
         Parte(
             "nucleos",
@@ -246,6 +255,7 @@ PARTES: dict[str, list[Parte]] = {
             "Efeito da Selic",
             "O que muda na inflação, no dólar e na dívida quando a Selic cai ou sobe.",
             cartoes=["selic-efeito-ipca", "selic-efeito-dolar", "selic-efeito-divida"],
+            graficos=["selic-ciclos-alinhados", "ipca-ciclos-alinhados"],
             tabelas=["selic-contas-bc", "selic-ciclos-corte", "selic-ciclos-alta"],
             extras=["simulador-selic"],
         ),
@@ -382,6 +392,13 @@ PARTES: dict[str, list[Parte]] = {
             "Dívida bruta e líquida, o que o mercado projeta e de que ela é feita.",
             cartoes=["dbgg", "dlsp", "divida-selic"],
             graficos=["divida", "divida-indexador"],
+            veja=[
+                Elo(
+                    endereco=EFEITO_DA_SELIC,
+                    titulo="Efeito da Selic",
+                    resumo="Quanto a dívida muda com 1 ponto de Selic, nas contas do BC.",
+                )
+            ],
         ),
         Parte(
             "resultado",
@@ -622,7 +639,10 @@ def aplicar(secao: Secao) -> list[str]:
                     titulo=p.titulo,
                     resumo=p.resumo,
                     extras=extras,
-                    **listas,
+                    veja=p.veja,
+                    cartoes=listas["cartoes"],
+                    graficos=listas["graficos"],
+                    tabelas=listas["tabelas"],
                 )
             )
     sobra = {k: [i for i in tem[k] if i not in usados[k]] for k in tem}
@@ -634,7 +654,9 @@ def aplicar(secao: Secao) -> list[str]:
                 titulo="Outros",
                 resumo="O que ainda não ganhou lugar nas outras partes.",
                 extras=extras_sobrando,
-                **sobra,
+                cartoes=sobra["cartoes"],
+                graficos=sobra["graficos"],
+                tabelas=sobra["tabelas"],
             )
         )
     secao.subcategorias = subcategorias

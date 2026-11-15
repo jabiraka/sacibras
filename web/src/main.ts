@@ -611,6 +611,28 @@ function listaDePartes(id: string, titulo: string, partes: Subcategoria[]): HTML
   return bloco;
 }
 
+/** Atalhos para partes de outros assuntos que tratam do mesmo (o efeito da Selic na
+ * inflação e na dívida). */
+function vejaTambem(p: Subcategoria): HTMLElement | null {
+  if (!p.veja?.length) return null;
+  const bloco = el("section", "partes veja");
+  bloco.append(el("h3", "partes-titulo", "Veja também"));
+  const lista = el("ul", "partes-lista");
+  for (const elo of p.veja) {
+    const li = el("li");
+    const a = el("a", "vidro parte");
+    a.href = elo.endereco;
+    const nome = el("span", "parte-titulo", elo.titulo);
+    nome.append(el("span", "seta", "→"));
+    a.append(nome);
+    if (elo.resumo) a.append(el("span", "parte-resumo", elo.resumo));
+    li.append(a);
+    lista.append(li);
+  }
+  bloco.append(lista);
+  return bloco;
+}
+
 /** Embaixo de uma parte: a visão geral e as vizinhas. */
 function outrasPartes(id: string, titulo: string, partes: Subcategoria[], atual: string): HTMLElement {
   const outras = el("nav", "outras-partes");
@@ -713,6 +735,8 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
         corpo.classList.add("parte-corpo");
         if (parte.resumo) corpo.append(el("p", "secao-resumo", parte.resumo));
         montarParte(s, parte, corpo);
+        const veja = vejaTambem(parte);
+        if (veja) corpo.append(veja);
         corpo.append(outrasPartes(id, item.titulo, partes, parte.id));
         return;
       }

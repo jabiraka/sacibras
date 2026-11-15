@@ -85,6 +85,23 @@ TERMOS: list[Termo] = [
         "#atividade/investimento",
     ),
     Termo(
+        "demanda-privada",
+        "Demanda privada",
+        "O consumo das famílias somado ao investimento (FBCF): o que famílias e empresas gastam "
+        "dentro do país, sem o governo, os estoques e o exterior. Varia menos que o PIB e "
+        "mostra melhor a força da economia.",
+        ("demanda privada",),
+        "#atividade/pib",
+    ),
+    Termo(
+        "pib-oferta",
+        "PIB pela oferta",
+        "O PIB visto por quem produz: agropecuária, indústria e serviços. Pela demanda, é o "
+        "mesmo PIB visto por quem gasta: famílias, empresas, governo e exterior.",
+        ("PIB pela oferta", "pela oferta"),
+        "#atividade/pib",
+    ),
+    Termo(
         "poupanca-pib",
         "Taxa de poupança",
         "A parte da renda do país que não vira consumo, em proporção do PIB. Se o país investe "

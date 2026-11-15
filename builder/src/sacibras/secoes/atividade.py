@@ -27,6 +27,40 @@ FONTE_PIB = "IBGE, Contas Nacionais Trimestrais (SIDRA 5932)"
 # PIB, SIDRA 6726, variável 9774), em % no trimestre, a preços correntes. Conferidas na API do
 # SIDRA em 14/11/2026: 16,1 % e 16,6 % no 2º tri/2026. Do Econvitals (saving rate).
 FONTE_INVESTIMENTO = "IBGE, Contas Nacionais Trimestrais (SIDRA 6727 e 6726)"
+# Valores a preços correntes (SIDRA 1846, variável 585, R$ milhões), para pesar consumo e
+# investimento na demanda privada. Conferido na API do SIDRA em 15/11/2026: consumo das
+# famílias R$ 2.112.893 mi e FBCF R$ 552.092 mi no 2º tri/2026.
+FONTE_DEMANDA_PRIVADA = "IBGE, Contas Nacionais Trimestrais (SIDRA 5932 e 1846); conta nossa"
+NOTA_DEMANDA_PRIVADA = (
+    "Demanda privada é o consumo das famílias somado ao investimento (FBCF), sem governo, "
+    "estoques e exterior: mostra a força do gasto de famílias e empresas. Conta nossa: a "
+    "variação em um ano de cada parte, pesada pelo tamanho dela em reais no mesmo trimestre "
+    'do ano anterior (preços correntes do IBGE). É a ideia da "real final sales to private '
+    'domestic purchasers" que o Econvitals mostra para os EUA.'
+)
+
+
+def demanda_privada(
+    consumo: list[Ponto],
+    investimento: list[Ponto],
+    consumo_reais: list[Ponto],
+    investimento_reais: list[Ponto],
+) -> list[Ponto]:
+    """Variação em um ano (%) de consumo das famílias + investimento.
+
+    Cada parte entra com a variação em volume dela contra o mesmo trimestre do ano anterior,
+    pesada pelo valor em reais correntes dela naquele trimestre (a base da comparação).
+    """
+    c, i = dict(consumo), dict(investimento)
+    cr, ir = dict(consumo_reais), dict(investimento_reais)
+    saida: list[Ponto] = []
+    for d in sorted(set(c) & set(i)):
+        base = date(d.year - 1, d.month, d.day)
+        if base not in cr or base not in ir:
+            continue
+        peso_c, peso_i = cr[base], ir[base]
+        saida.append((d, (peso_c * c[d] + peso_i * i[d]) / (peso_c + peso_i)))
+    return saida
 
 
 def _investimento_e_poupanca(investimento: list[Ponto], poupanca: list[Ponto]) -> list[Cartao]:
@@ -65,6 +99,12 @@ def montar(ctx: Contexto) -> Secao:
         5932, 6561, classificacao=f"c11255/{cats}", por="Setores", trimestral=True
     )
     pib_4t = ibge_sidra.series(5932, 6562, classificacao="c11255/90707", trimestral=True)[""]
+    em_reais = ibge_sidra.series(
+        1846, 585, classificacao="c11255/93404,93406", por="Setores", trimestral=True
+    )
+    privada = demanda_privada(
+        pib_aa["93404"], pib_aa["93406"], em_reais["93404"], em_reais["93406"]
+    )
     tt, aa = pib_tt["90707"], pib_aa["90707"]
     ctx.memo["pib_aa"] = aa
     ctx.memo["pib_4t"] = pib_4t
@@ -109,6 +149,19 @@ def montar(ctx: Contexto) -> Secao:
             fonte=FONTE_PIB,
             secao="atividade",
             mini=24,
+        ),
+        cartao(
+            "demanda-privada",
+            "Demanda privada, em um ano",
+            privada,
+            unidade="%",
+            periodicidade="T",
+            casas=1,
+            detalhe="consumo das famílias + investimento",
+            fonte=FONTE_DEMANDA_PRIVADA,
+            procedencia="calculado",
+            secao="atividade",
+            mini=20,
         ),
         cartao(
             "ibcbr",
@@ -193,6 +246,39 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="T",
             janela_anos=5,
             fonte=FONTE_PIB,
+        ),
+        grafico(
+            "pib-oferta",
+            "PIB pela oferta: agropecuária, indústria e serviços",
+            [
+                serie("agro", "Agropecuária", pib_aa["90687"], desde=inicio),
+                serie("industria", "Indústria", pib_aa["90691"], desde=inicio),
+                serie("servicos", "Serviços", pib_aa["90696"], desde=inicio),
+                serie("pib", "PIB", aa, desde=inicio),
+            ],
+            unidade="% em um ano",
+            casas=1,
+            periodicidade="T",
+            janela_anos=5,
+            fonte=FONTE_PIB,
+            nota=(
+                "Cada setor contra o mesmo trimestre do ano anterior. A agropecuária pesa "
+                "pouco no PIB, mas varia muito com a safra."
+            ),
+        ),
+        grafico(
+            "demanda-privada",
+            "Demanda privada: o gasto de famílias e empresas",
+            [
+                serie("privada", "Demanda privada (consumo + investimento)", privada, desde=inicio),
+                serie("pib", "PIB", aa, desde=inicio),
+            ],
+            unidade="% em um ano",
+            casas=1,
+            periodicidade="T",
+            janela_anos=5,
+            fonte=FONTE_DEMANDA_PRIVADA,
+            nota=NOTA_DEMANDA_PRIVADA,
         ),
         grafico(
             "ibcbr",

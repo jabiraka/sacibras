@@ -44,6 +44,13 @@ SINONIMOS: dict[str, list[str]] = {
     "pib": ["crescimento", "atividade", "economia", "produto interno bruto", "recessao"],
     "ibc-br": ["previa do pib", "atividade", "pib mensal"],
     "atividade": ["pib", "crescimento", "producao", "economia"],
+    "demanda privada": [
+        "consumo e investimento",
+        "gasto privado",
+        "final sales",
+        "demanda interna",
+    ],
+    "oferta": ["agropecuaria", "agro", "setores do pib", "industria e servicos"],
     "taxa de investimento": ["fbcf", "formacao bruta de capital", "investimento produtivo"],
     "taxa de poupanca": ["poupanca do pais", "poupanca nacional", "saving rate", "poupanca bruta"],
     "industria": ["producao industrial", "fabricas", "pim"],

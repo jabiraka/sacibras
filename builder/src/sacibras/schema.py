@@ -114,6 +114,12 @@ class Grafico(Modelo):
     linhas: list[LinhaRef] = Field(default_factory=list)
     marcas_y: list[LinhaRef] = Field(default_factory=list)
     """Eixo vertical com nome em vez de número (a nota de crédito: 0 = "BBB−/Baa3")."""
+    eixo: Literal["tempo", "meses"] = "tempo"
+    """"meses": o eixo horizontal conta meses de uma marca (o primeiro corte da Selic), não
+    datas. As datas dos pontos vêm de `modelos.selic.mes_relativo` (jan/2000 é o mês 0) e o
+    site escreve "mês k"; não há janela de anos."""
+    marco: str = ""
+    """No eixo "meses", o nome do mês zero ("mês do primeiro corte")."""
     janela_anos: float | None = None
     """Quanto de história abre na tela (o resto fica atrás do botão "máx")."""
     fonte: str
@@ -352,6 +358,14 @@ class Alerta(Modelo):
     """Onde o valor de um ano antes fica na régua de toda a história (mesmo corte de hoje)."""
 
 
+class Elo(Modelo):
+    """Um atalho para outra tela do painel ("#juros/efeito"), com o nome e uma frase."""
+
+    endereco: str
+    titulo: str
+    resumo: str = ""
+
+
 class Subcategoria(Modelo):
     """Uma parte do assunto ("Núcleos e o ritmo", na Inflação): o que abre junto, numa tela só.
 
@@ -368,6 +382,8 @@ class Subcategoria(Modelo):
     extras: list[Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]] = Field(
         default_factory=list
     )
+    veja: list[Elo] = Field(default_factory=list)
+    """Atalhos para partes de outros assuntos que tratam do mesmo ("Veja também")."""
 
 
 class Secao(Modelo):

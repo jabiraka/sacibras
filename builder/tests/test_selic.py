@@ -164,3 +164,18 @@ def test_o_simulador_da_selic_vai_para_a_parte_dele() -> None:
     )
     assert organizacao.aplicar(secao) == []
     assert [(s.id, s.extras) for s in secao.subcategorias] == [("efeito", ["simulador-selic"])]
+
+
+def test_alinhado_pelo_primeiro_corte_poe_o_mes_do_comeco_no_zero() -> None:
+    mensal = [(date(2023, m, 1), float(m)) for m in range(1, 13)]
+    alinhada = selic.alinhado(mensal, date(2023, 8, 2), antes=2, depois=6)
+    assert alinhada[0] == (selic.mes_relativo(-2), 6.0)
+    assert (selic.mes_relativo(0), 8.0) in alinhada
+    # depois de dez/2023 a série acaba: o que não há fica de fora
+    assert alinhada[-1] == (selic.mes_relativo(4), 12.0)
+    assert selic.mes_relativo(-1) == date(1999, 12, 1)
+
+
+def test_fim_do_mes_fica_com_o_ultimo_valor() -> None:
+    diaria = [(date(2023, 8, 1), 13.75), (date(2023, 8, 3), 13.25), (date(2023, 9, 21), 12.75)]
+    assert selic.fim_do_mes(diaria) == [(date(2023, 8, 1), 13.25), (date(2023, 9, 1), 12.75)]

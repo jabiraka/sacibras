@@ -83,6 +83,33 @@ def ate_o_dia(diaria: list[Ponto], dia: date) -> float | None:
     return [v for d, v in diaria if d <= dia][-1]
 
 
+def mes_relativo(k: int) -> date:
+    """O mês `k` contado de uma marca, escrito como data para o gráfico de eixo "meses".
+
+    O mês 0 é jan/2000, o 1 é fev/2000, o −1 é dez/1999: o site lê de volta e escreve "mês k"
+    (`eixo="meses"` em `schema.Grafico`)."""
+    return _meses_depois(date(2000, 1, 1), k)
+
+
+def alinhado(mensal: list[Ponto], inicio: date, antes: int, depois: int) -> list[Ponto]:
+    """A série mensal de `antes` meses antes do mês de `inicio` a `depois` meses depois, com o
+    mês de `inicio` no 0 (datas de `mes_relativo`). Mês que a série não tem fica de fora."""
+    saida: list[Ponto] = []
+    for k in range(-antes, depois + 1):
+        v = no_mes(mensal, inicio, k)
+        if v is not None:
+            saida.append((mes_relativo(k), v))
+    return saida
+
+
+def fim_do_mes(diaria: list[Ponto]) -> list[Ponto]:
+    """O último valor de cada mês, datado no dia 1 (para `no_mes`)."""
+    por_mes: dict[date, float] = {}
+    for d, v in diaria:
+        por_mes[date(d.year, d.month, 1)] = v
+    return sorted(por_mes.items())
+
+
 @dataclass(frozen=True)
 class DepoisDoCiclo:
     ipca_no_comeco: float | None
