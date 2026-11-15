@@ -306,7 +306,11 @@ export function montarGrafico(g: Grafico): HTMLElement {
       return;
     }
     // A cor segue a entidade: quem monta o gráfico pode fixar a casa da paleta (`cor`).
-    const cor = (i: number) => t.series[(g.series[i]?.cor ?? i) % t.series.length] ?? t.tinta;
+    // No empilhado, a série `total` (a soma das barras) é uma linha em tinta neutra, por cima.
+    const cor = (i: number) =>
+      g.total && g.series[i]?.id === g.total
+        ? t.tinta
+        : (t.series[(g.series[i]?.cor ?? i) % t.series.length] ?? t.tinta);
     const marcas: Plot.Markish[] = [];
     const empilhado = g.tipo === "empilhado";
     const barras = g.tipo === "barras" || empilhado;
@@ -382,7 +386,9 @@ export function montarGrafico(g: Grafico): HTMLElement {
       const quantas = new Set(todas.map((l) => l.iso)).size;
       const faixaPx = (largura - 60) / Math.max(1, quantas);
       const folga = Math.max(0.5, (faixaPx - 24) / 2);
-      const dados = empilhado ? todas : (ts[0]?.linhas ?? []);
+      const dados = empilhado
+        ? todas.filter((l) => l.serie !== g.total)
+        : (ts[0]?.linhas ?? []);
       marcas.push(
         Plot.rectY(dados, {
           x: "t",
@@ -410,6 +416,20 @@ export function montarGrafico(g: Grafico): HTMLElement {
         }
       }
       marcas.push(Plot.ruleY([0], { stroke: t.eixo }));
+      if (empilhado && g.total) {
+        for (const x of ts.filter((x) => x.serie.id === g.total)) {
+          marcas.push(
+            Plot.lineY(x.linhas, {
+              x: "t",
+              y: "v",
+              stroke: t.tinta,
+              strokeWidth: 2,
+              strokeLinejoin: "round",
+              strokeLinecap: "round",
+            }),
+          );
+        }
+      }
     } else {
       const vMin = Math.min(...todas.map((l) => l.v));
       const vMax = Math.max(...todas.map((l) => l.v));

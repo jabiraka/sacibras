@@ -10,6 +10,7 @@ from datetime import date
 
 from sacibras import contas, leis
 from sacibras.fontes import bcb_fiscal, bcb_focus, fmi, tesouro_rtn
+from sacibras.modelos import decomposicoes
 from sacibras.schema import (
     Cartao,
     Faixa,
@@ -211,6 +212,52 @@ def prazos_da_divida(total: list[Ponto], faixas: dict[str, list[Ponto]]) -> dict
         id: [(d, sum(mapas[f][d] for f in fontes) / todo[d] * 100) for d in meses]
         for id, _, fontes in FAIXAS_DE_PRAZO
     }
+
+
+def fatores_da_divida(ctx: Contexto, anos: int, inicio: date) -> Grafico:
+    """Por que a dívida bruta mudou em 12 meses: juros, crescimento do PIB em reais, primário
+    e o resto (`decomposicoes.divida_por_fator`), a identidade do simulador olhada para trás."""
+    taxa = ctx.memo.get("taxa_implicita_dbgg") or bcb_fiscal.taxa_implicita_dbgg()
+    ctx.memo["taxa_implicita_dbgg"] = taxa
+    fatores = decomposicoes.divida_por_fator(
+        ctx.sgs("DBGG", anos),
+        ctx.sgs("PIB_12M", anos),
+        taxa,
+        ctx.sgs("NFSP_PRIMARIO_12M", anos),
+    )
+    if not fatores:
+        raise ValueError("sem meses comuns entre dívida, PIB, taxa implícita e primário")
+    partes: list[tuple[str, str, list[Ponto]]] = [
+        ("juros", "Juros da dívida", [(f.quando, f.juros) for f in fatores]),
+        ("pib", "Crescimento do PIB em reais", [(f.quando, f.pib) for f in fatores]),
+        ("primario", "Déficit primário", [(f.quando, f.primario) for f in fatores]),
+        ("resto", "Resto: caixa, reservas, câmbio", [(f.quando, f.resto) for f in fatores]),
+        ("total", "Variação da dívida", [(f.quando, f.variacao) for f in fatores]),
+    ]
+    return grafico(
+        "divida-fatores",
+        "Por que a dívida bruta mudou em 12 meses",
+        [serie(id_, nome, pontos, desde=inicio) for id_, nome, pontos in partes],
+        tipo="empilhado",
+        total="total",
+        unidade="pontos do PIB",
+        casas=1,
+        periodicidade="M",
+        janela_anos=5,
+        fonte=(
+            f"{ctx.fonte_sgs('DBGG', 'PIB_12M', 'NFSP_PRIMARIO_12M')}; {bcb_fiscal.FONTE_TAXA}; "
+            "conta nossa"
+        ),
+        nota=(
+            "As barras somadas dão a variação da dívida bruta em % do PIB em 12 meses (a "
+            "linha). Juros: a taxa implícita vezes a dívida média. Crescimento do PIB em reais "
+            "(com a inflação): a mesma dívida fica menor diante de um PIB maior. Déficit "
+            "primário: o do setor público; superávit entra para baixo. Resto: o que os três "
+            "não explicam, como o caixa do Tesouro, as reservas, o câmbio e os ajustes. É a "
+            "conta do simulador da dívida olhada para trás; o Banco Central publica a dele "
+            "(fatores condicionantes) só na tabela da nota mensal, com outra abertura."
+        ),
+    )
 
 
 def juro_e_prazos(ctx: Contexto, inicio: date) -> tuple[Cartao, Grafico]:
@@ -591,6 +638,11 @@ def montar(ctx: Contexto) -> Secao:
         graficos.append(g_prazos)
     except Exception as erro:
         print(f"  aviso: fiscal: sem o juro e os prazos da dívida bruta ({str(erro)[:120]})")
+
+    try:
+        graficos.append(fatores_da_divida(ctx, anos, inicio))
+    except Exception as erro:
+        print(f"  aviso: fiscal: sem os fatores da dívida ({str(erro)[:120]})")
 
     sinal = "déficit" if primario[-1][1] < 0 else "superávit"
     resumo = (

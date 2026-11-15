@@ -7,6 +7,7 @@ from datetime import date
 from sacibras import contas
 from sacibras.fontes import bcb_focus, ibge_sidra
 from sacibras.leis import META_CONTINUA
+from sacibras.modelos import decomposicoes
 from sacibras.schema import Faixa, Grafico, LinhaRef, LinhaTabela, Meta, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
 from sacibras.tipos import Ponto
@@ -119,8 +120,64 @@ def _faixa_da_meta(ate: date) -> Faixa:
     return Faixa(nome="intervalo da meta (1,5 % a 4,5 %)", pontos=pontos)
 
 
-def _tabela_grupos() -> Tabela | None:
-    """Os nove grupos do IPCA: variação no mês, em 12 meses e peso (SIDRA 7060)."""
+# Os cinco grupos que mais pesam no IPCA ficam com cor própria no gráfico das contribuições;
+# os outros quatro (11 % do índice, juntos) vão numa barra só. Seis cores é o que a paleta tem.
+GRUPOS_NO_GRAFICO = ["7170", "7625", "7445", "7660", "7712"]
+DEMAIS_GRUPOS = "Educação, vestuário, comunicação e artigos de residência"
+FONTE_GRUPOS = "IBGE, SIDRA tabela 7060 (variáveis 63, 2265 e 66)"
+
+
+def contribuicoes_dos_grupos() -> dict[str, list[Ponto]]:
+    """{código do grupo: pontos do IPCA de 12 meses que vieram dele}, mês a mês, desde
+    dez/2020 (a tabela 7060 começa em jan/2020). Variação e peso do mês de cada grupo, do
+    IBGE; a conta é `decomposicoes.ipca_por_grupo`. Conferido em 15/11/2026: os nove grupos
+    somam 4,63 pontos em out/2026, o IPCA de 12 meses."""
+    cats = ",".join(["7169", *GRUPOS_IPCA])
+    variacao = ibge_sidra.series(7060, 63, classificacao=f"c315/{cats}", por="Geral")
+    peso = ibge_sidra.series(7060, 66, classificacao=f"c315/{cats}", por="Geral")
+    geral = variacao.pop("7169")
+    peso.pop("7169", None)
+    return decomposicoes.ipca_por_grupo(geral, variacao, peso)
+
+
+def grafico_contribuicoes(contribuicoes: dict[str, list[Ponto]], inicio: date) -> Grafico | None:
+    """De onde vem o IPCA de 12 meses: as contribuições empilhadas, contra a meta."""
+    if not all(contribuicoes.get(g) for g in GRUPOS_IPCA):
+        return None
+    demais = [contribuicoes[g] for g in GRUPOS_IPCA if g not in GRUPOS_NO_GRAFICO]
+    juntos = [(d, sum(dict(p)[d] for p in demais)) for d, _ in demais[0]]
+    series = [
+        serie(f"g{g}", GRUPOS_IPCA[g], contribuicoes[g], desde=inicio) for g in GRUPOS_NO_GRAFICO
+    ]
+    series.append(serie("demais", "Demais grupos", juntos, desde=inicio))
+    total = [(d, sum(dict(contribuicoes[g])[d] for g in GRUPOS_IPCA)) for d, _ in juntos]
+    series.append(serie("total", "IPCA em 12 meses", total, desde=inicio))
+    meta = META_CONTINUA
+    return grafico(
+        "ipca-contribuicoes",
+        "De onde vem o IPCA de 12 meses",
+        series,
+        tipo="empilhado",
+        total="total",
+        unidade="pontos percentuais",
+        casas=2,
+        periodicidade="M",
+        janela_anos=3,
+        linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
+        fonte=f"{FONTE_GRUPOS}; conta nossa",
+        nota=(
+            "Quantos pontos do IPCA de 12 meses vieram de cada grupo: o peso do grupo vezes "
+            "o quanto ele subiu, mês a mês. As barras somadas dão o IPCA de 12 meses (a "
+            "linha). O IBGE publica o impacto de cada grupo só no mês; a soma dos 12 é conta "
+            "nossa. "
+            f"Demais grupos: {DEMAIS_GRUPOS.lower()}."
+        ),
+    )
+
+
+def _tabela_grupos(contribuicoes: dict[str, list[Ponto]] | None = None) -> Tabela | None:
+    """Os nove grupos do IPCA: variação no mês, em 12 meses, peso (SIDRA 7060) e a
+    contribuição para o IPCA de 12 meses (conta nossa)."""
     cats = ",".join(GRUPOS_IPCA)
     try:
         mes = ibge_sidra.series(
@@ -137,6 +194,8 @@ def _tabela_grupos() -> Tabela | None:
     if not mes:
         return None
     quando = next(iter(mes.values()))[-1][0]
+    contrib = {g: dict(p).get(quando) for g, p in (contribuicoes or {}).items()}
+    com_contrib = all(contrib.get(g) is not None for g in GRUPOS_IPCA)
     linhas = [
         LinhaTabela(
             rotulo=nome,
@@ -144,6 +203,7 @@ def _tabela_grupos() -> Tabela | None:
                 mes.get(codigo, [(quando, float("nan"))])[-1][1] if codigo in mes else None,
                 doze[codigo][-1][1] if codigo in doze else None,
                 peso[codigo][-1][1] if codigo in peso else None,
+                *([round(contrib[codigo] or 0.0, 4)] if com_contrib else []),
             ],
             unidade="",
             casas=2,
@@ -155,9 +215,20 @@ def _tabela_grupos() -> Tabela | None:
         id="ipca-grupos",
         titulo=f"IPCA por grupo em {periodo(quando, 'M')}",
         subtitulo="Ordenado pela variação em 12 meses",
-        colunas=["No mês (%)", "Em 12 meses (%)", "Peso no índice (%)"],
+        colunas=[
+            "No mês (%)",
+            "Em 12 meses (%)",
+            "Peso no índice (%)",
+            *(["Contribuição em 12 meses (pontos)"] if com_contrib else []),
+        ],
         linhas=linhas,
-        fonte="IBGE, SIDRA tabela 7060 (variáveis 63, 2265 e 66)",
+        fonte=FONTE_GRUPOS + ("; contribuição: conta nossa" if com_contrib else ""),
+        nota=(
+            "Contribuição: quantos pontos do IPCA de 12 meses vieram do grupo (o peso vezes "
+            "a alta, mês a mês). As nove somam o IPCA de 12 meses."
+            if com_contrib
+            else ""
+        ),
     )
 
 
@@ -415,7 +486,15 @@ def montar(ctx: Contexto) -> Secao:
         ],
         ctx.fonte_sgs(*dict.fromkeys(c for _, chaves in MEDIDAS for c in chaves)),
     )
-    tabelas = [t for t in [_tabela_grupos(), medidas] if t]
+    try:
+        contribuicoes = contribuicoes_dos_grupos()
+    except Exception as erro:  # sem os grupos, a seção sai sem o gráfico das contribuições
+        print(f"  aviso: contribuições do IPCA indisponíveis: {str(erro)[:120]}")
+        contribuicoes = {}
+    g_contrib = grafico_contribuicoes(contribuicoes, inicio)
+    if g_contrib:
+        graficos.append(g_contrib)
+    tabelas = [t for t in [_tabela_grupos(contribuicoes), medidas] if t]
     fora = "acima do teto" if ipca12[-1][1] > teto else "dentro do intervalo"
     resumo = (
         f"O IPCA acumula {br(ipca12[-1][1], 2)} % em 12 meses até {periodo(ipca12[-1][0], 'M')}, "

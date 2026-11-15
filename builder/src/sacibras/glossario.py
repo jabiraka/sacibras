@@ -80,12 +80,25 @@ TERMOS: list[Termo] = [
     ),
     Termo(
         "contribuicao-para-o-pib",
-        "Contribuição para o crescimento",
-        "Quantos pontos do crescimento do país vieram de uma parte dele (um estado, um "
-        "setor): o peso da parte na economia vezes o quanto ela cresceu. Somadas, as "
-        "contribuições dão o crescimento do todo.",
-        ("Contribuição para o PIB do Brasil", "contribuição para o crescimento"),
+        "Contribuição",
+        "Quantos pontos de uma variação vieram de cada parte (um estado no PIB, um grupo de "
+        "preços no IPCA): o peso da parte vezes o quanto ela variou. Somadas, as "
+        "contribuições dão a variação do todo.",
+        (
+            "Contribuição para o PIB do Brasil",
+            "contribuição para o crescimento",
+            "Contribuição em 12 meses",
+        ),
         "#estados/mapa",
+    ),
+    Termo(
+        "carrego",
+        "Carrego estatístico",
+        "Quanto o PIB cresce no ano se ficar parado, até dezembro, no nível do último "
+        "trimestre publicado. Não é previsão: mostra o crescimento que a alta (ou a queda) "
+        "que já aconteceu deixa garantido.",
+        ("Carrego do PIB", "carrego estatístico", "carrego"),
+        "#atividade/pib",
     ),
     Termo(
         "ajuste-sazonal",

@@ -405,6 +405,7 @@ O que a tela já diz, ou deveria dizer, sobre o que os números não medem.
   expectativa e prêmio de prazo. Os anualizados de 3 meses da inflação são sem ajuste sazonal.
 - **Trabalho**: o saldo do Caged é a diferença do estoque (set/2026: 121 mil contra 115 mil do
   oficial com ajuste).
+- **Decomposições** (IPCA por grupo, PIB por componente, fatores da dívida e da desocupação): são contas nossas sobre dado oficial, não previsões. No PIB pela demanda, "estoques e ajuste" junta a variação dos estoques com a diferença do encadeamento de preços (1 ponto, em média); o peso de cada componente é o do mesmo trimestre do ano anterior, a preços correntes. Na dívida, os juros são os da dívida bruta (taxa implícita) e o primário é o do setor público inteiro, que não é o governo geral: a diferença cai no "resto", com caixa, reservas e câmbio; não é a tabela de fatores condicionantes do BC. O IPCA por grupo só existe desde dez/2020. O carrego usa a série com ajuste sazonal, que o IBGE revisa a cada trimestre.
 - **Estados**: o primário é o acumulado do ano sobre a RCL de 12 meses. O PIB trimestral por
   estado é conta nossa: o desenho dos trimestres dentro do ano é o do IBC-R, que não é o PIB;
   nos 14 estados sem IBC-R o desenho é o da região (em MT, o erro médio passa de 3 pontos); a

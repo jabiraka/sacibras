@@ -19,6 +19,8 @@ export interface Grafico {
   titulo: string;
   subtitulo: string;
   tipo: "linha" | "area" | "barras" | "empilhado" | "degrau" | "curva";
+  /** No empilhado: o id da série que é a soma das barras, desenhada como linha por cima. */
+  total?: string;
   unidade: string;
   casas: number;
   periodicidade: Periodicidade;

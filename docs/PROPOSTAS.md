@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 15/11/2026 (segunda sessão do dia: PIB trimestral por estado). Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava
+Última atualização: 15/11/2026 (segunda sessão do dia: PIB trimestral por estado e decomposições). Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava
 aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -44,6 +44,19 @@ repetido no PROXIMOS-PASSOS.
 - Alíquotas do Imposto Seletivo: a LC 214 deixa para lei ordinária; entra quando sair.
 - Gasto tributário antes de 2014: a Receita só publica em PDF; fica fora sem conferência.
 - Multiplicador de receita da SPE: só se sair com regularidade (estudo avulso não entra).
+
+**Decomposições** (feitas em 15/11/2026, no branch: IPCA por grupo, PIB pela demanda e pela
+oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de fora:
+- IPCA pelas categorias do BC (serviços, industriais, alimentação no domicílio, administrados):
+  o SGS dá a variação, não o peso; sairia dos subitens do IBGE, classificados um a um.
+- IPCA por grupo antes de dez/2020 (tabelas 1419 e 2938 do SIDRA, com outra estrutura de pesos).
+- Massa de renda = gente ocupada × rendimento médio; crédito por pessoa física e empresa.
+- Exportações em preço × quantidade (índices do MDIC; **do PC**).
+- A tabela oficial de fatores condicionantes da DBGG (só na nota mensal do BC, em planilha
+  com poucos meses): ler à mão ou achar o arquivo com a série.
+- Prévia de dado atrasado que ainda não tem conta: pobreza e Gini (PNAD anual), carga
+  tributária (OCDE, dois anos) e PIB dos municípios (2023). Nenhuma tem indicador mensal
+  bom o bastante; ficam sem prévia até aparecer um.
 
 **Estados**
 - Mínimos de saúde e educação (SIOPS e SIOPE; **do PC**).

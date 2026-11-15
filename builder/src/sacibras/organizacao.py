@@ -63,8 +63,15 @@ PARTES: dict[str, list[Parte]] = {
             "pib",
             "PIB",
             "O crescimento a cada trimestre, pela demanda, pela oferta e o gasto privado.",
-            cartoes=["pib-tt", "pib-4t", "demanda-privada"],
-            graficos=["pib-trimestral", "pib-demanda", "pib-oferta", "demanda-privada"],
+            cartoes=["pib-tt", "pib-4t", "demanda-privada", "pib-carrego"],
+            graficos=[
+                "pib-trimestral",
+                "pib-contribuicoes-demanda",
+                "pib-contribuicoes-oferta",
+                "pib-demanda",
+                "pib-oferta",
+                "demanda-privada",
+            ],
             tabelas=["pib-componentes"],
         ),
         Parte(
@@ -94,7 +101,13 @@ PARTES: dict[str, list[Parte]] = {
             "Desemprego",
             "Desocupação, subutilização, desalento e quem procura há muito tempo.",
             cartoes=["desocupacao", "subutilizacao"],
-            graficos=["desocupacao", "subutilizacao", "desalento", "procura-longa"],
+            graficos=[
+                "desocupacao",
+                "desocupacao-fatores",
+                "subutilizacao",
+                "desalento",
+                "procura-longa",
+            ],
         ),
         Parte(
             "renda",
@@ -246,7 +259,7 @@ PARTES: dict[str, list[Parte]] = {
             "Por tipo de preço",
             "Serviços, livres, administrados e cada grupo do IPCA.",
             cartoes=["servicos-12m"],
-            graficos=["ipca-aberturas"],
+            graficos=["ipca-contribuicoes", "ipca-aberturas"],
             tabelas=["ipca-grupos"],
         ),
         Parte(
@@ -408,7 +421,7 @@ PARTES: dict[str, list[Parte]] = {
             "Dívida bruta e líquida, o que o mercado projeta, de que ela é feita, quanto "
             "custa e quando vence.",
             cartoes=["dbgg", "dlsp", "divida-selic", "juro-implicito"],
-            graficos=["divida", "divida-indexador", "divida-vencimento"],
+            graficos=["divida", "divida-fatores", "divida-indexador", "divida-vencimento"],
             veja=[
                 Elo(
                     endereco=EFEITO_DA_SELIC,

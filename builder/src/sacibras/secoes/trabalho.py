@@ -6,6 +6,7 @@ from datetime import date
 
 from sacibras import contas
 from sacibras.fontes import ibge_sidra
+from sacibras.modelos import decomposicoes
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
 from sacibras.tipos import Periodicidade, Ponto
@@ -37,6 +38,46 @@ CONDICAO = (6318, 1641, "c629/32387,32446")
 """Pessoas de 14 anos ou mais (mil pessoas) por condição: 32387 "Força de trabalho -
 ocupada", 32446 "Força de trabalho - desocupada" (classificação 629)."""
 OCUPADOS, DESOCUPADOS = "32387", "32446"
+POPULACAO_14 = (6318, 1641, "c629/32385")
+"""A mesma tabela, categoria 32385 "Total": as pessoas de 14 anos ou mais (mil pessoas).
+Conferido na API em 15/11/2026: 175.729 mil no trimestre até set/2026."""
+
+
+def grafico_fatores_da_desocupacao(
+    ocupados: list[Ponto], desocupados: list[Ponto], populacao: list[Ponto], inicio: date
+) -> Grafico | None:
+    """Por que a taxa de desocupação mudou em 12 meses: a parte de mais (ou menos) gente
+    ocupada e a de mais (ou menos) gente na força de trabalho."""
+    mudanca, ocupacao, participacao = decomposicoes.desocupacao_por_fator(
+        ocupados, desocupados, populacao
+    )
+    if not ocupacao:
+        return None
+    return grafico(
+        "desocupacao-fatores",
+        "Por que a desocupação mudou em 12 meses",
+        [
+            serie("ocupacao", "Gente ocupada", ocupacao, desde=inicio),
+            serie("participacao", "Gente na força de trabalho", participacao, desde=inicio),
+            serie("total", "Mudança da taxa", mudanca, desde=inicio),
+        ],
+        tipo="empilhado",
+        total="total",
+        unidade="pontos percentuais",
+        casas=2,
+        periodicidade="M",
+        janela_anos=5,
+        fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6318); conta nossa",
+        nota=(
+            "As barras somadas dão a mudança da taxa de desocupação em 12 meses (a linha). Gente "
+            "ocupada: quando a fatia da população que trabalha cresce, a taxa cai (barra para "
+            "baixo). Gente na força de trabalho: quando mais gente passa a trabalhar ou a "
+            "procurar, a taxa sobe (barra para cima); quando gente desiste de procurar, a "
+            "taxa cai sem que haja mais emprego."
+        ),
+    )
+
+
 PROCURA_LONGA = (1616, 4110, "c1965/101227")
 """Trimestre civil, não móvel: distribuição percentual das pessoas desocupadas (%) por tempo
 de procura de trabalho, categoria "2 anos ou mais" (classificação 1965, categoria 101227)."""
@@ -495,6 +536,17 @@ def montar(ctx: Contexto) -> Secao:
         ),
     )
 
+    try:
+        populacao = ibge_sidra.serie(
+            POPULACAO_14[0], POPULACAO_14[1], classificacao=POPULACAO_14[2]
+        )
+        fatores = grafico_fatores_da_desocupacao(
+            condicao.get(OCUPADOS, []), condicao.get(DESOCUPADOS, []), populacao, inicio
+        )
+        if fatores:
+            graficos.append(fatores)
+    except Exception as erro:  # a conta a mais não derruba a seção
+        print(f"  aviso: trabalho sem os fatores da desocupação: {str(erro)[:120]}")
     tabelas = [tabela]
     try:
         g_setores, t_setores = _caged_por_setor(ctx, formal, inicio)

@@ -5,8 +5,9 @@ from __future__ import annotations
 from datetime import date
 
 from sacibras import contas
-from sacibras.fontes import ibge_sidra
-from sacibras.schema import Cartao, LinhaTabela, Secao, Tabela
+from sacibras.fontes import bcb_focus, ibge_sidra
+from sacibras.modelos import decomposicoes
+from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -61,6 +62,120 @@ def demanda_privada(
         peso_c, peso_i = cr[base], ir[base]
         saida.append((d, (peso_c * c[d] + peso_i * i[d]) / (peso_c + peso_i)))
     return saida
+
+
+# De onde veio o crescimento: SIDRA 1620 (variável 583, índice de volume trimestral, média de
+# 1995 = 100) e 1846 (variável 585, valores correntes), classificação 11255. Códigos conferidos
+# pela resposta da API em 15/11/2026 (2º tri/2026: impostos líquidos sobre produtos, 90706,
+# R$ 487.859 mi; importação, 93408, R$ 556.418 mi). (id da série, nome, sinal na soma do PIB)
+DEMANDA: dict[str, tuple[str, str, int]] = {
+    "93404": ("familias", "Consumo das famílias", 1),
+    "93405": ("governo", "Consumo do governo", 1),
+    "93406": ("fbcf", "Investimento (FBCF)", 1),
+    "93407": ("exportacoes", "Exportações", 1),
+    "93408": ("importacoes", "Importações (tiram do PIB)", -1),
+}
+OFERTA: dict[str, tuple[str, str, int]] = {
+    "90687": ("agro", "Agropecuária", 1),
+    "90691": ("industria", "Indústria", 1),
+    "90696": ("servicos", "Serviços", 1),
+    "90706": ("impostos", "Impostos sobre produtos", 1),
+}
+FONTE_CONTRIBUICOES = "IBGE, Contas Nacionais Trimestrais (SIDRA 1620 e 1846); conta nossa"
+FONTE_CARREGO = "IBGE, Contas Nacionais Trimestrais (SIDRA 1621, com ajuste sazonal); conta nossa"
+
+
+def contribuicoes_do_pib(inicio: date) -> list[Grafico]:
+    """De onde veio o crescimento do PIB, pela demanda e pela oferta: os pontos de cada
+    componente (`decomposicoes.pib_por_componente`), empilhados, um trimestre por barra."""
+    cats = ",".join(["90707", *DEMANDA, *OFERTA])
+    volume = ibge_sidra.series(
+        1620, 583, classificacao=f"c11255/{cats}", por="Setores", trimestral=True
+    )
+    valor = ibge_sidra.series(
+        1846, 585, classificacao=f"c11255/{cats}", por="Setores", trimestral=True
+    )
+    saida = []
+    for id_, titulo, partes, resto, nota in (
+        (
+            "pib-contribuicoes-demanda",
+            "De onde veio o crescimento: quem comprou",
+            DEMANDA,
+            "Estoques e ajuste",
+            "Quantos pontos do crescimento do PIB, contra o mesmo trimestre do ano anterior, "
+            "vieram de cada gasto: a fatia dele no PIB um ano antes vezes o quanto cresceu. "
+            "As barras somadas dão o crescimento do PIB (a linha). O IBGE publica o quanto cada "
+            "componente cresceu, não a contribuição: a conta é nossa. Estoques e ajuste: o "
+            "que sobra, a variação dos estoques mais a diferença do encadeamento de preços.",
+        ),
+        (
+            "pib-contribuicoes-oferta",
+            "De onde veio o crescimento: quem produziu",
+            OFERTA,
+            "",
+            "Quantos pontos do crescimento do PIB, contra o mesmo trimestre do ano anterior, "
+            "vieram de cada setor: a fatia dele no PIB um ano antes vezes o quanto cresceu. "
+            "As barras somadas dão o crescimento do PIB (a linha); a diferença do encadeamento de "
+            "preços (em média, 0,1 ponto) foi repartida pela fatia. Conta nossa.",
+        ),
+    ):
+        contrib = decomposicoes.pib_por_componente(
+            volume, valor, "90707", {c: sinal for c, (_, _, sinal) in partes.items()}, bool(resto)
+        )
+        series = [
+            serie(sid, nome, contrib[c], desde=inicio) for c, (sid, nome, _) in partes.items()
+        ]
+        if resto:
+            series.append(serie("resto", resto, contrib[decomposicoes.RESTO], desde=inicio))
+        soma = [
+            (t, sum(dict(p)[t] for p in contrib.values()))
+            for t, _ in contrib["93404" if resto else "90687"]
+        ]
+        series.append(serie("total", "PIB", soma, desde=inicio))
+        saida.append(
+            grafico(
+                id_,
+                titulo,
+                series,
+                tipo="empilhado",
+                total="total",
+                unidade="pontos percentuais",
+                casas=1,
+                periodicidade="T",
+                janela_anos=5,
+                fonte=FONTE_CONTRIBUICOES,
+                nota=nota,
+            )
+        )
+    return saida
+
+
+def cartao_carrego() -> Cartao | None:
+    """O carrego estatístico: quanto o PIB cresce no ano se ficar parado no nível do último
+    trimestre (`decomposicoes.carrego`). Não é previsão; o Focus vai ao lado."""
+    dessaz = ibge_sidra.serie(1621, 584, classificacao="c11255/90707", trimestral=True)
+    c = decomposicoes.carrego(dessaz)
+    if c is None:
+        return None
+    detalhe = f"se o PIB parar no nível do {periodo(c.ultimo, 'T').split('/')[0]}"
+    try:
+        focus = bcb_focus.mediana_anual_hoje("PIB Total").get(c.ano)
+    except Exception:
+        focus = None
+    if focus is not None:
+        detalhe += f"; Focus: {br(focus)} %"
+    return cartao(
+        "pib-carrego",
+        f"Carrego do PIB para {c.ano}",
+        [(c.ultimo, c.valor)],
+        unidade="%",
+        periodicidade="T",
+        casas=1,
+        detalhe=detalhe,
+        fonte=FONTE_CARREGO,
+        procedencia="calculado",
+        secao="atividade",
+    )
 
 
 def _investimento_e_poupanca(investimento: list[Ponto], poupanca: list[Ponto]) -> list[Cartao]:
@@ -351,6 +466,14 @@ def montar(ctx: Contexto) -> Secao:
             fonte=f"{ctx.fonte_sgs('UCI_INDUSTRIA')} (FGV)",
         ),
     ]
+
+    try:
+        graficos += contribuicoes_do_pib(inicio)
+        carrego = cartao_carrego()
+        if carrego:
+            cartoes.append(carrego)
+    except Exception as erro:  # as contas a mais não derrubam a seção
+        print(f"  aviso: atividade sem as contribuições ou o carrego: {str(erro)[:120]}")
 
     tabela = Tabela(
         id="pib-componentes",

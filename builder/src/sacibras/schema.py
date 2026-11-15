@@ -105,6 +105,9 @@ class Grafico(Modelo):
     titulo: str
     subtitulo: str = ""
     tipo: Literal["linha", "area", "barras", "empilhado", "degrau", "curva"] = "linha"
+    total: str = ""
+    """No empilhado: o id da série que é a soma das barras (o IPCA de 12 meses sobre as
+    contribuições dos grupos). O site a desenha como linha em tinta neutra, por cima."""
     unidade: str
     casas: int = 1
     periodicidade: Periodicidade

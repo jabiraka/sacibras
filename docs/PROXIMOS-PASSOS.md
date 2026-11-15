@@ -5,10 +5,11 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
 Última atualização: 15/11/2026 (segunda sessão da nuvem do dia). A primeira fez tudo o que
-dava para fazer de fora do Brasil e publicou no `main`. A segunda respondeu ao pedido do Caio
-(*"conseguimos ter alguma estimativa da decomposição do PIB por Estados em cada trimestre?
-Calculado, claro, se tiver alguma boa referência melhor ainda"*) com o PIB trimestral por
-estado, **no branch `ccr-94336676-cxavg1`, ainda não no `main`**: espera o Caio olhar.
+dava para fazer de fora do Brasil e publicou no `main`. A segunda respondeu a dois pedidos do
+Caio, **no branch `ccr-94336676-cxavg1`, ainda não no `main`** (espera o Caio olhar):
+o PIB trimestral por estado (*"conseguimos ter alguma estimativa da decomposição do PIB por
+Estados em cada trimestre?"*) e outras decomposições (*"veja se dá pra ter alguma outra
+estimativa de decomposição também no site [...] só os mais relevantes"*).
 
 ## Releituras com prazo
 
@@ -62,6 +63,15 @@ As próximas:
      por ano; hoje está só no FONTES.
   3. Pôr o IBC-R dos quatro estados novos (MT, MS, RN e MA; SGS 29701 a 29705, fora do
      CKAN): muda também a prévia anual e o texto "13 estados". MT é onde a conta mais erra.
+- **Decomposições novas** (mesmo branch), todas conta nossa sobre dado oficial, fechando com
+  o número oficial e com uma linha do total por cima das barras:
+  de onde vem o IPCA de 12 meses, por grupo (Inflação › Por tipo de preço, com a coluna nova
+  na tabela dos grupos); de onde veio o crescimento do PIB, por quem comprou e por quem
+  produziu, e o cartão do carrego do PIB (Atividade › PIB); por que a dívida bruta mudou em
+  12 meses (Contas públicas › Dívida pública); por que a desocupação mudou em 12 meses
+  (Trabalho › Desemprego). Para olhar: se o carrego conta como "previsão própria" (está
+  escrito "se o PIB parar", com o Focus ao lado) e se cinco peças de uma vez não pesam as
+  telas (Atividade › PIB ficou com seis gráficos).
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.
