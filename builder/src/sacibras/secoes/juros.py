@@ -6,11 +6,18 @@ from contextlib import suppress
 from datetime import date, timedelta
 from itertools import pairwise
 
-from sacibras import curvas, leis, relatorios
+from sacibras import curvas, leis, rede, relatorios
 from sacibras.calendario import ultimo_dia_util
 from sacibras.catalogo import SGS
 from sacibras.config import usar_b3
-from sacibras.fontes import b3_derivativos, bcb_copom, bcb_focus, bcb_sgs, tesouro_direto
+from sacibras.fontes import (
+    b3_derivativos,
+    bcb_copom,
+    bcb_focus,
+    bcb_secundario,
+    bcb_sgs,
+    tesouro_direto,
+)
 from sacibras.juros_futuros import a_termo
 from sacibras.modelos import acerto_focus
 from sacibras.modelos import selic as modelo_selic
@@ -440,6 +447,34 @@ def _a_termo(
     return n, r, ((1 + n / 100) / (1 + r / 100) - 1) * 100
 
 
+def _ntnb_curta(ctx: Contexto, dia: date) -> list[tuple[date, float, date]]:
+    """A NTN-B negociada no mercado secundário (BC): [(vencimento, taxa % a.a., dia do
+    negócio)], cada título com o negócio mais recente até o dia da curva. A taxa sai do preço
+    médio sobre o VNA projetado com o IPCA do mês: o do IBGE se já saiu, senão a mediana do
+    Focus para o mês."""
+    try:
+        recentes = bcb_secundario.ntnb_recentes(dia)
+    except ValueError:
+        return []
+    ipca_ibge = dict(ctx.sgs("IPCA", anos=1))
+    ipca_focus: dict[date, float] | None = None
+    pontos: list[tuple[date, float, date]] = []
+    for data, n in recentes:
+        mes = curvas.mes_do_vna(data)
+        ipca = ipca_ibge.get(mes)
+        if ipca is None:
+            if ipca_focus is None:
+                ipca_focus = dict(bcb_focus.mensais_hoje("IPCA")[1])
+            ipca = ipca_focus.get(mes)
+        if ipca is None:
+            continue
+        cotacao = n.pu_medio / curvas.vna_projetado(n.valor_par, data, ipca)
+        taxa = curvas.taxa_do_preco(data, n.vencimento, curvas.CUPOM_NTNB, cotacao)
+        if taxa is not None:
+            pontos.append((n.vencimento, taxa, data))
+    return pontos
+
+
 def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
     """O que o econvitals mostra para os EUA (2, 5 e 10 anos, o juro real, a inflação
     implícita e a de 5 anos daqui a 5), na curva zero do Tesouro."""
@@ -455,9 +490,36 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
     )
     # O maior prazo, até 10 anos, que as duas pernas cobrem hoje.
     longo = max(k for k in range(3, 11) if None not in _no_prazo(dia, nominal, real, k))
+    # Os prazos sem IPCA+ no Tesouro Direto (antes do primeiro sem cupom): a NTN-B curta
+    # negociada no mercado secundário entra no começo da curva real, só para esta tabela.
+    curtos: dict[int, tuple[float, float]] = {}
+    usados: list[tuple[date, date]] = []  # (vencimento, dia do negócio)
+    falhas_antes = len(rede.FALHAS)
+    primeiro = real.vertices[0][0]
+    # Com menos de três meses de prazo, o erro de preço vira erro grande de taxa.
+    pontos_bc = [p for p in _ntnb_curta(ctx, dia) if 63 <= nominal.du_de(p[0]) < primeiro]
+    bc_falhou = len(rede.FALHAS) > falhas_antes
+    if pontos_bc:
+        real_curta = curvas.montar(
+            dia,
+            dict(td[tesouro_direto.IPCA]).get(dia, []),
+            dict(td.get(tesouro_direto.IPCA_JUROS, {})).get(dia, []),
+            curvas.CUPOM_NTNB,
+            [(v, t) for v, t, _ in pontos_bc],
+        )
+        usados = [(v, d) for v, _, d in pontos_bc]
+        for k in range(1, longo):
+            n_k, r_k, _ = _no_prazo(dia, nominal, real, k)
+            du = nominal.du_de(_anos_depois(dia, k))
+            if n_k is None or r_k is not None or not curvas.tem_real(real_curta, du):
+                continue
+            r_curto = real_curta.taxa(du) * 100
+            curtos[k] = (r_curto, ((1 + n_k / 100) / (1 + r_curto / 100) - 1) * 100)
     linhas: list[LinhaTabela] = []
     for k in sorted({1, 2, 3, 5, longo}):
         n, r, i = _no_prazo(dia, nominal, real, k)
+        if k in curtos:
+            r, i = curtos[k]
         antes = (
             _no_prazo(dia, nominal_ano, real_ano, k)[2]
             if nominal_ano is not None and real_ano is not None
@@ -493,13 +555,30 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
         subtitulo=f"Curva zero dos títulos do Tesouro em {periodo(dia, 'D')}",
         colunas=["Prefixado", "IPCA+ (juro real)", "Inflação implícita", "Implícita há 1 ano"],
         linhas=linhas,
-        fonte=fonte,
+        fonte=fonte
+        + (
+            "; nos prazos curtos, Banco Central (negócios com NTN-B no mercado secundário, "
+            + ", ".join(f"{periodo(v, 'M')} em {periodo(d, 'D')}" for v, d in usados)
+            + ")"
+            if curtos
+            else ""
+        ),
         nota=(
             "Cada prazo é contado de hoje. A implícita é (1 + prefixado) / (1 + IPCA+) − 1 no "
             "mesmo prazo e carrega o prêmio pelo risco de inflação. A linha a termo é o que a "
             f"curva cobra de {meio} a {longo} anos daqui, sem os anos até lá: a inflação "
-            "esperada para o longo prazo, a medida que os bancos centrais acompanham. Sem IPCA+ "
-            "curto no Tesouro Direto, o juro real dos prazos curtos fica em branco."
+            "esperada para o longo prazo, a medida que os bancos centrais acompanham."
+            + (
+                " O Tesouro Direto não vende IPCA+ que vença antes de "
+                f"{min(v for v, _ in td[tesouro_direto.IPCA][dia]).year}: nos prazos curtos, o "
+                "juro real vem das NTN-B que vencem em "
+                f"{' e '.join(periodo(v, 'M') for v, _ in usados)}, pelo preço médio dos "
+                "negócios registrados no Banco Central, postas na mesma curva. Título sem "
+                "negócio no dia fica com a taxa do último dia em que teve."
+                if curtos
+                else " Sem IPCA+ curto no Tesouro Direto, o juro real dos prazos curtos fica "
+                "em branco."
+            )
         ),
     )
 
@@ -572,7 +651,9 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
                 mini=110,
             )
         )
-    return cartoes, graficos, [tabela]
+    # Com o arquivo do BC fora do ar, a tabela não sai com os prazos curtos em branco: fica
+    # de fora, e o `completar` do build devolve a da rodada anterior, com a data dela.
+    return cartoes, graficos, [] if bc_falhou and not curtos else [tabela]
 
 
 def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:

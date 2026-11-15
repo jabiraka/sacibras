@@ -122,3 +122,59 @@ def test_baixar_json_tenta_de_novo_quando_vem_html(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(rede, "baixar", lambda url, **kw: next(respostas))
     monkeypatch.setattr(rede.time, "sleep", lambda s: None)
     assert rede.baixar_json("https://exemplo") == [{"valor": "4.63"}]
+
+
+def test_secundario_le_so_a_ntnb_inteira_com_negocios_bastantes() -> None:
+    import io
+    import zipfile
+    from datetime import date
+
+    from sacibras.fontes import bcb_secundario
+
+    cabecalho = (
+        "DATA MOV;SIGLA;CODIGO;CODIGO ISIN;EMISSAO;VENCIMENTO;NUM DE OPER;QUANT NEGOCIADA;"
+        "VALOR NEGOCIADO;PU MIN;PU MED;PU MAX;PU LASTRO;VALOR PAR;TAXA MIN;TAXA MED;TAXA MAX;"
+        "NUM OPER COM CORRETAGEM;QUANT NEG COM CORRETAGEM"
+    )
+    linhas = [
+        # a NTN-B inteira, com negócios: entra
+        "13/11/2026;NTN-B;760199;X;10/01/2018;15/08/2028;907;1;;1;4748,59861900;1;1;"
+        "4766,33511200;;;;0;0",
+        # cupom destacado (760197), poucos negócios (3) e outro título: ficam de fora
+        "13/11/2026;NTN-B;760197;X;15/08/2004;15/05/2028;30;1;;1;129,36;1;1;;;;;0;0",
+        "13/11/2026;NTN-B;760199;X;10/01/2018;15/05/2027;3;1;;1;4961,86;1;1;4766,33;;;;0;0",
+        "13/11/2026;LFT;210100;X;03/07/2020;01/03/2027;376;1;;1;20212,06;1;1;20211,30;;;;0;0",
+    ]
+    corpo = io.BytesIO()
+    with zipfile.ZipFile(corpo, "w") as pacote:
+        pacote.writestr("NegT202611.CSV", "\n".join([cabecalho, *linhas]).encode("latin-1"))
+    por_dia = bcb_secundario.ler(corpo.getvalue())
+    assert list(por_dia) == [date(2026, 11, 13)]
+    (negocio,) = por_dia[date(2026, 11, 13)]
+    assert negocio.vencimento == date(2028, 8, 15)
+    assert negocio.pu_medio == 4748.598619
+    assert negocio.valor_par == 4766.335112
+    assert negocio.operacoes == 907
+
+
+def test_secundario_sem_negocio_no_dia_fica_com_o_do_ultimo_dia(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import date
+
+    from sacibras.fontes import bcb_secundario
+    from sacibras.fontes.bcb_secundario import Negocio
+
+    v27, v28 = date(2027, 5, 15), date(2028, 8, 15)
+    por_dia = {
+        date(2026, 11, 12): [Negocio(v27, 4950.0, 4766.0, 50), Negocio(v28, 4740.0, 4766.0, 80)],
+        date(2026, 11, 13): [Negocio(v28, 4748.0, 4766.0, 90)],  # a de 2027 não negociou
+        date(2026, 11, 16): [Negocio(v27, 4999.0, 4773.0, 70)],  # depois do alvo: não entra
+    }
+    monkeypatch.setattr(bcb_secundario, "baixar", lambda *a, **k: b"")
+    monkeypatch.setattr(bcb_secundario, "ler", lambda corpo: por_dia)
+    recentes = bcb_secundario.ntnb_recentes(date(2026, 11, 13))
+    assert [(d, n.vencimento, n.pu_medio) for d, n in recentes] == [
+        (date(2026, 11, 12), v27, 4950.0),
+        (date(2026, 11, 13), v28, 4748.0),
+    ]

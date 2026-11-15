@@ -75,3 +75,35 @@ def test_perna_real_sem_preco_antes_do_primeiro_vertice() -> None:
     assert not curvas.tem_real(real, 300)
     assert curvas.tem_real(real, 600)
     assert not curvas.tem_real(real, 2001)
+
+
+def test_taxa_do_preco_desfaz_o_preco_da_taxa() -> None:
+    vencimento = date(2028, 8, 15)
+    fl = curvas.fluxos(BASE, vencimento, curvas.CUPOM_NTNB)
+    cotacao = sum(v / 1.0725 ** (du / 252) for du, v in fl)
+    taxa = curvas.taxa_do_preco(BASE, vencimento, curvas.CUPOM_NTNB, cotacao)
+    assert taxa == pytest.approx(7.25, abs=1e-6)
+
+
+def test_vna_projetado_anda_do_dia_15_ao_seguinte() -> None:
+    # 15/11/2026 é domingo: a conta de dias úteis começa na segunda, 16.
+    assert curvas.mes_do_vna(date(2026, 11, 13)) == date(2026, 10, 1)
+    assert curvas.mes_do_vna(date(2026, 11, 16)) == date(2026, 11, 1)
+    assert curvas.vna_projetado(1000.0, date(2026, 10, 15), 0.5) == pytest.approx(1000.0)
+    quase = curvas.vna_projetado(1000.0, date(2026, 11, 13), 0.5)
+    assert 1004.5 < quase < 1005.0
+
+
+def test_papel_curto_com_cupom_entra_no_comeco_da_curva() -> None:
+    zero = [(date(2029, 5, 15), 7.5), (date(2032, 8, 15), 7.8)]
+    curtos = [(date(2027, 5, 15), 4.0), (date(2028, 8, 15), 7.3)]
+    curva = curvas.montar(BASE, zero, [], curvas.CUPOM_NTNB, curtos)
+    assert len(curva.vertices) == 4
+    # O primeiro papel vira a própria taxa; o segundo tem o preço refeito pela curva.
+    assert curva.vertices[0][1] == pytest.approx(0.04, abs=1e-6)
+    fl = curvas.fluxos(BASE, date(2028, 8, 15), curvas.CUPOM_NTNB)
+    pela_taxa = sum(v / 1.073 ** (du / 252) for du, v in fl)
+    pela_curva = sum(v * curva.fator_de_desconto(du) for du, v in fl)
+    assert pela_curva == pytest.approx(pela_taxa, abs=1e-9)
+    # Sem os curtos, a curva é a de antes.
+    assert curvas.montar(BASE, zero, [], curvas.CUPOM_NTNB).vertices == curva.vertices[2:]

@@ -17,6 +17,7 @@ from sacibras.fontes import (
     b3_indices,
     bcb_copom,
     bcb_focus,
+    bcb_secundario,
     bcb_sgs,
     bis,
     fmi,
@@ -97,6 +98,10 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     (
         "Penn World Table (Dataverse)",
         _texto(pwt.API, params={"persistentId": pwt.DOI}),
+    ),
+    (
+        "BCB, negócios no mercado secundário (ZIP)",
+        _texto(bcb_secundario.url(date.today() - timedelta(days=5))),
     ),
     (
         "Tesouro Direto (CSV)",

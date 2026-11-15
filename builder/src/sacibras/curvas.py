@@ -113,18 +113,65 @@ def montar(
     zero: Sequence[Ponto],
     com_cupom: Sequence[Ponto],
     cupom: float,
+    curtos: Sequence[Ponto] = (),
 ) -> Curva:
     """A curva com os zero-cupons (`zero`: [(vencimento, taxa % a.a.)]) e, depois do último,
-    os papéis com cupom por bootstrap."""
-    vertices = sorted((dias_uteis(base, d), t / 100) for d, t in zero if dias_uteis(base, d) > 0)
-    if not vertices:
+    os papéis com cupom por bootstrap. `curtos` são papéis com cupom que vencem antes do
+    primeiro zero-cupom (a NTN-B curta do mercado secundário): entram por bootstrap no
+    começo, do mais curto ao mais longo."""
+    zeros = sorted((dias_uteis(base, d), t / 100) for d, t in zero if dias_uteis(base, d) > 0)
+    if not zeros:
         raise ValueError("sem papel zero-cupom com prazo")
+    vertices: list[tuple[int, float]] = []
+    for vencimento, taxa in sorted(curtos):
+        fl = fluxos(base, vencimento, cupom)
+        if not fl or fl[-1][0] >= zeros[0][0] or (vertices and fl[-1][0] <= vertices[-1][0]):
+            continue
+        vertices.append(_bootstrap(vertices, base, fl, taxa / 100))
+    vertices += zeros
     for vencimento, taxa in sorted(com_cupom):
         fl = fluxos(base, vencimento, cupom)
         if not fl or fl[-1][0] <= vertices[-1][0]:
             continue
         vertices.append(_bootstrap(vertices, base, fl, taxa / 100))
     return Curva(base, tuple(vertices))
+
+
+def vna_projetado(par: float, dia: date, ipca_do_mes: float) -> float:
+    """O valor nominal atualizado da NTN-B em `dia`: o do último dia 15 (`par`) corrigido pelo
+    IPCA do mês (`ipca_do_mes`, em %), na proporção dos dias úteis corridos entre um dia 15 e
+    o seguinte (a regra do Tesouro para o preço do título)."""
+    d0 = dia.replace(day=15) if dia.day >= 15 else _somar_meses(dia.replace(day=15), -1)
+    d1 = _somar_meses(d0, 1)
+    return float(par * (1 + ipca_do_mes / 100) ** (dias_uteis(d0, dia) / dias_uteis(d0, d1)))
+
+
+def mes_do_vna(dia: date) -> date:
+    """O mês (dia 1º) cujo IPCA leva o VNA do último dia 15 ao seguinte."""
+    d0 = dia.replace(day=15) if dia.day >= 15 else _somar_meses(dia.replace(day=15), -1)
+    return d0.replace(day=1)
+
+
+def taxa_do_preco(base: date, vencimento: date, cupom: float, cotacao: float) -> float | None:
+    """A taxa (% a.a.) de um papel com cupom semestral que vale `cotacao` (preço sobre o
+    valor de face) em `base`, por bisseção."""
+    fl = fluxos(base, vencimento, cupom)
+    if not fl:
+        return None
+    baixo, alto = -0.5, 2.0
+
+    def preco(t: float) -> float:
+        return float(sum(v / (1 + t) ** (du / ANO) for du, v in fl))
+
+    if not preco(alto) <= cotacao <= preco(baixo):
+        return None
+    for _ in range(80):
+        meio = (baixo + alto) / 2
+        if preco(meio) > cotacao:
+            baixo = meio
+        else:
+            alto = meio
+    return (baixo + alto) / 2 * 100
 
 
 @dataclass(frozen=True)
