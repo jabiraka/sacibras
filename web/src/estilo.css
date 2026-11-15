@@ -1711,8 +1711,18 @@ table.dados tr.grupo th {
 table.dados td.texto {
   text-align: left;
   white-space: normal;
-  min-width: 15rem;
   line-height: 1.45;
+}
+
+/* Só o texto longo (uma linha do tempo, uma regra) pede largura para não virar uma coluna
+   estreita de uma palavra por linha; o curto ("45,4 %, acima do alerta", "C") ocupa o que
+   precisa. */
+table.dados td.texto.longo {
+  min-width: 15rem;
+}
+
+table.dados.de-textos thead th {
+  text-align: left;
 }
 
 table.dados td.proj {
@@ -1824,7 +1834,7 @@ table.dados thead th:first-child {
 
 @media (max-width: 520px) {
 
-  table.dados td.texto {
+  table.dados td.texto.longo {
     min-width: 11.5rem;
   }
 

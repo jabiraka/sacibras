@@ -163,8 +163,12 @@ function corpoDaTabela(colunas: string[], linhas: LinhaTabela[]): HTMLTableEleme
     protegerNomeDeEstado(th, l.rotulo);
     if (l.unidade) th.append(el("span", "sub", ` ${l.unidade}`));
     tr.append(th);
-    if (l.textos?.length) for (const x of l.textos) tr.append(el("td", "texto", x));
-    else for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
+    if (l.textos?.length) {
+      // Tabela de textos: o título da coluna alinha à esquerda, como o texto embaixo dele
+      // (Caio, 15/11/2026, "Estados perto dos limites": "pode arrumar o lugar das colunas?").
+      tabela.classList.add("de-textos");
+      for (const x of l.textos) tr.append(el("td", x.length > 40 ? "texto longo" : "texto", x));
+    } else for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
   }
   return tabela;
 }
