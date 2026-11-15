@@ -51,6 +51,15 @@ LEITURAS: list[Leitura] = [
         "ou a nota da Conorf no site do Senado. A cada bimestre.",
     ),
     Leitura(
+        "Salário mínimo do ano (o decreto de 2027 sai em dezembro)",
+        "leis.SALARIO_MINIMO_NORMAS",
+        date(2026, 11, 15),
+        date(2027, 1, 10),
+        "Senado, lista de decretos (dadosabertos/legislacao/lista?tipo=DEC&ano=2026), o que "
+        "'dispõe sobre o valor do salário mínimo'; ler o art. 1º, conferir que o SGS 1619 dá o "
+        "mesmo valor e pôr o ano novo no dicionário. Uma vez por ano.",
+    ),
+    Leitura(
         "Meta do Marco do Saneamento (99 % água, 90 % esgoto até 2033)",
         "leis.META_SANEAMENTO",
         date(2026, 11, 14),

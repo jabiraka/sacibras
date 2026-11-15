@@ -24,6 +24,8 @@ As próximas:
 - **até 23/12**: resolução do Senado que fixa a CBS de 2027 → `CBS_REFERENCIA_2027` e o texto
   "o Senado ainda fixa" em `impostos.py`.
 - **até 31/12**: RPM de dezembro → modelos e faixa do efeito da Selic.
+- **até 10/01/2027**: decreto do salário mínimo de 2027 → `leis.SALARIO_MINIMO_NORMAS`
+  (o valor vem do SGS 1619; a tela só cita a norma do ano que estiver no dicionário).
 
 ## Só do PC
 

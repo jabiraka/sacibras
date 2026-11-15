@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sacibras import contas
+from sacibras import contas, leis
 from sacibras.fontes import ibge_sidra
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
@@ -215,6 +215,71 @@ def _cartao_taxa(id: str, rotulo: str, pontos: list[Ponto], tabela: int) -> Cart
         secao="trabalho",
         mini=60,
     )
+
+
+SALARIO_MINIMO_DESDE = date(1995, 1, 1)
+"""Antes do real (jul/1994) a série está em outras moedas; 1995 é o primeiro ano inteiro."""
+
+
+def salario_minimo(ctx: Contexto) -> tuple[Cartao, Grafico]:
+    """O salário mínimo em reais e a preços de hoje pelo IPCA (revisão das telas, 15/11/2026:
+    quem busca "salário mínimo" não achava nada). A série do SGS traz os meses já decretados
+    adiante; a tela mostra até o mês de hoje."""
+    anos = ctx.hoje.year - SALARIO_MINIMO_DESDE.year + 1
+    minimo = [
+        (d, v) for d, v in ctx.sgs("SALARIO_MINIMO", anos) if SALARIO_MINIMO_DESDE <= d <= ctx.hoje
+    ]
+    nivel, indice = 1.0, {}
+    for d, v in ctx.sgs("IPCA", anos):
+        nivel *= 1 + v / 100
+        indice[d] = nivel
+    base = max(indice)
+    mensal_real = [(d, v * indice[base] / indice[d]) for d, v in minimo if d in indice]
+    # Média de cada ano: mês a mês a linha é um serrote (o reajuste em janeiro e a inflação
+    # comendo o resto do ano). O ano corrente entra com os meses que já têm IPCA.
+    por_ano: dict[int, list[float]] = {}
+    for d, v in mensal_real:
+        por_ano.setdefault(d.year, []).append(v)
+    real = [(date(ano, 1, 1), sum(vs) / len(vs)) for ano, vs in sorted(por_ano.items())]
+    agora = minimo[-1]
+    antes = next((v for d, v in reversed(minimo) if d.year < agora[0].year), None)
+    detalhe = (
+        f"{agora[0].year - 1}: R$ {br(antes, 0)}, alta de {br((agora[1] / antes - 1) * 100)} %"
+        if antes
+        else ""
+    )
+    norma = leis.SALARIO_MINIMO_NORMAS.get(agora[0].year)
+    fonte = ctx.fonte_sgs("SALARIO_MINIMO") + (
+        f"; valor de {agora[0].year}: {norma}" if norma else ""
+    )
+    c = cartao(
+        "salario-minimo",
+        "Salário mínimo",
+        minimo,
+        unidade="R$",
+        periodicidade="M",
+        casas=0,
+        detalhe=detalhe,
+        fonte=fonte,
+        secao="trabalho",
+        mini=60,
+    )
+    g = grafico(
+        "salario-minimo",
+        f"Salário mínimo a preços de {periodo(base, 'M')}, média do ano",
+        [serie("real", "Salário mínimo", real, casas=0)],
+        unidade="R$",
+        casas=0,
+        periodicidade="A",
+        fonte=f"{fonte}; IPCA: {ctx.fonte_sgs('IPCA')}",
+        nota=(
+            f"Cada mês levado a preços de {periodo(base, 'M')} pelo IPCA e a média dos meses "
+            f"de cada ano (conta nossa), desde {SALARIO_MINIMO_DESDE.year}, o primeiro ano "
+            f"inteiro do real; {base.year} com os meses até {periodo(base, 'M')}. O valor de "
+            "hoje, em reais da época, está no cartão."
+        ),
+    )
+    return c, g
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -496,6 +561,12 @@ def montar(ctx: Contexto) -> Secao:
     )
 
     tabelas = [tabela]
+    try:
+        c_minimo, g_minimo = salario_minimo(ctx)
+        cartoes.append(c_minimo)
+        graficos.append(g_minimo)
+    except Exception as erro:
+        print(f"    trabalho: salário mínimo ficou de fora: {str(erro)[:160]}")
     try:
         g_setores, t_setores = _caged_por_setor(ctx, formal, inicio)
         graficos.append(g_setores)

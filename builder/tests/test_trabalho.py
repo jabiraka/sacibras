@@ -52,7 +52,21 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     for chave, _ in trabalho.SETORES_CAGED:
         c._sgs[(chave, 16)] = vigesimo
     c._sgs[("EMPREGO_SERVICOS", 16)] = [(d, v * 14 / 20) for d, v in estoque]
+    anos = 2026 - trabalho.SALARIO_MINIMO_DESDE.year + 1
+    c._sgs[("SALARIO_MINIMO", anos)] = _salario()
+    c._sgs[("IPCA", anos)] = (
+        [(date(2024, m, 1), 0.5) for m in range(1, 13)]
+        + [(date(2025, m, 1), 0.5) for m in range(1, 13)]
+        + [(date(2026, m, 1), 0.5) for m in range(1, 11)]
+    )
     return c
+
+
+def _salario() -> list[Ponto]:
+    """R$ 1.518 em 2025 e R$ 1.621 em 2026, com os meses já decretados até dez/2026."""
+    return [(date(2025, m, 1), 1518.0) for m in range(1, 13)] + [
+        (date(2026, m, 1), 1621.0) for m in range(1, 13)
+    ]
 
 
 def test_montar(ctx: Contexto) -> None:
@@ -60,7 +74,13 @@ def test_montar(ctx: Contexto) -> None:
     ids = [c.id for c in secao.cartoes]
     # Os quatro de sempre na frente; os novos depois, atrás de "Mais números".
     assert ids[:4] == ["desocupacao", "rendimento", "massa", "emprego-formal"]
-    assert ids[4:] == ["subutilizacao", "participacao", "nivel-ocupacao", "informalidade"]
+    assert ids[4:] == [
+        "subutilizacao",
+        "participacao",
+        "nivel-ocupacao",
+        "informalidade",
+        "salario-minimo",
+    ]
     assert "média de 3 meses: 100 mil" in secao.cartoes[3].detalhe
     graficos = [g.id for g in secao.graficos]
     assert graficos[:4] == ["desocupacao", "emprego-formal", "rendimento", "massa"]
@@ -109,3 +129,22 @@ def test_somar_so_nas_datas_comuns() -> None:
     a = [(date(2026, 1, 1), 1.0), (date(2026, 2, 1), 2.0)]
     b = [(date(2026, 2, 1), 10.0)]
     assert trabalho.somar([a, b]) == [(date(2026, 2, 1), 12.0)]
+
+
+def test_salario_minimo_ate_hoje_e_a_precos_de_hoje(ctx: Contexto) -> None:
+    """Revisão das telas (15/11/2026): quem buscava "salário mínimo" não achava nada."""
+    cartao, grafico = trabalho.salario_minimo(ctx)
+    # O SGS traz dez/2026 já decretado; o cartão para no mês de hoje (nov/2026).
+    assert cartao.valor == 1621.0
+    assert cartao.referencia == date(2026, 11, 1)
+    assert cartao.detalhe == "2025: R$ 1.518, alta de 6,8 %"
+    assert "Decreto nº 12.797" in cartao.fonte
+    real = grafico.series[0].pontos
+    # O último mês com IPCA (out/2026) é a base; cada ano é a média dos seus meses.
+    assert grafico.titulo == "Salário mínimo a preços de out/2026, média do ano"
+    assert [d for d, _ in real] == [date(2025, 1, 1), date(2026, 1, 1)]
+    # 2026: jan a out em reais de out/2026, cada mês 1.621 corrigido até out.
+    em_2026 = [1621.0 * 1.005 ** (10 - m) for m in range(1, 11)]
+    assert real[1][1] == pytest.approx(sum(em_2026) / 10, abs=0.5)  # em reais inteiros
+    em_2025 = [1518.0 * 1.005 ** (22 - m) for m in range(1, 13)]
+    assert real[0][1] == pytest.approx(sum(em_2025) / 12, abs=0.5)

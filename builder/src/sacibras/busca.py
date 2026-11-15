@@ -448,6 +448,18 @@ SINONIMOS: dict[str, list[str]] = {
         "internet",
     ],
     "glossario": ["dicionario", "definicoes", "termos", "siglas", "significado", "vocabulario"],
+    # Revisão das telas (15/11/2026): o juro de cada modalidade e o salário mínimo.
+    "cartao rotativo": ["cartao de credito", "juros do cartao", "fatura", "cheque especial"],
+    "por modalidade": [
+        "cartao de credito",
+        "rotativo",
+        "cheque especial",
+        "consignado",
+        "credito pessoal",
+        "emprestimo",
+        "juros do emprestimo",
+    ],
+    "salario minimo": ["piso nacional", "minimo", "decreto do salario minimo"],
     "alimentacao no domicilio": ["comida", "alimentos", "supermercado", "mercado", "feira"],
 }
 

@@ -161,6 +161,102 @@ def _tabela_grupos() -> Tabela | None:
     )
 
 
+# Os subitens que alguém procura quando a conta sobe (SIDRA 7060, classificação 315; códigos
+# conferidos na resposta da própria API em 15/11/2026): gasolina, energia elétrica residencial
+# e aluguel residencial. Revisão das telas: "gasolina", "conta de luz" e "aluguel" não
+# achavam nada.
+ITENS_GRAFICO = {
+    "7657": "Gasolina",
+    "7485": "Energia elétrica residencial",
+    "7448": "Aluguel residencial",
+}
+ITENS_NA_TABELA = 15
+"""Quantos subitens a tabela mostra: os de maior peso no índice."""
+
+
+def subitens(linhas: list[dict[str, str]]) -> list[tuple[str, list[float | None]]]:
+    """Das linhas do SIDRA 7060 (variáveis 63, 2265 e 66, todas as categorias), os subitens
+    ("5104001.Gasolina": sete dígitos), com [no mês, em 12 meses, peso], do maior peso ao
+    menor. As categorias acima do subitem (grupo, subgrupo, item) ficam de fora."""
+    por_codigo: dict[str, tuple[str, dict[str, float]]] = {}
+    for linha in linhas:
+        nome = linha.get("D4N", "")
+        numero, _, rotulo = nome.partition(".")
+        if not (len(numero) == 7 and numero.isdigit() and rotulo):
+            continue
+        valor = linha.get("V", "")
+        try:
+            v = float(valor)
+        except ValueError:
+            continue
+        _, valores = por_codigo.setdefault(linha["D4C"], (rotulo.strip(), {}))
+        valores[linha["D2C"]] = v
+    itens = [
+        (rotulo, [valores.get("63"), valores.get("2265"), valores.get("66")])
+        for rotulo, valores in por_codigo.values()
+        if "66" in valores
+    ]
+    itens.sort(key=lambda item: -(item[1][2] or 0))
+    return itens
+
+
+def _tabela_itens() -> Tabela | None:
+    """Os subitens de maior peso no IPCA, no mês e em 12 meses (SIDRA 7060)."""
+    try:
+        linhas = ibge_sidra.consultar("t/7060/n1/all/v/63,2265,66/p/last 1/c315/all")
+    except Exception:
+        return None
+    itens = subitens(linhas)[:ITENS_NA_TABELA]
+    if not itens:
+        return None
+    mes = next((x for x in linhas if x.get("D3C")), {}).get("D3C", "")
+    quando = date(int(mes[:4]), int(mes[4:6]), 1) if len(mes) == 6 else None
+    return Tabela(
+        id="ipca-itens",
+        titulo="Os itens que mais pesam no IPCA"
+        + (f" em {periodo(quando, 'M')}" if quando else ""),
+        subtitulo=f"Os {len(itens)} de maior peso no índice, do maior ao menor",
+        colunas=["No mês (%)", "Em 12 meses (%)", "Peso no índice (%)"],
+        linhas=[LinhaTabela(rotulo=r, valores=v, unidade="", casas=2) for r, v in itens],
+        fonte="IBGE, SIDRA tabela 7060 (variáveis 63, 2265 e 66, subitens)",
+        nota=(
+            "Subitem é o nível mais fino do IPCA. O peso é a parte do gasto das famílias "
+            "que o subitem representa; a soma de todos os subitens dá 100 %."
+        ),
+    )
+
+
+def _grafico_itens(ipca12: list[Ponto]) -> Grafico | None:
+    """Gasolina, conta de luz e aluguel em 12 meses, contra o IPCA (SIDRA 7060, desde 2020)."""
+    try:
+        doze = ibge_sidra.series(
+            7060, 2265, classificacao=f"c315/{','.join(ITENS_GRAFICO)}", por="Geral"
+        )
+    except Exception:
+        return None
+    series = [
+        serie(f"item-{codigo}", nome, doze[codigo])
+        for codigo, nome in ITENS_GRAFICO.items()
+        if doze.get(codigo)
+    ]
+    if not series:
+        return None
+    inicio = min(p[0] for s in series for p in s.pontos)
+    return grafico(
+        "ipca-itens",
+        "Gasolina, energia elétrica e aluguel em 12 meses",
+        [*series, serie("ipca", "IPCA", ipca12, desde=inicio)],
+        unidade="% em 12 meses",
+        casas=2,
+        periodicidade="M",
+        fonte="IBGE, SIDRA tabela 7060 (variável 2265); IPCA: Banco Central, SGS 13522",
+        nota=(
+            "A tabela 7060 começa em jan/2020. Energia elétrica e aluguel são os residenciais; "
+            "a bandeira tarifária e os reajustes das distribuidoras mexem na conta de luz."
+        ),
+    )
+
+
 def montar(ctx: Contexto) -> Secao:
     ipca = ctx.sgs("IPCA")
     ipca12 = ctx.sgs("IPCA_12M")
@@ -171,6 +267,7 @@ def montar(ctx: Contexto) -> Secao:
     igpm12 = contas.acumulado(ctx.sgs("IGPM"), 12)
     inpc12 = contas.acumulado(ctx.sgs("INPC"), 12)
     ipca15 = ctx.sgs("IPCA15")
+    ipca15_12 = contas.acumulado(ipca15, 12)
     difusao = ctx.sgs("IPCA_DIFUSAO")
     meta = META_CONTINUA
 
@@ -375,9 +472,10 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "outros-indices",
-            "IPCA, INPC e IGP-M",
+            "IPCA, IPCA-15, INPC e IGP-M",
             [
                 serie("ipca", "IPCA", ipca12, desde=inicio),
+                serie("ipca15", "IPCA-15", ipca15_12, desde=inicio),
                 serie("inpc", "INPC", inpc12, desde=inicio),
                 serie("igpm", "IGP-M", igpm12, desde=inicio),
             ],
@@ -385,7 +483,12 @@ def montar(ctx: Contexto) -> Secao:
             casas=2,
             periodicidade="M",
             janela_anos=5,
-            fonte=ctx.fonte_sgs("IPCA_12M", "INPC", "IGPM"),
+            fonte=ctx.fonte_sgs("IPCA_12M", "IPCA15", "INPC", "IGPM"),
+            nota=(
+                "O IPCA-15 é o mesmo índice com preços de meados do mês anterior a meados do "
+                "mês de referência: sai antes do IPCA e serve de prévia. IPCA-15, INPC e IGP-M: "
+                "acumulado em 12 meses composto a partir da variação mensal."
+            ),
         ),
         grafico(
             "nucleos-ritmo",
@@ -415,7 +518,10 @@ def montar(ctx: Contexto) -> Secao:
         ],
         ctx.fonte_sgs(*dict.fromkeys(c for _, chaves in MEDIDAS for c in chaves)),
     )
-    tabelas = [t for t in [_tabela_grupos(), medidas] if t]
+    tabelas = [t for t in [_tabela_grupos(), _tabela_itens(), medidas] if t]
+    itens = _grafico_itens(ipca12)
+    if itens:
+        graficos.append(itens)
     fora = "acima do teto" if ipca12[-1][1] > teto else "dentro do intervalo"
     resumo = (
         f"O IPCA acumula {br(ipca12[-1][1], 2)} % em 12 meses até {periodo(ipca12[-1][0], 'M')}, "

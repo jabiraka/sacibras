@@ -70,16 +70,13 @@ escondia Previsões e Riscos, a busca (palavras de ligação, busca por parte da
 linhas das tabelas curtas, IPCA por grupo, o glossário), o número separado do "%" na quebra
 de linha, as frases do PIB dos estados e da Selic, as tabelas no celular (sombra na borda
 enquanto há coluna escondida; as que passavam 10 px agora cabem) e a página do glossário
-(`#glossario`, no menu e no rodapé). Fica:
+(`#glossario`, no menu e no rodapé). E o que a busca procurava e o painel não tinha (Caio,
+15/11/2026: *"coloque os itens que as pessoas procuram e o painel não tem"*): o juro de cada
+modalidade das pessoas físicas, do cartão rotativo ao consignado (Crédito › Volume e custo);
+o salário mínimo, em reais e a preços de hoje (Trabalho › Renda); os 15 subitens que mais
+pesam no IPCA e a gasolina, a luz e o aluguel em 12 meses (Inflação › Por tipo de preço); e
+o IPCA-15 no gráfico dos outros índices. Fica:
 
-- **O que se procura e o painel não tem** (busca testada com 65 termos; são dados novos,
-  ficaram para depois):
-  - juros do cartão de crédito, do rotativo e do cheque especial (SGS, taxa por modalidade;
-    conferir os códigos no CKAN);
-  - salário mínimo, em reais e descontada a inflação (o valor do decreto, lido na norma);
-  - itens do IPCA: gasolina, energia elétrica, aluguel (SIDRA 7060 tem os subitens; hoje a
-    busca leva ao grupo, Transportes ou Habitação);
-  - IPCA-15 como série (hoje só no detalhe do cartão do IPCA do mês e no glossário).
 - **Estados** (Caio, 15/11/2026: *"anote [...] dos Estados em propostas mas não mexa"*; fica
   para a sessão de Estados):
   - a tela abre no crescimento do PIB de 2024, o número oficial mais novo, com quase dois
