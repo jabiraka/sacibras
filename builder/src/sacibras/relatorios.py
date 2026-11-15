@@ -4,6 +4,14 @@ estima que a Selic faz com a inflação e com o dólar.
 
 Mesma regra de `leis.py`: só entra o que foi lido na fonte, com a data da leitura e o
 endereço ao lado. Cada bloco diz quando precisa ser lido de novo.
+
+Só entra o que sai com regularidade e com método (Caio, 15/11/2026: *"elimine tudo oq não for
+publicado regularmente e com metodologia, vamos manter apenas as nossas estimativas nesse
+caso"*): estudo, artigo ou nota técnica de uma vez só fica de fora. Saíram por isso os
+multiplicadores de imposto (FMI e Ipea), a incidência por décimo de renda (Ipea), as notas da
+Fazenda de 2024 sobre a alíquota da reforma e a proposta de Lara Resende no simulador da
+Selic. O simulador da Selic fica (Caio, mesmo dia): os modelos semiestruturais são os do BC,
+usados em todo Relatório de Política Monetária.
 O prazo de cada releitura mora em `leituras.py` (o build e o workflow "Prazos de releitura"
 avisam quando vence).
 """
@@ -289,157 +297,20 @@ FONTE_REPASSE_CAMBIAL = (
     "estimativas por projeções locais (p. 66)"
 )
 
-# ------------------------------------------------------------------ cenário em debate
-
-# Não é fonte de número: é uma proposta pública que alguém pode querer pôr no simulador da
-# Selic (Caio, 14/11/2026: "um dos ganchos pode ser aquela proposta do André Lara Resende para
-# baixar o juros"). Nenhum dado da tela sai daqui; só o tamanho do corte que o botão simula.
-# André Lara Resende, "Eu Acuso: uma proposta para eliminar os juros absurdos", publicado no
-# Substack do autor em 25/09/2026 (lido em 14/11/2026 em
-# andrelararesende.substack.com/p/eu-acuso-uma-proposta-para-eliminar):
-#   "O BC se comprometeria a manter a taxa básica num intervalo entre a meta de inflação, 3,0%,
-#   e taxa de crescimento nominal potencial, ou seja, a meta da inflação somada ao crescimento
-#   real potencial, o que hoje seria em torno de 5,5% ao ano (3% de inflação mais 2,5% de
-#   crescimento). [...] Para dar início ao novo regime fiscal e monetário, o BC anunciaria a
-#   redução gradual do juro básico, ao longo de cerca de 12 meses, para a taxa de crescimento
-#   nominal potencial mais um spread transitório de segurança de 2%, isto é, perto de 7,5% ao
-#   ano. [...] Anunciaria ainda que se necessário atuará no câmbio para suavizar toda
-#   depreciação mais acentuada".
-#   "No longo prazo a inflação converge para a diferença entre a taxa básica de juros e a taxa
-#   de crescimento real da economia. No curto prazo, a relação entre a taxa de juros e a
-#   inflação pode ser inversa, como convencionalmente aceito. A redução do juro pode
-#   efetivamente pressionar a inflação, mas é apenas um repique transitório."
-#   "A redução do custo médio da dívida de quase 13% para 7,5% ao ano, numa dívida que
-#   corresponde a 80% do PIB, equivale a uma economia fiscal de cerca de 4% do PIB ao ano. A
-#   economia não é instantânea".
-LARA_RESENDE_SELIC = 7.5
-LARA_RESENDE_MESES = 12
-LARA_RESENDE_EM = date(2026, 9, 25)
-LARA_RESENDE_TITULO = "Eu Acuso: uma proposta para eliminar os juros absurdos"
-LARA_RESENDE_ENDERECO = (
-    "https://andrelararesende.substack.com/p/eu-acuso-uma-proposta-para-eliminar"
-)
-
-# ------------------------------------------------------------------ imposto e crescimento
-
-
-@dataclass(frozen=True)
-class EfeitoDeImposto:
-    """Um número de estudo oficial sobre o efeito de imposto no PIB, com o trecho lido."""
-
-    rotulo: str
-    valor: float
-    unidade: str
-    casas: int
-    fonte: str
-    leitura: str
-    """O que o estudo diz, em palavras de todo dia, com o trecho original e a página."""
-
-
-# Lidos em 14/11/2026 nos PDFs (texto extraído e conferido contra a frase citada). Pedido do
-# Caio no mesmo dia: "multiplicadores lidos". Não há multiplicador de receita publicado pelo
-# BC, pelo Tesouro ou pela SPE (a SPE estimou um no Boletim Impulso Estrutural do Gasto,
-# dez/2025, mas publicou só os de despesa): RELER quando sair a nota metodológica da SPE. O
-# estudo do CCiF (Bráulio Borges, 2020) está no site da Fazenda, mas não é do governo: fica
-# de fora pela regra de fonte oficial.
-EFEITOS_DE_IMPOSTO: list[EfeitoDeImposto] = [
-    EfeitoDeImposto(
-        rotulo="Corte de imposto: PIB a mais no pico, um ano depois (FMI)",
-        valor=0.5,
-        unidade="R$ por R$ 1 de imposto",
-        casas=1,
-        fonte="FMI, Working Paper 16/79, Fiscal Multipliers for Brazil (2016)",
-        leitura=(
-            "FMI (Matheson e Pereira, 2016, dados de 1999 a 2014): R$ 1 a menos de imposto "
-            "rende uns R$ 0,50 a mais de PIB um ano depois; no médio prazo, somado, uns "
-            'R$ 2. "The revenue multiplier peaks at around 0.5 one year after a tax cut '
-            "[...] the medium-run (accumulated) multiplier of tax cuts is positive, at about "
-            '2" (p. 7). Vale também ao contrário: imposto a mais tira PIB.'
-        ),
-    ),
-    EfeitoDeImposto(
-        rotulo="Corte de imposto: PIB a mais, somado no médio prazo (FMI)",
-        valor=2.0,
-        unidade="R$ por R$ 1 de imposto",
-        casas=1,
-        fonte="FMI, Working Paper 16/79, Fiscal Multipliers for Brazil (2016)",
-        leitura=(
-            "O mesmo estudo diz que o efeito da receita ficou estável depois da crise de 2008, "
-            'ao contrário do efeito do gasto, que caiu para perto de zero: "the revenue '
-            'multiplier has remained broadly stable" (p. 9).'
-        ),
-    ),
-    EfeitoDeImposto(
-        rotulo="Receita a mais sem aviso: chance de o PIB cair logo depois (Ipea)",
-        valor=56.6,
-        unidade="% de chance",
-        casas=1,
-        fonte="Ipea, Texto para Discussão 1377 (2009)",
-        leitura=(
-            'Ipea (Mendonça, Medrano e Sachsida, 2009): "Com 56,6% de probabilidade o PIB '
-            "decresce após um aumento inesperado nas receitas do governo. Apesar de a "
-            "resposta inicial do PIB ser negativa, ela pode se tornar positiva no longo "
-            'prazo" (p. 13): o mercado pode ler a receita a mais como contas em ordem.'
-        ),
-    ),
-    EfeitoDeImposto(
-        rotulo="Reforma do consumo (texto da Câmara, 2023): PIB a mais até 2032 (Ipea)",
-        valor=2.39,
-        unidade="%",
-        casas=2,
-        fonte="Ipea, Carta de Conjuntura nº 60, Nota 1 (2023)",
-        leitura=(
-            "Ipea (João Maria de Oliveira, jul/2023), sobre o substitutivo da PEC 45 aprovado "
-            'na Câmara, que virou a reforma de 2023: "para o substitutivo da PEC no 45/2019, '
-            'também até 2032, cresce 2,39%" (p. 13), contra um cenário sem reforma. O texto '
-            "original da PEC 45 dava 5,75 % até 2036; a diferença vem dos regimes especiais e "
-            "das exceções mantidos."
-        ),
-    ),
-    EfeitoDeImposto(
-        rotulo="Reforma do consumo aprovada: PIB a mais no longo prazo, no máximo (Prêmio Tesouro)",
-        valor=4.5,
-        unidade="%",
-        casas=1,
-        fonte=(
-            "Tesouro Nacional, Cadernos de Finanças Públicas, edição especial do 29º Prêmio "
-            "Tesouro (2025)"
-        ),
-        leitura=(
-            "Araujo, Martinez e Navarro, trabalho premiado e publicado pelo Tesouro (não é "
-            'estimativa do próprio Tesouro): "estimamos um aumento de até 4,5% no PIB, com '
-            "2,7% devidos à aproximação das alíquotas entre os setores e até 1,8% em razão da "
-            'simplificação do sistema tributário" (resumo, p. 2).'
-        ),
-    ),
-]
-
 # ------------------------------------------------------------------ alíquotas da reforma
 
 # Quanto vai ser a alíquota cheia do IBS mais a CBS ninguém sabe: o Senado fixa a de cada ano
 # no ano anterior (ADCT, art. 130), e a de 2033 só no fim da transição. O que existe são contas
 # oficiais, lidas em 14/11/2026:
-# 1. Ministério da Fazenda, Secretaria Extraordinária da Reforma Tributária, nota técnica
-#    "Alíquotas de referência do IBS e da CBS: estimativas atualizadas", de 1/7/2024, p. 13
-#    (gov.br/fazenda/.../notas/nota-tecnica-aliquotas_2024-07-01_sertmf-1.pdf), para o projeto
-#    como o governo mandou: "a estimativa de alíquota de referência cresce gradualmente até
-#    chegar ao valor de 26,47%, dentro do intervalo de 25,65% a 27,29%, após a introdução do
-#    cashback (Cenário L)". O intervalo são "duas hipóteses de hiato de conformidade (factível
-#    ou conservadora)": quanto se sonega.
-# 2. Mesma secretaria, nota "Estimativa de impacto sobre a alíquota de referência do IBS e da
-#    CBS das mudanças introduzidas durante a tramitação", de agosto de 2024, p. 4
-#    (gov.br/fazenda/.../notas-informativas/2024/agosto/nota-tecnica-aliquotas-sertmf.pdf): "um
-#    incremento na alíquota de referência total da ordem de 1,47 ponto percentual, dentro do
-#    intervalo de 1,44 ponto percentual a 1,49 ponto percentual" (carnes na cesta básica: 0,56).
-#    A mesma nota: "as alíquotas de referência definitivas só serão conhecidas após o término
-#    da transição [...] os resultados são condicionais às hipóteses sobre variáveis ainda
-#    desconhecidas e que embutem uma incerteza inerente".
-# 3. Comitê Gestor do IBS, Resolução CGIBS nº 14, de 29/7/2026 (DOU de 31/7/2026, seção 3, p.
+# As notas técnicas da Fazenda de jul e ago/2024 (26,47 % e +1,47 ponto) saíram em 15/11/2026:
+# foram contas de uma vez só, sem série (Caio: só fica o que sai com regularidade e método).
+# Ficam as duas contas que a lei manda refazer todo ano:
+# 1. Comitê Gestor do IBS, Resolução CGIBS nº 14, de 29/7/2026 (DOU de 31/7/2026, seção 3, p.
 #    188-189), anexo, quadro 2 (cgibs.gov.br/upload/arquivos/202607/31144942-...pdf): "Alíquota
 #    total inicial (SERT) 26,50%; IBS correspondente 17,70%; Nova alíquota total estimada
 #    27,91%; [...] IBS atualizado 18,7%"; "as estimativas públicas passaram a indicar alíquota
 #    de referência em torno de 28%".
-# 4. Agência Senado, 28/10/2026 e 3/11/2026 (www12.senado.leg.br/noticias/materias/2026/10/28/
+# 2. Agência Senado, 28/10/2026 e 3/11/2026 (www12.senado.leg.br/noticias/materias/2026/10/28/
 #    reforma-tributaria-tcu-calcula-aliquota-da-cbs-em-11-3-para-2027 e .../2026/11/03/
 #    senado-deve-receber-calculo-da-cbs-na-proxima-terca-para-definir-aliquota): "O Tribunal de
 #    Contas da União (TCU) aprovou nesta quarta-feira (28) uma proposta para que a [CBS] seja
@@ -453,51 +324,14 @@ EFEITOS_DE_IMPOSTO: list[EfeitoDeImposto] = [
 CBS_REFERENCIA_2027 = 11.3
 CBS_REFERENCIA_2027_EM = date(2026, 10, 28)
 CBS_ESTIMATIVA_ANTERIOR = 9.21
-ALIQUOTA_FAZENDA_2024 = (26.47, 25.65, 27.29)
-"""A estimativa e o intervalo para o projeto como o governo mandou (jul/2024)."""
-ALIQUOTA_MUDANCAS_DA_CAMARA = (1.47, 1.44, 1.49)
-"""O que as mudanças da Câmara somam, em pontos (ago/2024)."""
 ALIQUOTA_COMITE_GESTOR = 27.91
 IBS_COMITE_GESTOR = 18.7
 ALIQUOTA_COMITE_GESTOR_EM = date(2026, 7, 29)
-FONTE_ALIQUOTA_FAZENDA = (
-    "Ministério da Fazenda, Secretaria Extraordinária da Reforma Tributária, notas técnicas de "
-    "1/7/2024 (p. 13) e de ago/2024 (p. 4)"
-)
 FONTE_ALIQUOTA_COMITE = "Comitê Gestor do IBS, Resolução nº 14, de 29/7/2026, anexo, quadro 2"
 FONTE_CBS_2027 = (
     "Tribunal de Contas da União, cálculo aprovado em 28/10/2026 (Agência Senado, 28/10 e "
     "3/11/2026); o Senado fixa por resolução"
 )
-
-# ------------------------------------------------------------------ quem paga
-
-# Ipea, Texto para Discussão 2823, "Tributação indireta: alíquotas efetivas e incidência sobre
-# as famílias" (Silveira, Palomo, Cornelio e Tonon, dez/2022; dados da POF 2017-2018), lido em
-# 14/11/2026 em repositorio.ipea.gov.br/handle/11058/11624. Gráfico 3 (p. 25), "Incidência da
-# tributação direta e indireta na renda total, segundo décimos de renda familiar per capita":
-# os rótulos das barras, conferidos na imagem da página. No texto (p. 25): "a incidência nos
-# 10% mais pobres alcançando 26,4%, ao passo que nos 10% mais ricos os tributos representam
-# 19,2% da renda"; (p. 23) "na média, os tributos indiretos representam 11,2% da renda total".
-# "Diretos" aqui inclui a contribuição à previdência, o IRPF, o IPTU e o IPVA (p. 23): não se
-# compara com a alíquota do IRPF dos Grandes Números. RELER quando o Ipea refizer a conta com
-# a próxima POF.
-FONTE_INCIDENCIA = "Ipea, Texto para Discussão 2823 (2022), gráfico 3, com dados da POF 2017-2018"
-INCIDENCIA_POR_DECIMO: list[tuple[str, float, float]] = [
-    # (décimo de renda familiar por pessoa, indiretos, diretos), em % da renda total
-    ("10 % mais pobres", 23.4, 3.0),
-    ("2º décimo", 17.3, 3.8),
-    ("3º décimo", 15.6, 3.8),
-    ("4º décimo", 14.3, 4.3),
-    ("5º décimo", 14.0, 4.9),
-    ("6º décimo", 13.1, 5.0),
-    ("7º décimo", 12.7, 5.6),
-    ("8º décimo", 12.5, 6.7),
-    ("9º décimo", 11.5, 8.2),
-    ("10 % mais ricos", 8.6, 10.6),
-    ("Média", 11.2, 8.0),
-]
-
 
 # ------------------------------------------------------------------ previsto no ano
 

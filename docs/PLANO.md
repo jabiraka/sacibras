@@ -13,7 +13,7 @@ Escrito em 13/11/2026. Referência: [econvitals.org](https://econvitals.org/) (E
 No ar (no Docker local e no build do Actions, ainda sem deploy porque o trabalho está no
 branch): o builder, o site e onze assuntos com dados reais — **atividade, trabalho, inflação,
 juros e Copom, crédito, mercados, setor externo, contas públicas e dívida, estados, Brasil no
-mundo, previsões** — com seis números na página inicial. O que cada fase já entregou está no §10; o que
+mundo, previsões** — com quatro números e quatro gráficos na página inicial. O que cada fase já entregou está no §10; o que
 falta decidir, no §11. O resultado dos testes de conexão está em [FONTES.md](FONTES.md).
 
 ---
@@ -276,8 +276,8 @@ Repositório público: Actions e Pages são gratuitos.
 - **Builder:** Python 3.12, `uv`, `httpx`, `pandas`, `statsmodels`, `pydantic` (schema dos
   JSONs), `pytest`, `ruff`, `mypy`. CLI: `sacibras build [--secao X]`, `sacibras fontes-smoke`.
 - **Desenho** (Caio, 14/11/2026): parecido com o do finjabs — escuro, vidro, cabeçalho em
-  pílula, Geist — com as luzes da bandeira ao fundo. A entrada mostra só seis números e os
-  assuntos; cada assunto abre na própria vista (`#inflacao`), com o resto atrás de um clique.
+  pílula, Geist — com as luzes da bandeira ao fundo. A entrada mostra quatro números, quatro
+  gráficos (inflação, PIB, juro real e dívida; Caio, 15/11/2026) e os assuntos; cada assunto abre na própria vista (`#inflacao`), com o resto atrás de um clique.
   Substitui a "uma página, nesta ordem" do §5 e os 12 cartões do §5.0.
 - **Site:** Vite + TypeScript, sem framework; **Observable Plot** para os gráficos,
   `d3-geo` + `topojson-client` para o mapa; CSS próprio com tokens, tema claro e escuro;
@@ -395,7 +395,7 @@ O que a tela já diz, ou deveria dizer, sobre o que os números não medem.
   não reage à inflação. A participação por indexador no SGS não traz o IPCA.
 - **Simulador da Selic**: linear e de um ano, com risco-país e juro de fora parados; a faixa do
   IPCA é do modelo de dez/2021 e a da dívida soma pontas. A soma das três parcelas da dívida é
-  nossa. O gancho de Lara Resende mede só o primeiro ano. As tabelas dos ciclos mostram o que
+  nossa. As tabelas dos ciclos mostram o que
   veio depois, não o que a Selic causou.
 - **Simulador da reforma**: só IBS e CBS (em 2027 e 2028 falta o ICMS ou ISS), sem comparar com
   o imposto de hoje; a alíquota de 2033 é faixa, e a ponta de cima é conta nossa. Regimes

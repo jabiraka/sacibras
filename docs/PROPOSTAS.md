@@ -23,11 +23,10 @@ que ficou faltando em cada um.
 ## Falta, por assunto
 
 **Juros e Selic**
-- Efeito da Selic na atividade e no crédito (boxe do RPM de mar/2026: 1 pp tira 3,7 % das
-  concessões de crédito livre às famílias em 12 meses); atalho em Inflação e em Contas
-  públicas; ciclos alinhados pelo primeiro corte (o gráfico só sabe eixo de datas).
+- Atalho do efeito da Selic em Inflação e em Contas públicas; ciclos alinhados pelo primeiro
+  corte (o gráfico só sabe eixo de datas). O efeito na atividade e no crédito (boxe do RPM de
+  mar/2026) não entra: é estudo de uma vez só (regra de 15/11/2026).
 - Faixa de erro do modelo de 2024, se o BC publicar; efeito por grupo de preços.
-- Gancho de Lara Resende: o segundo ano em diante e um endereço próprio para o cenário.
 - Inflação implícita antes de mai/2029 (só com a B3).
 
 **Mercados**
@@ -68,7 +67,8 @@ oferta também?"*)
 - IR da pessoa física, imposto sobre consumo e sobre salário contra outros países (a OCDE não
   traz o Brasil; achar outra fonte oficial).
 - FPE/FPM ao lado da arrecadação por estado; imposto retido na fonte por faixa de renda;
-  gasto tributário antes de 2014 (só PDF); multiplicador de receita da SPE.
+  gasto tributário antes de 2014 (só PDF); multiplicador de receita da SPE, só se sair com
+  regularidade (estudo avulso não entra, regra de 15/11/2026).
 
 **Estados**
 - Mínimos de saúde e educação (SIOPS e SIOPE; o RREO não traz pela API).

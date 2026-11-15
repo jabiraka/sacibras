@@ -910,15 +910,6 @@ TERMOS: list[Termo] = [
         "#impostos/gasto-tributario",
     ),
     Termo(
-        "multiplicador",
-        "Multiplicador",
-        "Quanto o PIB muda para cada real a mais ou a menos de gasto ou de imposto. Um "
-        "multiplicador de 0,5 num corte de imposto quer dizer R$ 0,50 a mais de PIB para cada "
-        "R$ 1 a menos de imposto.",
-        ("multiplicador", "multiplicadores"),
-        "#impostos/crescimento",
-    ),
-    Termo(
         "simples-nacional",
         "Simples Nacional",
         "O regime de imposto das empresas pequenas: uma guia só, com alíquota menor que a das "

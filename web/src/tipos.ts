@@ -40,6 +40,8 @@ export interface Grafico {
   largura: "meia" | "inteira";
   piramide?: Piramide | null;
   dispersao?: Dispersao | null;
+  /** Só na página inicial: o assunto de onde o gráfico veio. */
+  secao?: string;
 }
 
 /** Um ponto por país: uma métrica em cada eixo (`chave` é o ISO3; o Brasil é BRA). */
@@ -145,16 +147,6 @@ export interface SimuladorReforma {
   como_ler: string;
 }
 
-/** Um gancho do simulador da Selic: uma proposta pública, no tamanho de corte que ela dá. */
-export interface CenarioSelic {
-  id: string;
-  rotulo: string;
-  pp: number;
-  texto: string;
-  fonte: string;
-  endereco: string;
-}
-
 /** O que o BC estima para 1 pp de Selic; o navegador multiplica pela mudança escolhida. */
 export interface SimuladorSelic {
   ano: number;
@@ -184,7 +176,6 @@ export interface SimuladorSelic {
   erro_focus_dolar: number | null;
   erro_focus_divida: number | null;
   erro_focus_desde: number | null;
-  cenarios: CenarioSelic[];
   fonte: string;
   nota: string;
   como_ler: string;

@@ -10,7 +10,7 @@
 import { dinheiro, numero, sinal } from "./formato";
 import { montarGrafico } from "./grafico";
 import { el } from "./pecas";
-import type { CenarioSelic, Grafico, SimuladorSelic } from "./tipos";
+import type { Grafico, SimuladorSelic } from "./tipos";
 
 type Faixa = [number, number];
 
@@ -126,8 +126,7 @@ function pintarRegua(alvo: HTMLElement, linhas: LinhaDaRegua[]): void {
 
 export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
   let pp = -1;
-  let cenario: CenarioSelic | null = null;
-  const limite = Math.max(3, ...s.cenarios.map((c) => Math.ceil(Math.abs(c.pp))));
+  const limite = 3;
 
   const painel = el("div", "simulador");
   const linha = el("label", "controle");
@@ -148,20 +147,7 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
   const zerar = el("button", "botao", "Voltar ao Focus");
   zerar.type = "button";
   atalhos.append(zerar);
-  const sobreOCenario = el("div", "nota cenario");
-  sobreOCenario.hidden = true;
-  for (const c of s.cenarios) {
-    const botao = el("button", "botao", c.rotulo);
-    botao.type = "button";
-    botao.addEventListener("click", () => {
-      pp = c.pp;
-      cenario = c;
-      entrada.value = String(pp);
-      pintar();
-    });
-    atalhos.append(botao);
-  }
-  painel.append(linha, atalhos, sobreOCenario);
+  painel.append(linha, atalhos);
 
   const frase = el("p", "posicao");
   const quadros = el("div", "efeitos");
@@ -202,18 +188,6 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
         ? el("b", "", "para a esquerda é corte, para a direita é alta.")
         : el("b", "", ", pela conta do Banco Central, um ano depois (estimativa e faixa de 90 %):"),
     );
-
-    if (cenario && cenario.pp === pp) {
-      const fonte = el("a", "", `Ler o texto: ${cenario.fonte}`);
-      fonte.href = cenario.endereco;
-      fonte.target = "_blank";
-      fonte.rel = "noopener noreferrer";
-      sobreOCenario.replaceChildren(document.createTextNode(`${cenario.texto}\n\n`), fonte);
-      sobreOCenario.hidden = false;
-    } else {
-      cenario = null;
-      sobreOCenario.hidden = true;
-    }
 
     // ------------------------------------------------------------ inflação
     comPequeno(inflacao.valor, sinal(e.ipca, 2), "pp");

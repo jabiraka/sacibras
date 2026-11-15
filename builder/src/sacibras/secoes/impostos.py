@@ -1,11 +1,12 @@
-"""Impostos: quanto se arrecada, sobre o que, quanto se deixa de arrecadar e o que se sabe do
-efeito no crescimento.
+"""Impostos: quanto se arrecada, sobre o que, quanto se deixa de arrecadar e a carga contra o
+crescimento, país a país.
 
 Pedido do Caio (14/11/2026): *"estou sentindo falta de alguma sessão sobre impostos, ou
 impacto de impostos no crescimento"*. Das quatro peças oferecidas para o crescimento, ele
 escolheu as quatro: a composição da carga (com outros países), a carga contra o crescimento
 (um ponto por país, com o aviso de que andar junto não é causa), os multiplicadores lidos em
-estudo oficial e o gasto tributário.
+estudo oficial e o gasto tributário. Os multiplicadores e a incidência por décimo de renda
+saíram em 15/11/2026: eram estudos de uma vez só (Caio: só o que sai com regularidade).
 
 Fontes: a arrecadação federal mês a mês vem da Receita (CSV por UF e tributo); a carga
 tributária e a composição, da OCDE (Global Revenue Statistics: o mesmo método para ~145
@@ -565,8 +566,7 @@ def _crescimento(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
                 f"{len(pontos)} países com carga na OCDE e PIB no FMI. Correlação de "
                 f"{br(r, 2)}: {em_palavras(r)}. Andar junto não quer dizer que um cause o "
                 "outro: país rico tende a cobrar mais e a crescer menos, por já ter "
-                "crescido; e país que cresce pode cobrar mais. Para o efeito do imposto, "
-                "ver os estudos na tabela abaixo."
+                "crescido; e país que cresce pode cobrar mais."
                 + (
                     f" Brasil: carga de {br(brasil.x)} % e crescimento de "
                     f"{br(brasil.y)} % ao ano por habitante."
@@ -576,24 +576,7 @@ def _crescimento(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
             ),
         )
     ]
-    tabelas = [_tabela_estudos()]
-    return graficos, tabelas
-
-
-def _tabela_estudos() -> Tabela:
-    linhas = [
-        LinhaTabela(rotulo=e.rotulo, valores=[e.valor], unidade=e.unidade, casas=e.casas)
-        for e in relatorios.EFEITOS_DE_IMPOSTO
-    ]
-    return Tabela(
-        id="impostos-estudos",
-        titulo="O que os estudos oficiais estimam",
-        subtitulo="números lidos nos documentos, com a fonte de cada um na nota",
-        colunas=["efeito estimado"],
-        linhas=linhas,
-        fonte="; ".join(dict.fromkeys(e.fonte for e in relatorios.EFEITOS_DE_IMPOSTO)),
-        nota="\n\n".join(e.leitura for e in relatorios.EFEITOS_DE_IMPOSTO),
-    )
+    return graficos, []
 
 
 def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], str]:
@@ -727,12 +710,10 @@ def _simulador_da_reforma(
     o simulador. O calendário em palavras é a tabela de `_reforma`, mais abaixo.
 
     Nada aqui é estimativa nossa: as regras saem da emenda e da lei lidas (`leis.py`) e as
-    alíquotas, das contas da Fazenda, do Comitê Gestor do IBS e do TCU (`relatorios.py`). Nossa
+    alíquotas, das contas do Comitê Gestor do IBS e do TCU (`relatorios.py`). Nossa
     é só a aritmética (somar e multiplicar), dita onde aparece."""
     r = relatorios
     cbs_2027 = round(r.CBS_REFERENCIA_2027 - leis.CBS_DESCONTO_2027_2028, 2)
-    centro, piso, teto = r.ALIQUOTA_FAZENDA_2024
-    mais, mais_piso, mais_teto = r.ALIQUOTA_MUDANCAS_DA_CAMARA
     soma_recente = r.IBS_COMITE_GESTOR + r.CBS_REFERENCIA_2027
 
     cartoes = [
@@ -776,59 +757,36 @@ def _simulador_da_reforma(
         id="reforma-aliquota",
         titulo="A alíquota cheia de 2033: as contas oficiais",
         subtitulo="IBS mais CBS, para o que não tem desconto; ninguém sabe ainda o número",
-        colunas=["Estimativa", "De", "A"],
+        colunas=["Estimativa"],
         linhas=[
             LinhaTabela(
-                rotulo="Fazenda, jul/2024: o projeto como o governo mandou",
-                valores=[centro, piso, teto],
-                unidade="%",
-                casas=2,
-            ),
-            LinhaTabela(
-                rotulo="Fazenda, ago/2024: o que a Câmara acrescentou",
-                valores=[mais, mais_piso, mais_teto],
-                unidade="pp",
-                casas=2,
-            ),
-            LinhaTabela(
-                rotulo="As duas somadas",
-                valores=[
-                    round(centro + mais, 2),
-                    round(piso + mais_piso, 2),
-                    round(teto + mais_teto, 2),
-                ],
-                unidade="%",
-                casas=2,
-            ),
-            LinhaTabela(
                 rotulo="Comitê Gestor do IBS, jul/2026",
-                valores=[r.ALIQUOTA_COMITE_GESTOR, None, None],
+                valores=[r.ALIQUOTA_COMITE_GESTOR],
                 unidade="%",
                 casas=2,
             ),
             LinhaTabela(
                 rotulo="IBS do Comitê Gestor mais a CBS do TCU para 2027",
-                valores=[round(soma_recente, 2), None, None],
+                valores=[round(soma_recente, 2)],
                 unidade="%",
                 casas=2,
             ),
             LinhaTabela(
                 rotulo="Teto da lei: acima dele, o governo propõe cortar descontos",
-                valores=[leis.TETO_IBS_CBS, None, None],
+                valores=[leis.TETO_IBS_CBS],
                 unidade="%",
                 casas=2,
             ),
         ],
         fonte=(
-            f"{r.FONTE_ALIQUOTA_FAZENDA}; {r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; "
-            f"{leis.TETO_IBS_CBS_NORMA}; somas: cálculo próprio"
+            f"{r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; {leis.TETO_IBS_CBS_NORMA}; "
+            "somas: cálculo próprio"
         ),
         nota=(
             "Como ler: a alíquota cheia é a que repõe a arrecadação dos impostos que saem. "
-            "Quanto mais coisa tem desconto, mais alta ela fica para o resto: só as carnes na "
-            "cesta básica somaram 0,56 ponto. O intervalo da Fazenda vem de duas hipóteses de "
-            "sonegação. A Fazenda avisa que o número definitivo só se conhece no fim da "
-            "transição.\n\n"
+            "Quanto mais coisa tem desconto, mais alta ela fica para o resto. O número "
+            "definitivo só se conhece no fim da transição; o Comitê Gestor refaz a conta todo "
+            "ano.\n\n"
             f"A CBS que o TCU calculou para 2027 ({br(r.CBS_REFERENCIA_2027, 1)} %) ficou acima "
             f"dos {br(r.CBS_ESTIMATIVA_ANTERIOR, 2)} % esperados; somá-la ao IBS do Comitê Gestor "
             f"({br(r.IBS_COMITE_GESTOR, 1)} %) é conta nossa, e a CBS de 2033 pode ser outra. O "
@@ -1147,33 +1105,7 @@ def _divida_ativa(ctx: Contexto) -> Pecas:
 
 
 def _quem_paga(ctx: Contexto) -> Pecas:
-    tabelas = [
-        Tabela(
-            id="quem-paga-decimos",
-            titulo="Imposto em % da renda, dos mais pobres aos mais ricos",
-            subtitulo="famílias em dez grupos de renda por pessoa, 2017-2018",
-            colunas=["sobre o consumo, %", "sobre renda e patrimônio, %", "total, %"],
-            linhas=[
-                LinhaTabela(
-                    rotulo=nome,
-                    valores=[indiretos, diretos, round(indiretos + diretos, 1)],
-                    unidade="",
-                    casas=1,
-                )
-                for nome, indiretos, diretos in relatorios.INCIDENCIA_POR_DECIMO
-            ],
-            fonte=relatorios.FONTE_INCIDENCIA,
-            nota=(
-                "Quem ganha menos gasta quase tudo o que ganha, e o imposto embutido nos preços "
-                "(ICMS, PIS, Cofins, IPI, ISS) leva uma parte maior da renda: 23,4 % nos 10 % "
-                "mais pobres contra 8,6 % nos 10 % mais ricos. O imposto sobre renda e "
-                "patrimônio (com a contribuição à previdência, o IPTU e o IPVA) cresce com a "
-                "renda, mas não o bastante para compensar. O total é a soma das duas colunas. "
-                "É estimativa do Ipea com a pesquisa de orçamentos do IBGE, não dado de "
-                "arrecadação."
-            ),
-        )
-    ]
+    tabelas: list[Tabela] = []
     frase = ""
     try:
         ano, faixas = receita_irpf.grandes_numeros()

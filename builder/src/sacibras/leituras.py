@@ -125,21 +125,6 @@ LEITURAS: list[Leitura] = [
         date(2027, 3, 31),
         "Relatório de Política Monetária: novo boxe de repasse cambial. Uma vez por ano.",
     ),
-    Leitura(
-        "Proposta de Lara Resende no simulador da Selic",
-        "relatorios.LARA_RESENDE_SELIC",
-        date(2026, 11, 14),
-        date(2027, 3, 25),
-        "Substack do autor: conferir se a proposta mudou ou envelheceu (seis meses da publicação).",
-    ),
-    Leitura(
-        "Multiplicadores de imposto",
-        "relatorios.EFEITOS_DE_IMPOSTO",
-        date(2026, 11, 14),
-        date(2027, 5, 14),
-        "SPE, Boletim Impulso Estrutural do Gasto: conferir se saiu a nota metodológica com o "
-        "multiplicador de receita. A cada seis meses.",
-    ),
     # ------------------------------------------------------------- impostos
     Leitura(
         "Reforma do consumo, ano a ano (EC 132 e LC 214)",
@@ -168,14 +153,6 @@ LEITURAS: list[Leitura] = [
         date(2027, 8, 15),
         "Comitê Gestor do IBS (cgibs.gov.br), a resolução de julho com a estimativa de "
         "arrecadação do ano seguinte e o anexo metodológico. Uma vez por ano.",
-    ),
-    Leitura(
-        "Alíquota cheia do IBS e da CBS: as notas da Fazenda",
-        "relatorios.ALIQUOTA_FAZENDA_2024",
-        date(2026, 11, 14),
-        date(2027, 6, 30),
-        "gov.br/fazenda, Reforma Tributária, notas técnicas da alíquota de referência: ver se "
-        "saiu estimativa nova (as lidas são de jul e ago/2024).",
     ),
     Leitura(
         "Descontos, devolução e teto de 26,5 % da reforma (LC 214)",
@@ -207,14 +184,6 @@ LEITURAS: list[Leitura] = [
         date(2026, 11, 14),
         date(2027, 3, 31),
         "PGFN em Números (gov.br/pgfn, institucional), que sai em março. Uma vez por ano.",
-    ),
-    Leitura(
-        "Imposto em % da renda por décimo (Ipea)",
-        "relatorios.INCIDENCIA_POR_DECIMO",
-        date(2026, 11, 14),
-        date(2027, 11, 14),
-        "Repositório do Ipea: ver se há Texto para Discussão novo dos mesmos autores com a "
-        "POF seguinte. Uma vez por ano.",
     ),
 ]
 

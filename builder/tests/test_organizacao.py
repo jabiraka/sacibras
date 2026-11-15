@@ -148,3 +148,11 @@ def test_partes_dos_estados_sem_a_ficha_quando_nao_ha_contas() -> None:
     assert com == ["mapa", "estado", "duas-metricas", "tabela"]
     assert "estado" not in sem
     assert all(not re.match(r"^(c|g|t|m|p|uf)-", i) for i in com)
+
+
+def test_a_pagina_inicial_so_aponta_para_pecas_que_existem() -> None:
+    """Os números e gráficos da entrada moram numa parte do assunto (senão somem calados)."""
+    cartoes = {c for s in organizacao.PARTES for c in organizacao.esperados(s)["cartoes"]}
+    assert set(construir.RESUMO) <= cartoes
+    for secao, grafico in construir.RESUMO_GRAFICOS:
+        assert grafico in organizacao.esperados(secao)["graficos"], (secao, grafico)

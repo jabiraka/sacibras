@@ -124,6 +124,8 @@ class Grafico(Modelo):
     """Com ela, o site desenha a pirâmide etária no lugar das séries."""
     dispersao: Dispersao | None = None
     """Com ela, o site desenha um ponto por país no lugar das séries."""
+    secao: str = ""
+    """O assunto de onde o gráfico veio: só na página inicial, para o elo "abrir"."""
 
 
 class Meta(Modelo):
@@ -212,18 +214,6 @@ class SimuladorDivida(Modelo):
     nota: str
 
 
-class CenarioSelic(Modelo):
-    """Um gancho do simulador: uma proposta pública, posta no tamanho de corte que ela dá."""
-
-    id: str
-    rotulo: str
-    pp: float
-    """Onde o botão põe o controle: a Selic do ano contra o Focus, em pp."""
-    texto: str
-    fonte: str
-    endereco: str
-
-
 class SimuladorSelic(Modelo):
     """O que o Banco Central estima que muda quando a Selic fica diferente por um ano.
 
@@ -265,7 +255,6 @@ class SimuladorSelic(Modelo):
     erro_focus_divida: float | None = None
     """O mesmo para a dívida bruta, em pp do PIB."""
     erro_focus_desde: int | None = None
-    cenarios: list[CenarioSelic] = Field(default_factory=list)
     fonte: str
     nota: str
     como_ler: str

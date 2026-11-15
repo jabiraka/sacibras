@@ -137,12 +137,6 @@ def test_contas_da_secao() -> None:
     assert impostos.em_palavras(-0.05) == "praticamente nenhuma relação"
 
 
-def test_estudos_tem_fonte_e_trecho_lido() -> None:
-    for e in relatorios.EFEITOS_DE_IMPOSTO:
-        assert e.fonte and e.leitura and e.unidade
-        assert '"' in e.leitura or "“" in e.leitura  # o trecho original, entre aspas
-
-
 def test_dgt_regioes_e_previsao_do_ploa() -> None:
     livro = openpyxl.Workbook()
     iv = livro.active
@@ -231,13 +225,9 @@ def test_irpf_acha_a_planilha_mais_nova() -> None:
         receita_irpf.mais_nova("<html></html>")
 
 
-def test_reforma_e_decimos_estao_inteiros() -> None:
+def test_reforma_esta_inteira() -> None:
     assert [p.quando for p in leis.REFORMA_DO_CONSUMO][:2] == ["2026", "2027"]
     assert all(p.muda and p.norma.startswith("ADCT") for p in leis.REFORMA_DO_CONSUMO)
-    assert len(relatorios.INCIDENCIA_POR_DECIMO) == 11
-    pobres, ricos = relatorios.INCIDENCIA_POR_DECIMO[0], relatorios.INCIDENCIA_POR_DECIMO[9]
-    assert pobres[1] + pobres[2] == pytest.approx(26.4)  # os totais que o estudo escreve
-    assert ricos[1] + ricos[2] == pytest.approx(19.2)
 
 
 def test_setores_le_meses_abreviados_e_so_ano_fechado() -> None:

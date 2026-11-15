@@ -16,7 +16,6 @@ from sacibras.modelos import acerto_focus
 from sacibras.modelos import selic as modelo_selic
 from sacibras.schema import (
     Cartao,
-    CenarioSelic,
     Grafico,
     LinhaRef,
     LinhaTabela,
@@ -947,40 +946,6 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
         desde_do_erro += ")"
 
     focus_selic = focus("Selic")
-    cenarios: list[CenarioSelic] = []
-    if focus_selic is not None:
-        # Em linha reta até o alvo no fim do ano, a distância média do ano para o caminho do
-        # Focus é metade da distância do fim; no passo do controle (0,25).
-        alvo = r.LARA_RESENDE_SELIC
-        pp = round((alvo - focus_selic) / 2 / 0.25) * 0.25
-        lado = "abaixo" if pp < 0 else "acima"
-        cenarios.append(
-            CenarioSelic(
-                id="lara-resende",
-                rotulo=f"Proposta de André Lara Resende: Selic rumo a {br(alvo, 1)} %",
-                pp=pp,
-                texto=(
-                    f'Em "Eu Acuso" ({periodo(r.LARA_RESENDE_EM, "D")}), André Lara Resende '
-                    "propõe que o Banco Central leve a Selic aos poucos, em cerca de "
-                    f"{r.LARA_RESENDE_MESES} meses, para perto de {br(alvo, 1)} % ao ano, e que "
-                    "depois ela fique entre a meta de inflação e o crescimento nominal "
-                    "potencial da economia.\n\n"
-                    f"O que o botão faz: põe a Selic de {ano} {br(abs(pp), 2)} pp {lado} do "
-                    f"Focus. É a média do ano se a taxa for em linha reta até {br(alvo, 1)} % em "
-                    f"dezembro, contra os {br(focus_selic, 2)} % que o Focus espera para o fim "
-                    f"de {ano} (a conta do caminho é nossa). O simulador só enxerga esse "
-                    "primeiro ano: a proposta é de juro baixo para ficar, e a maior parte da "
-                    "queda viria no fim do ano, com pouco tempo para chegar aos preços.\n\n"
-                    "O que o autor espera é outra coisa: para ele a alta da inflação seria "
-                    '"apenas um repique transitório", o BC seguraria o dólar com as reservas, e '
-                    'o custo menor da dívida daria, com o tempo, "cerca de 4% do PIB ao ano". '
-                    "Este simulador usa os modelos do Banco Central, que são a visão que ele "
-                    "contesta: mostra o que essa visão diria da proposta, não quem tem razão."
-                ),
-                fonte=f"André Lara Resende, {r.LARA_RESENDE_TITULO}",
-                endereco=r.LARA_RESENDE_ENDERECO,
-            )
-        )
 
     meta = leis.META_CONTINUA
     zero = date(ctx.hoje.year, 10, 1)
@@ -1018,7 +983,6 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
         erro_focus_dolar=round(erro_dolar.erro_tipico, 1) if erro_dolar else None,
         erro_focus_divida=round(erro_divida.erro_tipico, 1) if erro_divida else None,
         erro_focus_desde=desde,
-        cenarios=cenarios,
         fonte=(
             f"{r.FONTE_EFEITO_SELIC}; {r.FONTE_FAIXA_DO_IPCA}; {fonte_divida}; Focus de "
             f"{periodo(bcb_focus.data_da_ultima_edicao(), 'D')}; soma das parcelas da dívida: "

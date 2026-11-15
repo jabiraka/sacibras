@@ -545,7 +545,7 @@ main {
   margin: 56px auto 0;
   max-width: 62rem;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border-block: 1px solid var(--borda);
 }
 
@@ -697,20 +697,40 @@ main {
 
 @media (max-width: 760px) {
   .essenciais {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .essencial:nth-child(4) {
+  .essencial:nth-child(3) {
     border-left: 0;
   }
 
-  .essencial:nth-child(n + 4) {
+  .essencial:nth-child(n + 3) {
     border-top: 1px solid var(--borda);
   }
 }
 
 .bloco {
   padding-top: 76px;
+}
+
+/* Os gráficos da página inicial: o elo para o assunto fica no pé de cada um. */
+.panorama .graficos {
+  margin-top: 24px;
+}
+
+.grafico-elo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.875rem;
+  color: var(--verde);
+  text-decoration: none;
+}
+
+.grafico-elo:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .sobretitulo {
@@ -2372,7 +2392,7 @@ input.escolha[type="number"] {
   accent-color: var(--verde);
 }
 
-/* Os atalhos do simulador: voltar ao Focus e os cenários em debate. */
+/* Os atalhos dos simuladores (voltar ao Focus; as alíquotas da reforma). */
 .cenarios {
   display: flex;
   flex-wrap: wrap;
@@ -2385,16 +2405,6 @@ input.escolha[type="number"] {
   padding: 6px 14px;
   text-align: left;
   white-space: normal;
-}
-
-.nota.cenario {
-  margin-top: 0;
-}
-
-.nota.cenario a {
-  color: var(--verde);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 @media (max-width: 860px) {

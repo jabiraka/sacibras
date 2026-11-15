@@ -4,7 +4,8 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 14/11/2026. Tudo publicado no `main`; nenhum branch com trabalho pendente.
+Última atualização: 15/11/2026. A página inicial com gráficos e a saída dos estudos avulsos
+estão no branch `ccr-bf38480b-wr13df`, à espera de ir ao `main`.
 
 ## Releituras com prazo
 
@@ -33,8 +34,8 @@ As próximas:
    pela oferta no tempo (agropecuária, indústria, serviços; dado já baixado) e a demanda
    privada do Econvitals (consumo das famílias + investimento, pesados pelo tamanho em reais;
    conta nossa, dita na nota). Detalhe no [PROPOSTAS](PROPOSTAS.md), em Atividade.
-2. **Efeito da Selic**: atividade e crédito (boxe do RPM de mar/2026), atalho em Inflação e em
-   Contas públicas, ciclos alinhados pelo primeiro corte.
+2. **Efeito da Selic**: atalho em Inflação e em Contas públicas, ciclos alinhados pelo
+   primeiro corte. (Atividade e crédito do boxe de mar/2026 não entram: estudo de uma vez só.)
 3. **Riscos**: juro real do Brasil menos o dos EUA, hiato de crédito na régua da própria
    história, taxa implícita da DBGG, bloco jurídico (Anexo de Riscos Fiscais, precatórios),
    estados perto dos limites com a nota CAPAG.

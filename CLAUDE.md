@@ -56,6 +56,15 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   *bootstrap*, fator de desconto log-linear, nada extrapolado (`builder/src/sacibras/curvas.py`,
   copiado e adaptado do `domain/curves.py` do finance_agent). Comparação com o Focus sempre no
   mesmo prazo (`media_do_caminho`), nunca taxa contra taxa de anos diferentes.
+- **Só o que sai com regularidade e com método** (Caio, 15/11/2026: *"elimine tudo oq não
+  for publicado regularmente e com metodologia, vamos manter apenas as nossas estimativas
+  nesse caso"*). Estudo, artigo, texto para discussão ou nota técnica de uma vez só não entra
+  (saíram os multiplicadores de imposto, a incidência por décimo do Ipea, as notas da Fazenda
+  de 2024 sobre a alíquota da reforma e a proposta de Lara Resende); onde não há publicação
+  regular, fica só a estimativa nossa, com o método dito. Entra o que tem calendário (nota
+  mensal, relatório trimestral ou semestral, resolução anual, série) e a nota de crédito,
+  que as agências revisam. O simulador da Selic fica (Caio, mesmo dia): os modelos
+  semiestruturais são os do BC, usados em todo Relatório de Política Monetária.
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 
@@ -63,8 +72,11 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 
 - **Página inicial enxuta, o resto abre no clique** (Caio, 14/11/2026: *"muitas métricas na
   página inicial… deixar só as informações essenciais no início e deixar o usuário ir clicando
-  pra abrir"*). Na entrada: seis números (`RESUMO` em `construir.py`) e os assuntos com a
-  manchete de cada um, agrupados por categoria.
+  pra abrir"*). Na entrada: quatro números (`RESUMO` em `construir.py`), quatro gráficos
+  (`RESUMO_GRAFICOS`: inflação contra a meta, PIB, juro real e dívida, cada um com o elo para
+  o assunto; Caio, 15/11/2026: *"coloque também alguns gráficos que achar mais importante pra
+  entender o Brasil. Pode eliminar alguns cartões"*) e os assuntos com a manchete de cada um,
+  agrupados por categoria.
 - **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
   muitas informações em uma página [...] classifique melhor em categorias, crie
   subcategorias"*). Tudo mora em `builder/src/sacibras/organizacao.py`: `CATEGORIAS` agrupa os
@@ -135,11 +147,8 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   nenhum número sem a faixa de erro** (Caio, 14/11/2026: *"claramente coloque as faixas de
   erro, principalmente no simulador né onde os números estão longe de serem previsíveis
   assim"*): cada efeito com a faixa de 90 % que o BC publica, e cada nível numa régua ao lado
-  do Focus com o quanto o Focus costuma errar. **Gancho** (Caio, mesmo dia: *"aquela proposta
-  do André Lara Resende para baixar o juros"*): proposta pública vira botão que põe o controle
-  no tamanho dela, com o texto lido na fonte e citado em `relatorios.py`, o que o autor espera
-  dito ao lado do que a conta do BC dá, e sem tomar partido; dela só sai o tamanho do corte,
-  nunca um dado da tela. **E o da reforma do consumo** (Caio, 14/11/2026: *"dá pra fazer
+  do Focus com o quanto o Focus costuma errar. O gancho da proposta de Lara Resende saiu em
+  15/11/2026 (artigo de uma vez só). **E o da reforma do consumo** (Caio, 14/11/2026: *"dá pra fazer
   simulador de impostos? A reforma tributária vai chegar"*), em Impostos › Reforma do consumo:
   quanto de IBS e CBS vai numa compra, só com a lei lida (`leis.py`) e as contas oficiais da
   alíquota (`relatorios.py`), com a faixa entre o teto da lei e a soma das contas mais

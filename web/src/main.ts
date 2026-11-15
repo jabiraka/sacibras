@@ -429,9 +429,34 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
 
   const essenciais = el("section", "essenciais entra");
   essenciais.style.setProperty("--i", "3");
-  essenciais.setAttribute("aria-label", "Os seis números");
+  essenciais.setAttribute("aria-label", "Os números essenciais");
+
+  // Os gráficos que mais explicam o Brasil de hoje (Caio, 15/11/2026), cada um com o elo
+  // para o assunto em que mora.
+  const panorama = el("section", "bloco panorama");
+  panorama.append(el("p", "sobretitulo", "Panorama"));
+  const h2Panorama = el("h2");
+  h2Panorama.append(
+    document.createTextNode("O Brasil em quatro gráficos. "),
+    el("span", "apagado", "Toque para abrir o assunto."),
+  );
+  const grade = el("div", "graficos");
+  panorama.append(h2Panorama, grade);
+
   void ler<Secao>("resumo.json")
     .then((resumo) => {
+      for (const g of resumo.graficos) {
+        const peca = montarPeca(g);
+        const assunto = painel.secoes.find((s) => s.id === g.secao);
+        if (assunto) {
+          const elo = el("a", "grafico-elo", `Mais em ${assunto.titulo}`);
+          elo.append(el("span", "seta", "→"));
+          elo.href = `#${assunto.id}/g-${g.id}`;
+          peca.append(elo);
+        }
+        grade.append(peca);
+      }
+      if (!resumo.graficos.length) panorama.remove();
       for (const c of resumo.cartoes) {
         const item = el("a", "essencial");
         item.href = `#${c.secao}`;
@@ -444,7 +469,10 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
         });
       }
     })
-    .catch(() => essenciais.remove());
+    .catch(() => {
+      essenciais.remove();
+      panorama.remove();
+    });
 
   const bloco = el("section", "bloco");
   bloco.id = "assuntos";
@@ -475,7 +503,7 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
     grupo.append(lista);
     bloco.append(grupo);
   }
-  conteudo.replaceChildren(heroi, essenciais, bloco);
+  conteudo.replaceChildren(heroi, essenciais, panorama, bloco);
 }
 
 // ------------------------------------------------------------------ assunto e parte

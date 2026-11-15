@@ -25,6 +25,7 @@ from sacibras.schema import (
     AoVivo,
     Cartao,
     EstadoFonte,
+    Grafico,
     ItemSecao,
     ItemSubcategoria,
     Painel,
@@ -68,9 +69,21 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("riscos", "Riscos", riscos.montar),
 ]
 
-# Os seis números da página inicial, na ordem; cada um nasce no assunto que o explica.
-# Decisão do Caio (14/11/2026): só o essencial na entrada, o resto abre no clique.
-RESUMO = ["pib-4t", "ipca-12m", "selic-meta", "desocupacao", "dolar", "dbgg"]
+# Os números da página inicial, na ordem; cada um nasce no assunto que o explica.
+# Decisão do Caio (14/11/2026): só o essencial na entrada, o resto abre no clique. Em
+# 15/11/2026 a entrada ganhou gráficos (*"coloque também alguns gráficos que achar mais
+# importante pra entender o Brasil. Pode eliminar alguns cartões"*): saíram o dólar e a
+# dívida bruta, que agora está no gráfico.
+RESUMO = ["pib-4t", "ipca-12m", "selic-meta", "desocupacao"]
+
+# Os gráficos da página inicial, na ordem: (assunto, id do gráfico). Crescimento, inflação
+# contra a meta, o juro real e a dívida: o que mais explica o Brasil de hoje.
+RESUMO_GRAFICOS = [
+    ("inflacao", "ipca-12m"),
+    ("atividade", "pib-trimestral"),
+    ("juros", "juro-real"),
+    ("fiscal", "divida"),
+]
 
 # Onde o navegador busca o ponto mais novo de cada número da entrada (SGS e SIDRA têm CORS
 # aberto, conferido em 14/11/2026). A Selic meta fica de fora: o SGS a preenche dia a dia até
@@ -79,8 +92,6 @@ AO_VIVO = {
     "pib-4t": AoVivo(tipo="sidra", caminho="t/5932/n1/all/v/6562/p/last%201/c11255/90707"),
     "ipca-12m": AoVivo(tipo="sgs", codigo=SGS["IPCA_12M"].codigo),
     "desocupacao": AoVivo(tipo="sgs", codigo=SGS["DESOCUPACAO"].codigo),
-    "dolar": AoVivo(tipo="sgs", codigo=SGS["DOLAR"].codigo),
-    "dbgg": AoVivo(tipo="sgs", codigo=SGS["DBGG"].codigo),
 }
 
 
@@ -202,6 +213,15 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
     itens: list[ItemSecao] = []
     fontes: list[EstadoFonte] = []
     cartoes: dict[str, Cartao] = {}
+    graficos: dict[tuple[str, str], Grafico] = {}
+
+    def guardar_graficos(id: str, lista: Sequence[Grafico | dict[str, object]]) -> None:
+        """Os gráficos do assunto que a página inicial mostra, marcados com o assunto."""
+        for g in lista:
+            modelo = g if isinstance(g, Grafico) else Grafico.model_validate(g)
+            if (id, modelo.id) in RESUMO_GRAFICOS:
+                graficos[(id, modelo.id)] = modelo.model_copy(update={"secao": id})
+
     for id, titulo, montar in ORDEM:
         arquivo = f"{id}.json"
         if so and id not in so:
@@ -220,6 +240,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 fontes.append(EstadoFonte(fonte=FONTES[id], ok=True))
                 for c in antigo.get("cartoes", []):
                     cartoes[c["id"]] = Cartao.model_validate(c)
+                guardar_graficos(id, antigo.get("graficos", []))
             continue
         try:
             falhas_antes = len(rede.FALHAS)
@@ -247,6 +268,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 _gravar(saida, getattr(secao, "arquivo_paises", ""), extra)
             if isinstance(secao, Secao):
                 cartoes.update({c.id: c for c in secao.cartoes})
+                guardar_graficos(id, secao.graficos)
             itens.append(
                 ItemSecao(
                     id=id,
@@ -271,6 +293,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     antigo = json.loads((saida / arquivo).read_text(encoding="utf-8"))
                     for c in antigo.get("cartoes", []):
                         cartoes[c["id"]] = Cartao.model_validate(c)
+                    guardar_graficos(id, antigo.get("graficos", []))
                     partes = _partes(antigo)
                 except (OSError, ValueError):
                     pass
@@ -291,12 +314,13 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
     resumo = Secao(
         id="resumo",
         titulo="Resumo",
-        resumo="Os seis números da página inicial.",
+        resumo="Os números e os gráficos da página inicial.",
         cartoes=[
             cartoes[c].model_copy(update={"ao_vivo": AO_VIVO.get(c)})
             for c in RESUMO
             if c in cartoes
         ],
+        graficos=[graficos[g] for g in RESUMO_GRAFICOS if g in graficos],
         gerado_em=agora,
     )
     _gravar(saida, "resumo.json", resumo)
