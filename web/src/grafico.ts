@@ -1,6 +1,6 @@
 // Um renderizador só para todos os gráficos: desenha o que o builder declarou.
 // Regras da casa: um eixo só, linha de 2 px, grade discreta, legenda quando há duas séries
-// ou mais, tabela e CSV sempre à mão, consenso e previsão tracejados.
+// ou mais, tabela, CSV e PNG sempre à mão, consenso e previsão tracejados.
 
 import * as Plot from "@observablehq/plot";
 import { comUnidade, data, eixo, mesCurto, numero, periodo } from "./formato";
@@ -262,7 +262,11 @@ export function montarGrafico(g: Grafico): HTMLElement {
   verTabela.setAttribute("aria-expanded", "false");
   const csv = el("button", "", "CSV");
   csv.type = "button";
-  acoes.append(verTabela, csv);
+  // A imagem do gráfico, com título, unidade, legenda e fonte escritos nela (15/11/2026).
+  const png = el("button", "", "PNG");
+  png.type = "button";
+  png.title = "Baixar a imagem do gráfico, com o título e a fonte";
+  acoes.append(verTabela, csv, png);
   pe.append(acoes);
   artigo.append(pe);
   if (g.nota) artigo.append(el("p", "nota", g.nota));
@@ -276,6 +280,11 @@ export function montarGrafico(g: Grafico): HTMLElement {
     verTabela.setAttribute("aria-expanded", String(!caixaTabela.hidden));
   });
   csv.addEventListener("click", () => baixarCsv(g));
+  png.addEventListener("click", () => {
+    const t = tema();
+    const cor = (i: number) => t.series[(g.series[i]?.cor ?? i) % t.series.length] ?? t.tinta;
+    void baixarPng(g, tela.querySelector("svg"), itensDaLegenda(g, cor), t);
+  });
 
   let jaEntrou = false;
 
@@ -561,46 +570,52 @@ function dominioDasMarcas(todas: Linha[]): [number, number] {
   return [Math.min(...vs) - 0.5, Math.max(...vs) + 0.5];
 }
 
-function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => string): void {
-  legenda.replaceChildren();
-  const itens: HTMLElement[] = [];
+type Chave = "linha" | "tracejada" | "banda" | "intervalo" | "intervalo-meio" | "referencia";
+
+interface ItemDaLegenda {
+  nome: string;
+  chave: Chave;
+  cor?: string;
+}
+
+/** O que a legenda mostra: as séries (quando há duas ou mais), a projeção, a faixa, as
+ *  barras de erro e as linhas de referência. A mesma lista vai para a tela e para o PNG. */
+function itensDaLegenda(g: Grafico, cor: (i: number) => string): ItemDaLegenda[] {
+  const itens: ItemDaLegenda[] = [];
   if (g.series.length >= 2) {
     g.series.forEach((s, i) => {
-      const item = el("span", "legenda-item");
-      const chave = el("i", s.papel === "realizado" ? "chave" : "chave tracejada");
-      chave.style.setProperty("--cor", cor(i));
-      item.append(chave, document.createTextNode(s.nome));
-      itens.push(item);
+      itens.push({ nome: s.nome, chave: s.papel === "realizado" ? "linha" : "tracejada", cor: cor(i) });
     });
   }
-  if (g.series.some((s) => s.tracejado_desde)) {
-    const item = el("span", "legenda-item");
-    const chave = el("i", "chave tracejada");
-    chave.style.setProperty("--cor", "var(--tinta-3)");
-    item.append(chave, document.createTextNode("projeção"));
-    itens.push(item);
-  }
-  if (g.faixa) {
-    const item = el("span", "legenda-item");
-    item.append(el("i", "chave banda"), document.createTextNode(g.faixa.nome));
-    itens.push(item);
-  }
+  if (g.series.some((s) => s.tracejado_desde)) itens.push({ nome: "projeção", chave: "tracejada" });
+  if (g.faixa) itens.push({ nome: g.faixa.nome, chave: "banda" });
   for (const intervalo of g.intervalos ?? []) {
-    const item = el("span", "legenda-item");
-    item.append(el("i", "chave intervalo"), document.createTextNode(intervalo.nome));
-    itens.push(item);
+    itens.push({ nome: intervalo.nome, chave: "intervalo" });
     if (intervalo.meio?.length && intervalo.nome_meio) {
-      const meio = el("span", "legenda-item");
-      meio.append(el("i", "chave intervalo-meio"), document.createTextNode(intervalo.nome_meio));
-      itens.push(meio);
+      itens.push({ nome: intervalo.nome_meio, chave: "intervalo-meio" });
     }
   }
-  for (const linha of g.linhas) {
+  for (const linha of g.linhas) itens.push({ nome: linha.rotulo, chave: "referencia" });
+  return itens;
+}
+
+function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => string): void {
+  const classe: Record<Chave, string> = {
+    linha: "chave",
+    tracejada: "chave tracejada",
+    banda: "chave banda",
+    intervalo: "chave intervalo",
+    "intervalo-meio": "chave intervalo-meio",
+    referencia: "chave referencia",
+  };
+  const itens = itensDaLegenda(g, cor).map((x) => {
     const item = el("span", "legenda-item");
-    item.append(el("i", "chave referencia"), document.createTextNode(linha.rotulo));
-    itens.push(item);
-  }
-  legenda.append(...itens);
+    const chave = el("i", classe[x.chave]);
+    chave.style.setProperty("--cor", x.cor ?? "var(--tinta-3)");
+    item.append(chave, document.createTextNode(x.nome));
+    return item;
+  });
+  legenda.replaceChildren(...itens);
   legenda.hidden = itens.length === 0;
 }
 
@@ -794,4 +809,203 @@ function baixarCsv(g: Grafico): void {
   a.download = `${g.id}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+// ------------------------------------------------------------------ PNG
+
+/** Quebra o texto em linhas que caibam em `largura` (medidas na fonte já posta no `ctx`). */
+function linhasDoTexto(ctx: CanvasRenderingContext2D, texto: string, largura: number): string[] {
+  const linhas: string[] = [];
+  let atual = "";
+  for (const palavra of texto.split(/\s+/).filter(Boolean)) {
+    const tentativa = atual ? `${atual} ${palavra}` : palavra;
+    if (atual && ctx.measureText(tentativa).width > largura) {
+      linhas.push(atual);
+      atual = palavra;
+    } else atual = tentativa;
+  }
+  if (atual) linhas.push(atual);
+  return linhas;
+}
+
+/** O desenho do gráfico como imagem: o SVG da tela, sem a camada do toque. */
+function imagemDoSvg(svg: SVGSVGElement): Promise<{ img: HTMLImageElement; w: number; h: number }> {
+  const w = Math.round(svg.width.baseVal.value || svg.getBoundingClientRect().width);
+  const h = Math.round(svg.height.baseVal.value || svg.getBoundingClientRect().height);
+  const copia = svg.cloneNode(true) as SVGSVGElement;
+  copia.querySelectorAll('g[pointer-events="none"]').forEach((n) => n.remove());
+  copia.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  copia.setAttribute("width", String(w));
+  copia.setAttribute("height", String(h));
+  // A fonte da página (a Geist não vai junto: no arquivo fica a do sistema, parecida).
+  copia.style.fontFamily = getComputedStyle(svg).fontFamily;
+  const texto = new XMLSerializer().serializeToString(copia);
+  const img = new Image();
+  img.width = w;
+  img.height = h;
+  return new Promise((resolve, reject) => {
+    img.onload = () => resolve({ img, w, h });
+    img.onerror = () => reject(new Error("o desenho não virou imagem"));
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(texto)}`;
+  });
+}
+
+/** Baixa o gráfico em PNG, em fundo claro, com o título, a unidade, a legenda e a fonte
+ *  escritos na imagem: quem recebe a figura sabe o que é e de onde veio. */
+async function baixarPng(
+  g: Grafico,
+  svg: SVGSVGElement | null,
+  legenda: ItemDaLegenda[],
+  t: Tema,
+): Promise<void> {
+  if (!svg) return;
+  const { img, w, h } = await imagemDoSvg(svg);
+  const escala = 2;
+  const margem = 28;
+  const largura = Math.max(w + 2 * margem, 560);
+  const util = largura - 2 * margem;
+  const familia = getComputedStyle(document.body).fontFamily;
+  const fonte = (peso: number, px: number): string => `${peso} ${px}px ${familia}`;
+
+  // Primeiro mede (a altura depende das quebras de linha), depois desenha.
+  const medidor = document.createElement("canvas").getContext("2d");
+  if (!medidor) return;
+  medidor.font = fonte(600, 20);
+  const titulo = linhasDoTexto(medidor, g.titulo, util);
+  medidor.font = fonte(400, 13);
+  const sub = linhasDoTexto(medidor, [g.subtitulo, g.unidade].filter(Boolean).join(" · "), util);
+  medidor.font = fonte(400, 12);
+  const pe = linhasDoTexto(medidor, `Fonte: ${g.fonte}`, util - 90);
+  // A legenda em fileiras: cada item é a chave (22 px) e o nome.
+  const fileiras: { item: ItemDaLegenda; x: number }[][] = [];
+  let fileira: { item: ItemDaLegenda; x: number }[] = [];
+  let x = 0;
+  for (const item of legenda) {
+    const larguraItem = 22 + medidor.measureText(item.nome).width + 16;
+    if (fileira.length && x + larguraItem > util) {
+      fileiras.push(fileira);
+      fileira = [];
+      x = 0;
+    }
+    fileira.push({ item, x });
+    x += larguraItem;
+  }
+  if (fileira.length) fileiras.push(fileira);
+
+  const alturaTitulo = titulo.length * 26 + (sub.length ? 4 + sub.length * 18 : 0);
+  const alturaLegenda = fileiras.length ? 10 + fileiras.length * 20 : 0;
+  const altura = margem + alturaTitulo + alturaLegenda + 12 + h + 14 + pe.length * 17 + margem;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(largura * escala);
+  canvas.height = Math.round(altura * escala);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.scale(escala, escala);
+  ctx.fillStyle = t.superficie || "#fdfcf7";
+  ctx.fillRect(0, 0, largura, altura);
+  ctx.textBaseline = "top";
+
+  let y = margem;
+  ctx.fillStyle = t.tinta;
+  ctx.font = fonte(600, 20);
+  for (const l of titulo) {
+    ctx.fillText(l, margem, y);
+    y += 26;
+  }
+  if (sub.length) {
+    y += 4;
+    ctx.fillStyle = t.tinta2;
+    ctx.font = fonte(400, 13);
+    for (const l of sub) {
+      ctx.fillText(l, margem, y);
+      y += 18;
+    }
+  }
+
+  if (fileiras.length) {
+    y += 10;
+    ctx.font = fonte(400, 12);
+    for (const f of fileiras) {
+      for (const { item, x: dx } of f) {
+        const x0 = margem + dx;
+        const meio = y + 8;
+        ctx.save();
+        ctx.strokeStyle = item.cor ?? t.tinta2;
+        ctx.fillStyle = item.cor ?? t.tinta2;
+        if (item.chave === "linha" || item.chave === "tracejada" || item.chave === "referencia") {
+          ctx.lineWidth = item.chave === "linha" ? 3 : item.chave === "tracejada" ? 2 : 1.5;
+          if (item.chave === "tracejada") ctx.setLineDash([5, 4]);
+          if (item.chave === "referencia") {
+            ctx.strokeStyle = t.tinta2;
+            ctx.setLineDash([2, 3]);
+          }
+          if (item.chave === "tracejada" && !item.cor) ctx.strokeStyle = t.tinta3;
+          ctx.beginPath();
+          ctx.moveTo(x0, meio);
+          ctx.lineTo(x0 + 16, meio);
+          ctx.stroke();
+        } else if (item.chave === "banda") {
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = t.faixa;
+          ctx.fillRect(x0, meio - 5, 16, 10);
+        } else if (item.chave === "intervalo") {
+          ctx.strokeStyle = t.tinta2;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x0 + 4, meio - 7);
+          ctx.lineTo(x0 + 12, meio - 7);
+          ctx.moveTo(x0 + 8, meio - 7);
+          ctx.lineTo(x0 + 8, meio + 7);
+          ctx.moveTo(x0 + 4, meio + 7);
+          ctx.lineTo(x0 + 12, meio + 7);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "rgb(20 38 28 / 16%)";
+          ctx.fillRect(x0 + 4, meio - 6, 8, 12);
+        }
+        ctx.restore();
+        ctx.fillStyle = t.tinta2;
+        ctx.fillText(item.nome, x0 + 22, y + 1);
+      }
+      y += 20;
+    }
+  }
+
+  y += 12;
+  ctx.drawImage(img, margem + Math.max(0, (util - w) / 2), y, w, h);
+  y += h + 14;
+
+  ctx.fillStyle = t.tinta3;
+  ctx.font = fonte(400, 12);
+  for (const l of pe) {
+    ctx.fillText(l, margem, y);
+    y += 17;
+  }
+  // A marca, no canto: o losango e o nome.
+  const xMarca = largura - margem - 70;
+  const yMarca = altura - margem - 12;
+  ctx.fillStyle = "#ffd400";
+  ctx.beginPath();
+  ctx.moveTo(xMarca + 7, yMarca);
+  ctx.lineTo(xMarca + 14, yMarca + 7);
+  ctx.lineTo(xMarca + 7, yMarca + 14);
+  ctx.lineTo(xMarca, yMarca + 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#0b2a6f";
+  ctx.beginPath();
+  ctx.arc(xMarca + 7, yMarca + 7, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = t.tinta2;
+  ctx.font = fonte(600, 12);
+  ctx.fillText("sacibras", xMarca + 20, yMarca + 1);
+
+  const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/png"));
+  if (!blob) return;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${g.id}.png`;
+  a.click();
+  window.setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }

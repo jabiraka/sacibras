@@ -9,8 +9,10 @@ ache tudo o que o site mostra. Os sinônimos ficam aqui, num dicionário só: qu
 from __future__ import annotations
 
 import json
+import re
 import unicodedata
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -628,6 +630,65 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
     "volatilidade": ["volatility", "volatilidad", "volatilite"],
     "hiato de credito": ["credit gap", "credit-to-gdp gap", "brecha de credito"],
     "servico da divida": ["debt service ratio", "dsr", "servicio de la deuda"],
+    "imposto": ["taxes", "tax", "taxation", "impuestos", "tributos", "impots", "fiscalite"],
+}
+
+# Os assuntos em chinês (simplificado e tradicional), japonês e árabe (15/11/2026), para quem
+# lê a página traduzida (traducao.ts) e busca na própria escrita. Só os nomes comuns de cada
+# assunto, como aparecem em jornal e em site de banco central; o árabe vai com o artigo
+# ("التضخم"), porque a busca acha o termo também dentro da palavra ("تضخم" casa). Chinês e
+# japonês não separam palavras: o navegador procura o termo dentro do que foi digitado
+# ("巴西通货膨胀" acha "通货膨胀").
+OUTRAS_ESCRITAS: dict[str, list[str]] = {
+    "atividade": ["经济活动", "經濟活動", "景気", "経済活動", "النشاط الاقتصادي"],
+    "pib": ["国内生产总值", "國內生產毛額", "國內生產總值", "国内総生産", "الناتج المحلي الإجمالي"],
+    "trabalho": [
+        "就业",
+        "就業",
+        "劳动力市场",
+        "勞動市場",
+        "雇用",
+        "労働市場",
+        "سوق العمل",
+        "التوظيف",
+    ],
+    "desocupacao": ["失业率", "失業率", "失业", "失業", "البطالة", "معدل البطالة"],
+    "inflacao": [
+        "通货膨胀",
+        "通胀",
+        "通貨膨脹",
+        "通膨",
+        "物价",
+        "物價",
+        "インフレ",
+        "物価",
+        "التضخم",
+        "الأسعار",
+    ],
+    "ipca": ["消费者物价指数", "消費者物價指數", "消費者物価指数", "مؤشر أسعار المستهلك"],
+    "juro": ["利率", "金利", "سعر الفائدة", "أسعار الفائدة"],
+    "selic": ["基准利率", "基準利率", "政策金利", "سعر الفائدة الأساسي"],
+    "copom": ["货币政策委员会", "貨幣政策委員會", "金融政策委員会", "لجنة السياسة النقدية"],
+    "credito": ["信贷", "信貸", "贷款", "貸款", "融資", "貸出", "الائتمان", "القروض"],
+    "mercados": ["金融市场", "金融市場", "الأسواق المالية"],
+    "bolsa": ["股市", "股票", "株式市場", "株価", "البورصة", "سوق الأسهم"],
+    "cambio": ["汇率", "匯率", "為替", "سعر الصرف"],
+    "dolar": ["美元", "ドル", "الدولار"],
+    "setor externo": ["国际收支", "國際收支", "国際収支", "القطاع الخارجي", "ميزان المدفوعات"],
+    "exporta": ["出口", "輸出", "الصادرات"],
+    "importa": ["进口", "進口", "輸入", "الواردات"],
+    "contas publicas": ["公共财政", "公共財政", "财政", "財政", "المالية العامة"],
+    "divida": ["公共债务", "公共債務", "政府債務", "الدين العام"],
+    "imposto": ["税收", "稅收", "税金", "税制", "الضرائب"],
+    "reforma do consumo": ["税制改革", "稅制改革", "增值税", "增值稅", "消費税", "الإصلاح الضريبي"],
+    "estados": ["巴西各州", "州", "الولايات"],
+    "demografia": ["人口", "人口结构", "人口結構", "人口動態", "السكان"],
+    "pobreza": ["贫困", "貧困", "الفقر"],
+    "desigualdade": ["不平等", "格差", "عدم المساواة"],
+    "mundo": ["世界", "国际比较", "國際比較", "国際比較", "العالم"],
+    "previs": ["预测", "預測", "予測", "見通し", "التوقعات"],
+    "focus": ["市场预期", "市場預期", "市場予想", "توقعات السوق"],
+    "risco": ["风险", "風險", "リスク", "المخاطر"],
 }
 
 
@@ -643,35 +704,71 @@ class Item(BaseModel):
     lt: str = ""
     """O título em outras línguas (OUTRAS_LINGUAS só do título): vale mais que `p`, para
     "unemployment" trazer a Desocupação antes do assunto que só a cita no resumo."""
+    n: str = ""
+    """Os números que a peça mostra (o do cartão, os da tabela), separados por espaço, no
+    formato de `numero`: "13,75" acha o cartão da Selic."""
+
+
+# Os acentos que a busca ignora: os do alfabeto latino e as vogais curtas do árabe. Os sinais
+# do japonês (o "゛" de "デ") ficam: tirá-los trocaria uma letra por outra.
+_ACENTOS = re.compile("[\u0300-\u036f\u064b-\u065f\u0670]")
 
 
 def normalizar(texto: str) -> str:
-    sem_acento = unicodedata.normalize("NFD", texto)
-    return "".join(c for c in sem_acento if unicodedata.category(c) != "Mn").lower()
+    sem_acento = _ACENTOS.sub("", unicodedata.normalize("NFD", texto))
+    return unicodedata.normalize("NFC", sem_acento).lower()
+
+
+def numero(valor: float, casas: int) -> str:
+    """O número como a busca o compara: com as casas da tela, vírgula decimal e sem o ponto
+    de milhar ("13,75", "128450", "-2,1"). O navegador escreve o que se digita do mesmo jeito."""
+    texto = f"{abs(valor):.{max(0, casas)}f}".replace(".", ",")
+    zero = not texto.strip("0,")
+    return texto if valor >= 0 or zero else f"-{texto}"
+
+
+# Uma tabela grande (os estados, os países) não precisa pôr todos os números no índice.
+NUMEROS_POR_TABELA = 400
+
+
+def _numeros_da_tabela(t: dict[str, Any]) -> str:
+    vistos: dict[str, None] = {}
+    for linha in t.get("linhas", []):
+        casas = int(linha.get("casas", 1))
+        for v in linha.get("valores", []):
+            if isinstance(v, int | float) and not isinstance(v, bool):
+                vistos.setdefault(numero(v, casas))
+            if len(vistos) >= NUMEROS_POR_TABELA:
+                return " ".join(vistos)
+    return " ".join(vistos)
+
+
+def _palavras(dicionarios: tuple[dict[str, list[str]], ...], base: str) -> list[str]:
+    """As palavras dos termos que aparecem em `base`, normalizadas (o árabe é escrito certo
+    no dicionário, com a hamza, e vai ao índice como o navegador compara), sem repetir."""
+    achadas: list[str] = []
+    for dicionario in dicionarios:
+        for termo, palavras in dicionario.items():
+            if termo in base:
+                for p in map(normalizar, palavras):
+                    if p not in achadas:
+                        achadas.append(p)
+    return achadas
 
 
 def sinonimos_de(texto: str) -> str:
-    """Os sinônimos em português e as palavras em inglês, espanhol e francês do texto."""
+    """Os sinônimos em português e as palavras nas outras línguas e escritas do texto."""
     base = normalizar(texto)
-    extras: list[str] = []
-    for dicionario in (SINONIMOS, OUTRAS_LINGUAS):
-        for termo, palavras in dicionario.items():
-            if termo in base:
-                extras.extend(p for p in palavras if p not in base and p not in extras)
-    return " ".join(extras)
+    todas = _palavras((SINONIMOS, OUTRAS_LINGUAS, OUTRAS_ESCRITAS), base)
+    return " ".join(p for p in todas if p not in base)
 
 
 def _no_titulo(titulo: str) -> str:
-    base = normalizar(titulo)
-    achadas: list[str] = []
-    for termo, palavras in OUTRAS_LINGUAS.items():
-        if termo in base:
-            achadas.extend(p for p in palavras if p not in achadas)
-    return " ".join(achadas)
+    return " ".join(_palavras((OUTRAS_LINGUAS, OUTRAS_ESCRITAS), normalizar(titulo)))
 
 
-def _item(t: str, o: str, h: str, extra: str = "") -> Item:
-    return Item(t=t, o=o, h=h, p=sinonimos_de(f"{t} {extra}"), lt=_no_titulo(t))
+def _item(t: str, o: str, h: str, extra: str = "", numeros: str = "") -> Item:
+    return Item(t=t, o=o, h=h, p=sinonimos_de(f"{t} {extra}"), lt=_no_titulo(t), n=numeros)
 
 
 def montar(saida: Path) -> list[Item]:
@@ -693,13 +790,21 @@ def montar(saida: Path) -> list[Item]:
         for c in dados.get("cartoes", []):
             alvo = f"c-{c['id']}"
             local = onde.get(alvo, nome)
-            itens.append(_item(c["rotulo"], f"{local} · número", f"{h}/{alvo}", c["detalhe"]))
+            valor = c.get("valor")
+            n = (
+                numero(valor, int(c.get("casas", 1)))
+                if isinstance(valor, int | float) and not c.get("texto")
+                else ""
+            )
+            extra = f"{c['detalhe']} {c.get('texto', '')}"
+            itens.append(_item(c["rotulo"], f"{local} · número", f"{h}/{alvo}", extra, n))
         for g in dados.get("graficos", []):
             alvo = f"g-{g['id']}"
             itens.append(_item(g["titulo"], f"{onde.get(alvo, nome)} · gráfico", f"{h}/{alvo}"))
         for t in dados.get("tabelas", []):
             alvo = f"t-{t['id']}"
-            itens.append(_item(t["titulo"], f"{onde.get(alvo, nome)} · tabela", f"{h}/{alvo}"))
+            local = f"{onde.get(alvo, nome)} · tabela"
+            itens.append(_item(t["titulo"], local, f"{h}/{alvo}", numeros=_numeros_da_tabela(t)))
         if dados.get("simulador_selic"):
             parte = next(
                 (

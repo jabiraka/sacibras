@@ -65,3 +65,50 @@ def test_titulo_em_outras_linguas_vai_a_parte() -> None:
     assert "unemployment" in item.lt
     assistido = busca._item("Estados", "Assunto", "#estados", "a desocupação vai de 2 a 10 %")
     assert "unemployment" not in assistido.lt and "unemployment" in assistido.p
+
+
+def test_numero_como_a_busca_compara() -> None:
+    assert busca.numero(13.75, 2) == "13,75"
+    assert busca.numero(128450.4, 0) == "128450"  # sem o ponto de milhar
+    assert busca.numero(-2.14, 1) == "-2,1"
+    assert busca.numero(-0.04, 1) == "0,0"  # zero arredondado não leva sinal
+
+
+def test_indice_guarda_os_numeros_do_cartao_e_da_tabela(tmp_path: Path) -> None:
+    painel = {"secoes": [{"id": "juros", "titulo": "Juros e Copom", "arquivo": "juros.json"}]}
+    juros = {
+        "cartoes": [
+            {"id": "selic-meta", "rotulo": "Selic meta", "detalhe": "", "valor": 13.75, "casas": 2},
+            {"id": "nota", "rotulo": "Nota", "detalhe": "", "valor": 0, "casas": 0, "texto": "BB"},
+        ],
+        "tabelas": [
+            {
+                "id": "ciclos",
+                "titulo": "Ciclos",
+                "linhas": [
+                    {"rotulo": "a", "valores": [13.75, None, 2.0], "casas": 2},
+                    {"rotulo": "b", "valores": [13.75, 1234.5], "casas": 1},
+                ],
+            }
+        ],
+    }
+    (tmp_path / "painel.json").write_text(json.dumps(painel), encoding="utf-8")
+    (tmp_path / "juros.json").write_text(json.dumps(juros), encoding="utf-8")
+    itens = {i.h: i for i in busca.montar(tmp_path)}
+    assert itens["#juros/c-selic-meta"].n == "13,75"
+    assert itens["#juros/c-nota"].n == ""  # o resultado é um nome, não um número
+    # Cada número uma vez, com as casas da linha: 13,75 com uma casa é "13,8".
+    assert itens["#juros/t-ciclos"].n == "13,75 2,00 13,8 1234,5"
+
+
+def test_assuntos_em_chines_japones_e_arabe() -> None:
+    inflacao = busca._item("Inflação", "Assunto", "#inflacao")
+    for termo in ("通货膨胀", "通貨膨脹", "インフレ", "التضخم"):
+        assert termo in inflacao.lt.split()
+    # O árabe vai ao índice sem a hamza ("الأسعار" → "الاسعار"), como o navegador compara.
+    assert "الاسعار" in inflacao.lt.split()
+    # Japonês com o sinal de sonora ("ド") não perde o sinal ao normalizar.
+    assert busca.normalizar("ドル") == "ドル"
+    # Árabe sem as vogais curtas, como o navegador compara.
+    assert busca.normalizar("التَّضَخُّم") == "التضخم"
+    assert "مؤشر أسعار المستهلك" in busca.OUTRAS_ESCRITAS["ipca"]

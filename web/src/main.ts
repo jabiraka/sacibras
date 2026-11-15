@@ -12,9 +12,10 @@ import { comUnidade, data, dataHora, numero, periodo } from "./formato";
 import { montarAlertas } from "./alertas";
 import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
-import { agendaDoAssunto } from "./calendario";
+import { agendaDaSemana, agendaDoAssunto } from "./calendario";
 import { ligarGlossario } from "./glossario";
-import { ligarTraducao, protegerNomeDeEstado } from "./traducao";
+import { ligarNomesProprios, ligarTraducao, protegerNomeDeEstado } from "./traducao";
+import { novoDesdeAUltimaVisita, seloNovo } from "./novidades";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
 import { montarMundo } from "./mundo";
@@ -123,7 +124,9 @@ function montarCartao(c: Cartao): HTMLElement {
   if (c.meta) no.append(...medidorDaMeta(c.valor, c.meta, c.casas, c.unidade));
   if (c.mini.length > 1) no.append(miniatura(c.mini));
   const pe = el("span", "cartao-pe");
-  pe.append(el("span", "", periodo(c.referencia, c.periodicidade)));
+  const quando = el("span", "", periodo(c.referencia, c.periodicidade));
+  if (novoDesdeAUltimaVisita(c.secao, c.id, c.referencia)) quando.append(seloNovo());
+  pe.append(quando);
   const proc = el("span", `procedencia ${c.procedencia}`);
   proc.append(el("i"), document.createTextNode(c.procedencia));
   pe.append(proc);
@@ -263,7 +266,9 @@ function preencherEssencial(item: HTMLElement, c: Cartao, aoVivo: boolean): void
   item.append(valor, el("span", "rotulo", c.rotulo));
   if (c.meta) item.append(...medidorDaMeta(c.valor, c.meta, c.casas, c.unidade));
   const quando = el("span", "quando", periodo(c.referencia, c.periodicidade));
+  const desdeAVisita = novoDesdeAUltimaVisita(c.secao, c.id, c.referencia);
   if (aoVivo) quando.append(el("span", "novo", "novo"));
+  else if (desdeAVisita) quando.append(seloNovo());
   item.append(quando);
   item.classList.toggle("ao-vivo", aoVivo);
 }
@@ -503,7 +508,11 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
     grupo.append(lista);
     bloco.append(grupo);
   }
-  conteudo.replaceChildren(heroi, essenciais, panorama, bloco);
+  // A agenda da semana, atrás de um clique: o calendário do IBGE só é lido quando abre.
+  const agenda = agendaDaSemana(painel.secoes);
+  agenda.classList.add("entra");
+  agenda.style.setProperty("--i", "4");
+  conteudo.replaceChildren(heroi, essenciais, agenda, panorama, bloco);
 }
 
 // ------------------------------------------------------------------ assunto e parte
@@ -765,6 +774,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
 async function iniciar(): Promise<void> {
   const conteudo = document.getElementById("conteudo") as HTMLElement;
   ligarTraducao();
+  ligarNomesProprios();
   ligarBusca();
   ligarGlossario(conteudo);
   document.querySelector(".menu-botao")?.addEventListener("click", () => {
