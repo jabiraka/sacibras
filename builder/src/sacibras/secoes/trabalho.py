@@ -6,7 +6,7 @@ from datetime import date
 
 from sacibras import contas, leis
 from sacibras.fontes import ibge_sidra
-from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela
+from sacibras.schema import Cartao, ComparadorSalario, Grafico, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
 from sacibras.tipos import Periodicidade, Ponto
 
@@ -221,26 +221,19 @@ SALARIO_MINIMO_DESDE = date(1995, 1, 1)
 """Antes do real (jul/1994) a série está em outras moedas; 1995 é o primeiro ano inteiro."""
 
 
-def salario_minimo(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
-    """O salário mínimo em reais e a preços de hoje pelo IPCA (revisão das telas, 15/11/2026:
-    quem busca "salário mínimo" não achava nada). A série do SGS traz os meses já decretados
-    adiante; a tela mostra até o mês de hoje."""
+def salario_minimo(ctx: Contexto) -> tuple[Cartao, ComparadorSalario]:
+    """O salário mínimo em reais (o cartão) e o comparador contra a inflação, em que a pessoa
+    escolhe o período (Caio, 15/11/2026). A série do SGS traz os meses já decretados adiante;
+    o cartão para no mês de hoje e o comparador no último mês com IPCA."""
     anos = ctx.hoje.year - SALARIO_MINIMO_DESDE.year + 1
     minimo = [
         (d, v) for d, v in ctx.sgs("SALARIO_MINIMO", anos) if SALARIO_MINIMO_DESDE <= d <= ctx.hoje
     ]
     nivel, indice = 1.0, {}
     for d, v in ctx.sgs("IPCA", anos):
-        nivel *= 1 + v / 100
-        indice[d] = nivel
-    base = max(indice)
-    mensal_real = [(d, v * indice[base] / indice[d]) for d, v in minimo if d in indice]
-    # Média de cada ano: mês a mês a linha é um serrote (o reajuste em janeiro e a inflação
-    # comendo o resto do ano). O ano corrente entra com os meses que já têm IPCA.
-    por_ano: dict[int, list[float]] = {}
-    for d, v in mensal_real:
-        por_ano.setdefault(d.year, []).append(v)
-    real = [(date(ano, 1, 1), sum(vs) / len(vs)) for ano, vs in sorted(por_ano.items())]
+        if d >= SALARIO_MINIMO_DESDE:
+            nivel *= 1 + v / 100
+            indice[d] = nivel
     agora = minimo[-1]
     antes = next((v for d, v in reversed(minimo) if d.year < agora[0].year), None)
     detalhe = (
@@ -264,71 +257,37 @@ def salario_minimo(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         secao="trabalho",
         mini=60,
     )
-    g = grafico(
-        "salario-minimo",
-        f"Salário mínimo a preços de {periodo(base, 'M')}, média do ano",
-        [serie("real", "Salário mínimo", real, casas=0)],
-        unidade="R$",
-        casas=0,
-        periodicidade="A",
+    comparador = ComparadorSalario(
+        meses=[(d, v, round(indice[d], 8)) for d, v in minimo if d in indice],
+        prazos=PRAZOS_SALARIO_MINIMO,
         fonte=f"{fonte}; IPCA: {ctx.fonte_sgs('IPCA')}",
         nota=(
-            f"Cada mês levado a preços de {periodo(base, 'M')} pelo IPCA e a média dos meses "
-            f"de cada ano (conta nossa), desde {SALARIO_MINIMO_DESDE.year}, o primeiro ano "
-            f"inteiro do real; {base.year} com os meses até {periodo(base, 'M')}. O valor de "
-            "hoje, em reais da época, está no cartão."
+            "O mínimo do início corrigido pelo IPCA é o que ele valeria se só tivesse "
+            "acompanhado a inflação; a distância até a outra linha é o ganho (ou a perda) "
+            "acima dela. Acima da inflação: (1 + alta do mínimo) ÷ (1 + IPCA) − 1. O IPCA do "
+            "período vai do fim do mês de início ao fim do mês final. Conta nossa, desde "
+            f"{SALARIO_MINIMO_DESDE.year}, o primeiro ano inteiro do real."
         ),
     )
-    return c, g, contra_a_inflacao(minimo, indice, base, fonte, ctx.fonte_sgs("IPCA"))
+    return c, comparador
 
 
-# Os prazos da tabela "contra a inflação": fixos e contados do mês mais novo com IPCA, para a
-# comparação não depender de um ano escolhido a dedo (Caio, 15/11/2026: "comparar o salário
-# mínimo contra a inflação acumulada no período").
+# Os prazos fixos da tabela, contados do último mês com IPCA; a pessoa escolhe outros
+# períodos no próprio comparador (Caio, 15/11/2026).
 PRAZOS_SALARIO_MINIMO = [1, 5, 10, 20]
 
 
-def contra_a_inflacao(
-    minimo: list[Ponto], indice: dict[date, float], base: date, fonte: str, fonte_ipca: str
-) -> Tabela:
-    """Para cada prazo (e desde 1995): o mínimo no início, quanto ele subiu, quanto subiu o
-    IPCA e o ganho acima da inflação, (1 + alta) / (1 + IPCA) − 1. O IPCA do período é o do
-    índice no mês de início até o mês mais novo, a mesma conta do gráfico."""
-    valor = dict(minimo)
-    linhas: list[LinhaTabela] = []
-    inicios = [
-        (f"Em {n} ano{'s' if n > 1 else ''}: desde", date(base.year - n, base.month, 1))
-        for n in PRAZOS_SALARIO_MINIMO
-    ] + [("Desde o início do real:", SALARIO_MINIMO_DESDE)]
-    for rotulo, inicio in inicios:
-        if inicio not in valor or inicio not in indice or base not in valor:
-            continue
-        alta = valor[base] / valor[inicio] - 1
-        ipca = indice[base] / indice[inicio] - 1
-        linhas.append(
-            LinhaTabela(
-                rotulo=f"{rotulo} {periodo(inicio, 'M')}, R$ {br(valor[inicio], 0)}",
-                valores=[alta * 100, ipca * 100, ((1 + alta) / (1 + ipca) - 1) * 100],
-                unidade="",
-                casas=1,
-            )
-        )
-    return Tabela(
-        id="salario-minimo",
-        titulo="Salário mínimo contra a inflação",
-        subtitulo=f"Até {periodo(base, 'M')}, quando valia R$ {br(valor.get(base, 0.0), 0)}",
-        colunas=[
-            "Alta do mínimo (%)",
-            "IPCA no período (%)",
-            "Acima da inflação (%)",
-        ],
-        linhas=linhas,
-        fonte=f"{fonte}; IPCA: {fonte_ipca}",
-        nota=(
-            "Acima da inflação: quanto o mínimo de hoje compra a mais que o do início, "
-            "(1 + alta do mínimo) ÷ (1 + IPCA) − 1. Conta nossa, com o IPCA de cada mês."
-        ),
-    )
+def comparar(
+    meses: list[tuple[date, float, float]], de: date, ate: date
+) -> tuple[float, float, float] | None:
+    """A alta do mínimo, o IPCA e o ganho acima da inflação entre dois meses, em %. A mesma
+    conta está em `web/src/salario-minimo.ts`, que roda no navegador."""
+    por_mes = {d: (s, i) for d, s, i in meses}
+    if de not in por_mes or ate not in por_mes or de >= ate:
+        return None
+    (s0, i0), (s1, i1) = por_mes[de], por_mes[ate]
+    alta, ipca = s1 / s0 - 1, i1 / i0 - 1
+    return alta * 100, ipca * 100, ((1 + alta) / (1 + ipca) - 1) * 100
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -610,11 +569,10 @@ def montar(ctx: Contexto) -> Secao:
     )
 
     tabelas = [tabela]
+    comparador: ComparadorSalario | None = None
     try:
-        c_minimo, g_minimo, t_minimo = salario_minimo(ctx)
+        c_minimo, comparador = salario_minimo(ctx)
         cartoes.append(c_minimo)
-        graficos.append(g_minimo)
-        tabelas.append(t_minimo)
     except Exception as erro:
         print(f"    trabalho: salário mínimo ficou de fora: {str(erro)[:160]}")
     try:
@@ -637,5 +595,6 @@ def montar(ctx: Contexto) -> Secao:
         cartoes=cartoes,
         graficos=graficos,
         tabelas=tabelas,
+        salario_minimo=comparador,
         gerado_em=ctx.agora(),
     )

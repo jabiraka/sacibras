@@ -300,6 +300,19 @@ class MarcaDeAliquota(Modelo):
     rotulo: str
 
 
+class ComparadorSalario(Modelo):
+    """O salário mínimo contra a inflação no período que a pessoa escolhe (Caio, 15/11/2026:
+    "um parâmetro na tabela [...] para colocar outros períodos" e, no gráfico, "o salário
+    mínimo inicial ajustado pela inflação"). Só dado oficial: o navegador divide e multiplica."""
+
+    meses: list[tuple[date, float, float]]
+    """(mês, salário mínimo em R$ da época, nível do IPCA no fim do mês; o primeiro é 1)."""
+    prazos: list[int]
+    """Os prazos fixos da tabela, em anos, contados do último mês."""
+    fonte: str
+    nota: str
+
+
 class SimuladorReforma(Modelo):
     """Quanto de IBS e CBS vai numa compra. Tudo aqui é lei lida ou conta oficial; o navegador
     multiplica o valor da compra pela alíquota e pela fração que o tipo de compra paga."""
@@ -379,9 +392,9 @@ class Subcategoria(Modelo):
     cartoes: list[str] = Field(default_factory=list)
     graficos: list[str] = Field(default_factory=list)
     tabelas: list[str] = Field(default_factory=list)
-    extras: list[Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]] = Field(
-        default_factory=list
-    )
+    extras: list[
+        Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
+    ] = Field(default_factory=list)
     veja: list[Elo] = Field(default_factory=list)
     """Atalhos para partes de outros assuntos que tratam do mesmo ("Veja também")."""
 
@@ -398,6 +411,7 @@ class Secao(Modelo):
     simulador: SimuladorDivida | None = None
     simulador_selic: SimuladorSelic | None = None
     simulador_reforma: SimuladorReforma | None = None
+    salario_minimo: ComparadorSalario | None = None
     alertas: list[Alerta] = Field(default_factory=list)
     gerado_em: datetime
 

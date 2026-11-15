@@ -3727,3 +3727,22 @@ table.dados.limites-tabela td {
     padding: 16px 18px 8px;
   }
 }
+
+/* Salário mínimo contra a inflação: "de" numa linha e "até" na outra, mês e ano lado a lado
+   (no celular, as quatro listas empilhadas comiam a tela). */
+.comparador-controles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.comparador-resumo {
+  margin: 14px 0 12px;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .comparador-controles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

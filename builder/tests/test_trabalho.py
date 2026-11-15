@@ -86,8 +86,8 @@ def test_montar(ctx: Contexto) -> None:
     assert graficos[:4] == ["desocupacao", "emprego-formal", "rendimento", "massa"]
     caged = secao.graficos[1]
     assert [s.id for s in caged.series] == ["saldo", "saldo-3m"]
-    tabela, minimo, setores = secao.tabelas
-    assert minimo.id == "salario-minimo"
+    tabela, setores = secao.tabelas
+    assert secao.salario_minimo is not None
     assert setores.id == "emprego-setores"
     assert setores.linhas[-1].rotulo == "Total"
     # 17 setores, os "demais serviços" e o total; a coluna das vagas fecha no total.
@@ -132,32 +132,30 @@ def test_somar_so_nas_datas_comuns() -> None:
     assert trabalho.somar([a, b]) == [(date(2026, 2, 1), 12.0)]
 
 
-def test_salario_minimo_ate_hoje_e_a_precos_de_hoje(ctx: Contexto) -> None:
+def test_salario_minimo_ate_hoje_e_o_comparador(ctx: Contexto) -> None:
     """Revisão das telas (15/11/2026): quem buscava "salário mínimo" não achava nada."""
-    cartao, grafico, _ = trabalho.salario_minimo(ctx)
+    cartao, comparador = trabalho.salario_minimo(ctx)
     # O SGS traz dez/2026 já decretado; o cartão para no mês de hoje (nov/2026).
     assert cartao.valor == 1621.0
     assert cartao.referencia == date(2026, 11, 1)
     assert cartao.detalhe == "2025: R$ 1.518, alta de 6,8 %"
     assert "Decreto nº 12.797" in cartao.fonte
-    real = grafico.series[0].pontos
-    # O último mês com IPCA (out/2026) é a base; cada ano é a média dos seus meses.
-    assert grafico.titulo == "Salário mínimo a preços de out/2026, média do ano"
-    assert [d for d, _ in real] == [date(2025, 1, 1), date(2026, 1, 1)]
-    # 2026: jan a out em reais de out/2026, cada mês 1.621 corrigido até out.
-    em_2026 = [1621.0 * 1.005 ** (10 - m) for m in range(1, 11)]
-    assert real[1][1] == pytest.approx(sum(em_2026) / 10, abs=0.5)  # em reais inteiros
-    em_2025 = [1518.0 * 1.005 ** (22 - m) for m in range(1, 13)]
-    assert real[0][1] == pytest.approx(sum(em_2025) / 12, abs=0.5)
+    # O comparador vai até o último mês com IPCA (out/2026), desde 1995 (aqui, jan/2025).
+    assert comparador.meses[0][:2] == (date(2025, 1, 1), 1518.0)
+    assert comparador.meses[-1][0] == date(2026, 10, 1)
+    assert comparador.prazos == [1, 5, 10, 20]
 
 
 def test_salario_minimo_contra_a_inflacao(ctx: Contexto) -> None:
-    """Caio, 15/11/2026: "comparar o salário mínimo contra a inflação acumulada no período"."""
-    *_, tabela = trabalho.salario_minimo(ctx)
-    # Os dados de mentira vão de jan/2025 a out/2026: só o prazo de 1 ano cabe.
-    assert [linha.rotulo for linha in tabela.linhas] == ["Em 1 ano: desde out/2025, R$ 1.518"]
-    alta, ipca, acima = tabela.linhas[0].valores
+    """Caio, 15/11/2026: "comparar o salário mínimo contra a inflação acumulada no período",
+    com o período à escolha."""
+    _, comparador = trabalho.salario_minimo(ctx)
+    conta = trabalho.comparar(comparador.meses, date(2025, 10, 1), date(2026, 10, 1))
+    assert conta is not None
+    alta, ipca, acima = conta
     assert alta == pytest.approx((1621 / 1518 - 1) * 100)
     assert ipca == pytest.approx((1.005**12 - 1) * 100)
     assert acima == pytest.approx((1621 / 1518 / 1.005**12 - 1) * 100)
-    assert tabela.subtitulo == "Até out/2026, quando valia R$ 1.621"
+    # Fora da série ou de trás para a frente: sem conta.
+    assert trabalho.comparar(comparador.meses, date(2026, 10, 1), date(2025, 10, 1)) is None
+    assert trabalho.comparar(comparador.meses, date(2020, 1, 1), date(2026, 10, 1)) is None

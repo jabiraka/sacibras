@@ -73,8 +73,9 @@ enquanto há coluna escondida; as que passavam 10 px agora cabem) e a página do
 (`#glossario`, no menu e no rodapé). E o que a busca procurava e o painel não tinha (Caio,
 15/11/2026: *"coloque os itens que as pessoas procuram e o painel não tem"*): o juro de cada
 modalidade das pessoas físicas, do cartão rotativo ao consignado (Crédito › Volume e custo);
-o salário mínimo, em reais, a preços de hoje e contra o IPCA em 1, 5, 10 e 20 anos e desde
-1995 (Trabalho › Renda); os 15 subitens que mais
+o salário mínimo, em reais, e um comparador contra o IPCA no período que a pessoa escolhe,
+com os prazos fixos de 1, 5, 10 e 20 anos e desde 1995 e o gráfico do mínimo do início
+corrigido pela inflação (Trabalho › Renda); os 15 subitens que mais
 pesam no IPCA e a gasolina, a luz e o aluguel em 12 meses (Inflação › Por tipo de preço); e
 o IPCA-15 no gráfico dos outros índices. Fica:
 

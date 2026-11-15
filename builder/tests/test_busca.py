@@ -142,3 +142,18 @@ def test_glossario_entra_na_busca(tmp_path: Path) -> None:
     (tmp_path / "painel.json").write_text(json.dumps({"secoes": []}), encoding="utf-8")
     item = next(i for i in busca.montar(tmp_path) if i.h == "#glossario")
     assert "dicionario" in item.p and "siglas" in item.p
+
+
+def test_comparador_do_salario_minimo_entra_na_busca(tmp_path: Path) -> None:
+    painel = {"secoes": [{"id": "trabalho", "titulo": "Trabalho", "arquivo": "trabalho.json"}]}
+    trabalho = {
+        "subcategorias": [
+            {"id": "renda", "titulo": "Renda", "resumo": "", "extras": ["salario-minimo"]}
+        ],
+        "salario_minimo": {"meses": [], "prazos": [1], "fonte": "", "nota": ""},
+    }
+    (tmp_path / "painel.json").write_text(json.dumps(painel), encoding="utf-8")
+    (tmp_path / "trabalho.json").write_text(json.dumps(trabalho), encoding="utf-8")
+    item = next(i for i in busca.montar(tmp_path) if i.t == "Salário mínimo contra a inflação")
+    assert item.h == "#trabalho/renda"
+    assert item.o == "Trabalho › Renda · comparador"

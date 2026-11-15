@@ -27,6 +27,7 @@ import { el, guardar } from "./pecas";
 import { montarSimulador } from "./simulador";
 import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
+import { montarComparadorSalario } from "./salario-minimo";
 import type {
   Cartao,
   Estados,
@@ -36,6 +37,7 @@ import type {
   Painel,
   Secao,
   SimuladorReforma,
+  ComparadorSalario,
   SimuladorSelic,
   Subcategoria,
   Tabela,
@@ -196,6 +198,17 @@ function caixaDoSimuladorSelic(sim: SimuladorSelic): HTMLElement {
   return caixa;
 }
 
+/** O salário mínimo contra a inflação, no período que a pessoa escolhe (Trabalho › Renda). */
+function caixaDoSalarioMinimo(c: ComparadorSalario): HTMLElement {
+  const caixa = guardar(
+    "Salário mínimo contra a inflação",
+    "Escolha o período e compare o reajuste do mínimo com o IPCA",
+    () => montarComparadorSalario(c),
+  );
+  caixa.id = "salario-minimo-comparador";
+  return caixa;
+}
+
 /** O simulador da reforma do consumo; na parte dele (`#impostos/reforma`) já abre. */
 function caixaDoSimuladorReforma(sim: SimuladorReforma): HTMLElement {
   const caixa = guardar(
@@ -251,6 +264,8 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
   if (simuladorSelic) alvo.append(caixaDoSimuladorSelic(simuladorSelic));
   const simuladorReforma = s.simulador_reforma;
   if (simuladorReforma) alvo.append(caixaDoSimuladorReforma(simuladorReforma));
+  const comparador = s.salario_minimo;
+  if (comparador) alvo.append(caixaDoSalarioMinimo(comparador));
   for (const t of s.tabelas) alvo.append(montarTabela(t));
 }
 
@@ -561,6 +576,7 @@ function contagem(p: Subcategoria): string {
     plural(p.tabelas.length, "tabela", "tabelas"),
     p.extras.some((e) => e.startsWith("simulador")) ? "simulador" : "",
     p.extras.includes("alertas") ? "painel" : "",
+    p.extras.includes("salario-minimo") ? "comparador" : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -616,6 +632,12 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   const simuladorReforma = s.simulador_reforma;
   if (p.extras.includes("simulador-reforma") && simuladorReforma) {
     const caixa = caixaDoSimuladorReforma(simuladorReforma);
+    if (caixa instanceof HTMLDetailsElement) caixa.open = true;
+    alvo.append(caixa);
+  }
+  const comparador = s.salario_minimo;
+  if (p.extras.includes("salario-minimo") && comparador) {
+    const caixa = caixaDoSalarioMinimo(comparador);
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;
     alvo.append(caixa);
   }

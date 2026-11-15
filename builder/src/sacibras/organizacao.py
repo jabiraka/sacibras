@@ -17,7 +17,7 @@ from typing import Literal
 
 from sacibras.schema import Categoria, Elo, Secao, Subcategoria
 
-Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas"]
+Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
 
 CATEGORIAS: list[Categoria] = [
     Categoria(
@@ -102,8 +102,8 @@ PARTES: dict[str, list[Parte]] = {
             "O rendimento médio e a massa de rendimento, já descontada a inflação, e o salário "
             "mínimo.",
             cartoes=["rendimento", "massa", "salario-minimo"],
-            graficos=["rendimento", "massa", "salario-minimo"],
-            tabelas=["salario-minimo"],
+            graficos=["rendimento", "massa"],
+            extras=["salario-minimo"],
         ),
         Parte(
             "quem-trabalha",
@@ -690,6 +690,8 @@ def aplicar(secao: Secao) -> list[str]:
         extras_da_secao.append("simulador-reforma")
     if secao.alertas:
         extras_da_secao.append("alertas")
+    if secao.salario_minimo:
+        extras_da_secao.append("salario-minimo")
     usados: dict[str, set[str]] = {k: set() for k in tem}
     subcategorias: list[Subcategoria] = []
     for p in partes:

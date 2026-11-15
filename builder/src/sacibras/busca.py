@@ -1055,6 +1055,18 @@ def montar(saida: Path) -> list[Item]:
             alvo = f"{h}/{parte['id']}" if parte else h
             local = f"{nome} › {parte['titulo']}" if parte else nome
             itens.append(_item("Quanto de imposto vai numa compra?", f"{local} · simulador", alvo))
+        if dados.get("salario_minimo"):
+            parte = next(
+                (
+                    sub
+                    for sub in dados.get("subcategorias", [])
+                    if "salario-minimo" in sub.get("extras", [])
+                ),
+                None,
+            )
+            alvo = f"{h}/{parte['id']}" if parte else h
+            local = f"{nome} › {parte['titulo']}" if parte else nome
+            itens.append(_item("Salário mínimo contra a inflação", f"{local} · comparador", alvo))
         if dados.get("alertas"):
             # O painel fica guardado e é montado no clique: o resultado leva a ele.
             itens.append(_item("Painel de alerta", f"{nome} · painel", f"{h}/t-alertas"))
