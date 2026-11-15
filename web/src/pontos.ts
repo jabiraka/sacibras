@@ -71,6 +71,8 @@ export interface LinhaDoRanking {
   faixa?: [number, number];
   /** Valor estimado por regra, não medido: o ponto sai vazado. */
   estimado?: boolean;
+  /** O valor escrito, quando é um nome (a nota CAPAG) e não um número. */
+  texto?: string;
 }
 
 export interface Regua {
@@ -143,11 +145,11 @@ export function linhaDoRanking(
     el("span", "ponto-pos", l.posicao === null ? "" : String(l.posicao)),
     nome,
     trilho,
-    el("span", "ponto-valor", numero(l.valor, casas)),
+    el("span", "ponto-valor", l.texto ?? numero(l.valor, casas)),
   );
   linha.title =
     l.dica ??
-    `${l.nome}: ${numero(l.valor, casas)}` +
+    `${l.nome}: ${l.texto ?? numero(l.valor, casas)}` +
       (l.faixa ? ` (de ${numero(l.faixa[0], casas)} a ${numero(l.faixa[1], casas)})` : "") +
       (l.estimado ? ", estimado pela região" : "");
   return linha;

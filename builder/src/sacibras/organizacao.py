@@ -566,6 +566,20 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["reservatorios", "idosos-por-100"],
             graficos=["reservatorios"],
         ),
+        Parte(
+            "estados-limite",
+            "Estados perto do limite",
+            "Os estados acima do alerta de pessoal ou de dívida, com a nota do Tesouro.",
+            cartoes=["estados-no-limite"],
+            tabelas=["estados-no-limite"],
+            veja=[
+                Elo(
+                    endereco="#estados/limites",
+                    titulo="Estados › Perto dos limites",
+                    resumo="Os 27 estados contra os limites da lei, com a nota CAPAG.",
+                )
+            ],
+        ),
     ],
 }
 
@@ -579,7 +593,12 @@ PARTES_ESTADOS: list[Parte] = [
     Parte(
         "estado",
         "Um estado por dentro",
-        "Receita, despesa e dívida de um estado, uma parte de cada vez.",
+        "Receita, gasto, dívida, previdência, a economia por setor e as contas no tempo.",
+    ),
+    Parte(
+        "limites",
+        "Perto dos limites",
+        "Pessoal e dívida contra os limites da lei, com a nota CAPAG do Tesouro.",
     ),
     Parte("duas-metricas", "Duas métricas", "Um ponto por estado, com duas métricas juntas."),
     Parte("tabela", "Tabela completa", "Todas as métricas, estado por estado."),

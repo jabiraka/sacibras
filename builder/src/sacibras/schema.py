@@ -504,6 +504,24 @@ class MetricaEstados(Modelo):
     janela")."""
     ano_previsto: int | None = None
     """O primeiro ano de `anuais` que é prévia nossa (o IBC-R encadeado), não número do IBGE."""
+    marcas: list[LinhaRef] = Field(default_factory=list)
+    """Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. A tela escreve o
+    nome no lugar do número."""
+
+
+class HistoricoEstado(Modelo):
+    """Uma conta do estado no fim de cada ano (RGF do 3º quadrimestre, RREO do 6º bimestre)."""
+
+    id: str
+    titulo: str
+    unidade: str
+    casas: int = 1
+    pontos: dict[int, float]
+    """{ano: valor}."""
+    fonte: str
+    nota: str = ""
+    linhas: list[LinhaRef] = Field(default_factory=list)
+    """Os limites da lei, quando há."""
 
 
 class Fatia(Modelo):
@@ -534,6 +552,8 @@ class ContasEstado(Modelo):
     blocos: list[BlocoDeConta]
     numeros: list[Cartao] = Field(default_factory=list)
     """Os números soltos do estado (investimento % da RCL, dívida com a União…)."""
+    historico: list[HistoricoEstado] = Field(default_factory=list)
+    """Pessoal, dívida, primário e previdência no fim de cada ano."""
 
 
 class EstadosContas(Modelo):
@@ -541,6 +561,8 @@ class EstadosContas(Modelo):
 
     id: Literal["estados-contas"] = "estados-contas"
     contas: dict[str, ContasEstado]
+    historico_brasil: dict[str, dict[int, float]] = Field(default_factory=dict)
+    """{id do histórico: {ano: a soma dos estados}}: a linha "Todos os estados" ao lado."""
     gerado_em: datetime
 
 

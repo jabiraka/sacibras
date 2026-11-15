@@ -241,6 +241,10 @@ def _sem_economia(monkeypatch: pytest.MonkeyPatch) -> None:
     for nome in ("pib", "ibcr", "inflacao", "exportacoes", "concentracao", "trabalho", "credito"):
         monkeypatch.setattr(estados.estados_economia, nome, cai)
     monkeypatch.setattr(estados.ibge_contas_regionais, "pib", cai)
+    # A ficha: CAPAG, os anos fechados e a economia por atividade (testados à parte).
+    monkeypatch.setattr(estados.ibge_contas_regionais, "setores", cai)
+    monkeypatch.setattr(estados.tesouro_capag, "capag", cai)
+    monkeypatch.setattr(estados.siconfi, "coletar_historico", cai)
 
 
 def _pobreza_uf() -> dict[str, list[tuple[date, float]]]:
@@ -592,6 +596,7 @@ def test_montar_poe_as_contas_no_memo_e_aponta_o_arquivo(monkeypatch: pytest.Mon
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
     monkeypatch.setattr(estados.siconfi, "coletar_anual", lambda *a, **k: _anual_falso())
+    _sem_economia(monkeypatch)
     ctx = Contexto(hoje=date(2026, 11, 14))
     e = estados.montar(ctx)
     assert e.arquivo_contas == "estados-contas.json"
@@ -615,6 +620,7 @@ def test_sem_dca_o_estados_json_sai_sem_o_arquivo_de_contas(
     monkeypatch.setattr(estados.siconfi, "coletar_rreo", lambda *a, **k: _coleta_rreo({12}))
     monkeypatch.setattr(estados.siconfi, "entes", lambda: {c: 1000.0 for c, *_ in estados.UFS})
     monkeypatch.setattr(estados.siconfi, "coletar_anual", lambda *a, **k: None)
+    _sem_economia(monkeypatch)
     ctx = Contexto(hoje=date(2026, 11, 14))
     e = estados.montar(ctx)
     assert e.arquivo_contas == "" and "estados_contas" not in ctx.memo
