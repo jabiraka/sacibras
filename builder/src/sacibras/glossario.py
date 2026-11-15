@@ -118,6 +118,33 @@ TERMOS: list[Termo] = [
         "#demografia",
     ),
     Termo(
+        "ptf",
+        "PTF (produtividade total dos fatores)",
+        "O quanto o país produz além do que explicam as máquinas, as horas trabalhadas e o "
+        "estudo de quem trabalha: tecnologia, organização, gente e capital no lugar certo. É "
+        "calculada como o que sobra da conta, por isso também sobe e desce com o ciclo.",
+        ("PTF", "produtividade total dos fatores", "eficiência da economia"),
+        "#demografia/eficiencia",
+    ),
+    Termo(
+        "capital-humano",
+        "Capital humano",
+        "O estudo de quem trabalha visto como um fator de produção. Na Penn World Table, um "
+        "índice feito dos anos de estudo da população e do quanto cada ano a mais costuma "
+        "render no salário.",
+        ("capital humano",),
+        "#demografia/eficiencia",
+    ),
+    Termo(
+        "pwt",
+        "Penn World Table",
+        "Base de dados da Universidade de Groningen com PIB, capital, horas, estudo e PTF de "
+        "185 países desde 1950, com o mesmo método para todos. Sai a cada dois anos, mais ou "
+        "menos, sob licença aberta (CC BY 4.0).",
+        ("Penn World Table", "PWT"),
+        "#demografia/eficiencia",
+    ),
+    Termo(
         "ibge",
         "IBGE",
         "O Instituto Brasileiro de Geografia e Estatística, do governo federal: faz o PIB, o "

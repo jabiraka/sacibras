@@ -151,6 +151,15 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["produtividade", "produtividade-hora"],
             graficos=["produtividade", "crescimento-decomposto"],
         ),
+        Parte(
+            "eficiencia",
+            "Eficiência (PTF)",
+            "De onde veio o crescimento desde 1955 (capital, horas, estudo e eficiência) e a "
+            "eficiência do Brasil contra a dos EUA e a de outros emergentes.",
+            cartoes=["ptf-eua", "ptf-desde-o-pico"],
+            graficos=["ptf-brasil", "ptf-paises"],
+            tabelas=["pwt-contabilidade"],
+        ),
     ],
     "pobreza": [
         Parte(

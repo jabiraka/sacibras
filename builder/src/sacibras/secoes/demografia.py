@@ -14,6 +14,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from datetime import date
+from itertools import pairwise
 from typing import NamedTuple
 
 from sacibras import contas
@@ -22,6 +23,7 @@ from sacibras.fontes import (
     ibge_projecao,
     ibge_sidra,
     onu_wpp,
+    pwt,
     siconfi,
     tesouro_rtn,
 )
@@ -62,6 +64,15 @@ PAISES_IDOSOS = {
     "JPN": "Japão",
 }
 """As seis séries do envelhecimento contra o mundo (seis cores de série)."""
+PAISES_PTF = {
+    "BRA": "Brasil",
+    "MEX": "México",
+    "CHL": "Chile",
+    "ARG": "Argentina",
+    "KOR": "Coreia do Sul",
+    "CHN": "China",
+}
+"""A PTF contra a dos EUA: o Brasil, três vizinhos e dois emergentes da Ásia (seis cores)."""
 ANOS_DAS_BARRAS_ONU = list(range(2030, 2101, 10))
 
 PROJETADO_DESDE = date(ULTIMO_ANO_AJUSTADO + 1, 1, 1)
@@ -214,6 +225,87 @@ def decomposicao_anual(pib: list[Ponto], ocupados: list[Ponto]) -> list[Ano]:
         log_g = math.log1p(g)
         parte = g * math.log1p(g_ocup) / log_g if abs(log_g) > 1e-12 else g_ocup
         saida.append(Ano(ano, g * 100, g_ocup * 100, g_prod * 100, parte * 100, (g - parte) * 100))
+    return saida
+
+
+class Parcela(NamedTuple):
+    """Um ano da contabilidade do crescimento (PWT), em pontos percentuais (log × 100)."""
+
+    ano: int
+    pib: float
+    capital: float
+    horas: float
+    escolaridade: float
+    ptf: float
+    """O que sobra do PIB depois das outras três partes."""
+    ptf_pwt: float
+    """A variação da PTF publicada pela PWT (`rtfpna`), para conferir."""
+
+
+def contabilidade(anos: dict[int, dict[str, float]]) -> list[Parcela]:
+    """O crescimento do PIB de cada ano em capital, horas trabalhadas, escolaridade e PTF.
+
+    O método da PWT 11 (índice de Törnqvist): o peso do trabalho é a média da parte do
+    trabalho na renda (`labsh`) nos dois anos, o do capital é o resto; o trabalho é ocupados ×
+    horas por ano × capital humano. As quatro partes somam o crescimento do PIB (em log)."""
+    precisa = ("rgdpna", "rnna", "emp", "avh", "hc", "labsh", "rtfpna")
+    completos = {a: v for a, v in anos.items() if all(c in v for c in precisa)}
+    saida: list[Parcela] = []
+    for ano in sorted(completos):
+        antes = completos.get(ano - 1)
+        if antes is None:
+            continue
+        agora = completos[ano]
+        peso = (agora["labsh"] + antes["labsh"]) / 2
+
+        def log(campo: str, a: dict[str, float] = agora, b: dict[str, float] = antes) -> float:
+            return math.log(a[campo] / b[campo]) * 100
+
+        pib = log("rgdpna")
+        capital = (1 - peso) * log("rnna")
+        horas = peso * (log("emp") + log("avh"))
+        escolaridade = peso * log("hc")
+        saida.append(
+            Parcela(
+                ano,
+                pib,
+                capital,
+                horas,
+                escolaridade,
+                pib - capital - horas - escolaridade,
+                log("rtfpna"),
+            )
+        )
+    return saida
+
+
+def anos_repetidos(anos: dict[int, dict[str, float]], campo: str) -> list[int]:
+    """Os últimos anos em que o campo só repete o do ano anterior (a PWT estende assim a
+    parte do trabalho quando falta o dado)."""
+    serie = [(a, v[campo]) for a, v in sorted(anos.items()) if campo in v]
+    saida: list[int] = []
+    for (_, antes), (ano, valor) in reversed(list(pairwise(serie))):
+        if valor != antes:
+            break
+        saida.insert(0, ano)
+    return saida
+
+
+def periodos(parcelas: list[Parcela]) -> list[tuple[str, Parcela]]:
+    """A média por ano de cada parte, por década (1961 a 1970...); a primeira e a última
+    ficam com os anos que houver. O rótulo é "1961 a 1970"."""
+    grupos: dict[int, list[Parcela]] = {}
+    for p in parcelas:
+        grupos.setdefault((p.ano - 1) // 10, []).append(p)
+    saida: list[tuple[str, Parcela]] = []
+    for chave in sorted(grupos):
+        g = grupos[chave]
+        n = len(g)
+        media = Parcela(
+            g[-1].ano,
+            *(sum(getattr(p, c) for p in g) / n for c in Parcela._fields[1:]),
+        )
+        saida.append((f"{g[0].ano} a {g[-1].ano}", media))
     return saida
 
 
@@ -710,6 +802,14 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
     graficos += graficos_inss
+    tabelas_pwt: list[Tabela] = []
+    try:
+        c_pwt, g_pwt, t_pwt = _pwt()
+        cartoes += c_pwt
+        graficos += g_pwt
+        tabelas_pwt.append(t_pwt)
+    except Exception as erro:  # a PWT fora do ar não derruba a seção
+        print(f"    a Penn World Table ficou de fora: {str(erro)[:120]}")
     try:
         graficos.append(_grafico_onu(populacao))
     except Exception as erro:  # a ONU fora do ar não derruba a seção
@@ -720,7 +820,7 @@ def montar(ctx: Contexto) -> Secao:
         print(f"    o Banco Mundial ficou de fora da demografia: {str(erro)[:120]}")
 
     tabelas = [_tabela_marcos(agora, ind, br_grupos), _tabela_estados(agora, grupos)]
-    tabelas += tabelas_prev
+    tabelas += tabelas_prev + tabelas_pwt
 
     resumo = (
         f"O Brasil tem {br(populacao[agora] / 1e6)} milhões de habitantes em {agora} e, "
@@ -964,6 +1064,133 @@ def _grafico_onu(populacao_ibge: PorAno) -> Grafico:
         ),
         largura="inteira",
     )
+
+
+def _pwt() -> tuple[list[Cartao], list[Grafico], Tabela]:
+    """A eficiência da economia (PTF) e de onde veio o crescimento desde 1955, pela PWT."""
+    todos = pwt.dados(set(PAISES_PTF))
+    brasil = todos.get("BRA")
+    if not brasil:
+        raise RuntimeError("PWT sem o Brasil")
+    parcelas = contabilidade(brasil)
+    if not parcelas:
+        raise RuntimeError("PWT sem anos completos do Brasil")
+    ptf = [(date(a, 1, 1), v["rtfpna"] * 100) for a, v in sorted(brasil.items()) if "rtfpna" in v]
+    relativa = {
+        cod: [
+            (date(a, 1, 1), v["ctfp"] * 100) for a, v in sorted(todos[cod].items()) if "ctfp" in v
+        ]
+        for cod in PAISES_PTF
+        if cod in todos
+    }
+    ultimo = ptf[-1][0].year
+    ano_pico, valor_pico = max(((d.year, v) for d, v in ptf), key=lambda x: x[1])
+    rel_br = relativa["BRA"]
+    ano_pico_rel, pico_rel = max(((d.year, v) for d, v in rel_br), key=lambda x: x[1])
+    fonte_ptf = f"{pwt.FONTE}: rtfpna"
+    fonte_rel = f"{pwt.FONTE}: ctfp, PTF a paridade de poder de compra"
+    fonte_conta = f"{pwt.FONTE}: rgdpna, rnna, emp, avh, hc e labsh; conta nossa pelo método da PWT"
+    decadas = periodos(parcelas)
+    diferenca = max(abs(m.ptf - m.ptf_pwt) for _, m in decadas)
+    repetidos = anos_repetidos(brasil, "labsh")
+    aviso_labsh = (
+        f" A PWT repete a parte do trabalho na renda de {repetidos[0] - 1} em "
+        f"{' e '.join(str(a) for a in repetidos)}."
+        if repetidos
+        else ""
+    )
+
+    cartoes = [
+        cartao(
+            "ptf-eua",
+            "PTF do Brasil contra a dos EUA",
+            rel_br,
+            unidade="% da dos EUA",
+            periodicidade="A",
+            casas=0,
+            detalhe=f"{br(pico_rel, 0)} % em {ano_pico_rel}, o auge",
+            fonte=fonte_rel,
+            secao="demografia",
+            mini=80,
+        ),
+        cartao(
+            "ptf-desde-o-pico",
+            f"PTF do Brasil desde {ano_pico}",
+            [(d, (v / valor_pico - 1) * 100) for d, v in ptf if d.year >= ano_pico],
+            unidade="%",
+            periodicidade="A",
+            casas=0,
+            detalhe=f"{ultimo} contra {ano_pico}, o auge da série",
+            fonte=fonte_ptf,
+            procedencia="calculado",
+            secao="demografia",
+            mini=80,
+        ),
+    ]
+    graficos = [
+        grafico(
+            "ptf-brasil",
+            "Eficiência da economia brasileira (PTF)",
+            [serie("ptf", "PTF do Brasil", ptf, casas=1)],
+            unidade="índice, 2021 = 100",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte_ptf,
+            nota=(
+                "A produtividade total dos fatores é o que o país produz além do que explicam "
+                "as máquinas e prédios, as horas trabalhadas e o estudo de quem trabalha: "
+                "tecnologia, organização, alocação. A PWT a calcula como o resto da conta, "
+                f"então ela carrega o ciclo. Atualizada a cada dois anos, mais ou menos; vai "
+                f"até {ultimo}."
+            ),
+        ),
+        grafico(
+            "ptf-paises",
+            "PTF contra a dos EUA",
+            [
+                serie(cod.lower(), nome, relativa[cod], casas=1)
+                for cod, nome in PAISES_PTF.items()
+                if relativa.get(cod)
+            ],
+            unidade="% da PTF dos EUA",
+            casas=0,
+            periodicidade="A",
+            fonte=fonte_rel,
+            nota=(
+                "O nível da PTF de cada país em % da dos EUA no mesmo ano, com os preços "
+                "convertidos pela paridade do poder de compra. Compara o nível entre países; "
+                "para a trajetória de um país só, o índice de PTF (rtfpna) é o certo."
+            ),
+        ),
+    ]
+    tabela = Tabela(
+        id="pwt-contabilidade",
+        titulo="De onde veio o crescimento, década a década",
+        subtitulo=(
+            f"Média por ano, em pontos percentuais (pp); {decadas[0][0].split()[0]} a {ultimo}"
+        ),
+        colunas=["PIB", "Capital", "Horas", "Capital humano", "PTF"],
+        linhas=[
+            LinhaTabela(
+                rotulo=rotulo,
+                valores=[m.pib, m.capital, m.horas, m.escolaridade, m.ptf],
+                unidade="",
+                casas=1,
+            )
+            for rotulo, m in decadas
+        ],
+        fonte=fonte_conta,
+        nota=(
+            "Capital, horas trabalhadas e capital humano somam o crescimento que as máquinas e "
+            "prédios, o trabalho e o estudo explicam, cada um pesado pela sua parte na renda; "
+            "a PTF é o que sobra, e as quatro somam o PIB (em log). Capital humano é o índice "
+            "da PWT "
+            "(anos de estudo e o retorno de cada ano). A PTF da própria PWT difere da daqui em "
+            f"até {br(diferenca, 1)} pp por ano nas médias. Depois de 2020 as horas sobem com "
+            "a volta da pandemia." + aviso_labsh
+        ),
+    )
+    return cartoes, graficos, tabela
 
 
 def _grafico_idosos_paises(agora: int) -> Grafico:

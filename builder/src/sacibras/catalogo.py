@@ -20,10 +20,14 @@ class SerieSGS:
     periodicidade: Periodicidade
     conferida: str
     """Data (dd/mm/aaaa) em que título, unidade e periodicidade foram conferidos no BCB."""
+    origem: str = ""
+    """Quem faz o número, quando não é o governo ("FGV IBRE"). Vai escrito na fonte, e a
+    fonte decide se o gráfico pode ser baixado (`licencas.py`)."""
 
     @property
     def fonte(self) -> str:
-        return f"Banco Central (SGS {self.codigo})"
+        de = f"; {self.origem}" if self.origem else ""
+        return f"Banco Central (SGS {self.codigo}{de})"
 
 
 SGS: dict[str, SerieSGS] = {
@@ -47,7 +51,11 @@ SGS: dict[str, SerieSGS] = {
     "IPCA": SerieSGS(433, "IPCA, variação mensal", "% no mês", "M", "13/11/2026"),
     "IPCA_12M": SerieSGS(13522, "IPCA acumulado em 12 meses", "% em 12 meses", "M", "14/11/2026"),
     "IPCA15": SerieSGS(7478, "IPCA-15, variação mensal", "% no mês", "M", "14/11/2026"),
-    "IGPM": SerieSGS(189, "IGP-M, variação mensal", "% no mês", "M", "13/11/2026"),
+    # O IGP-M é da FGV IBRE: o SGS só repassa (não está no catálogo aberto do BC, licenças em
+    # `licencas.py`). Fica na tela, sem CSV nem PNG.
+    "IGPM": SerieSGS(
+        189, "IGP-M, variação mensal", "% no mês", "M", "13/11/2026", origem="IGP-M: FGV IBRE"
+    ),
     "INPC": SerieSGS(188, "INPC, variação mensal", "% no mês", "M", "14/11/2026"),
     # Os cinco núcleos que o BCB acompanha nos documentos de política monetária.
     # Atenção: 11427 é o EX0. O 16121 (fora daqui) o CKAN chama de EX2 e o SGS de EX1: não usar
@@ -98,8 +106,14 @@ SGS: dict[str, SerieSGS] = {
         4382, "PIB acumulado em 12 meses, valores correntes", "R$ milhões", "M", "14/11/2026"
     ),
     "PIB_VAR_ANUAL": SerieSGS(7326, "PIB, variação real no ano", "% no ano", "A", "14/11/2026"),
+    # Da Fecomercio-SP (o catálogo do BC diz "Fonte: Federação do Comércio...", 15/11/2026).
     "CONFIANCA_CONSUMIDOR": SerieSGS(
-        4393, "Índice de Confiança do Consumidor", "índice", "M", "13/11/2026"
+        4393,
+        "Índice de Confiança do Consumidor",
+        "índice",
+        "M",
+        "13/11/2026",
+        origem="Fecomercio-SP",
     ),
     "UCI_INDUSTRIA": SerieSGS(
         28561,
@@ -107,6 +121,7 @@ SGS: dict[str, SerieSGS] = {
         "%",
         "M",
         "14/11/2026",
+        origem="FGV IBRE",
     ),
     "DESOCUPACAO": SerieSGS(24369, "Taxa de desocupação, PNAD Contínua", "%", "M", "14/11/2026"),
     # O SGS só tem o ESTOQUE do emprego formal (28763 não é o saldo do Caged): o saldo do

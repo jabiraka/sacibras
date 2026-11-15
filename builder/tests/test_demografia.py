@@ -14,6 +14,7 @@ from sacibras.fontes import (
     ibge_projecao,
     ibge_sidra,
     onu_wpp,
+    pwt,
     siconfi,
     tesouro_rtn,
 )
@@ -275,6 +276,25 @@ def _mensal(inicio: date, n: int, valor: float) -> list[Ponto]:
     ]
 
 
+def _ano_pwt(a: int) -> dict[str, float]:
+    """Um país que cresce 3 % ao ano, com a PTF subindo até 1980 e caindo depois."""
+    t = a - 1954
+    return {
+        "rgdpna": 100 * 1.03**t,
+        "rnna": 300 * 1.04**t,
+        "emp": 20 * 1.02**t,
+        "avh": 2000.0,
+        "hc": 2 * 1.005**t,
+        "labsh": 0.6 if a < 2021 else 0.5,
+        "rtfpna": 1 + 0.01 * min(t, 26) - 0.005 * max(0, t - 26),
+        "ctfp": 0.5 + 0.01 * min(t, 26) - 0.004 * max(0, t - 26),
+    }
+
+
+def _pwt() -> pwt.PorPais:
+    return {cod: {a: _ano_pwt(a) for a in range(1954, 2024)} for cod in demografia.PAISES_PTF}
+
+
 @pytest.fixture
 def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     monkeypatch.setattr(ibge_projecao, "indicadores", lambda: _tabela(_indicadores))
@@ -310,6 +330,7 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
         "series_dos_paises",
         lambda paises, *a: {p: [(2000, 5.0), (2025, 10.0)] for p in paises},
     )
+    monkeypatch.setattr(pwt, "dados", lambda paises=None: _pwt())
     c = Contexto(hoje=date(2026, 11, 14))
     c._sgs[("PIB_12M", 30)] = _mensal(date(2010, 1, 1), 199, 12_000_000.0)
     return c
@@ -356,7 +377,82 @@ def test_monta_a_secao_com_o_ano_corrente_e_o_inss(ctx: Contexto) -> None:
     estados = next(t for t in secao.tabelas if t.id == "demografia-estados")
     assert [linha.rotulo for linha in estados.linhas] == ["Brasil", "São Paulo", "Acre"]
     assert "filho," in secao.resumo or "filhos," in secao.resumo
+
+    # A PWT: o pico da PTF relativa é 1980, e a tabela vai década a década.
+    ptf_eua = next(c for c in secao.cartoes if c.id == "ptf-eua")
+    assert ptf_eua.referencia == date(2023, 1, 1) and ptf_eua.detalhe == "76 % em 1980, o auge"
+    assert len(graficos["ptf-paises"].series) == 6
+    assert "CC BY 4.0" in graficos["ptf-brasil"].fonte and not graficos["ptf-brasil"].sem_download
+    contabil = next(t for t in secao.tabelas if t.id == "pwt-contabilidade")
+    assert (
+        contabil.linhas[0].rotulo == "1955 a 1960" and contabil.linhas[-1].rotulo == "2021 a 2023"
+    )
+    assert "parte do trabalho na renda de 2021 em 2022 e 2023" in contabil.nota
     secao.model_dump_json()  # o JSON do site sai
+
+
+def test_contabilidade_soma_o_pib_e_bate_com_a_ptf_da_pwt() -> None:
+    """Com a PTF da fonte feita pela mesma conta, o resto é ela, e as partes somam o PIB."""
+    anos: dict[int, dict[str, float]] = {}
+    for a in range(2000, 2011):
+        t = a - 2000
+        y = {"rnna": 300 * 1.04**t, "emp": 20 * 1.02**t, "avh": 1900.0, "hc": 2 * 1.01**t}
+        y["labsh"] = 0.55 + 0.001 * t
+        y["rtfpna"] = 1.01**t
+        anos[a] = y
+    for a in range(2000, 2011):  # o PIB que sai de Y = A · K^(1-α) · (L·hc)^α, ano a ano
+        anos[a]["rgdpna"] = 0.0
+    anos[2000]["rgdpna"] = 100.0
+    for a in range(2001, 2011):
+        x, ant = anos[a], anos[a - 1]
+        peso = (x["labsh"] + ant["labsh"]) / 2
+        crescimento = (
+            math.log(x["rtfpna"] / ant["rtfpna"])
+            + (1 - peso) * math.log(x["rnna"] / ant["rnna"])
+            + peso * math.log(x["emp"] * x["avh"] * x["hc"] / (ant["emp"] * ant["avh"] * ant["hc"]))
+        )
+        x["rgdpna"] = ant["rgdpna"] * math.exp(crescimento)
+    parcelas = demografia.contabilidade(anos)
+    assert [p.ano for p in parcelas] == list(range(2001, 2011))
+    for p in parcelas:
+        assert p.capital + p.horas + p.escolaridade + p.ptf == pytest.approx(p.pib)
+        assert p.ptf == pytest.approx(p.ptf_pwt) and p.ptf == pytest.approx(math.log(1.01) * 100)
+    decadas = demografia.periodos(parcelas)
+    assert [r for r, _ in decadas] == ["2001 a 2010"]
+    assert decadas[0][1].horas == pytest.approx(0.0 + 100 * math.log(1.02) * 0.5555, rel=1e-2)
+
+
+def test_anos_em_que_a_pwt_repete_o_dado() -> None:
+    anos = {2019: {"labsh": 0.57}, 2020: {"labsh": 0.54}, 2021: {"labsh": 0.51}}
+    anos |= {2022: {"labsh": 0.51}, 2023: {"labsh": 0.51}}
+    assert demografia.anos_repetidos(anos, "labsh") == [2022, 2023]
+    assert demografia.anos_repetidos({2020: {"labsh": 0.5}, 2021: {"labsh": 0.6}}, "labsh") == []
+
+
+def test_pwt_le_a_aba_data_e_acha_a_planilha_no_dataverse() -> None:
+    livro = openpyxl.Workbook()
+    ws = livro.active
+    ws.title = "Data"
+    ws.append(["countrycode", "country", "year", *pwt.CAMPOS])
+    ws.append(["BRA", "Brazil", 2023, 1, 2, 3, 4, 5, 0.5, 0.97, 0.49])
+    ws.append(["BRA", "Brazil", 2022, 1, 2, 3, 4, 5, 0.5, 0.96, None])
+    ws.append(["USA", "United States", 2023, 1, 2, 3, 4, 5, 0.6, 1.0, 1.0])
+    saida = io.BytesIO()
+    livro.save(saida)
+    lido = pwt.ler_planilha(saida.getvalue(), {"BRA"})
+    assert set(lido) == {"BRA"}
+    assert lido["BRA"][2023]["ctfp"] == 0.49 and "ctfp" not in lido["BRA"][2022]
+    meta = {
+        "data": {
+            "latestVersion": {
+                "files": [
+                    {"dataFile": {"id": 1, "filename": "pwt110_na_data.xlsx"}},
+                    {"dataFile": {"id": 7, "filename": "pwt110.xlsx"}},
+                ]
+            }
+        }
+    }
+    assert pwt.id_da_planilha(meta) == 7
 
 
 def test_sem_o_rtn_a_secao_sai_sem_o_inss(ctx: Contexto, monkeypatch: pytest.MonkeyPatch) -> None:

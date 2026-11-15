@@ -30,7 +30,8 @@ class Contexto:
 
     def fonte_sgs(self, *chaves: str) -> str:
         codigos = ", ".join(str(SGS[c].codigo) for c in chaves)
-        return f"Banco Central, SGS {codigos}"
+        origens = "".join(f"; {SGS[c].origem}" for c in chaves if SGS[c].origem)
+        return f"Banco Central, SGS {codigos}{origens}"
 
     def agora(self) -> datetime:
         return datetime.now(UTC)

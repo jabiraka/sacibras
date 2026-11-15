@@ -6,7 +6,9 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 
 Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Tudo publicado no `main`; nenhum branch com trabalho pendente.
+PC"*). Depois, a Penn World Table entrou (Demografia › Eficiência (PTF)) e o dado privado
+(FGV IBRE, Fecomercio-SP, B3) ficou sem CSV nem PNG, com as licenças em `licencas.py`; isso
+está no branch `ccr-47e59384-8x2d1m`, para juntar ao `main`.
 
 ## Releituras com prazo
 
@@ -46,6 +48,12 @@ As próximas:
     fotos usaram um calendário fabricado; conferir do PC que a caixa abre com o de verdade.
 
 ## Espera o Caio
+
+- **IGP-M e capacidade instalada (FGV IBRE)**: os termos da FGV vedam reproduzir sem
+  autorização, e o BC só repassa (não os põe no catálogo aberto). Hoje ficam na tela, com a
+  fonte e sem download. Escolher: pedir autorização por escrito à FGV (aí entra também a
+  decomposição do IGP-M), manter como está, ou tirar da tela. O mesmo vale, por cautela, para
+  a confiança do consumidor (Fecomercio-SP, sem termo publicado) e o Ibovespa (B3).
 
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em

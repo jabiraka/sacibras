@@ -143,6 +143,38 @@ LEITURAS: list[Leitura] = [
         date(2027, 3, 31),
         "Relatório de Política Monetária: novo boxe de repasse cambial. Uma vez por ano.",
     ),
+    # ------------------------------------------------------------- licenças de dado
+    Leitura(
+        "Licença da Penn World Table (CC BY 4.0) e versão nova",
+        "licencas.PWT",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "rug.nl/ggdc/productivity/pwt/: conferir a licença e se saiu versão nova (a 12.0 virá "
+        "com outro DOI: trocar `pwt.DOI` e `pwt.VERSAO`). Uma vez por ano.",
+    ),
+    Leitura(
+        "Termos de uso da FGV IBRE (IGP-M e capacidade instalada sem download)",
+        "licencas.FGV_IBRE",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "portalibre.fgv.br/termos-de-uso e /fgv-dados: se passarem a deixar reproduzir com a "
+        "fonte, trocar `exporta`. Uma vez por ano.",
+    ),
+    Leitura(
+        "Licença do Índice de Confiança do Consumidor (Fecomercio-SP)",
+        "licencas.FECOMERCIO",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "fecomercio.com.br e o catálogo do BC (série 4393): ver se a Fecomercio publicou "
+        "termo de uso dos dados. Uma vez por ano.",
+    ),
+    Leitura(
+        "Licença dos dados da B3 (Ibovespa sem download)",
+        "licencas.B3",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "b3.com.br, termos de uso e Market Data. Uma vez por ano.",
+    ),
     # ------------------------------------------------------------- impostos
     Leitura(
         "Reforma do consumo, ano a ano (EC 132 e LC 214)",

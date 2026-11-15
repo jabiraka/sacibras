@@ -264,7 +264,7 @@ def montar(ctx: Contexto) -> Secao:
         fonte_ibov = "B3, estatísticas históricas do Ibovespa"
     else:
         ibov = ipeadata.serie(ipeadata.IBOVESPA, date(ano - 10, 1, 1))
-        fonte_ibov = "IPEADATA (série GM366_IBVSP366, fechamento do Ibovespa)"
+        fonte_ibov = ipeadata.FONTE_IBOVESPA
 
     indices: dict[str, list[Ponto]] = {"IBOV": [p for p in ibov if p[0].year >= ano - 2]}
     tabelas: list[Tabela] = []

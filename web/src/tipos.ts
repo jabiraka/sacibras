@@ -46,6 +46,8 @@ export interface Grafico {
   dispersao?: Dispersao | null;
   /** Só na página inicial: o assunto de onde o gráfico veio. */
   secao?: string;
+  /** Por que não há CSV nem PNG (dado privado cujos termos vedam reproduzir; licencas.py). */
+  sem_download?: string;
 }
 
 /** Um ponto por país: uma métrica em cada eixo (`chave` é o ISO3; o Brasil é BRA). */

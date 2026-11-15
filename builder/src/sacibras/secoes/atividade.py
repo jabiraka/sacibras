@@ -348,7 +348,7 @@ def montar(ctx: Contexto) -> Secao:
             casas=1,
             periodicidade="M",
             janela_anos=10,
-            fonte=f"{ctx.fonte_sgs('UCI_INDUSTRIA')} (FGV)",
+            fonte=ctx.fonte_sgs("UCI_INDUSTRIA"),
         ),
     ]
 

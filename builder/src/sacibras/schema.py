@@ -9,8 +9,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from sacibras import licencas
 from sacibras.tipos import Periodicidade, Ponto
 
 Procedencia = Literal["oficial", "mercado", "calculado"]
@@ -132,6 +133,14 @@ class Grafico(Modelo):
     """Com ela, o site desenha um ponto por país no lugar das séries."""
     secao: str = ""
     """O assunto de onde o gráfico veio: só na página inicial, para o elo "abrir"."""
+    sem_download: str = ""
+    """Por que não há CSV nem PNG: a fonte cita dado privado cujos termos vedam reproduzir
+    (`licencas.py`). Sai sozinho da `fonte`; não se escreve à mão."""
+
+    @model_validator(mode="after")
+    def _licenca(self) -> Grafico:
+        self.sem_download = licencas.sem_download(self.fonte)
+        return self
 
 
 class Meta(Modelo):

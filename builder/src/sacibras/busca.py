@@ -355,6 +355,16 @@ SINONIMOS: dict[str, list[str]] = {
     "idade mediana": ["idade media", "envelhecimento"],
     "inss": ["previdencia", "aposentadoria", "rgps", "deficit da previdencia", "reforma"],
     "produtividade": ["pib por trabalhador", "eficiencia", "produto por ocupado"],
+    "ptf": [
+        "produtividade total dos fatores",
+        "eficiencia",
+        "penn world table",
+        "pwt",
+        "contabilidade do crescimento",
+        "capital humano",
+        "estoque de capital",
+        "tecnologia",
+    ],
     "por pessoa ocupada": ["produtividade", "pib por trabalhador"],
     "crescimento do pib": [
         "de onde veio o crescimento",
@@ -749,6 +759,13 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
     "esperanca de vida": ["life expectancy", "esperanza de vida", "esperance de vie"],
     "piramide": ["population pyramid", "age pyramid", "piramide de poblacion", "pyramide des ages"],
     "produtividade": ["productivity", "labor productivity", "productividad", "productivite"],
+    "ptf": [
+        "total factor productivity",
+        "tfp",
+        "growth accounting",
+        "productividad total de los factores",
+        "productivite globale des facteurs",
+    ],
     "mundo": [
         "world",
         "countries",

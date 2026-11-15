@@ -118,6 +118,7 @@ Pobreza, Demografia e Impostos (15/11/2026):
 | Receita Federal, Grandes Números do IRPF, colunas `imposto_pago`, `imposto_a_pagar`, `imposto_a_restituir` | imposto retido na fonte e antecipado e o acerto, por faixa | O metadado: "soma de imposto retido na fonte, carnê leão, imposto complementar, imposto pago no exterior e imposto retido RRA". Não há o retido sobre tributação exclusiva. |
 | Tesouro Transparente (CKAN), `transferencias-constitucionais-para-estados` e `…-para-municipios` | FPE de cada estado e FPM dos municípios, mês a mês, por decêndio | CSV latin-1 `;`. O nome do arquivo é o mês da publicação (o `202610` traz set/2026). Municipal: 5 a 8 MB por mês. Valores já sem os 20 % do Fundeb. Brasília recebe FPM. |
 | ONU, World Population Prospects 2024, projeção probabilística (`population.un.org/wpp/assets/Excel%20Files/2_Indicators%20(Probabilistic)/…/UN_PPP2024_Output_PopTot.xlsx`) | população com faixas de 80 % e 95 %, 2024 a 2100 | A API de dados (`dataportalapi`) pede token (HTTP 401); a lista dos arquivos está em `population.un.org/wpp/assets/downloads.json`. 1 MB, responde em < 1 s. Abrir sem `read_only` (no modo rápido, só uma coluna de ano). |
+| Penn World Table 11.0, DataverseNL (`dataverse.nl/api/datasets/:persistentId/?persistentId=doi:10.34894/FABVLR` para achar o id do `pwt110.xlsx`; hoje `api/access/datafile/554105`) | PIB, capital, ocupados, horas, capital humano, parte do trabalho na renda e PTF (índice e contra os EUA) de 185 países, 1950 a 2023 | **CC BY 4.0** (página da PWT e o campo `license` do Dataverse, lidos em 15/11/2026): pode mostrar e baixar, com o crédito e a citação (Feenstra, Inklaar e Timmer, 2015, AER 105(10)). XLSX de 5,8 MB, aba `Data`, responde da nuvem em poucos segundos. A PTF da PWT 11 usa ocupados × horas × capital humano (a conta com só ocupados erra até 4 pp num ano); refeita aqui, difere da `rtfpna` em até 0,6 pp num ano e 0,2 pp nas médias por década. A parte do trabalho na renda (`labsh`) de 2021 se repete em 2022 e 2023. Versões: 9.0 (2015), 9.1 (2019), 10.0 (2021), 10.01 (2023), 11.0 (out/2025). Em Demografia › Eficiência (PTF). |
 | Banco Mundial `SP.POP.65UP.TO.ZS` | % de 65 anos ou mais, 1960 a 2025 | Vários países numa chamada (`country/BRA;WLD;…`), ~60 s. O agregado de renda alta vem com `countryiso3code` vazio: usar `country.id` (XD). |
 | Câmara, Constituição em texto atualizado (`www2.camara.leg.br/legin/fed/consti/1988/constituicao-1988-5-outubro-1988-322142-normaatualizada-pl.html`, 1,7 MB) | ADCT compilado: arts. 124 a 137 da reforma | Responde de fora do Brasil: dispensa o Planalto para conferir se emenda nova mexeu na transição. |
 | Fundação João Pinheiro (déficit habitacional), Confaz (ICMS por estado) | — | 403 (FJP) e sem resposta (Confaz) da nuvem em 15/11/2026. |
@@ -153,6 +154,26 @@ Pobreza, Demografia e Impostos (15/11/2026):
 | Ministério do Trabalho, Novo Caged por UF (`gov.br/trabalho-e-emprego/...`) | 403 da nuvem em 14/11/2026 (o `pdet.mte.gov.br` redireciona para lá). O IPEADATA só tem o Caged do Brasil. Testar do PC. |
 | MDIC, índices de preço e quantum do comércio exterior (`balanca.economia.gov.br/balanca/IPQ/`) | certificado vencido em 15/11/2026 (com a cadeia completa, o `curl` recusa por "certificate has expired"); a API do Comex Stat não tem os índices. O SGS não tem preço nem quantum das exportações, e a Funcex não é fonte oficial: "preço × quantidade" espera. Testar do PC. |
 | BCB SGS, "serviços subjacentes" do IPCA | não achado no CKAN (`q=subjacentes` dá zero) nem nos códigos vizinhos dos outros recortes do IPCA (4447–4461, 10841–10844, 11426–11428, 16121–16122, 27838–27880, 28750–28762), conferidos um a um no serviço de metadados em 15/11/2026. A busca de séries do SGS (`localizarseries`) recusa a nuvem (HTTP 502): procurar do PC. |
+
+## Licença do dado: o que é privado fica sem download
+
+Pedido do Caio (15/11/2026): *"não deixe exportar oq for de fontes privadas, grave a licença
+de dados desses sites"*. O registro, com o trecho lido de cada termo, está em
+`builder/src/sacibras/licencas.py`; a releitura anual, em `leituras.py`. O gráfico cuja fonte
+cita uma origem privada sai com `sem_download` (o site tira o CSV e o PNG e escreve o porquê);
+cartão e tabela não têm download. O número continua no JSON público do site, como tudo o que
+a tela mostra: o que se evita é oferecer a cópia.
+
+| Fonte | Licença (lida em 15/11/2026) | No site |
+|-------|------------------------------|---------|
+| Penn World Table (Groningen) | CC BY 4.0: copiar e redistribuir, até para uso comercial, com crédito, elo da licença e aviso de mudança | na tela e com download; a fonte leva a citação e a licença |
+| FGV IBRE: IGP-M (SGS 189) e utilização da capacidade (SGS 28561) | `portalibre.fgv.br/termos-de-uso`: *"É expressamente proibida a reprodução [...] de qualquer forma de conteúdo aqui disponibilizado, sem a autorização do FGV IBRE."* O FGV Dados: IGP, IPA, IPC e INCC "divulgados gratuitamente nas suas formas mais agregadas"; grupos, subgrupos e itens só por assinatura | na tela, com a fonte, **sem download**. Nada da FGV entra além do que já estava (ver PROPOSTAS) |
+| Fecomercio-SP: Índice de Confiança do Consumidor (SGS 4393) | o catálogo do BC lista a série com ODbL e "Fonte: Federação do Comércio..."; o site da Fecomercio não tem termo de uso de dados (só o aviso de privacidade) | na tela, **sem download**, por cautela |
+| B3: Ibovespa (pelo IPEADATA) | a B3 veda a coleta automatizada e licencia a redistribuição (seção abaixo) | na tela, **sem download** (também os gráficos feitos com ele: retornos, em dólares, distância do pico) |
+
+O SGS repassa séries de terceiros, mas o catálogo aberto do BC (`dadosabertos.bcb.gov.br`,
+ODbL) não traz nenhuma da FGV (busca por título "igp", "capacidade", "ipa", "incc" em
+15/11/2026): o repasse não muda a licença de quem fez o número.
 
 ## B3: funciona, mas o site veda a coleta
 

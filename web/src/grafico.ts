@@ -266,10 +266,13 @@ export function montarGrafico(g: Grafico): HTMLElement {
   const png = el("button", "", "PNG");
   png.type = "button";
   png.title = "Baixar a imagem do gráfico, com o título e a fonte";
-  acoes.append(verTabela, csv, png);
+  // Dado privado cujos termos vedam reproduzir (licencas.py): fica na tela, sem download.
+  if (g.sem_download) acoes.append(verTabela);
+  else acoes.append(verTabela, csv, png);
   pe.append(acoes);
   artigo.append(pe);
   if (g.nota) artigo.append(el("p", "nota", g.nota));
+  if (g.sem_download) artigo.append(el("p", "nota", g.sem_download));
 
   const caixaTabela = el("div", "tabela-rolavel");
   caixaTabela.hidden = true;
@@ -790,6 +793,7 @@ function tabelaDoGrafico(g: Grafico): HTMLTableElement {
 }
 
 function baixarCsv(g: Grafico): void {
+  if (g.sem_download) return;
   const { isos, colunas } = matriz(g);
   const aspas = (s: string) => `"${s.replaceAll('"', '""')}"`;
   const meses = g.eixo === "meses";
@@ -858,7 +862,7 @@ async function baixarPng(
   legenda: ItemDaLegenda[],
   t: Tema,
 ): Promise<void> {
-  if (!svg) return;
+  if (!svg || g.sem_download) return;
   const { img, w, h } = await imagemDoSvg(svg);
   const escala = 2;
   const margem = 28;
