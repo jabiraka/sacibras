@@ -6,7 +6,8 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 
 Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Tudo publicado no `main`; nenhum branch com trabalho pendente.
+PC"*). Tudo publicado no `main`, menos as propostas do custo do envelhecimento (só docs,
+no branch `ccr-bd2d88f7-8r0acn`).
 
 ## Releituras com prazo
 
@@ -52,6 +53,8 @@ As próximas:
   `anterior.SITE`.
 - **Previsões próprias** de IPCA, desocupação e o PIB agora com indústria, varejo e serviços:
   fora por enquanto (Caio, 15/11/2026: *"sem próprias previsões por enquanto"*).
+- **O custo do envelhecimento** (Demografia): oito propostas testadas, com os números, no
+  [PROPOSTAS](PROPOSTAS.md#falta-por-assunto); escolher quais entram (a 8, simulador, pede o "sim").
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).
