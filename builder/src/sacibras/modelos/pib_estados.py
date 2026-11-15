@@ -3,7 +3,8 @@
 O IBGE dá o PIB dos estados uma vez por ano, com dois anos de atraso (Contas Regionais), e o
 PIB do Brasil a cada trimestre (Contas Nacionais Trimestrais). A conta junta os dois com um
 indicador trimestral de cada estado, o IBC-R do Banco Central (o do próprio estado ou, para
-os 14 que não têm, o da região), em dois ajustes repetidos até fecharem:
+os que não têm, o da região; índice que começa tarde é emendado para trás pela região, ver
+`emendar`), em dois ajustes repetidos até fecharem:
 
 1. **No tempo** (Denton proporcional, o método do manual de Contas Nacionais Trimestrais do
    FMI, 2017, cap. 6): o índice trimestral do estado é o indicador vezes uma razão que muda o
@@ -16,7 +17,7 @@ os 14 que não têm, o da região), em dois ajustes repetidos até fecharem:
    desse último ano, porque não há PIB corrente por estado mais novo.
 
 O que a conta não sabe: o desenho dos trimestres dentro do ano é o do IBC-R, que não é o PIB;
-e nos 14 estados sem índice o desenho é o da região. O erro se mede refazendo a conta como
+e nos estados sem índice o desenho é o da região. O erro se mede refazendo a conta como
 se o IBGE só tivesse publicado até um ano Y e comparando com a conta de hoje nos trimestres
 de Y+1 e Y+2 (`revisoes`): é o quanto o número do trimestre muda quando sai o oficial do ano.
 Limite declarado: o teste usa o IBC-R e o PIB revisados de hoje, não os da época.
@@ -43,6 +44,25 @@ def trimestral(pontos: Sequence[Ponto]) -> dict[date, float]:
     for d, v in pontos:
         por.setdefault(date(d.year, 3 * ((d.month - 1) // 3) + 1, 1), []).append(v)
     return {t: sum(v) / 3 for t, v in sorted(por.items()) if len(v) == 3}
+
+
+def emendar(
+    proprio: Mapping[date, float], referencia: Sequence[float], trimestres: Sequence[date]
+) -> list[float]:
+    """O indicador de um estado cujo índice começa depois do primeiro trimestre (o IBC-R de
+    MT começa em 2013; os de MA, MS e RN, em 2023). Onde o índice existe, é ele; para trás,
+    cada trimestre sai do mesmo trimestre do ano seguinte, descontado o crescimento em um ano
+    da `referencia` (o índice da região). Assim o desenho dos trimestres é sempre o do
+    estado, e o crescimento contra o ano anterior não dá salto na emenda."""
+    x = [proprio.get(t) for t in trimestres]
+    inicio = next((i for i, v in enumerate(x) if v is not None), None)
+    if inicio is None or any(v is None for v in x[inicio:]) or len(x) - inicio < 4:
+        raise ValueError("índice do estado com buraco ou com menos de um ano")
+    for i in range(inicio - 1, -1, -1):
+        seguinte = x[i + 4]
+        assert seguinte is not None
+        x[i] = seguinte * referencia[i] / referencia[i + 4]
+    return [v for v in x if v is not None]
 
 
 def _resolver(a: list[list[float]], b: list[float]) -> list[float]:
@@ -202,13 +222,13 @@ def revisoes(
     corrente_brasil: PorAno,
     final: Estimativa,
     voltas: int = 2,
-) -> dict[str, list[float]]:
-    """O teste: {UF: [crescimento de hoje − crescimento estimado sabendo o PIB oficial só até
-    Y]}, nos trimestres de Y+1 e Y+2, para cada Y possível. É o tamanho da revisão que o
-    número do trimestre leva quando o IBGE publica o ano."""
+) -> dict[str, list[tuple[date, float]]]:
+    """O teste: {UF: [(trimestre, crescimento de hoje − crescimento estimado sabendo o PIB
+    oficial só até Y)]}, nos trimestres de Y+1 e Y+2, para cada Y possível. É o tamanho da
+    revisão que o número do trimestre leva quando o IBGE publica o ano."""
     primeiro = trimestres[0].year
     de_hoje = {s: crescimento(v) for s, v in final.indice.items()}
-    saida: dict[str, list[float]] = {s: [] for s in indicador}
+    saida: dict[str, list[tuple[date, float]]] = {s: [] for s in indicador}
     for y in range(primeiro + 2, final.ultimo_oficial):
         e = estimar(trimestres, indicador, volume, corrente, pib_brasil, corrente_brasil, y, voltas)
         for s in indicador:
@@ -217,5 +237,5 @@ def revisoes(
                 if y < tri.year <= min(y + 2, final.ultimo_oficial):
                     a, h = antes[t], de_hoje[s][t]
                     if a is not None and h is not None:
-                        saida[s].append(h - a)
+                        saida[s].append((tri, h - a))
     return saida

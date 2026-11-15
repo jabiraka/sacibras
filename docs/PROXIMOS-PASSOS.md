@@ -5,11 +5,11 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
 Última atualização: 15/11/2026 (segunda sessão da nuvem do dia). A primeira fez tudo o que
-dava para fazer de fora do Brasil e publicou no `main`. A segunda respondeu a dois pedidos do
-Caio, **no branch `ccr-94336676-cxavg1`, ainda não no `main`** (espera o Caio olhar):
-o PIB trimestral por estado (*"conseguimos ter alguma estimativa da decomposição do PIB por
-Estados em cada trimestre?"*) e outras decomposições (*"veja se dá pra ter alguma outra
-estimativa de decomposição também no site [...] só os mais relevantes"*).
+dava para fazer de fora do Brasil. A segunda fez o PIB trimestral por estado, as decomposições
+(IPCA por grupo, PIB por componente, fatores da dívida e da desocupação, carrego do PIB), o
+IBC-R dos quatro estados novos e a conferência contra os institutos estaduais. O Caio olhou e
+mandou juntar (*"junte no main e pode fazer oq recomendar"*). Tudo publicado no `main`; nenhum
+branch com trabalho pendente.
 
 ## Releituras com prazo
 
@@ -26,6 +26,8 @@ As próximas:
 - **até 23/12**: resolução do Senado que fixa a CBS de 2027 → `CBS_REFERENCIA_2027` e o texto
   "o Senado ainda fixa" em `impostos.py`.
 - **até 31/12**: RPM de dezembro → modelos e faixa do efeito da Selic.
+- **até 30/11/2027**: a conferência do PIB trimestral por estado contra RS, PR, MG, BA e ES
+  (`relatorios.CONFERENCIA_PIB_ESTADOS`; `scripts/conferir_pib_estados.py` refaz).
 
 ## Só do PC
 
@@ -50,33 +52,13 @@ As próximas:
 
 ## Espera o Caio
 
-- **PIB trimestral por estado** (branch `ccr-94336676-cxavg1`): duas métricas novas em
-  Estados › Mapa e ranking, "PIB no trimestre (estimativa)" e "Contribuição para o PIB do
-  Brasil (estimativa)", com a lista "Trimestre" (de 2011 em diante). O método, os testes e a
-  conferência contra cinco institutos estaduais estão no [FONTES](FONTES.md) e no
-  [PLANO](PLANO.md#6-previsões). Para decidir:
-  1. Entra no `main`? (No mesmo dia o Caio disse *"sem próprias previsões por enquanto"*;
-     isto é estimativa de trimestre que já aconteceu, como a prévia anual pelo IBC-R, mas a
-     decisão é dele.)
-  2. Mostrar na tela a conferência contra os cinco estados que publicam PIB trimestral
-     (diferença média de 1,1 ponto)? Pede linha em `leituras.py` e refazer a conta uma vez
-     por ano; hoje está só no FONTES.
-  3. Pôr o IBC-R dos quatro estados novos (MT, MS, RN e MA; SGS 29701 a 29705, fora do
-     CKAN): muda também a prévia anual e o texto "13 estados". MT é onde a conta mais erra.
-- **Decomposições novas** (mesmo branch), todas conta nossa sobre dado oficial, fechando com
-  o número oficial e com uma linha do total por cima das barras:
-  de onde vem o IPCA de 12 meses, por grupo (Inflação › Por tipo de preço, com a coluna nova
-  na tabela dos grupos); de onde veio o crescimento do PIB, por quem comprou e por quem
-  produziu, e o cartão do carrego do PIB (Atividade › PIB); por que a dívida bruta mudou em
-  12 meses (Contas públicas › Dívida pública); por que a desocupação mudou em 12 meses
-  (Trabalho › Desemprego). Para olhar: se o carrego conta como "previsão própria" (está
-  escrito "se o PIB parar", com o Focus ao lado) e se cinco peças de uma vez não pesam as
-  telas (Atividade › PIB ficou com seis gráficos).
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.
 - **Previsões próprias** de IPCA, desocupação e o PIB agora com indústria, varejo e serviços:
   fora por enquanto (Caio, 15/11/2026: *"sem próprias previsões por enquanto"*).
+- Para olhar: Atividade › PIB ficou com seis gráficos (Caio, 15/11/2026: *"pode deixar por
+  enquanto"*); se pesar, os dois antigos de linhas (demanda e oferta) são os candidatos a sair.
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).

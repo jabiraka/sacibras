@@ -26,6 +26,24 @@ def test_trimestral_tira_a_media_e_ignora_trimestre_incompleto() -> None:
     assert pe.trimestral(pontos) == {date(2026, 1, 1): 2.0, date(2026, 4, 1): 5.0}
 
 
+def test_emendar_anda_para_tras_pelo_crescimento_em_um_ano_da_regiao() -> None:
+    tri = _trimestres(2021, 2023)
+    # O índice do estado só existe em 2023, com safra no 2º trimestre.
+    proprio = dict(zip(tri[8:], [100.0, 140.0, 90.0, 95.0], strict=True))
+    regiao = [50.0 * 1.1 ** (i // 4) for i in range(12)]  # cresce 10 % ao ano, sem safra
+    x = pe.emendar(proprio, regiao, tri)
+    assert x[8:] == [100.0, 140.0, 90.0, 95.0]
+    # Para trás, o mesmo desenho dos trimestres, 10 % menor a cada ano.
+    assert x[4:8] == pytest.approx([v / 1.1 for v in x[8:]])
+    assert x[:4] == pytest.approx([v / 1.21 for v in x[8:]])
+    # Índice inteiro passa como veio; com buraco ou curto demais, não serve.
+    assert pe.emendar(dict(zip(tri, regiao, strict=True)), regiao, tri) == regiao
+    with pytest.raises(ValueError, match="buraco"):
+        pe.emendar({tri[8]: 1.0, tri[10]: 1.0, tri[11]: 1.0}, regiao, tri)
+    with pytest.raises(ValueError):
+        pe.emendar({tri[11]: 1.0}, regiao, tri)
+
+
 def test_denton_fecha_com_o_ano_e_guarda_o_desenho_do_indicador() -> None:
     tri = _trimestres(2010, 2013)
     anos = [t.year for t in tri]
@@ -148,8 +166,9 @@ def test_revisoes_medem_o_quanto_o_trimestre_muda_quando_sai_o_oficial() -> None
     r = d.revisoes(d.indice, d.estimar())
     # Y vai de 2012 a 2014; cada um revê os trimestres de Y+1 e Y+2 que já têm oficial.
     assert len(r["A"]) == 4 * (2 + 2 + 1)
-    assert max(abs(x) for s in r for x in r[s]) < 1e-6
+    assert max(abs(x) for s in r for _, x in r[s]) < 1e-6
+    assert {t.year for t, _ in r["A"]} == {2013, 2014, 2015}
     ruim = d.sem_safra()
     r = d.revisoes(ruim, d.estimar(ruim))
     # B cresce 12,6 % ao ano e o indicador só 8,2 %: a revisão é para cima, e grande.
-    assert sum(r["B"]) / len(r["B"]) > 2
+    assert sum(x for _, x in r["B"]) / len(r["B"]) > 2

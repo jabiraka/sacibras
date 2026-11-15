@@ -717,19 +717,32 @@ CREDITO_INADIMPLENCIA_UF: dict[str, int] = {
     "TO": 15951,
 }
 # "Índice de Atividade Econômica Regional - <UF> - IBCR-<UF>", sem ajuste sazonal, índice,
-# último ponto ago/2026 (SP: 113,34). O BC só publica o IBC-R destes 13 estados (CKAN,
-# package_search?q=IBCR, 36 séries: os 13 e as 5 regiões, com e sem ajuste).
+# último ponto ago/2026 (SP: 113,34). Treze estão no CKAN (package_search?q=IBCR, 36 séries:
+# os 13 e as 5 regiões, com e sem ajuste). Os outros quatro (MA, MS, MT e RN) entraram com o
+# boxe "IBCR: inclusão de quatro novas Unidades da Federação e revisão metodológica" do
+# Boletim Regional de 2025 do BC (lido em 15/11/2026: "amplia sua cobertura de treze para
+# dezessete Unidades da Federação [...] de 85,2% para 91,6% do total nacional"; MT desde
+# jan/2013, os outros três desde jan/2023, "em função da disponibilidade de dados da
+# Pesquisa Industrial Mensal"; o boxe dá os códigos). O CKAN não os lista
+# (fq=codigo_sgs:N devolve zero): conferidos no serviço de metadados do SGS (FachadaWSSGS,
+# getUltimoValorXML, 15/11/2026): "Índice de Atividade Econômica Regional - Maranhão -
+# IBCR-MA" (29701), "- Rio Grande do Norte - IBCR-RN" (29702), "- Mato Grosso do Sul -
+# IBCR-MS" (29703) e "- Mato Grosso - IBCR-MT" (29704), todos M, índice, até ago/2026.
 IBCR_UF: dict[str, int] = {
     "AM": 25411,
     "BA": 25415,
     "CE": 25390,
     "ES": 25398,
     "GO": 25383,
+    "MA": 29701,
     "MG": 25379,
+    "MS": 29703,
+    "MT": 29704,
     "PA": 25409,
     "PE": 25417,
     "PR": 25408,
     "RJ": 25396,
+    "RN": 29702,
     "RS": 25401,
     "SC": 25402,
     "SP": 25392,
@@ -747,6 +760,8 @@ for _uf, _c in CREDITO_INADIMPLENCIA_UF.items():
         _c, f"Inadimplência das operações de crédito do SFN, {_uf}", "%", "M", "14/11/2026"
     )
 for _uf, _c in IBCR_UF.items():
-    SGS[f"IBCR_{_uf}"] = SerieSGS(_c, f"IBC-R {_uf}", "índice", "M", "14/11/2026")
+    SGS[f"IBCR_{_uf}"] = SerieSGS(
+        _c, f"IBC-R {_uf}", "índice", "M", "15/11/2026" if _c > 29000 else "14/11/2026"
+    )
 for _r, _c in IBCR_REGIAO.items():
     SGS[f"IBCR_REGIAO_{_r}"] = SerieSGS(_c, f"IBC-R, região {_r}", "índice", "M", "14/11/2026")

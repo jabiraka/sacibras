@@ -65,6 +65,14 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   mensal, relatório trimestral ou semestral, resolução anual, série) e a nota de crédito,
   que as agências revisam. O simulador da Selic fica (Caio, mesmo dia): os modelos
   semiestruturais são os do BC, usados em todo Relatório de Política Monetária.
+- **Conta nossa sobre dado oficial entra, dita como nossa** (Caio, 15/11/2026: *"se fizemos
+  a conta, é nossa"*, sobre o carrego do PIB; e *"junte no main"*, sobre o PIB trimestral por
+  estado e as decomposições). Vale para o que reparte ou junta número já publicado
+  (`modelos/decomposicoes.py`, `modelos/pib_estados.py`): a fonte diz "conta nossa", a soma
+  fecha com o número oficial, o método vai em uma frase e, onde a conta pode errar, vai a faixa
+  de erro medida e a conferência contra quem publica número parecido (os institutos estaduais,
+  `relatorios.CONFERENCIA_PIB_ESTADOS`). Previsão do que ainda não aconteceu continua fora
+  (*"sem próprias previsões por enquanto"*).
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 

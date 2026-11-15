@@ -34,7 +34,8 @@ def test_crescimento_de_12_meses_compara_medias_e_pede_os_24_meses() -> None:
 def test_os_codigos_por_uf_cobrem_as_27_e_estao_no_catalogo() -> None:
     siglas = {s for _, s, _, _ in UFS}
     assert set(CREDITO_SALDO_UF) == siglas == set(CREDITO_INADIMPLENCIA_UF)
-    assert set(IBCR_UF) < siglas and len(IBCR_UF) == 13
+    assert set(IBCR_UF) < siglas and len(IBCR_UF) == 17
+    assert SGS["IBCR_MT"].codigo == 29704 and SGS["IBCR_MA"].codigo == 29701
     assert SGS["CREDITO_SALDO_SP"].codigo == 14080 and SGS["IBCR_SP"].codigo == 25392
     assert SGS["CREDITO_INADIMPLENCIA_ES"].codigo == 15932
 
@@ -88,7 +89,7 @@ def test_pib_recusa_planilha_sem_um_estado(monkeypatch: pytest.MonkeyPatch) -> N
         estados_economia.pib(UFS)
 
 
-def test_sem_o_pib_oficial_a_previa_fica_so_com_os_13_estados_e_sem_faixa() -> None:
+def test_sem_o_pib_oficial_a_previa_fica_so_com_os_17_estados_e_sem_faixa() -> None:
     serie = _meses(date(2023, 1, 1), [100.0] * 12 + [100.0] * 12 + [103.0] * 12 + [104.0] * 8)
 
     def sgs(chave: str) -> list[Ponto]:
@@ -97,10 +98,10 @@ def test_sem_o_pib_oficial_a_previa_fica_so_com_os_13_estados_e_sem_faixa() -> N
     doze, ano = estados_economia.ibcr(UFS, sgs)
     assert ano.nome == "Prévia do PIB de 2025" and ano.referencia == "2025"
     assert ano.valores["SP"] == pytest.approx(3.0) and ano.brasil == pytest.approx(3.0)
-    assert ano.valores["MT"] is None and "MT" in ano.descricao
+    assert ano.valores["DF"] is None and "DF" in ano.descricao
     assert not ano.intervalos and not ano.estimados and ano.como_ler == ""
     assert doze.referencia == "12 meses até ago/2026"
-    assert sum(v is not None for v in doze.valores.values()) == 13
+    assert sum(v is not None for v in doze.valores.values()) == 17
 
 
 def test_estado_sem_ibcr_cresce_como_a_regiao_com_a_faixa_do_teste() -> None:
@@ -124,12 +125,12 @@ def test_estado_sem_ibcr_cresce_como_a_regiao_com_a_faixa_do_teste() -> None:
 
     _, previa = estados_economia.ibcr(UFS, sgs, volume)
     assert all(v is not None for v in previa.valores.values())
-    assert len(previa.estimados) == 14 and "MT" in previa.estimados and "SP" not in previa.estimados
-    assert previa.valores["MT"] == pytest.approx(3.0) and previa.valores["SP"] == pytest.approx(2.0)
+    assert len(previa.estimados) == 10 and "DF" in previa.estimados and "MT" not in previa.estimados
+    assert previa.valores["DF"] == pytest.approx(3.0) and previa.valores["SP"] == pytest.approx(2.0)
     # Erro = oficial − prévia: +0,5 em quem tem índice; de +1 a +2 em quem não tem.
     de, ate = previa.intervalos["SP"]
     assert de == pytest.approx(2.5) and ate == pytest.approx(2.5)
-    de, ate = previa.intervalos["MT"]
+    de, ate = previa.intervalos["DF"]
     assert de == pytest.approx(4.0) and ate == pytest.approx(5.0)
     assert "8 de cada 10" in previa.como_ler and "2011 a 2024" in previa.como_ler
     assert "cresce como a região" in previa.descricao
@@ -159,11 +160,11 @@ def test_pib_trimestral_reparte_o_pib_do_brasil_e_so_poe_faixa_depois_do_oficial
     cresc, contrib = estados_economia.pib_trimestral(UFS, sgs, pib_brasil, 2024, corrente, volume)
     assert (cresc.id, contrib.id) == ("pib_trimestre", "pib_trimestre_contribuicao")
     assert cresc.referencia == "2º tri/2026 (estimativa)" and cresc.grupo == "Economia"
-    assert len(cresc.estimados) == 14 and "MT" in cresc.estimados and "SP" not in cresc.estimados
+    assert len(cresc.estimados) == 10 and "DF" in cresc.estimados and "SP" not in cresc.estimados
     assert all(v is not None for v in cresc.valores.values())
     assert cresc.brasil == pytest.approx((1.007**4 - 1) * 100, abs=0.01)
     # Quem não tem IBC-R anda pela região, que cresce mais.
-    assert cresc.valores["MT"] > cresc.valores["SP"]  # type: ignore[operator]
+    assert cresc.valores["DF"] > cresc.valores["SP"]  # type: ignore[operator]
     # Um período por trimestre desde 2011, do mais novo ao mais antigo; o primeiro é o de cima.
     assert len(cresc.periodos) == 62 and cresc.periodos[0].valores == cresc.valores
     assert cresc.periodos[-1].referencia == "1º tri/2011"
@@ -180,6 +181,33 @@ def test_pib_trimestral_reparte_o_pib_do_brasil_e_so_poe_faixa_depois_do_oficial
     # A faixa da contribuição é a do crescimento vezes o peso: mais estreita que a do estado.
     c_de, c_ate = contrib.intervalos["SP"]
     assert 0 < c_ate - c_de < ate - de
+
+
+def test_pib_trimestral_emenda_o_indice_que_comeca_tarde_e_cita_a_conferencia() -> None:
+    # Como no BC: o IBC-R de MT começa em 2013 e o de MS em 2023; os outros, antes de 2010.
+    def sgs(chave: str) -> list[Ponto]:
+        taxa = 0.01 if chave.startswith("IBCR_REGIAO_") else 0.005
+        pontos = _meses(date(2010, 1, 1), [100.0 * (1 + taxa) ** (i // 3) for i in range(198)])
+        desde = {"IBCR_MT": 2013, "IBCR_MS": 2023}.get(chave, 2010)
+        return [p for p in pontos if p[0].year >= desde]
+
+    anos = range(2010, 2025)
+    volume = {n: {a: 100.0 * 1.03 ** (a - 2010) for a in anos} for n in ["Brasil", *NOMES]}
+    corrente = {n: {a: 1000.0 * volume[n][a] / 100 for a in anos} for n in NOMES}
+    corrente["Brasil"] = {a: sum(corrente[n][a] for n in NOMES) for a in anos}
+    pib_brasil = [(date(2010 + i // 4, 3 * (i % 4) + 1, 1), 170.0 * 1.0074**i) for i in range(66)]
+    cresc, contrib = estados_economia.pib_trimestral(UFS, sgs, pib_brasil, 2024, corrente, volume)
+    por_tri = {p.referencia: p for p in cresc.periodos}
+    # O ponto vazado segue a história: MT sai pela região até 2013; MS, até 2023.
+    assert "MT" in por_tri["4º tri/2013"].estimados and "MT" not in por_tri["1º tri/2014"].estimados
+    assert "MS" in por_tri["4º tri/2023"].estimados and "MS" not in por_tri["1º tri/2024"].estimados
+    assert len(cresc.estimados) == 10 and cresc.estimados == contrib.estimados
+    assert "MT até 2013" in cresc.descricao and "MS até 2023" in cresc.descricao
+    # O ano fecha com o oficial (3 %) antes e depois da emenda: nada foge de 2 % a 4 %.
+    assert all(2 < p.valores["MT"] < 4 for p in cresc.periodos)  # type: ignore[operator]
+    # A conferência contra os cinco estados que publicam o PIB trimestral vai junto.
+    assert "RS, PR, MG, BA e ES" in cresc.conferencia and "309 trimestres" in cresc.conferencia
+    assert contrib.conferencia == ""
 
 
 def test_crescimento_anual_ignora_ano_incompleto() -> None:

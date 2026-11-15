@@ -45,7 +45,7 @@ repetido no PROXIMOS-PASSOS.
 - Gasto tributário antes de 2014: a Receita só publica em PDF; fica fora sem conferência.
 - Multiplicador de receita da SPE: só se sair com regularidade (estudo avulso não entra).
 
-**Decomposições** (feitas em 15/11/2026, no branch: IPCA por grupo, PIB pela demanda e pela
+**Decomposições** (feitas em 15/11/2026: IPCA por grupo, PIB pela demanda e pela
 oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de fora:
 - IPCA pelas categorias do BC (serviços, industriais, alimentação no domicílio, administrados):
   o SGS dá a variação, não o peso; sairia dos subitens do IBGE, classificados um a um.
@@ -60,11 +60,10 @@ oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de f
 
 **Estados**
 - Mínimos de saúde e educação (SIOPS e SIOPE; **do PC**).
-- PIB trimestral por estado (feito em 15/11/2026, no branch, à espera do Caio). O que ficou
-  de fora: o IBC-R de MT, MS, RN e MA (conferir os códigos no SGS); a série do estado no tempo
-  na ficha ("Um estado por dentro"); a conferência automática contra os institutos estaduais
-  (o arquivo muda de nome a cada trimestre); e agropecuária por estado para corrigir o
-  trimestre da safra (LSPA), onde a conta mais erra (RS, MT).
+- PIB trimestral por estado: o que ficou de fora é a série do estado no tempo na ficha ("Um
+  estado por dentro"); a conferência automática contra os institutos estaduais (o arquivo muda
+  de nome a cada trimestre; hoje é à mão, uma vez por ano); e agropecuária por estado para
+  corrigir o trimestre da safra (LSPA), onde a conta mais erra (RS).
 
 **Setor externo**
 - Preço × quantidade das exportações (índices do MDIC; **do PC**, certificado vencido).

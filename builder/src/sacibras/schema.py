@@ -485,6 +485,8 @@ class PeriodoDaMetrica(Modelo):
     intervalos: dict[str, tuple[float, float]] = Field(default_factory=dict)
     nota: str = ""
     """A frase do período, que a tela põe antes da descrição da métrica."""
+    estimados: list[str] = Field(default_factory=list)
+    """As UFs que, neste período, saem pela regra da região (o ponto vazado)."""
 
 
 class MetricaEstados(Modelo):
@@ -521,6 +523,9 @@ class MetricaEstados(Modelo):
     marcas: list[LinhaRef] = Field(default_factory=list)
     """Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. A tela escreve o
     nome no lugar do número."""
+    conferencia: str = ""
+    """A conta nossa comparada com número oficial de outra fonte, em uma frase (o PIB
+    trimestral dos estados contra os institutos estaduais que o publicam)."""
     periodos: list[PeriodoDaMetrica] = Field(default_factory=list)
     """Só no PIB trimestral dos estados: a mesma métrica em cada trimestre, do mais novo ao
     mais antigo (o primeiro repete `valores`). A tela põe a lista "Trimestre"."""

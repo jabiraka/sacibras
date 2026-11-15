@@ -326,6 +326,8 @@ export interface MetricaEstados {
   ano_previsto?: number | null;
   /** Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. */
   marcas?: { valor: number; rotulo: string }[];
+  /** A conta nossa comparada com número oficial de outra fonte, em uma frase. */
+  conferencia?: string;
   /** Só no PIB trimestral dos estados: a métrica em cada trimestre, do mais novo ao mais antigo. */
   periodos?: PeriodoDaMetrica[];
 }
@@ -337,6 +339,8 @@ export interface PeriodoDaMetrica {
   intervalos?: Record<string, [number, number]>;
   /** A frase do período, que vai antes da descrição ("No 2º tri/2026, o PIB do Brasil…"). */
   nota?: string;
+  /** As UFs que, neste período, saem pela regra da região (o ponto vazado). */
+  estimados?: string[];
 }
 
 /** Uma conta do estado no fim de cada ano: {ano: valor}. */

@@ -164,6 +164,7 @@ function noTrimestre(m: MetricaEstados): MetricaEstados {
     valores: p.valores,
     brasil: p.brasil,
     intervalos: p.intervalos,
+    estimados: p.estimados ?? m.estimados,
     // Ano que o IBGE já publicou: a soma do ano fecha com o oficial e não há faixa a mostrar.
     como_ler: semFaixa
       ? "Neste trimestre, a soma do ano já fecha com o PIB oficial do estado (IBGE); só a divisão entre os trimestres é estimada. Ponto vazado: estado sem IBC-R, repartido pelo índice da região."
@@ -466,6 +467,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
       );
     }
     if (metrica.como_ler) posicao.append(document.createTextNode(metrica.como_ler));
+    if (metrica.conferencia) posicao.append(document.createTextNode(` ${metrica.conferencia}`));
     const semDado = e.ufs.filter((u) => (metrica.valores[u.sigla] ?? null) === null);
     if (semDado.length) {
       posicao.append(

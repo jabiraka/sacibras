@@ -242,6 +242,16 @@ LEITURAS: list[Leitura] = [
         "ano.",
     ),
     Leitura(
+        "PIB trimestral por estado contra os cinco estados que publicam o seu",
+        "relatorios.CONFERENCIA_PIB_ESTADOS",
+        date(2026, 11, 15),
+        date(2027, 11, 30),
+        "Baixar as séries de PIB trimestral de RS (DEE), PR (IPARDES), MG (FJP), BA (SEI) e ES "
+        "(IJSN), nos endereços do comentário em relatorios.py, e rodar "
+        "scripts/conferir_pib_estados.py. Uma vez por ano, depois das Contas Regionais "
+        "(novembro).",
+    ),
+    Leitura(
         "Dívida ativa da União: recuperado no ano",
         "relatorios.DIVIDA_ATIVA_RECUPERADO",
         date(2026, 11, 14),

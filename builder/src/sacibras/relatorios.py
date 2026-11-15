@@ -579,3 +579,49 @@ FONTE_ACORDOS = (
     "Fazenda); Tesouro Nacional, Relatório Mensal de Garantias Honradas de out/2025 (estados "
     "no RRF)"
 )
+
+
+# ------------------------------------------------------------------ conferência do PIB dos estados
+
+# O PIB trimestral por estado é conta nossa (`modelos/pib_estados.py`). Cinco estados publicam
+# o seu, por órgão oficial de estatística, com método e série em planilha: é o que há para
+# conferir a conta. Lidas em 15/11/2026, todas até o 2º tri/2026:
+# - RS, DEE/SPGG: dee.rs.gov.br/pib-trimestral, "serie-historica-2026-ii.xlsx", aba "Série
+#   encadeada", coluna PIB (2002 = 100).
+# - PR, IPARDES: ipardes.pr.gov.br/Pagina/PIB-Trimestral-do-Parana,
+#   "serie_encadeada_2o_trim_2026.xlsx", aba "Série Encadeada", coluna PIB (2005 = 100).
+# - MG, Fundação João Pinheiro: anexo estatístico do PIB trimestral (planilha no Google),
+#   aba "Série Encadeada", coluna PIB (2002 = 100).
+# - BA, SEI: ba.gov.br/sei/pib-estadual-trimestral-0, "pib_trimestral_tabelas_completas.xls",
+#   aba "Base Móvel", coluna PIB (2002 = 100).
+# - ES, IJSN: ijsn.es.gov.br, "PIB Trimestral (dados em Excel)", aba "Planilha4" (taxa contra o
+#   mesmo trimestre do ano anterior), coluna PIB do Espírito Santo.
+# A conta: o crescimento contra o mesmo trimestre do ano anterior de cada órgão menos o nosso,
+# em todos os trimestres desde 2011 (`scripts/conferir_pib_estados.py` refaz). REFAZER uma
+# vez por ano, depois das Contas Regionais (novembro), quando a nossa série muda mais.
+
+
+@dataclass(frozen=True)
+class ConferenciaPibEstados:
+    lida_em: date
+    estados: tuple[str, ...]
+    desde: int
+    trimestres: int
+    diferenca_media: float
+    """Média do módulo da diferença, em pontos percentuais."""
+    faixa: tuple[float, float]
+    """Onde ficaram 8 de cada 10 diferenças (nossa conta menos a do órgão estadual)."""
+
+
+CONFERENCIA_PIB_ESTADOS = ConferenciaPibEstados(
+    lida_em=date(2026, 11, 15),
+    estados=("RS", "PR", "MG", "BA", "ES"),
+    desde=2011,
+    trimestres=309,
+    diferenca_media=1.1,
+    faixa=(-1.7, 1.8),
+)
+FONTE_CONFERENCIA_PIB_ESTADOS = (
+    "PIB trimestral estadual: DEE/SPGG (RS), IPARDES (PR), Fundação João Pinheiro (MG), "
+    "SEI (BA) e IJSN (ES)"
+)

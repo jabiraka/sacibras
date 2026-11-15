@@ -55,7 +55,7 @@ TERMOS: list[Termo] = [
         "ibc-r",
         "IBC-R",
         "O IBC-Br feito para um estado: a prévia mensal do PIB que o Banco Central publica "
-        "para 13 estados. O PIB oficial de cada estado, do IBGE, sai quase dois anos depois.",
+        "para 17 estados. O PIB oficial de cada estado, do IBGE, sai quase dois anos depois.",
         ("IBC-R",),
         "#estados/mapa",
     ),

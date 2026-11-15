@@ -4,7 +4,8 @@
   sai da série encadeada do volume; o PIB por habitante divide o PIB corrente pela população da
   projeção do IBGE do mesmo ano (1º de julho), o que resolve a mistura de anos que deixava o
   PIB per capita de fora (a tabela 6579 de estimativas não tem todos os anos).
-- Prévia do PIB: o IBC-R do Banco Central, mensal, só para os 13 estados que o BC publica.
+- Prévia do PIB: o IBC-R do Banco Central, mensal, só para os 17 estados que o BC publica
+  (MT desde 2013; MA, MS e RN desde 2023).
   Daqui sai o crescimento de 12 meses e o do último ano fechado, que o IBGE ainda não publicou.
 - Trabalho: PNAD Contínua trimestral por UF (SIDRA 4099, 8529 e 5436).
 - Inflação: o IPCA de 12 meses das 16 áreas que o IBGE pesquisa (SIDRA 7060): cada uma é a
@@ -20,6 +21,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
+from sacibras import relatorios
 from sacibras.catalogo import (
     CREDITO_INADIMPLENCIA_UF,
     CREDITO_SALDO_UF,
@@ -223,7 +225,7 @@ def ibcr(
     """
     series = {s: sgs(f"IBCR_{s}") for s in IBCR_UF}
     brasil = sgs("IBCBR")
-    # O último mês que todos os 13 têm (o BC publica todos juntos, mas por garantia).
+    # O último mês que todos têm (o BC publica todos juntos, mas por garantia).
     fim = min(p[-1][0] for p in series.values() if p)
     ano = fim.year - 1 if fim.month < 12 else fim.year
     siglas = [s for _, s, _, _ in ufs]
@@ -350,15 +352,29 @@ def pib_trimestral(
     regiao = {s: REGIOES[r] for _, s, _, r in ufs}
     proprio = {s: pib_estados.trimestral(sgs(f"IBCR_{s}")) for s in IBCR_UF}
     da_regiao = {r: pib_estados.trimestral(sgs(f"IBCR_REGIAO_{r}")) for r in IBCR_REGIAO}
-    serie = {s: proprio.get(s) or da_regiao[regiao[s]] for s in siglas}
     brasil = dict(pib_brasil)
     primeiro = min(volume["Brasil"])
+    # Até o último trimestre que o PIB do Brasil, as regiões e todos os índices próprios têm.
+    fim = min(max(p) for p in [brasil, *da_regiao.values(), *proprio.values()] if p)
     trimestres = sorted(
-        t for t in brasil if t.year >= primeiro and all(t in serie[s] for s in siglas)
+        t
+        for t in brasil
+        if t.year >= primeiro and t <= fim and all(t in p for p in da_regiao.values())
     )
     if len(trimestres) < 12 or (trimestres[0].month, len(set(trimestres))) != (1, len(trimestres)):
         raise ValueError("PIB trimestral dos estados: série curta ou sem o 1º trimestre")
-    indicador = {s: [serie[s][t] for t in trimestres] for s in siglas}
+    indicador: dict[str, list[float]] = {}
+    for s in siglas:
+        referencia = [da_regiao[regiao[s]][t] for t in trimestres]
+        # Sem índice: a região. Índice que começa tarde: emendado para trás pela região.
+        indicador[s] = (
+            pib_estados.emendar(proprio[s], referencia, trimestres) if s in proprio else referencia
+        )
+
+    def com_indice(s: str, tri: date) -> bool:
+        """O crescimento do estado no trimestre sai do IBC-R dele (e não do da região)?"""
+        return s in proprio and tri in proprio[s] and date(tri.year - 1, tri.month, 1) in proprio[s]
+
     pib = [brasil[t] for t in trimestres]
     vol = {s: volume[n] for n, s in por_nome.items()}
     cor = {s: corrente[n] for n, s in por_nome.items()}
@@ -367,17 +383,17 @@ def pib_trimestral(
     contrib = pib_estados.contribuicoes(e, pib)
     cresc_br = pib_estados.crescimento(pib)
 
-    # A faixa: quanto o número do trimestre mudou quando saiu o PIB oficial do ano.
+    # A faixa: quanto o número do trimestre mudou quando saiu o PIB oficial do ano, separando
+    # os trimestres em que o estado tinha índice próprio dos que saíram pela região.
     revisoes = pib_estados.revisoes(trimestres, indicador, vol, cor, pib, corrente["Brasil"], e)
     sem_indice = sorted(s for s in siglas if s not in IBCR_UF)
-    faixa: dict[str, tuple[float, float]] = {}
+    com = [x for s in siglas for tri, x in revisoes[s] if com_indice(s, tri)]
+    sem = [x for s in siglas for tri, x in revisoes[s] if not com_indice(s, tri)]
+    f_com = f_sem = None
     como_ler = ""
-    com = [x for s in IBCR_UF for x in revisoes[s]]
-    sem = [x for s in sem_indice for x in revisoes[s]]
     if len(com) >= MINIMO_DE_ERROS and len(sem) >= MINIMO_DE_ERROS:
         f_com = (_quantil(com, 0.1), _quantil(com, 0.9))
         f_sem = (_quantil(sem, 0.1), _quantil(sem, 0.9))
-        faixa = {s: f_sem if s in sem_indice else f_com for s in siglas}
         como_ler = (
             "O traço é a faixa de erro. Refizemos a conta como se o IBGE ainda não tivesse "
             "publicado o PIB do ano: em 8 de cada 10 trimestres, o número refeito depois do "
@@ -387,6 +403,22 @@ def pib_trimestral(
             "repartir o ano entre os trimestres: seca ou safra forte num estado pode cair no "
             "trimestre errado."
         )
+
+    def faixa(s: str, tri: date) -> tuple[float, float] | None:
+        return f_com if com_indice(s, tri) else f_sem
+
+    # Quem ganhou índice depois: até que ano o crescimento dele ainda sai pela região.
+    tardios: dict[int, list[str]] = {}
+    for s in sorted(proprio):
+        comeco = min(proprio[s])
+        if comeco > trimestres[0]:
+            tardios.setdefault(comeco.year, []).append(s)
+    tambem = " e ".join(
+        f"{', '.join(quem[:-1])} e {quem[-1]} até {ano}"
+        if len(quem) > 1
+        else f"{quem[0]} até {ano}"
+        for ano, quem in sorted(tardios.items())
+    )
 
     def periodos(
         valores: dict[str, list[float | None]],
@@ -418,13 +450,14 @@ def pib_trimestral(
                     else None,
                     intervalos={
                         s: (
-                            round(v + faixa[s][0] * largura(s, t), casas),
-                            round(v + faixa[s][1] * largura(s, t), casas),
+                            round(v + f[0] * largura(s, t), casas),
+                            round(v + f[1] * largura(s, t), casas),
                         )
                         for s, v in vals.items()
-                        if estimado and v is not None and s in faixa
+                        if estimado and v is not None and (f := faixa(s, tri)) is not None
                     },
                     nota=nota,
+                    estimados=sorted(s for s in siglas if not com_indice(s, tri)),
                 )
             )
         return saida
@@ -439,8 +472,18 @@ def pib_trimestral(
         "O IBGE não publica PIB trimestral por estado: só o do Brasil, a cada trimestre, e o "
         f"dos estados uma vez por ano (o último é {e.ultimo_oficial}). A conta reparte o PIB "
         "trimestral do Brasil entre os estados pelo IBC-R do Banco Central, fechando com o "
-        f"PIB oficial de cada estado até {e.ultimo_oficial}; os {len(sem_indice)} estados sem "
-        "IBC-R (ponto vazado) andam como a região. Não é número oficial."
+        f"PIB oficial de cada estado até {e.ultimo_oficial}. Estado sem IBC-R (ponto vazado) "
+        f"anda como a região: são {len(sem_indice)} hoje"
+        + (f", e também {tambem}, antes de terem índice" if tambem else "")
+        + ". Não é número oficial."
+    )
+    c = relatorios.CONFERENCIA_PIB_ESTADOS
+    conferencia = (
+        f"Conferência: contra o PIB trimestral que {len(c.estados)} estados publicam "
+        f"({', '.join(c.estados[:-1])} e {c.estados[-1]}), a nossa conta ficou, em média, a "
+        f"{br(c.diferenca_media)} ponto do número deles em {c.trimestres} trimestres desde "
+        f"{c.desde}; em 8 de cada 10, entre {br(abs(c.faixa[0]))} abaixo e {br(c.faixa[1])} "
+        f"acima (conferido em {c.lida_em:%d/%m/%Y})."
     )
     p_cresc = periodos(cresc, 2, lambda s, t: 1.0, True)
     p_contrib = periodos(contrib, 3, lambda s, t: e.pesos[s][t], False)
@@ -461,8 +504,9 @@ def pib_trimestral(
             brasil=p_cresc[0].brasil,
             grupo=ECONOMIA,
             intervalos=p_cresc[0].intervalos,
-            estimados=sem_indice,
+            estimados=p_cresc[0].estimados,
             como_ler=como_ler,
+            conferencia=conferencia,
             periodos=p_cresc,
         ),
         MetricaEstados(
@@ -480,7 +524,7 @@ def pib_trimestral(
             valores=p_contrib[0].valores,
             grupo=ECONOMIA,
             intervalos=p_contrib[0].intervalos,
-            estimados=sem_indice,
+            estimados=p_contrib[0].estimados,
             como_ler=como_ler
             and (
                 "O traço é a faixa de erro: a do crescimento do estado (veja a métrica "
