@@ -6,7 +6,7 @@ from datetime import date
 
 from sacibras import contas
 from sacibras.fontes import ibge_sidra
-from sacibras.schema import Cartao, LinhaTabela, Secao, Tabela
+from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
 from sacibras.tipos import Periodicidade, Ponto
 
@@ -40,6 +40,121 @@ OCUPADOS, DESOCUPADOS = "32387", "32446"
 PROCURA_LONGA = (1616, 4110, "c1965/101227")
 """Trimestre civil, não móvel: distribuição percentual das pessoas desocupadas (%) por tempo
 de procura de trabalho, categoria "2 anos ou mais" (classificação 1965, categoria 101227)."""
+
+
+# ---- emprego com carteira por setor (estoque do Novo Caged no SGS)
+# (chave do catálogo, nome curto). Somam o total (EMPREGO_FORMAL): os serviços entram aberto.
+SETORES_CAGED: list[tuple[str, str]] = [
+    ("EMPREGO_AGRO", "Agropecuária"),
+    ("EMPREGO_EXTRATIVAS", "Indústria extrativa (petróleo, minérios)"),
+    ("EMPREGO_TRANSFORMACAO", "Indústria de transformação"),
+    ("EMPREGO_SIUP", "Eletricidade, gás, água e esgoto"),
+    ("EMPREGO_CONSTRUCAO", "Construção"),
+    ("EMPREGO_COMERCIO", "Comércio"),
+    ("EMPREGO_TRANSPORTE", "Transporte, armazenagem e correio"),
+    ("EMPREGO_ALOJAMENTO", "Hotéis, bares e restaurantes"),
+    ("EMPREGO_INFORMACAO", "Informação e comunicação"),
+    ("EMPREGO_FINANCEIRAS", "Bancos e seguros"),
+    ("EMPREGO_IMOBILIARIAS", "Atividades imobiliárias"),
+    ("EMPREGO_PROFISSIONAIS", "Serviços profissionais e técnicos"),
+    ("EMPREGO_ADMINISTRATIVAS", "Serviços administrativos (limpeza, vigilância)"),
+    ("EMPREGO_ADM_PUBLICA", "Administração pública"),
+    ("EMPREGO_EDUCACAO", "Educação"),
+    ("EMPREGO_SAUDE", "Saúde e assistência social"),
+    ("EMPREGO_OUTROS_SERVICOS", "Outros serviços"),
+]
+# Os cinco grandes setores do gráfico: (id, nome, chaves somadas).
+GRANDES_SETORES: list[tuple[str, str, list[str]]] = [
+    ("agro", "Agropecuária", ["EMPREGO_AGRO"]),
+    ("industria", "Indústria", ["EMPREGO_EXTRATIVAS", "EMPREGO_TRANSFORMACAO", "EMPREGO_SIUP"]),
+    ("construcao", "Construção", ["EMPREGO_CONSTRUCAO"]),
+    ("comercio", "Comércio", ["EMPREGO_COMERCIO"]),
+    ("servicos", "Serviços", ["EMPREGO_SERVICOS"]),
+]
+
+
+def somar(series: list[list[Ponto]]) -> list[Ponto]:
+    """A soma ponto a ponto, só nas datas que todas têm."""
+    mapas = [dict(s) for s in series]
+    comuns = set(mapas[0]).intersection(*mapas[1:]) if mapas else set()
+    return sorted((d, sum(m[d] for m in mapas)) for d in comuns)
+
+
+def emprego_por_setor(
+    estoques: list[tuple[str, list[Ponto]]], total: list[Ponto]
+) -> tuple[date, list[LinhaTabela]]:
+    """Por setor: empregos (mil), vagas criadas em 12 meses (mil) e a variação em 12 meses
+    (%), no último mês que todos têm; do setor que mais criou ao que menos, e o total."""
+    quando = min(p[-1][0] for _, p in [*estoques, ("", total)])
+    antes = date(quando.year - 1, quando.month, 1)
+
+    def linha(rotulo: str, pontos: list[Ponto]) -> LinhaTabela:
+        mapa = dict(pontos)
+        agora, ha_um_ano = mapa.get(quando), mapa.get(antes)
+        valores: list[float | None] = [None if agora is None else agora / 1000, None, None]
+        if agora is not None and ha_um_ano:
+            valores[1:] = [(agora - ha_um_ano) / 1000, (agora / ha_um_ano - 1) * 100]
+        return LinhaTabela(rotulo=rotulo, valores=valores, unidade="", casas=1)
+
+    linhas = sorted((linha(r, p) for r, p in estoques), key=lambda x: -(x.valores[1] or 0))
+    return quando, [*linhas, linha("Total", total)]
+
+
+def _caged_por_setor(ctx: Contexto, total: list[Ponto], inicio: date) -> tuple[Grafico, Tabela]:
+    """O gráfico do crescimento em 12 meses dos cinco grandes setores e a tabela de todos."""
+    estoques = {chave: ctx.sgs(chave) for chave, _ in SETORES_CAGED}
+    estoques["EMPREGO_SERVICOS"] = ctx.sgs("EMPREGO_SERVICOS")
+    # As onze partes dos serviços no SGS não somam o total dos serviços (em set/2026 faltavam
+    # 1,15 milhão, de seções da CNAE sem série própria no SGS): o resto entra como a
+    # diferença, para a coluna fechar no total.
+    partes = [chave for chave, _ in SETORES_CAGED[6:]]
+    resto = contas.subtrair(estoques["EMPREGO_SERVICOS"], somar([estoques[c] for c in partes]))
+    quando, linhas = emprego_por_setor(
+        [(nome, estoques[chave]) for chave, nome in SETORES_CAGED] + [("Demais serviços", resto)],
+        total,
+    )
+    fonte = ctx.fonte_sgs(*(c for c, _ in SETORES_CAGED), "EMPREGO_SERVICOS", "EMPREGO_FORMAL")
+    nota = (
+        "Estoque de empregos com carteira (Novo Caged), sem ajuste sazonal, publicado pelo "
+        "Banco Central; as vagas em 12 meses são a diferença do estoque contra o mesmo mês do "
+        "ano anterior, conta nossa."
+    )
+    grandes = [
+        serie(
+            id,
+            nome,
+            contas.variacao(somar([estoques[c] for c in chaves]), 12),
+            desde=inicio,
+            casas=1,
+        )
+        for id, nome, chaves in GRANDES_SETORES
+    ]
+    grafico_setores = grafico(
+        "emprego-setores",
+        "Emprego com carteira por setor",
+        grandes,
+        unidade="% em 12 meses",
+        casas=1,
+        periodicidade="M",
+        janela_anos=5,
+        fonte=fonte,
+        nota=nota + " Indústria: extrativa, de transformação, eletricidade, gás, água e esgoto.",
+    )
+    tabela = Tabela(
+        id="emprego-setores",
+        titulo="Emprego com carteira, setor a setor",
+        subtitulo=(
+            f"Em {periodo(quando, 'M')} e nos 12 meses até ele, do setor que mais criou vagas"
+        ),
+        colunas=["Empregos (mil)", "Vagas em 12 meses (mil)", "Em 12 meses (%)"],
+        linhas=linhas,
+        fonte=fonte,
+        nota=(
+            nota + ' Os serviços vêm abertos nas partes que o SGS publica; "Demais serviços" '
+            "é o total dos serviços menos essas partes."
+        ),
+    )
+    return grafico_setores, tabela
 
 
 def _meses_antes(pontos: list[Ponto], meses: int, de: date | None = None) -> float | None:
@@ -380,6 +495,14 @@ def montar(ctx: Contexto) -> Secao:
         ),
     )
 
+    tabelas = [tabela]
+    try:
+        g_setores, t_setores = _caged_por_setor(ctx, formal, inicio)
+        graficos.append(g_setores)
+        tabelas.append(t_setores)
+    except Exception as erro:
+        print(f"    trabalho: emprego por setor ficou de fora: {str(erro)[:160]}")
+
     resumo = (
         f"A desocupação está em {br(desocupacao[-1][1])} % no trimestre encerrado em "
         f"{periodo(desocupacao[-1][0], 'M')}. O rendimento médio real é de "
@@ -392,6 +515,6 @@ def montar(ctx: Contexto) -> Secao:
         resumo=resumo,
         cartoes=cartoes,
         graficos=graficos,
-        tabelas=[tabela],
+        tabelas=tabelas,
         gerado_em=ctx.agora(),
     )

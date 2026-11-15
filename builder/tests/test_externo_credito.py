@@ -83,6 +83,20 @@ EXTERNO = {
     "ICBR_AGRO": 400.0,
     "ICBR_METAL": 600.0,
     "ICBR_ENERGIA": 200.0,
+    # Os serviços em partes: somam -5000 por mês, como o total acima.
+    "BP_SERV_TRANSPORTES": -1500.0,
+    "BP_SERV_ALUGUEL": -1500.0,
+    "BP_SERV_TELECOM": -800.0,
+    "BP_SERV_VIAGENS": -1000.0,
+    "BP_SERV_PROPRIEDADE": -900.0,
+    "BP_SERV_NEGOCIOS": 700.0,
+    "BP_SERV_FINANCEIROS": 100.0,
+    "BP_SERV_SEGUROS": -100.0,
+    "BP_SERV_GOVERNO": -100.0,
+    "BP_SERV_CULTURAIS": 50.0,
+    "BP_SERV_MANUTENCAO": 50.0,
+    "BP_SERV_CONSTRUCAO": 0.0,
+    "BP_SERV_MANUFATURA": 0.0,
 }
 
 
@@ -100,8 +114,8 @@ def test_externo_guarda_o_balanco_no_fim(monkeypatch: pytest.MonkeyPatch) -> Non
         "cambio-real",
     ]
     assert secao.graficos[0].id == "conta-corrente"
-    partes = secao.graficos[-1]
-    assert partes.id == "conta-corrente-partes"
+    assert [g.id for g in secao.graficos][-2:] == ["conta-corrente-partes", "servicos-partes"]
+    partes = secao.graficos[-2]
     assert partes.tipo == "empilhado"
     assert [s.id for s in partes.series] == ["bens", "servicos", "renda1", "renda2"]
     tabela = secao.tabelas[0]
@@ -115,6 +129,17 @@ def test_externo_guarda_o_balanco_no_fim(monkeypatch: pytest.MonkeyPatch) -> Non
     assert por_rotulo["Investimento direto de brasileiros no exterior"][0] < 0
     # Com o PIB em dólares de mentira (~66 bi / 2,5 %), o % do PIB sai preenchido.
     assert por_rotulo["Conta corrente"][2] is not None
+    # Os serviços: seis linhas no gráfico; na tabela, todas, da que mais tira dólares à que
+    # mais traz, e o total, que é a soma.
+    assert len(secao.graficos[-1].series) == externo.SERVICOS_NO_GRAFICO
+    servicos = next(t for t in secao.tabelas if t.id == "servicos-partes")
+    assert servicos.colunas == ["Até set/2026 (US$ bi)", "Até set/2025 (US$ bi)"]
+    rotulos = [linha.rotulo for linha in servicos.linhas]
+    assert rotulos[0] in ("Transportes (fretes e passagens)", "Aluguel de equipamentos")
+    assert rotulos[-2:] == ["Serviços técnicos e de negócios", "Serviços, total"]
+    # (cada série de mentira cresce 0,01 por mês: a soma das partes se afasta um pouco do total)
+    partes_12m = [linha.valores[0] or 0.0 for linha in servicos.linhas[:-1]]
+    assert sum(partes_12m) == pytest.approx(servicos.linhas[-1].valores[0], abs=0.5)
 
 
 CREDITO = {

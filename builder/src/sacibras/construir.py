@@ -108,7 +108,7 @@ FONTES = {
     "inflacao": "Banco Central (SGS)",
     "juros": "Banco Central (Copom e Focus)",
     "credito": "Banco Central (crédito)",
-    "mercados": "IPEADATA e Banco Central (bolsa e câmbio)",
+    "mercados": "IPEADATA, Banco Central, Tesouro Nacional e FMI (bolsa, câmbio, títulos e ouro)",
     "externo": "Banco Central (setor externo)",
     "fiscal": "Banco Central (estatísticas fiscais) e Tesouro Nacional (RTN)",
     "impostos": "Receita Federal (arrecadação e gastos tributários), OCDE e FMI (impostos)",
@@ -116,7 +116,7 @@ FONTES = {
         "Tesouro Nacional (SICONFI), IBGE (Contas Regionais, PNAD Contínua e IPCA), Banco "
         "Central (IBC-R e crédito por UF) e Comex Stat"
     ),
-    "mundo": "FMI (WEO) e BIS",
+    "mundo": "FMI (WEO), BIS, OCDE e Tesouro Nacional",
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",
     "demografia": "IBGE (Projeções da População e PNAD) e Tesouro Nacional (RTN)",

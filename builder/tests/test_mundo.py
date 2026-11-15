@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 import pytest
 
-from sacibras.fontes import fmi
+from sacibras.fontes import bis, fmi, ocde_juros
 from sacibras.secoes import mundo
 
 
@@ -65,3 +66,64 @@ def test_nome_do_kosovo_e_de_codigo_fora_do_iso() -> None:
     assert mundo.nome_do_pais("WBG") == "Cisjordânia e Gaza"
     with pytest.raises(KeyError):
         mundo.nome_do_pais("XXX")
+
+
+# ---- câmbio no ano, juro de 10 anos e as leituras do BIS e da OCDE
+
+
+def test_variacao_da_moeda_no_ano_contra_o_dolar() -> None:
+    real = {
+        "BRL": [
+            (date(2024, 12, 1), 6.0),
+            (date(2025, 6, 1), 5.6),
+            (date(2025, 12, 1), 5.0),
+            (date(2026, 10, 1), 5.5),
+        ]
+    }
+    # 2025: a cotação caiu de 6 para 5, o real ganhou 20 %; 2026, até outubro, perdeu 1/11.
+    assert mundo.variacao_no_ano(real, [2024, 2025, 2026]) == [None, 20.0, -9.09]
+
+
+def test_ano_da_troca_de_moeda_fica_em_branco() -> None:
+    croacia = {
+        "HRK": [(date(2021, 12, 1), 6.6), (date(2022, 12, 1), 7.0)],
+        "EUR": [(date(2023, 1, 1), 0.93), (date(2023, 12, 1), 0.9), (date(2024, 12, 1), 0.96)],
+    }
+    assert mundo.variacao_no_ano(croacia, [2022, 2023, 2024]) == [-5.71, None, -6.25]
+
+
+def test_juro_de_10_anos_do_brasil_pelo_titulo_mais_perto_de_10_anos() -> None:
+    d1, d2, d3 = date(2026, 10, 1), date(2026, 10, 2), date(2026, 11, 3)
+    curvas = {
+        # 4 anos (fora da faixa), 9 e 12 anos: o de 9 anos é o mais perto de 10.
+        d1: [(date(2030, 10, 1), 13.0), (date(2035, 10, 1), 14.0), (date(2038, 10, 1), 15.0)],
+        d2: [(date(2035, 10, 1), 14.5), (date(2038, 10, 1), 15.0)],
+        # Só títulos curtos: o dia fica de fora.
+        d3: [(date(2029, 1, 1), 14.0)],
+    }
+    assert mundo.juro_10_anos_brasil(curvas) == [(date(2026, 10, 1), 14.25)]
+
+
+def test_le_o_cambio_do_bis_por_moeda() -> None:
+    texto = (
+        "FREQ,REF_AREA,CURRENCY,COLLECTION,TIME_PERIOD,OBS_VALUE\n"
+        "M,BR,BRL,E,2025-12,5.4778\n"
+        "M,BR,BRL,E,2025-11,5.3\n"
+        "M,HR,HRK,E,2022-12,7.0\n"
+        "M,HR,EUR,E,2023-01,0.93\n"
+        "M,XX,XXX,E,2023-01,NaN\n"
+    )
+    lido = bis.ler_cambio(texto)
+    assert lido["BR"] == {"BRL": [(date(2025, 11, 1), 5.3), (date(2025, 12, 1), 5.4778)]}
+    assert set(lido["HR"]) == {"HRK", "EUR"}
+    assert "XX" not in lido
+
+
+def test_le_o_juro_longo_da_ocde() -> None:
+    texto = (
+        "DATAFLOW,REF_AREA,FREQ,MEASURE,TIME_PERIOD,OBS_VALUE\n"
+        "x,USA,M,IRLT,2026-10,4.06\n"
+        "x,USA,M,IRLT,2026-09,4.12\n"
+        "x,EA20,M,IRLT,2026-10,\n"
+    )
+    assert ocde_juros.ler(texto) == {"USA": [(date(2026, 9, 1), 4.12), (date(2026, 10, 1), 4.06)]}

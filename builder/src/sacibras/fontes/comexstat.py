@@ -42,6 +42,7 @@ CAMPOS: dict[str, tuple[str, str]] = {
     "SITCGroup": ("coSITCGroup", "SITCGroup"),
     "country": ("country", "country"),
     "economicBlock": ("economicBlock", "economicBlock"),
+    "BECLevel1": ("coBECLevel1", "BECLevel1"),
 }
 
 
@@ -174,6 +175,25 @@ def grupo_unctad(codigo_cuci: str) -> str:
     if secao in ("5", "6", "7", "8"):
         return "manufaturados"
     return "ouro"  # 971 (ouro não monetário) e o resto da seção 9
+
+
+# ---- categorias de uso: a CGCE (Classificação por Grandes Categorias Econômicas), a versão
+# brasileira da BEC da ONU, que o Comex Stat publica em três níveis (`BECLevel1` a 3). Nível 1,
+# conferido em 15/11/2026, com dado desde 1997: 1 "BENS DE CAPITAL (BK)", 2 "BENS
+# INTERMEDIÁRIOS (BI)", 3 "BENS DE CONSUMO (BC)", 4 "COMBUSTÍVEIS E LUBRIFICANTES", 9 "BENS NÃO
+# ESPECIFICADOS ANTERIORMENTE" (uns US$ 0,1 bi por ano).
+USOS: dict[str, str] = {
+    "1": "Bens de capital (máquinas e equipamentos)",
+    "2": "Bens intermediários (insumos e peças)",
+    "3": "Bens de consumo",
+    "4": "Combustíveis e lubrificantes",
+    "9": "Não classificados",
+}
+
+
+def uso_curto(item: Item) -> str:
+    """O nome de todo dia da categoria de uso, ou o oficial com só a primeira maiúscula."""
+    return USOS.get(item.codigo) or item.nome.capitalize()
 
 
 # ---- nomes curtos de setor (divisão da ISIC). Os oficiais falam "Fabricação de…" e "n.c".

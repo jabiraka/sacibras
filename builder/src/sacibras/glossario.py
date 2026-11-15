@@ -455,6 +455,15 @@ TERMOS: list[Termo] = [
         ("Tesouro IPCA+", "IPCA+", "NTN-B"),
     ),
     Termo(
+        "juro-10-anos",
+        "Juro de 10 anos",
+        "Quanto o governo paga para tomar emprestado por 10 anos, pela taxa dos títulos desse "
+        "prazo no mercado. É a referência de juro longo para comparar países: mostra a "
+        "confiança nas contas do governo e a inflação esperada.",
+        ("juro de 10 anos", "juros de 10 anos"),
+        "#mundo",
+    ),
+    Termo(
         "tesouro-direto",
         "Tesouro Direto",
         "O programa do Tesouro Nacional para pessoas comprarem títulos públicos pela internet. "
@@ -666,6 +675,39 @@ TERMOS: list[Termo] = [
         "agrícolas.",
         ("commodities", "commodity"),
         "#externo/setores",
+    ),
+    Termo(
+        "cgce",
+        "Categoria de uso (CGCE)",
+        "Classificação do IBGE que separa o que o país compra pelo destino: bens de capital "
+        "(máquinas que viram investimento), intermediários (insumos e peças para produzir), "
+        "bens de consumo (para as famílias) e combustíveis.",
+        ("categoria de uso", "categorias de uso", "CGCE"),
+        "#externo/setores",
+    ),
+    Termo(
+        "bens-de-capital",
+        "Bens de capital",
+        "Máquinas, equipamentos e veículos de carga que as empresas compram para produzir. A "
+        "importação deles sobe quando o investimento sobe.",
+        ("bens de capital",),
+        "#externo/setores",
+    ),
+    Termo(
+        "bens-intermediarios",
+        "Bens intermediários",
+        "Insumos e peças que entram na produção de outra coisa: adubo, aço, químicos, chips. "
+        "São mais da metade do que o Brasil importa.",
+        ("bens intermediários", "intermediários"),
+        "#externo/setores",
+    ),
+    Termo(
+        "aluguel-de-equipamentos",
+        "Aluguel de equipamentos",
+        "O que o país paga para usar máquinas de donos de fora, como plataformas e navios de "
+        "petróleo, aviões e contêineres. Conta como serviço no balanço de pagamentos.",
+        ("aluguel de equipamentos",),
+        "#externo/conta-corrente",
     ),
     Termo(
         "fob",

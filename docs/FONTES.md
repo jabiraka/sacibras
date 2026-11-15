@@ -58,6 +58,13 @@ Entraram depois, no mesmo dia, com o que se aprendeu ao usar:
 | SIDRA 6727 (variável 2517) e 6726 (variável 9774) | taxa de investimento e de poupança, % do PIB no trimestre | Conferidas em 14/11/2026: 16,1 % e 16,6 % no 2º tri/2026. Sem ajuste sazonal (a poupança oscila muito entre trimestres). Em Atividade › Investimento e poupança. |
 | FMI WEO `GGXONLB_NGDP` só do Brasil | o primário do governo geral, para a tabela "por quem mede" em Contas públicas | A mesma API do Brasil no mundo, uma chamada a mais. Diferenças contra o Banco Central: 2021, +2,0 % (FMI) contra +0,7 % (BC). |
 | SGS e SIDRA, pelo navegador | o ponto mais novo dos números da página inicial | CORS `*` conferido com `Origin` de github.io. O SGS às vezes devolve HTML no lugar do JSON: o builder agora pede de novo antes de desistir. |
+| Tesouro Direto, preço unitário (`PU Venda Manha`, o mesmo CSV) | o valor de R$ 100 num Tesouro Prefixado e num IPCA+ rolados (Mercados › Quanto rendeu, 15/11/2026) | O `PU Base` é igual ao de venda. Compra-se o título com vencimento mais perto de 5 anos e, no vencimento, o de prazo mais perto de 5 anos; o último preço de cada título é o da véspera do vencimento. Há buracos de dias no CSV (10 a 19/10/2026): o valor fica parado. |
+| FMI, Primary Commodity Price System (`api.imf.org/external/sdmx/2.1/data/IMF.RES,PCPS/G001.PGOLD.USD.M`, CSV com `Accept: application/vnd.sdmx.data+csv`) | ouro, US$ por onça, média do mês, desde 1990 | Responde de fora (15/11/2026), dado até out/2026. O ouro do SGS (4, "Ouro BM&F - grama") parou em 30/09/2019; o CKAN do BC só tem o ouro das reservas. Em reais, vezes o dólar médio do mês (SGS 3698). |
+| BIS `WS_XRU/1.0/M..E` | câmbio de 180 áreas contra o dólar, fim do mês (Brasil no mundo, 15/11/2026) | Membros do euro vêm com o EUR; quem trocou de moeda (Croácia, 2023) tem duas séries, e o ano da troca fica em branco. |
+| OCDE `OECD.SDD.STES,DSD_STES@DF_FINMARK`, medida IRLT | juro de longo prazo (títulos de 10 anos) de 44 áreas, mensal | **O "Brasil" da OCDE é a TJLP** (7,37 % em fev/2023, 5 % em 2014), não título de 10 anos: no Brasil no mundo, o Brasil vem do Tesouro Prefixado com Juros Semestrais de vencimento mais perto de 10 anos (média do mês). Zona do euro em `EA20`. Um pedido só, com todos (429 depois de uns 8). |
+| Comex Stat, detalhe `BECLevel1` (código em `coBECLevel1`) | importações por categoria de uso (CGCE: capital, intermediários, consumo, combustíveis), desde 1997 | Conferido em 15/11/2026. Há também os níveis 2 e 3. |
+| BCB SGS 22722 a 22797 (os "líquido") | os serviços do balanço de pagamentos em 13 partes (transportes, viagens, aluguel de equipamentos…) | No CKAN, conferidas em 15/11/2026; somam o 22719. |
+| BCB SGS 28764 a 28783 | estoque de empregos formais (Novo Caged) por setor | Fora do CKAN; nomes no serviço de metadados (15/11/2026). As 11 partes dos serviços (28773 a 28783) não somam o total dos serviços (28772): faltava 1,15 milhão em set/2026, de seções da CNAE sem série própria. |
 
 Da aba de riscos (14/11/2026):
 
@@ -107,6 +114,8 @@ Da aba de riscos (14/11/2026):
 | Stooq, Yahoo Finance | desafio de JavaScript, HTTP 429 ou sem CORS; não usar. |
 | DBnomics | responde, mas o WEO mais novo lá é abril/2025. |
 | Ministério do Trabalho, Novo Caged por UF (`gov.br/trabalho-e-emprego/...`) | 403 da nuvem em 14/11/2026 (o `pdet.mte.gov.br` redireciona para lá). O IPEADATA só tem o Caged do Brasil. Testar do PC. |
+| MDIC, índices de preço e quantum do comércio exterior (`balanca.economia.gov.br/balanca/IPQ/`) | certificado vencido em 15/11/2026 (com a cadeia completa, o `curl` recusa por "certificate has expired"); a API do Comex Stat não tem os índices. O SGS não tem preço nem quantum das exportações, e a Funcex não é fonte oficial: "preço × quantidade" espera. Testar do PC. |
+| BCB SGS, "serviços subjacentes" do IPCA | não achado no CKAN (`q=subjacentes` dá zero) nem nos códigos vizinhos dos outros recortes do IPCA (4447–4461, 10841–10844, 11426–11428, 16121–16122, 27838–27880, 28750–28762), conferidos um a um no serviço de metadados em 15/11/2026. A busca de séries do SGS (`localizarseries`) recusa a nuvem (HTTP 502): procurar do PC. |
 
 ## B3: funciona, mas o site veda a coleta
 

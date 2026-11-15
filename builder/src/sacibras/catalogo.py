@@ -117,6 +117,114 @@ SGS: dict[str, SerieSGS] = {
     "EMPREGO_FORMAL_DESSAZ": SerieSGS(
         28784, "Estoque de empregos formais, total, dessazonalizado", "pessoas", "M", "14/11/2026"
     ),
+    # O estoque por setor (Novo Caged), sem ajuste sazonal. O CKAN não lista 28764 a 28783
+    # (package_search?fq=codigo_sgs:N dá count 0): nome, unidade ("Unidades") e periodicidade
+    # conferidos um a um em 15/11/2026 no serviço de metadados do SGS (FachadaWSSGS,
+    # getUltimoValorXML), último ponto set/2026. "Estoque de empregos formais – <setor>". SIUP
+    # (28767) é a soma de 28768 e 28769; Serviços (28772), a de 28773 a 28783. De 28784 em
+    # diante vêm os mesmos, dessazonalizados.
+    "EMPREGO_AGRO": SerieSGS(
+        28764, "Estoque de empregos formais, agropecuária", "pessoas", "M", "15/11/2026"
+    ),
+    "EMPREGO_EXTRATIVAS": SerieSGS(
+        28765, "Estoque de empregos formais, indústrias extrativas", "pessoas", "M", "15/11/2026"
+    ),
+    "EMPREGO_TRANSFORMACAO": SerieSGS(
+        28766,
+        "Estoque de empregos formais, indústrias de transformação",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_SIUP": SerieSGS(
+        28767,
+        "Estoque de empregos formais, eletricidade, gás, água e esgoto (SIUP)",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_CONSTRUCAO": SerieSGS(
+        28770, "Estoque de empregos formais, construção", "pessoas", "M", "15/11/2026"
+    ),
+    "EMPREGO_COMERCIO": SerieSGS(
+        28771, "Estoque de empregos formais, comércio", "pessoas", "M", "15/11/2026"
+    ),
+    "EMPREGO_SERVICOS": SerieSGS(
+        28772, "Estoque de empregos formais, serviços", "pessoas", "M", "15/11/2026"
+    ),
+    "EMPREGO_TRANSPORTE": SerieSGS(
+        28773,
+        "Estoque de empregos formais, transporte, armazenamento e correio",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_ALOJAMENTO": SerieSGS(
+        28774,
+        "Estoque de empregos formais, alojamento e alimentação",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_INFORMACAO": SerieSGS(
+        28775,
+        "Estoque de empregos formais, informação e comunicação",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_FINANCEIRAS": SerieSGS(
+        28776,
+        "Estoque de empregos formais, atividades financeiras e seguros",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_IMOBILIARIAS": SerieSGS(
+        28777,
+        "Estoque de empregos formais, atividades imobiliárias",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_PROFISSIONAIS": SerieSGS(
+        28778,
+        "Estoque de empregos formais, atividades profissionais, científicas e técnicas",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_ADMINISTRATIVAS": SerieSGS(
+        28779,
+        "Estoque de empregos formais, atividades administrativas e serviços complementares",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_ADM_PUBLICA": SerieSGS(
+        28780,
+        "Estoque de empregos formais, administração pública, defesa e seguridade social",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_EDUCACAO": SerieSGS(
+        28781, "Estoque de empregos formais, educação", "pessoas", "M", "15/11/2026"
+    ),
+    "EMPREGO_SAUDE": SerieSGS(
+        28782,
+        "Estoque de empregos formais, saúde e serviços sociais",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
+    "EMPREGO_OUTROS_SERVICOS": SerieSGS(
+        28783,
+        "Estoque de empregos formais, outras atividades de serviços",
+        "pessoas",
+        "M",
+        "15/11/2026",
+    ),
     # ---- setor externo
     "RESERVAS": SerieSGS(3546, "Reservas internacionais, total", "US$ milhões", "M", "14/11/2026"),
     "RESERVAS_DIA": SerieSGS(
@@ -148,6 +256,64 @@ SGS: dict[str, SerieSGS] = {
         24419, "Transações correntes acumulado em 12 meses", "US$ milhões", "M", "14/11/2026"
     ),
     "BP_SERVICOS": SerieSGS(22719, "Serviços, líquido mensal", "US$ milhões", "M", "14/11/2026"),
+    # Os serviços em partes (BPM6), saldo (receita menos despesa) mensal. Conferidas no
+    # package_search do BCB em 15/11/2026 ("<nome> - mensal - líquido", US$ milhões, mensal,
+    # dado até set/2026). As treze somam o 22719.
+    "BP_SERV_MANUFATURA": SerieSGS(
+        22722,
+        "Serviços de manufatura sobre insumos físicos de outros, líquido mensal",
+        "US$ milhões",
+        "M",
+        "15/11/2026",
+    ),
+    "BP_SERV_MANUTENCAO": SerieSGS(
+        22725, "Serviços de manutenção e reparo, líquido mensal", "US$ milhões", "M", "15/11/2026"
+    ),
+    "BP_SERV_TRANSPORTES": SerieSGS(
+        22728, "Transportes, líquido mensal", "US$ milhões", "M", "15/11/2026"
+    ),
+    "BP_SERV_VIAGENS": SerieSGS(22740, "Viagens, líquido mensal", "US$ milhões", "M", "15/11/2026"),
+    "BP_SERV_CONSTRUCAO": SerieSGS(
+        22761, "Construção, líquido mensal", "US$ milhões", "M", "15/11/2026"
+    ),
+    "BP_SERV_SEGUROS": SerieSGS(22764, "Seguros, líquido mensal", "US$ milhões", "M", "15/11/2026"),
+    "BP_SERV_FINANCEIROS": SerieSGS(
+        22767, "Serviços financeiros, líquido mensal", "US$ milhões", "M", "15/11/2026"
+    ),
+    "BP_SERV_PROPRIEDADE": SerieSGS(
+        22776,
+        "Serviços de propriedade intelectual, líquido mensal",
+        "US$ milhões",
+        "M",
+        "15/11/2026",
+    ),
+    "BP_SERV_TELECOM": SerieSGS(
+        22779,
+        "Telecomunicação, computação e informações, líquido mensal",
+        "US$ milhões",
+        "M",
+        "15/11/2026",
+    ),
+    "BP_SERV_ALUGUEL": SerieSGS(
+        22782, "Aluguel de equipamentos, líquido mensal", "US$ milhões", "M", "15/11/2026"
+    ),
+    "BP_SERV_NEGOCIOS": SerieSGS(
+        22785,
+        "Outros serviços de negócio, incluindo arquitetura e engenharia, líquido mensal",
+        "US$ milhões",
+        "M",
+        "15/11/2026",
+    ),
+    "BP_SERV_CULTURAIS": SerieSGS(
+        22788,
+        "Serviços culturais, pessoais e recreativos, líquido mensal",
+        "US$ milhões",
+        "M",
+        "15/11/2026",
+    ),
+    "BP_SERV_GOVERNO": SerieSGS(
+        22797, "Serviços governamentais, líquido mensal", "US$ milhões", "M", "15/11/2026"
+    ),
     "BP_RENDA_PRIMARIA": SerieSGS(
         22800, "Renda primária, líquido mensal", "US$ milhões", "M", "14/11/2026"
     ),
