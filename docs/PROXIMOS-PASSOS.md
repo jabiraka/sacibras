@@ -18,7 +18,8 @@ Produtividade e Eficiência (PTF) saíram de Demografia para Atividade (`secoes/
 a PTF contra a dos EUA ficou só com o Brasil, os gráficos do PIB ficaram em pares lado a lado,
 a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos que somam o PIB,
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibovespa e a pessoa
-escolhe o resto.
+escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
+ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
 
 ## Releituras com prazo
 

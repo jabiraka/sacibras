@@ -72,6 +72,13 @@ oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de f
   estado por dentro"); a conferência automática contra os institutos estaduais (o arquivo muda
   de nome a cada trimestre; hoje é à mão, uma vez por ano); e agropecuária por estado para
   corrigir o trimestre da safra (LSPA), onde a conta mais erra (RS).
+- Escolher o período nas métricas que ainda não têm a lista (Caio, 15/11/2026: *"escolher a
+  data em outras métricas além do crescimento do PIB"*; entraram trabalho, Gini, pobreza,
+  PIB por habitante e peso, concentração, inflação, IBC-R em 12 meses e crédito). Faltam as
+  contas do governo do estado (pessoal, dívida, RCL, primário, ICMS: uma consulta ao SICONFI
+  por período e estado), exportações e arrecadação federal (mais downloads por mês) e a prévia
+  do PIB pelo IBC-R (a faixa de erro é de um ano só). A lista vale no mapa e no ranking; a
+  tabela completa e "Duas métricas" seguem no período mais novo.
 
 **Setor externo**
 - Preço × quantidade das exportações (índices do MDIC; **do PC**, certificado vencido).

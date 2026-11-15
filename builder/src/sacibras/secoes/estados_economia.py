@@ -33,7 +33,7 @@ from sacibras.fontes import comexstat, ibge_contas_regionais, ibge_projecao, ibg
 from sacibras.modelos import pib_estados
 from sacibras.schema import BlocoDeConta, Cartao, Fatia, MetricaEstados, PeriodoDaMetrica
 from sacibras.secoes.base import br, periodo
-from sacibras.tipos import Ponto
+from sacibras.tipos import Periodicidade, Ponto
 
 UFs = list[tuple[int, str, str, str]]
 """(código IBGE, sigla, nome, região), como `estados.UFS`."""
@@ -44,6 +44,56 @@ CREDITO = "Crédito"
 REGIOES = {"Norte": "N", "Nordeste": "NE", "Sudeste": "SE", "Sul": "S", "Centro-Oeste": "CO"}
 """Nome da região em `UFs` → a sigla dela no IBC-R (`catalogo.IBCR_REGIAO`)."""
 assert set(REGIOES.values()) == set(IBCR_REGIAO)
+
+TRIMESTRES = 20
+"""Quantos trimestres a lista do período oferece (cinco anos)."""
+MESES = 24
+"""Quantos meses a lista do período oferece (dois anos)."""
+NOME_DO_PERIODO: dict[Periodicidade, str] = {"T": "Trimestre", "M": "Mês", "A": "Ano"}
+
+
+def periodos_por_data(
+    por_uf: dict[str, list[Ponto]],
+    pais: list[Ponto] | None,
+    p: Periodicidade,
+    quantos: int | None = None,
+    casas: int | None = None,
+) -> list[PeriodoDaMetrica]:
+    """A métrica em cada data das séries, da mais nova para a mais antiga (no máximo
+    `quantos`), para a tela pôr a lista do período. Fica de fora a data que menos da metade
+    dos estados tem."""
+    por = {s: dict(pts) for s, pts in por_uf.items()}
+    nacional = dict(pais or [])
+    datas = sorted({d for pts in por.values() for d in pts}, reverse=True)
+    saida: list[PeriodoDaMetrica] = []
+    for d in datas:
+        valores = {s: pts.get(d) for s, pts in por.items()}
+        if sum(v is not None for v in valores.values()) * 2 < len(por):
+            continue
+        if casas is not None:
+            valores = {s: None if v is None else round(v, casas) for s, v in valores.items()}
+        saida.append(
+            PeriodoDaMetrica(referencia=periodo(d, p), valores=valores, brasil=nacional.get(d))
+        )
+        if quantos is not None and len(saida) == quantos:
+            break
+    return saida
+
+
+def com_periodos(
+    m: MetricaEstados, periodos: list[PeriodoDaMetrica], p: Periodicidade
+) -> MetricaEstados:
+    """A métrica no período mais novo; com mais de um, a lista vai junto."""
+    if periodos:
+        m.referencia, m.valores, m.brasil = (
+            periodos[0].referencia,
+            periodos[0].valores,
+            periodos[0].brasil,
+        )
+    if len(periodos) > 1:
+        m.periodos = periodos
+        m.nome_periodo = NOME_DO_PERIODO[p]
+    return m
 
 
 def _por_nome(ufs: UFs) -> dict[str, str]:
@@ -95,49 +145,71 @@ def pib(ufs: UFs) -> list[MetricaEstados]:
         )
     ]
     populacao = ibge_projecao.grupos()
-    per_capita: dict[str, float | None] = {}
-    for nome, sigla in por_nome.items():
-        pop = populacao.get(sigla, {}).get("POP_T", {}).get(ano)
-        pib_ano = corrente[nome].get(ano)
-        per_capita[sigla] = pib_ano * 1e6 / pop if pop and pib_ano else None
-    pop_br = populacao.get("BR", {}).get("POP_T", {}).get(ano)
-    pib_br = corrente["Brasil"].get(ano)
-    metricas.append(
-        MetricaEstados(
-            id="pib_per_capita",
-            nome="PIB por habitante",
-            descricao=(
-                f"PIB do estado em {ano}, a preços do próprio ano, dividido pela população "
-                "estimada pelo IBGE para 1º de julho. Mede quanto se produz por pessoa, não "
-                "quanto cada um ganha: onde há muita mineração, petróleo ou agronegócio de "
-                "exportação, o PIB por habitante fica bem acima da renda das famílias."
-            ),
-            unidade="R$ por pessoa",
-            casas=0,
-            referencia=str(ano),
-            maior_e_melhor=None,
-            fonte=f"{fonte}, tabela 1; {ibge_projecao.FONTE} (população em 1º/7/{ano})",
-            valores=per_capita,
-            brasil=pib_br * 1e6 / pop_br if pib_br and pop_br else None,
-            grupo=ECONOMIA,
-        )
+    anos = sorted(a for a in corrente["Brasil"] if a <= ano)
+
+    def por_habitante(nome: str, sigla: str) -> list[Ponto]:
+        pop = populacao.get(sigla, {}).get("POP_T", {})
+        return [
+            (date(a, 1, 1), corrente[nome][a] * 1e6 / pop[a])
+            for a in anos
+            if pop.get(a) and corrente[nome].get(a)
+        ]
+
+    per_capita = periodos_por_data(
+        {s: por_habitante(n, s) for n, s in por_nome.items()}, por_habitante("Brasil", "BR"), "A"
     )
-    if pib_br:
-        metricas.append(
+    metricas.append(
+        com_periodos(
             MetricaEstados(
-                id="pib_participacao",
-                nome="Peso no PIB do Brasil",
-                descricao=f"Fatia do estado no PIB do país em {ano}, a preços correntes.",
-                unidade="% do PIB do Brasil",
-                casas=1,
+                id="pib_per_capita",
+                nome="PIB por habitante",
+                descricao=(
+                    "PIB do estado no ano, a preços do próprio ano, dividido pela população "
+                    "estimada pelo IBGE para 1º de julho. Mede quanto se produz por pessoa, não "
+                    "quanto cada um ganha: onde há muita mineração, petróleo ou agronegócio de "
+                    "exportação, o PIB por habitante fica bem acima da renda das famílias."
+                ),
+                unidade="R$ por pessoa",
+                casas=0,
                 referencia=str(ano),
                 maior_e_melhor=None,
-                fonte=f"{fonte}, tabela 1",
-                valores={
-                    s: corrente[n][ano] / pib_br * 100 if ano in corrente[n] else None
-                    for n, s in por_nome.items()
-                },
+                fonte=f"{fonte}, tabela 1; {ibge_projecao.FONTE} (população em 1º de julho)",
+                valores={s: None for s in por_nome.values()},
                 grupo=ECONOMIA,
+            ),
+            per_capita,
+            "A",
+        )
+    )
+    if corrente["Brasil"].get(ano):
+        fatia = periodos_por_data(
+            {
+                s: [
+                    (date(a, 1, 1), corrente[n][a] / corrente["Brasil"][a] * 100)
+                    for a in anos
+                    if corrente[n].get(a) and corrente["Brasil"].get(a)
+                ]
+                for n, s in por_nome.items()
+            },
+            None,
+            "A",
+        )
+        metricas.append(
+            com_periodos(
+                MetricaEstados(
+                    id="pib_participacao",
+                    nome="Peso no PIB do Brasil",
+                    descricao="Fatia do estado no PIB do país no ano, a preços correntes.",
+                    unidade="% do PIB do Brasil",
+                    casas=1,
+                    referencia=str(ano),
+                    maior_e_melhor=None,
+                    fonte=f"{fonte}, tabela 1",
+                    valores={s: None for s in por_nome.values()},
+                    grupo=ECONOMIA,
+                ),
+                fatia,
+                "A",
             )
         )
     return metricas
@@ -255,6 +327,18 @@ def ibcr(
         brasil=crescimento_12_meses(brasil, fim),
         grupo=ECONOMIA,
     )
+    meses = [_menos_meses(fim, k) for k in range(MESES)]
+    doze.periodos = [
+        PeriodoDaMetrica(
+            referencia=f"12 meses até {periodo(m, 'M')}",
+            valores={
+                s: crescimento_12_meses(series[s], m) if s in series else None for s in siglas
+            },
+            brasil=crescimento_12_meses(brasil, m),
+        )
+        for m in meses
+    ]
+    doze.nome_periodo = "Mês"
 
     por_uf = {s: crescimento_anual(p) for s, p in series.items()}
     por_regiao = {r: crescimento_anual(sgs(f"IBCR_REGIAO_{c}")) for r, c in REGIOES.items()}
@@ -490,6 +574,7 @@ def pib_trimestral(
     return [
         MetricaEstados(
             id="pib_trimestre",
+            nome_periodo="Trimestre",
             nome="PIB no trimestre (estimativa)",
             descricao=(
                 "Estimativa nossa de quanto a economia do estado cresceu no trimestre contra "
@@ -511,6 +596,7 @@ def pib_trimestral(
         ),
         MetricaEstados(
             id="pib_trimestre_contribuicao",
+            nome_periodo="Trimestre",
             nome="Contribuição para o PIB do Brasil (estimativa)",
             descricao=(
                 "Quantos pontos do crescimento do PIB do Brasil vieram de cada estado: o peso "
@@ -539,87 +625,106 @@ def pib_trimestral(
 # ------------------------------------------------------------------ PNAD por UF
 
 
-def _pnad(
-    ufs: UFs, tabela: int, variavel: int
-) -> tuple[date, dict[str, float | None], float | None]:
+def series_por_uf(
+    ufs: UFs, tabela: int, variavel: int, ultimos: int, *, trimestral: bool = False
+) -> tuple[dict[str, list[Ponto]], list[Ponto]]:
+    """Os `ultimos` períodos de uma variável do SIDRA, por estado e no Brasil."""
     por_uf = ibge_sidra.series(
         tabela,
         variavel,
-        periodos="last 1",
+        periodos=f"last {ultimos}",
         nivel="n3/all",
         por="Unidade da Federação",
-        trimestral=True,
+        trimestral=trimestral,
     )
     sigla = {cod: s for cod, s, _, _ in ufs}
-    valores: dict[str, float | None] = {s: None for s in sigla.values()}
-    quando: date | None = None
+    series: dict[str, list[Ponto]] = {s: [] for s in sigla.values()}
     for cod, pontos in por_uf.items():
-        if int(cod) in sigla and pontos:
-            quando, valores[sigla[int(cod)]] = pontos[-1]
-    if quando is None:
+        if int(cod) in sigla:
+            series[sigla[int(cod)]] = pontos
+    if not any(series.values()):
         raise RuntimeError(f"SIDRA {tabela} sem dado por UF")
-    pais = ibge_sidra.serie(tabela, variavel, periodos="last 1", nivel="n1/all", trimestral=True)
-    return quando, valores, (pais[-1][1] if pais and pais[-1][0] == quando else None)
+    pais = ibge_sidra.serie(
+        tabela, variavel, periodos=f"last {ultimos}", nivel="n1/all", trimestral=trimestral
+    )
+    return series, pais
+
+
+def pnad_trimestral(ufs: UFs, tabela: int, variavel: int) -> list[PeriodoDaMetrica]:
+    """Os últimos cinco anos de uma taxa da PNAD trimestral, trimestre a trimestre."""
+    series, pais = series_por_uf(ufs, tabela, variavel, TRIMESTRES, trimestral=True)
+    return periodos_por_data(series, pais, "T")
+
+
+def da_pnad(m: MetricaEstados, periodos: list[PeriodoDaMetrica]) -> MetricaEstados:
+    return com_periodos(m, periodos, "T")
 
 
 def trabalho(ufs: UFs) -> list[MetricaEstados]:
     saida: list[MetricaEstados] = []
-    quando, valores, brasil = _pnad(ufs, 4099, 4118)
+    periodos = pnad_trimestral(ufs, 4099, 4118)
     saida.append(
-        MetricaEstados(
-            id="subutilizacao",
-            nome="Subutilização",
-            descricao=(
-                "Quem está sem trabalho, quem trabalha menos horas do que gostaria e quem "
-                "queria trabalhar mas não procurou, em proporção da força de trabalho "
-                "ampliada. Pega o que a desocupação deixa de fora."
+        da_pnad(
+            MetricaEstados(
+                id="subutilizacao",
+                nome="Subutilização",
+                descricao=(
+                    "Quem está sem trabalho, quem trabalha menos horas do que gostaria e quem "
+                    "queria trabalhar mas não procurou, em proporção da força de trabalho "
+                    "ampliada. Pega o que a desocupação deixa de fora."
+                ),
+                unidade="%",
+                casas=1,
+                referencia="",
+                maior_e_melhor=False,
+                fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 4099, taxa composta)",
+                valores={},
+                grupo=TRABALHO,
             ),
-            unidade="%",
-            casas=1,
-            referencia=periodo(quando, "T"),
-            maior_e_melhor=False,
-            fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 4099, taxa composta)",
-            valores=valores,
-            brasil=brasil,
-            grupo=TRABALHO,
+            periodos,
         )
     )
-    quando, valores, brasil = _pnad(ufs, 8529, 12466)
+    periodos = pnad_trimestral(ufs, 8529, 12466)
     saida.append(
-        MetricaEstados(
-            id="informalidade",
-            nome="Informalidade",
-            descricao=(
-                "Parcela dos ocupados sem carteira assinada, sem CNPJ ou trabalhando para a "
-                "família sem receber: quem fica sem FGTS, férias e, em geral, sem INSS."
+        da_pnad(
+            MetricaEstados(
+                id="informalidade",
+                nome="Informalidade",
+                descricao=(
+                    "Parcela dos ocupados sem carteira assinada, sem CNPJ ou trabalhando para a "
+                    "família sem receber: quem fica sem FGTS, férias e, em geral, sem INSS."
+                ),
+                unidade="% dos ocupados",
+                casas=1,
+                referencia="",
+                maior_e_melhor=False,
+                fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 8529)",
+                valores={},
+                grupo=TRABALHO,
             ),
-            unidade="% dos ocupados",
-            casas=1,
-            referencia=periodo(quando, "T"),
-            maior_e_melhor=False,
-            fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 8529)",
-            valores=valores,
-            brasil=brasil,
-            grupo=TRABALHO,
+            periodos,
         )
     )
-    quando, valores, brasil = _pnad(ufs, 5436, 5933)
+    periodos = pnad_trimestral(ufs, 5436, 5933)
     saida.append(
-        MetricaEstados(
-            id="renda_trabalho",
-            nome="Renda média do trabalho",
-            descricao=(
-                "O que os ocupados costumam receber por mês, somados todos os trabalhos, "
-                "em reais do trimestre da pesquisa. Média: puxada para cima por quem ganha muito."
+        da_pnad(
+            MetricaEstados(
+                id="renda_trabalho",
+                nome="Renda média do trabalho",
+                descricao=(
+                    "O que os ocupados costumam receber por mês, somados todos os trabalhos, "
+                    "em reais do trimestre da pesquisa. Média: puxada para cima por quem ganha "
+                    "muito."
+                ),
+                unidade="R$ por mês",
+                casas=0,
+                referencia="",
+                maior_e_melhor=True,
+                fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 5436, rendimento habitual)",
+                valores={},
+                grupo=TRABALHO,
             ),
-            unidade="R$ por mês",
-            casas=0,
-            referencia=periodo(quando, "T"),
-            maior_e_melhor=True,
-            fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 5436, rendimento habitual)",
-            valores=valores,
-            brasil=brasil,
-            grupo=TRABALHO,
+            periodos,
         )
     )
     return saida
@@ -631,38 +736,49 @@ def trabalho(ufs: UFs) -> list[MetricaEstados]:
 def inflacao(ufs: UFs) -> MetricaEstados:
     """IPCA de 12 meses de cada área pesquisada, posto no estado dela."""
     siglas = {cod: s for cod, s, _, _ in ufs}
-    valores: dict[str, float | None] = {s: None for s in siglas.values()}
+    series: dict[str, list[Ponto]] = {s: [] for s in siglas.values()}
     areas: list[str] = []
-    quando: date | None = None
+    ultimos = f"last {MESES}"
     for nivel, por in (("n7/all", "Região Metropolitana"), ("n6/all", "Município")):
         linhas = ibge_sidra.series(
-            7060, 2265, periodos="last 1", classificacao="c315/7169", nivel=nivel, por=por
+            7060, 2265, periodos=ultimos, classificacao="c315/7169", nivel=nivel, por=por
         )
         for cod, pontos in linhas.items():
             uf = siglas.get(int(cod[:2]))
             if uf and pontos:
-                quando, valores[uf] = pontos[-1]
+                series[uf] = pontos
                 areas.append(uf)
-    if quando is None:
+    if not areas:
         raise RuntimeError("SIDRA 7060 sem as áreas do IPCA")
-    pais = ibge_sidra.serie(7060, 2265, periodos="last 1", classificacao="c315/7169")
+    pais = ibge_sidra.serie(7060, 2265, periodos=ultimos, classificacao="c315/7169")
     fora = sorted(s for s in siglas.values() if s not in areas)
-    return MetricaEstados(
-        id="inflacao_capital",
-        nome="Inflação na capital",
-        descricao=(
-            "IPCA dos últimos 12 meses na capital ou na região metropolitana que o IBGE "
-            f"pesquisa no estado ({len(areas)} áreas). Vale para ela, não para o interior. "
-            f"{', '.join(fora)} não têm área pesquisada."
+    # Só os estados com área pesquisada contam para a regra da metade.
+    periodos = periodos_por_data({s: series[s] for s in areas}, pais, "M")
+    quando = max(p[-1][0] for p in series.values() if p)
+    valores: dict[str, float | None] = {s: dict(series[s]).get(quando) for s in siglas.values()}
+    for per in periodos:
+        per.valores = {s: per.valores.get(s) for s in siglas.values()}
+    nacional = dict(pais)
+    return com_periodos(
+        MetricaEstados(
+            id="inflacao_capital",
+            nome="Inflação na capital",
+            descricao=(
+                "IPCA dos últimos 12 meses na capital ou na região metropolitana que o IBGE "
+                f"pesquisa no estado ({len(areas)} áreas). Vale para ela, não para o interior. "
+                f"{', '.join(fora)} não têm área pesquisada."
+            ),
+            unidade="% em 12 meses",
+            casas=1,
+            referencia=periodo(quando, "M"),
+            maior_e_melhor=False,
+            fonte="IBGE, IPCA (SIDRA, tabela 7060, por região metropolitana e município)",
+            valores=valores,
+            brasil=nacional.get(quando),
+            grupo=ECONOMIA,
         ),
-        unidade="% em 12 meses",
-        casas=1,
-        referencia=periodo(quando, "M"),
-        maior_e_melhor=False,
-        fonte="IBGE, IPCA (SIDRA, tabela 7060, por região metropolitana e município)",
-        valores=valores,
-        brasil=pais[-1][1] if pais and pais[-1][0] == quando else None,
-        grupo=ECONOMIA,
+        periodos,
+        "M",
     )
 
 
@@ -849,36 +965,34 @@ def exportacoes_da_ficha(
 
 
 def concentracao(ufs: UFs) -> MetricaEstados:
-    por_uf = ibge_sidra.series(
-        5939, 529, periodos="last 1", nivel="n3/all", por="Unidade da Federação"
-    )
-    sigla = {cod: s for cod, s, _, _ in ufs}
-    valores: dict[str, float | None] = {s: None for s in sigla.values()}
-    quando: date | None = None
-    for cod, pontos in por_uf.items():
-        if int(cod) in sigla and pontos:
-            quando, valores[sigla[int(cod)]] = pontos[-1]
-    if quando is None:
-        raise RuntimeError("SIDRA 5939 sem dado por UF")
-    pais = ibge_sidra.serie(5939, 529, periodos="last 1")
+    series, pais = series_por_uf(ufs, 5939, 529, 10)
     # O DF é um município só: o índice não se aplica.
-    valores["DF"] = None
-    return MetricaEstados(
-        id="pib_concentracao",
-        nome="Concentração do PIB nos municípios",
-        descricao=(
-            "Índice de Gini do PIB entre os municípios do estado: 0 seria todos com o mesmo "
-            "PIB, 1 seria tudo num só. Alto quer dizer que a economia se junta em poucas "
-            "cidades. O Distrito Federal é um município só e fica de fora."
+    series["DF"] = []
+    quando = max(p[-1][0] for p in series.values() if p)
+    valores: dict[str, float | None] = {s: dict(p).get(quando) for s, p in series.items()}
+    periodos = periodos_por_data(series, pais, "A")
+    for per in periodos:
+        per.valores["DF"] = None
+    return com_periodos(
+        MetricaEstados(
+            id="pib_concentracao",
+            nome="Concentração do PIB nos municípios",
+            descricao=(
+                "Índice de Gini do PIB entre os municípios do estado: 0 seria todos com o mesmo "
+                "PIB, 1 seria tudo num só. Alto quer dizer que a economia se junta em poucas "
+                "cidades. O Distrito Federal é um município só e fica de fora."
+            ),
+            unidade="índice de 0 a 1",
+            casas=2,
+            referencia=str(quando.year),
+            maior_e_melhor=None,
+            fonte="IBGE, PIB dos Municípios (SIDRA, tabela 5939)",
+            valores=valores,
+            brasil=dict(pais).get(quando),
+            grupo=ECONOMIA,
         ),
-        unidade="índice de 0 a 1",
-        casas=2,
-        referencia=str(quando.year),
-        maior_e_melhor=None,
-        fonte="IBGE, PIB dos Municípios (SIDRA, tabela 5939)",
-        valores=valores,
-        brasil=pais[-1][1] if pais else None,
-        grupo=ECONOMIA,
+        periodos,
+        "A",
     )
 
 
@@ -888,41 +1002,65 @@ def concentracao(ufs: UFs) -> MetricaEstados:
 def credito(
     ufs: UFs, sgs: Callable[[str], list[Ponto]], populacao: dict[int, float]
 ) -> list[MetricaEstados]:
-    saldo = {s: sgs(f"CREDITO_SALDO_{s}") for s in CREDITO_SALDO_UF}
-    inad = {s: sgs(f"CREDITO_INADIMPLENCIA_{s}") for s in CREDITO_INADIMPLENCIA_UF}
-    fim = min(p[-1][0] for p in [*saldo.values(), *inad.values()] if p)
+    saldo = {s: dict(sgs(f"CREDITO_SALDO_{s}")) for s in CREDITO_SALDO_UF}
+    inad = {s: dict(sgs(f"CREDITO_INADIMPLENCIA_{s}")) for s in CREDITO_INADIMPLENCIA_UF}
+    fim = min(max(p) for p in [*saldo.values(), *inad.values()] if p)
 
-    def em(p: list[Ponto]) -> float | None:
-        return next((v for d, v in reversed(p) if d == fim), None)
+    def no_mes(
+        mes: date,
+    ) -> tuple[dict[str, float | None], float | None, dict[str, float | None], float | None]:
+        """Crédito por habitante e inadimplência no mês, com o número do Brasil de cada."""
+        por_hab: dict[str, float | None] = {}
+        soma = soma_pop = 0.0
+        for cod, sigla, _, _ in ufs:
+            v, pop = saldo.get(sigla, {}).get(mes), populacao.get(cod)
+            if v is not None and pop:
+                por_hab[sigla] = v * 1e6 / pop
+                soma += v * 1e6
+                soma_pop += pop
+            else:
+                por_hab[sigla] = None
+        inadimplencia = {s: inad.get(s, {}).get(mes) for _, s, _, _ in ufs}
+        # O Brasil da inadimplência: a média dos estados pesada pelo saldo (a série nacional
+        # do BC é de outra família e não fecha com a soma das UFs).
+        pares = [(inadimplencia[s], saldo.get(s, {}).get(mes)) for s in inadimplencia]
+        validos = [(i, w) for i, w in pares if i is not None and w]
+        peso = sum(w for _, w in validos)
+        return (
+            por_hab,
+            soma / soma_pop if soma_pop else None,
+            inadimplencia,
+            sum(i * w for i, w in validos) / peso if peso else None,
+        )
 
-    por_hab: dict[str, float | None] = {}
-    soma = soma_pop = 0.0
-    for cod, sigla, _, _ in ufs:
-        v, pop = em(saldo.get(sigla, [])), populacao.get(cod)
-        if v is not None and pop:
-            por_hab[sigla] = v * 1e6 / pop
-            soma += v * 1e6
-            soma_pop += pop
-        else:
-            por_hab[sigla] = None
-    inadimplencia = {s: em(inad.get(s, [])) for _, s, _, _ in ufs}
-    # O Brasil da inadimplência: a média dos estados pesada pelo saldo (a série nacional do
-    # BC é de outra família e não fecha com a soma das UFs).
-    pares = [(inadimplencia[s], em(saldo[s])) for s in inadimplencia]
-    validos = [(i, w) for i, w in pares if i is not None and w]
-    peso = sum(w for _, w in validos)
+    meses = [_menos_meses(fim, k) for k in range(MESES)]
+    contas = {m: no_mes(m) for m in meses}
+    contas = {m: c for m, c in contas.items() if any(v is not None for v in c[0].values())}
+    por_hab, brasil_hab, inadimplencia, brasil_inad = contas[fim]
+    periodos_hab = [
+        PeriodoDaMetrica(referencia=periodo(m, "M"), valores=c[0], brasil=c[1])
+        for m, c in contas.items()
+    ]
+    periodos_inad = [
+        PeriodoDaMetrica(referencia=periodo(m, "M"), valores=c[2], brasil=c[3])
+        for m, c in contas.items()
+    ]
     ref = periodo(fim, "M")
     cods_saldo = f"{min(CREDITO_SALDO_UF.values())} a {max(CREDITO_SALDO_UF.values())}"
     cods_inad = (
         f"{min(CREDITO_INADIMPLENCIA_UF.values())} a {max(CREDITO_INADIMPLENCIA_UF.values())}"
     )
+    multiplos = len(contas) > 1
     return [
         MetricaEstados(
+            periodos=periodos_hab if multiplos else [],
+            nome_periodo="Mês" if multiplos else "",
             id="credito_per_capita",
             nome="Crédito por habitante",
             descricao=(
                 "Saldo de empréstimos e financiamentos de bancos e financeiras a pessoas e "
-                "empresas do estado, dividido pela população. O estado é o do cliente."
+                "empresas do estado, dividido pela população. O estado é o do cliente. Nos "
+                "meses anteriores, a mesma população de hoje."
             ),
             unidade="R$ por pessoa",
             casas=0,
@@ -933,10 +1071,12 @@ def credito(
                 "população estimada do SICONFI (IBGE)"
             ),
             valores=por_hab,
-            brasil=soma / soma_pop if soma_pop else None,
+            brasil=brasil_hab,
             grupo=CREDITO,
         ),
         MetricaEstados(
+            periodos=periodos_inad if multiplos else [],
+            nome_periodo="Mês" if multiplos else "",
             id="credito_inadimplencia",
             nome="Inadimplência",
             descricao=(
@@ -952,7 +1092,7 @@ def credito(
                 f"(SGS {cods_inad})"
             ),
             valores=inadimplencia,
-            brasil=sum(i * w for i, w in validos) / peso if peso else None,
+            brasil=brasil_inad,
             grupo=CREDITO,
         ),
     ]

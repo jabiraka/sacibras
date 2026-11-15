@@ -571,8 +571,11 @@ class MetricaEstados(Modelo):
     """A conta nossa comparada com número oficial de outra fonte, em uma frase (o PIB
     trimestral dos estados contra os institutos estaduais que o publicam)."""
     periodos: list[PeriodoDaMetrica] = Field(default_factory=list)
-    """Só no PIB trimestral dos estados: a mesma métrica em cada trimestre, do mais novo ao
-    mais antigo (o primeiro repete `valores`). A tela põe a lista "Trimestre"."""
+    """A mesma métrica em cada período que a fonte tem, do mais novo ao mais antigo (o
+    primeiro repete `valores`). A tela põe a lista com o nome de `nome_periodo` (Caio,
+    15/11/2026: "conseguir escolher a data em outras métricas além do crescimento do PIB")."""
+    nome_periodo: str = ""
+    """O nome da lista dos períodos: "Trimestre", "Ano", "Mês"."""
 
 
 class HistoricoEstado(Modelo):

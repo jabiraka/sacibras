@@ -53,6 +53,7 @@ from sacibras.schema import (
 )
 from sacibras.secoes import estados_economia
 from sacibras.secoes.base import MESES, Contexto, br, periodo
+from sacibras.tipos import Ponto
 
 # (código IBGE, sigla, nome, região)
 UFS: list[tuple[int, str, str, str]] = [
@@ -90,70 +91,53 @@ CONTAS = "Contas do governo do estado"
 
 def _desocupacao() -> MetricaEstados:
     # Tabela 4099 (PNAD Contínua trimestral), variável 4099 (taxa de desocupação, 14 anos ou mais).
-    por_uf = ibge_sidra.series(
-        4099,
-        4099,
-        periodos="last 1",
-        nivel="n3/all",
-        por="Unidade da Federação",
-        trimestral=True,
-    )
-    pais = ibge_sidra.serie(4099, 4099, periodos="last 1", nivel="n1/all", trimestral=True)
-    valores: dict[str, float | None] = {s: None for s in SIGLA.values()}
-    quando: date | None = None
-    for cod, pontos in por_uf.items():
-        if int(cod) in SIGLA and pontos:
-            quando, valores[SIGLA[int(cod)]] = pontos[-1]
-    if quando is None:
-        raise RuntimeError("SIDRA 4099 sem dado por UF")
-    return MetricaEstados(
-        id="desocupacao",
-        nome="Desocupação",
-        descricao=(
-            "Parcela das pessoas na força de trabalho (14 anos ou mais) que procuravam emprego "
-            "e não tinham trabalho na semana da pesquisa."
+    periodos = estados_economia.pnad_trimestral(UFS, 4099, 4099)
+    return estados_economia.da_pnad(
+        MetricaEstados(
+            id="desocupacao",
+            nome="Desocupação",
+            descricao=(
+                "Parcela das pessoas na força de trabalho (14 anos ou mais) que procuravam emprego "
+                "e não tinham trabalho na semana da pesquisa."
+            ),
+            unidade="%",
+            casas=1,
+            referencia="",
+            maior_e_melhor=False,
+            fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 4099)",
+            valores={},
+            grupo=estados_economia.TRABALHO,
         ),
-        unidade="%",
-        casas=1,
-        referencia=periodo(quando, "T"),
-        maior_e_melhor=False,
-        fonte="IBGE, PNAD Contínua trimestral (SIDRA, tabela 4099)",
-        valores=valores,
-        grupo=estados_economia.TRABALHO,
-        brasil=pais[-1][1] if pais and pais[-1][0] == quando else None,
+        periodos,
     )
 
 
 def _gini() -> MetricaEstados:
     # Tabela 7435 (PNAD Contínua anual, rendimento de todas as fontes), variável 10681: Gini do
     # rendimento domiciliar per capita (conferida em 14/11/2026; a mesma de Desigualdade).
-    por_uf = ibge_sidra.series(
-        7435, 10681, periodos="last 1", nivel="n3/all", por="Unidade da Federação"
-    )
-    pais = ibge_sidra.serie(7435, 10681, periodos="last 1")
-    valores: dict[str, float | None] = {s: None for s in SIGLA.values()}
-    quando: date | None = None
-    for cod, pontos in por_uf.items():
-        if int(cod) in SIGLA and pontos:
-            quando, valores[SIGLA[int(cod)]] = pontos[-1]
-    if quando is None:
-        raise RuntimeError("SIDRA 7435 sem dado por UF")
-    return MetricaEstados(
-        id="gini",
-        nome="Desigualdade da renda (Gini)",
-        grupo=estados_economia.TRABALHO,
-        descricao=(
-            "Índice de Gini da renda domiciliar por pessoa: 0 é todos com a mesma renda, 1 é "
-            "uma pessoa com toda a renda. Mede a desigualdade dentro do estado; o do Brasil é "
-            "maior porque soma também a distância entre os estados."
+    series, pais = estados_economia.series_por_uf(UFS, 7435, 10681, 15)
+    quando = max(p[-1][0] for p in series.values() if p)
+    periodos = estados_economia.periodos_por_data(series, pais, "A")
+    return estados_economia.com_periodos(
+        MetricaEstados(
+            id="gini",
+            nome="Desigualdade da renda (Gini)",
+            grupo=estados_economia.TRABALHO,
+            descricao=(
+                "Índice de Gini da renda domiciliar por pessoa: 0 é todos com a mesma renda, 1 é "
+                "uma pessoa com toda a renda. Mede a desigualdade dentro do estado; o do Brasil é "
+                "maior porque soma também a distância entre os estados."
+            ),
+            unidade="índice",
+            casas=3,
+            referencia=str(quando.year),
+            maior_e_melhor=False,
+            fonte="IBGE, PNAD Contínua anual (SIDRA, tabela 7435)",
+            valores={s: dict(p).get(quando) for s, p in series.items()},
+            brasil=dict(pais).get(quando),
         ),
-        unidade="índice",
-        casas=3,
-        referencia=str(quando.year),
-        maior_e_melhor=False,
-        fonte="IBGE, PNAD Contínua anual (SIDRA, tabela 7435)",
-        valores=valores,
-        brasil=pais[-1][1] if pais and pais[-1][0] == quando else None,
+        periodos,
+        "A",
     )
 
 
@@ -162,30 +146,38 @@ def _pobreza() -> MetricaEstados:
     # Indicadores Sociais do IBGE; o ano mais novo é estimado pelo Ipea com a PNAD anual
     # (conferido em 14/11/2026; a mesma de Pobreza › Estados e países).
     por_ter = ipeadata.por_territorio("PNADCA_TXPNUF", date(2012, 1, 1))
-    valores: dict[str, float | None] = {s: None for s in SIGLA.values()}
-    quando: date | None = None
+    series: dict[str, list[Ponto]] = {s: [] for s in SIGLA.values()}
     for cod, pontos in por_ter.items():
-        if len(cod) == 2 and int(cod) in SIGLA and pontos:
-            quando, valores[SIGLA[int(cod)]] = pontos[-1][0], round(pontos[-1][1], 2)
-    if quando is None:
+        if len(cod) == 2 and int(cod) in SIGLA:
+            series[SIGLA[int(cod)]] = pontos
+    if not any(series.values()):
         raise RuntimeError("Ipeadata sem pobreza por UF")
+    quando = max(p[-1][0] for p in series.values() if p)
     pais = por_ter.get("0", [])
-    return MetricaEstados(
-        id="pobreza",
-        nome="Pobreza",
-        grupo=estados_economia.TRABALHO,
-        descricao=(
-            "Parte das pessoas com renda domiciliar por pessoa abaixo de US$ 8,30 por dia, em "
-            "dólares de paridade do poder de compra de 2021: a linha do Banco Mundial que o "
-            "IBGE usa para a pobreza."
+    periodos = estados_economia.periodos_por_data(series, pais, "A", casas=2)
+    return estados_economia.com_periodos(
+        MetricaEstados(
+            id="pobreza",
+            nome="Pobreza",
+            grupo=estados_economia.TRABALHO,
+            descricao=(
+                "Parte das pessoas com renda domiciliar por pessoa abaixo de US$ 8,30 por dia, em "
+                "dólares de paridade do poder de compra de 2021: a linha do Banco Mundial que o "
+                "IBGE usa para a pobreza."
+            ),
+            unidade="% das pessoas",
+            casas=1,
+            referencia=str(quando.year),
+            maior_e_melhor=False,
+            fonte="IBGE, Síntese de Indicadores Sociais, pelo Ipeadata (PNADCA_TXPNUF)",
+            valores={
+                s: None if (v := dict(p).get(quando)) is None else round(v, 2)
+                for s, p in series.items()
+            },
+            brasil=None if (b := dict(pais).get(quando)) is None else round(b, 2),
         ),
-        unidade="% das pessoas",
-        casas=1,
-        referencia=str(quando.year),
-        maior_e_melhor=False,
-        fonte="IBGE, Síntese de Indicadores Sociais, pelo Ipeadata (PNADCA_TXPNUF)",
-        valores=valores,
-        brasil=round(pais[-1][1], 2) if pais and pais[-1][0] == quando else None,
+        periodos,
+        "A",
     )
 
 

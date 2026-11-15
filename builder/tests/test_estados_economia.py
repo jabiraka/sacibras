@@ -328,3 +328,47 @@ def test_frase_do_pib_diz_queda_quando_um_estado_cai() -> None:
     )
     subiu = estados_economia.frase_pib(metrica({"MS": 1.0, "PB": 6.5}))
     assert subiu.startswith("Em 2024, o PIB cresceu de 1,0 % (MS) a 6,5 % (PB)")
+
+
+def test_periodos_vao_do_mais_novo_e_pulam_data_de_poucos_estados() -> None:
+    t1, t2, t3 = date(2026, 1, 1), date(2026, 4, 1), date(2026, 7, 1)
+    por_uf = {s: [(t1, 1.0), (t2, 2.0)] for _, s, _, _ in UFS}
+    por_uf["SP"] = [*por_uf["SP"], (t3, 9.0)]  # só um estado no 3º tri: fica de fora
+    p = estados_economia.periodos_por_data(por_uf, [(t2, 2.5)], "T")
+    assert [x.referencia for x in p] == ["2º tri/2026", "1º tri/2026"]
+    assert p[0].brasil == 2.5 and p[1].brasil is None and p[0].valores["AC"] == 2.0
+    m = estados_economia.com_periodos(
+        estados_economia.MetricaEstados(
+            id="x", nome="x", unidade="%", referencia="", fonte="f", valores={}
+        ),
+        p,
+        "T",
+    )
+    assert m.referencia == "2º tri/2026" and m.nome_periodo == "Trimestre" and m.periodos == p
+
+
+def test_um_periodo_so_nao_ganha_lista() -> None:
+    p = estados_economia.periodos_por_data({"SP": [(date(2026, 1, 1), 1.0)]}, None, "A")
+    m = estados_economia.com_periodos(
+        estados_economia.MetricaEstados(
+            id="x", nome="x", unidade="%", referencia="", fonte="f", valores={}
+        ),
+        p,
+        "A",
+    )
+    assert m.valores == {"SP": 1.0} and m.referencia == "2026" and not m.periodos
+
+
+def test_credito_tem_um_periodo_por_mes() -> None:
+    ago, setembro = date(2026, 8, 1), date(2026, 9, 1)
+
+    def sgs(chave: str) -> list[Ponto]:
+        if chave.startswith("CREDITO_SALDO_"):
+            return [(ago, 500.0), (setembro, 1000.0)]
+        return [(ago, 3.0), (setembro, 2.0)]
+
+    pop = {c: 1_000_000.0 for c, *_ in UFS}
+    por_hab, inad = estados_economia.credito(UFS, sgs, pop)
+    assert [p.referencia for p in por_hab.periodos] == ["set/2026", "ago/2026"]
+    assert por_hab.periodos[1].valores["SP"] == pytest.approx(500.0)
+    assert inad.periodos[1].brasil == pytest.approx(3.0) and inad.nome_periodo == "Mês"

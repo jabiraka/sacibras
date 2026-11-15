@@ -143,20 +143,23 @@ function naJanela(m: MetricaEstados, todas: MetricaEstados[]): MetricaEstados {
   };
 }
 
-// O PIB trimestral dos estados (estimativa nossa) vem com um valor por trimestre: a pessoa
-// escolhe o trimestre numa lista (Caio, 15/11/2026: "a decomposição do PIB por estados em cada
-// trimestre"). A escolha vale para as métricas que têm o mesmo trimestre e fica ao trocar.
-let trimestre = "";
+// A métrica com um valor por período (o trimestre, o ano, o mês): a pessoa escolhe numa lista
+// (Caio, 15/11/2026: "a decomposição do PIB por estados em cada trimestre" e "escolher a data
+// em outras métricas além do crescimento do PIB"). A escolha vale para as métricas que têm o
+// mesmo período e fica ao trocar de métrica; a que não tem abre no mais novo.
+let periodoEscolhido = "";
 
 function periodoDe(m: MetricaEstados): PeriodoDaMetrica | undefined {
-  return m.periodos?.find((p) => p.referencia === trimestre) ?? m.periodos?.[0];
+  return m.periodos?.find((p) => p.referencia === periodoEscolhido) ?? m.periodos?.[0];
 }
 
-/** A métrica no trimestre escolhido; sem `periodos`, passa como veio. */
-function noTrimestre(m: MetricaEstados): MetricaEstados {
+/** A métrica no período escolhido; sem `periodos`, passa como veio. */
+function noPeriodo(m: MetricaEstados): MetricaEstados {
   const p = periodoDe(m);
   if (!p) return m;
-  const semFaixa = !Object.keys(p.intervalos ?? {}).length;
+  // Só o PIB trimestral tem faixa de erro e "como ler"; nos trimestres que o IBGE já fechou, a
+  // faixa some e a frase muda.
+  const semFaixa = Boolean(m.como_ler) && !Object.keys(p.intervalos ?? {}).length;
   return {
     ...m,
     descricao: p.nota ? `${p.nota} ${m.descricao}` : m.descricao,
@@ -172,19 +175,21 @@ function noTrimestre(m: MetricaEstados): MetricaEstados {
   };
 }
 
-/** A lista "Trimestre"; some quando a métrica só tem um período. */
-function controleDoTrimestre(
+/** A lista do período ("Trimestre", "Ano", "Mês"); some quando a métrica só tem um. */
+function controleDoPeriodo(
   id: string,
   aoMudar: () => void,
 ): { caixa: HTMLElement; pintar: (m: MetricaEstados | undefined) => void } {
-  const lista = listaSuspensa(id, "Trimestre", [], "", (v) => {
-    trimestre = v;
+  const lista = listaSuspensa(id, "Período", [], "", (v) => {
+    periodoEscolhido = v;
     aoMudar();
   });
+  const nome = lista.caixa.querySelector(".escolha-rotulo");
   function pintar(m: MetricaEstados | undefined): void {
     const periodos = m?.periodos ?? [];
     lista.caixa.hidden = periodos.length < 2;
     if (!m || periodos.length < 2) return;
+    if (nome) nome.textContent = m.nome_periodo || "Período";
     lista.trocar(
       periodos.map((p) => ({ valor: p.referencia, rotulo: p.referencia })),
       periodoDe(m)?.referencia ?? "",
@@ -348,14 +353,14 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   const comRanking = parte === "mapa";
   const barra = el("div", "barra-controles");
   const janelaMapa = controlesDaJanela("estados-janela", () => pintar());
-  const trimestreMapa = controleDoTrimestre("estados-trimestre", () => pintar());
+  const periodoMapa = controleDoPeriodo("estados-periodo", () => pintar());
   barra.append(
     listaSuspensa("estados-metrica", "Métrica", opcoes, escolhida.id, (id) => {
       escolhida = e.metricas.find((m) => m.id === id) ?? escolhida;
       pintar();
     }).caixa,
     janelaMapa.caixa,
-    trimestreMapa.caixa,
+    periodoMapa.caixa,
   );
   const sobre = el("p", "secao-resumo");
   const grade = el("div", comRanking ? "mundo-grade" : "estados-so-mapa");
@@ -477,9 +482,9 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   }
 
   function pintar(): void {
-    metrica = noTrimestre(naJanela(escolhida, e.metricas));
+    metrica = noPeriodo(naJanela(escolhida, e.metricas));
     janelaMapa.pintar(escolhida);
-    trimestreMapa.pintar(escolhida);
+    periodoMapa.pintar(escolhida);
     sobre.textContent = metrica.descricao;
     tituloMapa.textContent = metrica.nome;
     // O texto mudou: o glossário marca de novo (o "?" do título, o sublinhado da descrição).

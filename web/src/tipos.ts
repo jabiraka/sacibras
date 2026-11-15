@@ -362,8 +362,10 @@ export interface MetricaEstados {
   marcas?: { valor: number; rotulo: string }[];
   /** A conta nossa comparada com número oficial de outra fonte, em uma frase. */
   conferencia?: string;
-  /** Só no PIB trimestral dos estados: a métrica em cada trimestre, do mais novo ao mais antigo. */
+  /** A métrica em cada período que a fonte tem (trimestre, ano, mês), do mais novo ao mais antigo. */
   periodos?: PeriodoDaMetrica[];
+  /** O nome da lista dos períodos: "Trimestre", "Ano", "Mês". */
+  nome_periodo?: string;
 }
 
 export interface PeriodoDaMetrica {
