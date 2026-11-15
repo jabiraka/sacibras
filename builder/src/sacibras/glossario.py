@@ -906,7 +906,7 @@ TERMOS: list[Termo] = [
         'A pergunta "e se uma crise do passado acontecesse de novo hoje?": aplica os choques '
         "de um episódio real (2008, 2015, 2020) aos números de hoje e mostra o resultado.",
         ("testes de estresse", "teste de estresse"),
-        "#riscos/estresse",
+        "#riscos/divida",
     ),
     Termo(
         "elasticidade",
@@ -937,6 +937,72 @@ TERMOS: list[Termo] = [
         "Dívidas do governo reconhecidas pela Justiça em decisão final, que entram no "
         "orçamento para ser pagas.",
         ("precatórios", "precatório"),
+    ),
+    Termo(
+        "taxa-implicita",
+        "Taxa implícita da dívida",
+        "O juro médio que a dívida pagou: os juros do período divididos pelo saldo dela. O "
+        "Banco Central publica a da dívida bruta todo mês, somando os últimos 12 meses.",
+        ("taxa implícita", "juro médio da dívida bruta"),
+        "#riscos/divida",
+    ),
+    Termo(
+        "compromissadas",
+        "Operações compromissadas",
+        "Empréstimos de curtíssimo prazo que o Banco Central toma dos bancos, dando títulos do "
+        "Tesouro em garantia, para tirar dinheiro de circulação. Pagam perto da Selic e o Banco "
+        "Central as conta na dívida bruta.",
+        ("operações compromissadas", "compromissadas"),
+    ),
+    Termo(
+        "rolagem",
+        "Rolagem da dívida",
+        "Trocar a dívida que vence por dívida nova. Quanto mais dívida vence no ano, mais o "
+        "governo depende do juro do momento para rolá-la.",
+        ("rolagem", "rolar a dívida"),
+        "#riscos/custo",
+    ),
+    Termo(
+        "receita-liquida",
+        "Receita líquida da União",
+        "O que o Governo Central arrecada menos o que a lei manda repassar a estados e "
+        "municípios. É o que sobra para os gastos da União, os juros inclusive.",
+        ("receita líquida",),
+    ),
+    Termo(
+        "perda-provavel",
+        "Perda provável e perda possível",
+        "Como a AGU classifica as ações contra a União: provável quando o STF, o STJ ou o TST "
+        "já decidiu contra o governo; possível quando o caso está para ser julgado nesses "
+        "tribunais. O resto é remoto e fica fora da conta.",
+        ("perda provável", "perda possível"),
+        "#riscos/juridico",
+    ),
+    Termo(
+        "anexo-de-riscos-fiscais",
+        "Anexo de Riscos Fiscais",
+        "A parte do projeto da LDO em que o governo lista, todo ano, o que pode piorar as "
+        "contas: ações na Justiça, garantias dadas, dívidas a receber e o efeito de juros e PIB "
+        "diferentes do previsto. A Lei de Responsabilidade Fiscal manda publicar.",
+        ("Anexo de Riscos Fiscais", "riscos fiscais"),
+        "#riscos/juridico",
+    ),
+    Termo(
+        "projecao-atuarial",
+        "Projeção atuarial",
+        "A conta de quanto a Previdência vai receber e pagar nas próximas décadas, feita com a "
+        "população projetada, as regras de aposentadoria e hipóteses de salário e PIB.",
+        ("projeção atuarial", "projeções atuariais", "projeção do governo"),
+        "#riscos/bancos",
+    ),
+    Termo(
+        "governanca",
+        "Governança (Banco Mundial)",
+        "As notas que o Banco Mundial dá a cada país, todo ano, para a qualidade do governo, "
+        "das leis, da regulação e o controle da corrupção, juntando dezenas de pesquisas. Vão "
+        "de 0 a 100; mais é melhor, e a margem de erro é de alguns pontos.",
+        ("governança", "estado de direito", "controle da corrupção"),
+        "#riscos/juridico",
     ),
     Termo(
         "tjlp",

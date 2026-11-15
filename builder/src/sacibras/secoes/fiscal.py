@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date
 
 from sacibras import contas, leis
-from sacibras.fontes import bcb_focus, fmi, tesouro_rtn
+from sacibras.fontes import bcb_fiscal, bcb_focus, fmi, tesouro_rtn
 from sacibras.schema import (
     Cartao,
     Faixa,
@@ -190,6 +190,65 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         ),
     )
     return c, g, t
+
+
+FAIXAS_DE_PRAZO = [
+    ("ate-1", "Até 1 ano", ("até 1 ano",)),
+    ("1-a-3", "De 1 a 3 anos", ("entre 1 e 3 anos",)),
+    ("3-a-5", "De 3 a 5 anos", ("entre 3 e 5 anos",)),
+    ("5-a-10", "De 5 a 10 anos", ("entre 5 e 10 anos",)),
+    ("mais-de-10", "Mais de 10 anos", ("entre 10 e 20 anos", "após 20 anos")),
+]
+
+
+def prazos_da_divida(total: list[Ponto], faixas: dict[str, list[Ponto]]) -> dict[str, list[Ponto]]:
+    """{faixa: % do saldo da dívida bruta} nas cinco faixas da tela (as duas mais longas do BC
+    somadas), nos meses em que todas existem."""
+    mapas = {nome: dict(pontos) for nome, pontos in faixas.items()}
+    todo = dict(total)
+    meses = sorted(d for d in todo if todo[d] and all(d in m for m in mapas.values()))
+    return {
+        id: [(d, sum(mapas[f][d] for f in fontes) / todo[d] * 100) for d in meses]
+        for id, _, fontes in FAIXAS_DE_PRAZO
+    }
+
+
+def juro_e_prazos(ctx: Contexto, inicio: date) -> tuple[Cartao, Grafico]:
+    """O juro médio da dívida bruta (taxa implícita de 12 meses) e quando ela vence."""
+    taxa = ctx.memo.get("taxa_implicita_dbgg") or bcb_fiscal.taxa_implicita_dbgg()
+    ctx.memo["taxa_implicita_dbgg"] = taxa
+    total, faixas = bcb_fiscal.cronograma_dbgg()
+    partes = prazos_da_divida(total, faixas)
+    c = cartao(
+        "juro-implicito",
+        "Juro médio da dívida bruta, 12 meses",
+        taxa,
+        unidade="% a.a.",
+        periodicidade="M",
+        casas=1,
+        detalhe=f"Selic hoje: {br(ctx.sgs('SELIC_META', 2)[-1][1], 2)} %",
+        fonte=bcb_fiscal.FONTE_TAXA,
+        secao="fiscal",
+        mini=120,
+    )
+    g = grafico(
+        "divida-vencimento",
+        "Quando a dívida bruta vence",
+        [serie(id, nome, partes[id], casas=1, desde=inicio) for id, nome, _ in FAIXAS_DE_PRAZO],
+        tipo="empilhado",
+        unidade="% da dívida bruta",
+        casas=1,
+        periodicidade="M",
+        janela_anos=10,
+        fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+        nota=(
+            "O saldo da dívida bruta do governo geral pelo prazo que falta para vencer, como "
+            "parte do total, no cronograma que o Banco Central publica. Inclui as operações "
+            "compromissadas do Banco Central, quase todas de prazo curto. A parte de até um "
+            "ano é a que o governo precisa trocar por dívida nova nos próximos 12 meses."
+        ),
+    )
+    return c, g
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -524,6 +583,14 @@ def montar(ctx: Contexto) -> Secao:
             ),
         )
     )
+
+    # --- O juro e os prazos da dívida bruta: as tabelas especiais do BC (não estão no SGS) ---
+    try:
+        c_juro, g_prazos = juro_e_prazos(ctx, inicio)
+        cartoes.append(c_juro)
+        graficos.append(g_prazos)
+    except Exception as erro:
+        print(f"  aviso: fiscal: sem o juro e os prazos da dívida bruta ({str(erro)[:120]})")
 
     sinal = "déficit" if primario[-1][1] < 0 else "superávit"
     resumo = (

@@ -483,6 +483,18 @@ SGS: dict[str, SerieSGS] = {
         "M",
         "14/11/2026",
     ),
+    # Conferida no package_search em 15/11/2026: "NFSP sem desvalorização cambial - Fluxo
+    # mensal corrente - Juros nominais - Total - Governo Federal e Banco Central", mensal,
+    # "Milhões de reais", desde jan/1991 (set/2026: 104.837,22). Juros por competência, sem o
+    # efeito do câmbio; líquidos (o que se paga menos o que se recebe de juros, as reservas
+    # inclusive). Par da 4639, para os juros sobre a receita do Governo Central.
+    "NFSP_JUROS_GC_MES": SerieSGS(
+        4606,
+        "NFSP, juros nominais, fluxo mensal, Governo Federal e Banco Central",
+        "R$ milhões",
+        "M",
+        "15/11/2026",
+    ),
     # Dívida mobiliária federal, participação por indexador (Percentual, mensal, desde jan/2000).
     # Conferidas no package_search do BCB em 14/11/2026. A família não traz o IPCA (NTN-B):
     # as oito parcelas somam ~76 % em set/2026; o que falta para 100 % é o IPCA.

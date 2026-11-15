@@ -179,6 +179,25 @@ LEITURAS: list[Leitura] = [
         "até 15 de abril. Uma vez por ano.",
     ),
     Leitura(
+        "Ações na Justiça contra a União e sentenças pagas (Anexo de Riscos Fiscais)",
+        "relatorios.ACOES_JUDICIAIS",
+        date(2026, 11, 15),
+        date(2027, 4, 30),
+        "Anexo V (Riscos Fiscais) do PLDO, tabelas de demandas judiciais (possível e provável) "
+        "e de despesas judiciais (gov.br/planejamento, orçamentos anuais, enviado até 15 de "
+        "abril). Atualizar também SENTENCAS_PAGAS e RISCOS_FISCAIS (a tabela-resumo). Uma vez "
+        "por ano.",
+    ),
+    Leitura(
+        "Projeção atuarial do INSS até 2100",
+        "relatorios.RGPS_PROJECAO",
+        date(2026, 11, 15),
+        date(2027, 4, 30),
+        "Anexo IV.10 do PLDO (Projeções Atuariais do RGPS), tabela da receita, despesa e "
+        "necessidade de financiamento em % do PIB (gov.br/planejamento, abril). Uma vez por "
+        "ano.",
+    ),
+    Leitura(
         "Dívida ativa da União: recuperado no ano",
         "relatorios.DIVIDA_ATIVA_RECUPERADO",
         date(2026, 11, 14),

@@ -391,9 +391,10 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "divida",
             "Dívida pública",
-            "Dívida bruta e líquida, o que o mercado projeta e de que ela é feita.",
-            cartoes=["dbgg", "dlsp", "divida-selic"],
-            graficos=["divida", "divida-indexador"],
+            "Dívida bruta e líquida, o que o mercado projeta, de que ela é feita, quanto "
+            "custa e quando vence.",
+            cartoes=["dbgg", "dlsp", "divida-selic", "juro-implicito"],
+            graficos=["divida", "divida-indexador", "divida-vencimento"],
             veja=[
                 Elo(
                     endereco=EFEITO_DA_SELIC,
@@ -515,24 +516,42 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "divida",
             "A dívida se sustenta?",
-            "O primário que estabiliza a dívida, o juro contra o crescimento e o leque.",
+            "O primário que estabiliza a dívida, o juro contra o crescimento, o leque e a dívida "
+            "se cada crise do passado se repetisse agora.",
             cartoes=[
                 "primario-estabiliza",
                 "divida-sobe-em-5-anos",
                 "juro-menos-crescimento",
                 "juro-da-divida",
-                "juros-em-reais",
-                "prazo-da-divida",
             ],
-            graficos=["divida-leque", "primario-necessario", "juro-crescimento"],
-            tabelas=["elasticidades-da-divida"],
+            graficos=["divida-leque", "primario-necessario", "juro-crescimento", "estresse-divida"],
+            tabelas=["elasticidades-da-divida", "estresse-episodios"],
         ),
         Parte(
-            "estresse",
-            "Testes de estresse",
-            "A dívida se cada crise do passado se repetisse agora.",
-            graficos=["estresse-divida"],
-            tabelas=["estresse-episodios"],
+            "custo",
+            "Custo e rolagem da dívida",
+            "Quanto se paga de juros, quanto da receita eles levam e quanto vence logo.",
+            cartoes=[
+                "juros-em-reais",
+                "juros-sobre-receita",
+                "vence-em-12-meses",
+                "prazo-da-divida",
+            ],
+            graficos=["juros-sobre-receita", "vence-em-12-meses"],
+        ),
+        Parte(
+            "juridico",
+            "Riscos fiscais e da Previdência",
+            "Ações na Justiça, precatórios, garantias, governança, o INSS até 2100 e o "
+            "envelhecimento.",
+            cartoes=[
+                "acoes-perda-provavel",
+                "sentencas-pagas",
+                "inss-deficit-2060",
+                "idosos-por-100",
+            ],
+            graficos=["acoes-judiciais", "sentencas-judiciais", "inss-ate-2100"],
+            tabelas=["riscos-fiscais-uniao", "governanca"],
         ),
         Parte(
             "mercado-externo",
@@ -558,17 +577,10 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "bancos",
-            "Bancos e crédito",
-            "Atrasos no crédito e o capital dos bancos.",
-            cartoes=["credito-atrasos", "basileia"],
-            graficos=["credito-atrasos", "basileia"],
-        ),
-        Parte(
-            "energia-populacao",
-            "Energia e população",
-            "Os reservatórios das hidrelétricas e o envelhecimento.",
-            cartoes=["reservatorios", "idosos-por-100"],
-            graficos=["reservatorios"],
+            "Bancos e energia",
+            "Atrasos no crédito, o capital dos bancos e os reservatórios das hidrelétricas.",
+            cartoes=["credito-atrasos", "basileia", "reservatorios"],
+            graficos=["credito-atrasos", "basileia", "reservatorios"],
         ),
     ],
 }
