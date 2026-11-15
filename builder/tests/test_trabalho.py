@@ -86,7 +86,8 @@ def test_montar(ctx: Contexto) -> None:
     assert graficos[:4] == ["desocupacao", "emprego-formal", "rendimento", "massa"]
     caged = secao.graficos[1]
     assert [s.id for s in caged.series] == ["saldo", "saldo-3m"]
-    tabela, setores = secao.tabelas
+    tabela, minimo, setores = secao.tabelas
+    assert minimo.id == "salario-minimo"
     assert setores.id == "emprego-setores"
     assert setores.linhas[-1].rotulo == "Total"
     # 17 setores, os "demais serviços" e o total; a coluna das vagas fecha no total.
@@ -133,7 +134,7 @@ def test_somar_so_nas_datas_comuns() -> None:
 
 def test_salario_minimo_ate_hoje_e_a_precos_de_hoje(ctx: Contexto) -> None:
     """Revisão das telas (15/11/2026): quem buscava "salário mínimo" não achava nada."""
-    cartao, grafico = trabalho.salario_minimo(ctx)
+    cartao, grafico, _ = trabalho.salario_minimo(ctx)
     # O SGS traz dez/2026 já decretado; o cartão para no mês de hoje (nov/2026).
     assert cartao.valor == 1621.0
     assert cartao.referencia == date(2026, 11, 1)
@@ -148,3 +149,15 @@ def test_salario_minimo_ate_hoje_e_a_precos_de_hoje(ctx: Contexto) -> None:
     assert real[1][1] == pytest.approx(sum(em_2026) / 10, abs=0.5)  # em reais inteiros
     em_2025 = [1518.0 * 1.005 ** (22 - m) for m in range(1, 13)]
     assert real[0][1] == pytest.approx(sum(em_2025) / 12, abs=0.5)
+
+
+def test_salario_minimo_contra_a_inflacao(ctx: Contexto) -> None:
+    """Caio, 15/11/2026: "comparar o salário mínimo contra a inflação acumulada no período"."""
+    *_, tabela = trabalho.salario_minimo(ctx)
+    # Os dados de mentira vão de jan/2025 a out/2026: só o prazo de 1 ano cabe.
+    assert [linha.rotulo for linha in tabela.linhas] == ["Em 1 ano: desde out/2025, R$ 1.518"]
+    alta, ipca, acima = tabela.linhas[0].valores
+    assert alta == pytest.approx((1621 / 1518 - 1) * 100)
+    assert ipca == pytest.approx((1.005**12 - 1) * 100)
+    assert acima == pytest.approx((1621 / 1518 / 1.005**12 - 1) * 100)
+    assert tabela.subtitulo == "Até out/2026, quando valia R$ 1.621"

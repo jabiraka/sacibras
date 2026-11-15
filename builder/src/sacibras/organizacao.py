@@ -103,6 +103,7 @@ PARTES: dict[str, list[Parte]] = {
             "mínimo.",
             cartoes=["rendimento", "massa", "salario-minimo"],
             graficos=["rendimento", "massa", "salario-minimo"],
+            tabelas=["salario-minimo"],
         ),
         Parte(
             "quem-trabalha",

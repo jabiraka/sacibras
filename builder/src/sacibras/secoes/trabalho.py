@@ -221,7 +221,7 @@ SALARIO_MINIMO_DESDE = date(1995, 1, 1)
 """Antes do real (jul/1994) a série está em outras moedas; 1995 é o primeiro ano inteiro."""
 
 
-def salario_minimo(ctx: Contexto) -> tuple[Cartao, Grafico]:
+def salario_minimo(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
     """O salário mínimo em reais e a preços de hoje pelo IPCA (revisão das telas, 15/11/2026:
     quem busca "salário mínimo" não achava nada). A série do SGS traz os meses já decretados
     adiante; a tela mostra até o mês de hoje."""
@@ -279,7 +279,56 @@ def salario_minimo(ctx: Contexto) -> tuple[Cartao, Grafico]:
             "hoje, em reais da época, está no cartão."
         ),
     )
-    return c, g
+    return c, g, contra_a_inflacao(minimo, indice, base, fonte, ctx.fonte_sgs("IPCA"))
+
+
+# Os prazos da tabela "contra a inflação": fixos e contados do mês mais novo com IPCA, para a
+# comparação não depender de um ano escolhido a dedo (Caio, 15/11/2026: "comparar o salário
+# mínimo contra a inflação acumulada no período").
+PRAZOS_SALARIO_MINIMO = [1, 5, 10, 20]
+
+
+def contra_a_inflacao(
+    minimo: list[Ponto], indice: dict[date, float], base: date, fonte: str, fonte_ipca: str
+) -> Tabela:
+    """Para cada prazo (e desde 1995): o mínimo no início, quanto ele subiu, quanto subiu o
+    IPCA e o ganho acima da inflação, (1 + alta) / (1 + IPCA) − 1. O IPCA do período é o do
+    índice no mês de início até o mês mais novo, a mesma conta do gráfico."""
+    valor = dict(minimo)
+    linhas: list[LinhaTabela] = []
+    inicios = [
+        (f"Em {n} ano{'s' if n > 1 else ''}: desde", date(base.year - n, base.month, 1))
+        for n in PRAZOS_SALARIO_MINIMO
+    ] + [("Desde o início do real:", SALARIO_MINIMO_DESDE)]
+    for rotulo, inicio in inicios:
+        if inicio not in valor or inicio not in indice or base not in valor:
+            continue
+        alta = valor[base] / valor[inicio] - 1
+        ipca = indice[base] / indice[inicio] - 1
+        linhas.append(
+            LinhaTabela(
+                rotulo=f"{rotulo} {periodo(inicio, 'M')}, R$ {br(valor[inicio], 0)}",
+                valores=[alta * 100, ipca * 100, ((1 + alta) / (1 + ipca) - 1) * 100],
+                unidade="",
+                casas=1,
+            )
+        )
+    return Tabela(
+        id="salario-minimo",
+        titulo="Salário mínimo contra a inflação",
+        subtitulo=f"Até {periodo(base, 'M')}, quando valia R$ {br(valor.get(base, 0.0), 0)}",
+        colunas=[
+            "Alta do mínimo (%)",
+            "IPCA no período (%)",
+            "Acima da inflação (%)",
+        ],
+        linhas=linhas,
+        fonte=f"{fonte}; IPCA: {fonte_ipca}",
+        nota=(
+            "Acima da inflação: quanto o mínimo de hoje compra a mais que o do início, "
+            "(1 + alta do mínimo) ÷ (1 + IPCA) − 1. Conta nossa, com o IPCA de cada mês."
+        ),
+    )
 
 
 def montar(ctx: Contexto) -> Secao:
@@ -562,9 +611,10 @@ def montar(ctx: Contexto) -> Secao:
 
     tabelas = [tabela]
     try:
-        c_minimo, g_minimo = salario_minimo(ctx)
+        c_minimo, g_minimo, t_minimo = salario_minimo(ctx)
         cartoes.append(c_minimo)
         graficos.append(g_minimo)
+        tabelas.append(t_minimo)
     except Exception as erro:
         print(f"    trabalho: salário mínimo ficou de fora: {str(erro)[:160]}")
     try:
