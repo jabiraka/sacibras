@@ -6,7 +6,7 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 
 Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*); o trabalho está no branch `ccr-851b3f37-q0xn6r`, **ainda não juntado no `main`**.
+PC"*). Tudo publicado no `main`; nenhum branch com trabalho pendente.
 
 ## Releituras com prazo
 
@@ -47,7 +47,6 @@ As próximas:
 
 ## Espera o Caio
 
-- **Juntar no `main`** o branch `ccr-851b3f37-q0xn6r` (a sessão da nuvem só sobe no branch dela).
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.
