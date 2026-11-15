@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from sacibras.fontes import bcb_focus, fmi
+from sacibras.fontes import bcb_fiscal, bcb_focus, fmi
 from sacibras.modelos import acerto_focus, divida, pib_agora
 from sacibras.schema import (
     Cartao,
@@ -47,6 +47,22 @@ def _anual(pontos: list[Ponto]) -> list[Ponto]:
     return [(date(d.year, 1, 1), v) for d, v in pontos]
 
 
+def _juro_de_hoje(ctx: Contexto, dbgg: list[Ponto]) -> tuple[float, bool]:
+    """(o juro que a dívida bruta paga hoje, em % a.a., True se é a taxa oficial).
+
+    Caio, 15/11/2026: "mude o simulador para a taxa oficial" — a taxa implícita da DBGG em 12
+    meses que o BC publica (a mesma de Riscos e de Contas públicas). Sem a planilha, fica a
+    conta antiga (juros de 12 meses do setor público ÷ dívida bruta), dita na nota."""
+    try:
+        taxa = ctx.memo.get("taxa_implicita_dbgg") or bcb_fiscal.taxa_implicita_dbgg()
+        ctx.memo["taxa_implicita_dbgg"] = taxa
+        return taxa[-1][1], True
+    except Exception as erro:
+        print(f"    simulador: sem a taxa implícita do BC, fica a conta nossa ({str(erro)[:100]})")
+    juros_12m = ctx.sgs("NFSP_JUROS_12M", anos=20)
+    return juros_12m[-1][1] / dbgg[-1][1] * 100, False
+
+
 def _simulador(
     ctx: Contexto, medianas: dict[str, dict[int, float]], edicao: date
 ) -> SimuladorDivida | None:
@@ -57,9 +73,7 @@ def _simulador(
     if ano not in focus_divida or any(not medianas.get(n) for n in necessarios):
         return None
     dbgg = ctx.sgs("DBGG", anos=20)
-    juros_12m = ctx.sgs("NFSP_JUROS_12M", anos=20)
-    # O juro que a dívida paga hoje: os juros de 12 meses divididos pelo estoque.
-    implicito = juros_12m[-1][1] / dbgg[-1][1] * 100
+    implicito, oficial = _juro_de_hoje(ctx, dbgg)
     anos = list(range(ano + 1, ano + 9))
     # A parte da dívida atrelada à Selic acompanha a Selic que o Focus espera (a média do
     # ano, pelo começo e pelo fim); o resto mantém o custo de hoje.
@@ -72,6 +86,11 @@ def _simulador(
         fim = selic_fim.get(a, anterior)
         juro.append(round(implicito + atrelada * ((anterior + fim) / 2 - selic_hoje), 2))
         anterior = fim
+    como_juro = (
+        "a taxa implícita da dívida bruta em 12 meses, do Banco Central"
+        if oficial
+        else "juros de 12 meses do setor público ÷ dívida bruta; a taxa do BC não respondeu"
+    )
     return SimuladorDivida(
         ano_inicial=ano,
         divida_inicial=round(focus_divida[ano], 2),
@@ -84,13 +103,15 @@ def _simulador(
         realizado=[(date(d.year, 1, 1), round(v, 2)) for d, v in dbgg if d.month == 12][-10:],
         fonte=(
             f"Focus de {periodo(edicao, 'D')} (PIB, IPCA, Selic, resultado primário e dívida); "
-            f"{ctx.fonte_sgs('DBGG', 'NFSP_JUROS_12M', 'DIVIDA_IDX_SELIC')}; cálculo próprio"
+            f"{ctx.fonte_sgs('DBGG', 'DIVIDA_IDX_SELIC')}"
+            + (f"; {bcb_fiscal.FONTE_TAXA}" if oficial else "")
+            + "; cálculo próprio"
         ),
         nota=(
             "Conta: dívida do ano seguinte = dívida × (1 + juro) ÷ ((1 + crescimento) × "
             "(1 + inflação)) − resultado primário. Parte da dívida que o Focus espera para o "
-            f"fim de {ano}. Juro: o que a dívida paga hoje (juros de 12 meses do setor público "
-            f"÷ dívida bruta = {br(implicito)} % ao ano); a parte atrelada à Selic "
+            f"fim de {ano}. Juro: o que a dívida paga hoje ({como_juro} = {br(implicito)} % "
+            "ao ano); a parte atrelada à Selic "
             f"({br(atrelada * 100, 0)} % dos títulos) acompanha a Selic esperada pelo Focus. "
             "Crescimento, inflação e primário: medianas do Focus, com a última repetida nos "
             "anos que o Focus não cobre. Inflação: na conta, o juro não reage a ela; na vida "
