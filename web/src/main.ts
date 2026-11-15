@@ -14,6 +14,7 @@ import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDaSemana, agendaDoAssunto } from "./calendario";
 import { ligarGlossario } from "./glossario";
+import { vistaGlossario } from "./glossario-pagina";
 import { ligarNomesProprios, ligarTraducao, protegerNomeDeEstado } from "./traducao";
 import { novoDesdeAUltimaVisita, seloNovo } from "./novidades";
 import { montarEstados } from "./estados";
@@ -382,6 +383,14 @@ function montarMenu(painel: Painel): void {
     grupo.append(ul);
     menu.append(grupo);
   }
+  // O glossário inteiro, de A a Z (revisão das telas, 15/11/2026).
+  const consulta = el("div", "menu-grupo");
+  consulta.append(el("p", "menu-categoria", "Consulta"));
+  const glossario = el("a", "menu-assunto", "Glossário");
+  glossario.href = "#glossario";
+  glossario.dataset.assunto = "glossario";
+  consulta.append(glossario);
+  menu.append(consulta);
 }
 
 /** Marca no menu onde a pessoa está e abre as partes do assunto aberto. */
@@ -846,6 +855,15 @@ async function iniciar(): Promise<void> {
     const assunto = item ? alvo : "";
     const chave = assunto ? `${assunto}/${peca}` : "";
     abrirMenu(false);
+    if (alvo === "glossario") {
+      if (vistaAtual !== "glossario" || !conteudo.firstChild) {
+        vistaAtual = "glossario";
+        vistaGlossario(conteudo, peca);
+        marcarMenu("glossario", "");
+        window.scrollTo(0, 0);
+      } else if (peca) document.getElementById(`termo-${peca}`)?.scrollIntoView();
+      return;
+    }
     if (chave !== vistaAtual || !conteudo.firstChild) {
       vistaAtual = chave;
       if (assunto) vistaAssunto(painel, assunto, peca, conteudo);

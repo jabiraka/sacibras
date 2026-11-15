@@ -447,6 +447,7 @@ SINONIMOS: dict[str, list[str]] = {
         "celular",
         "internet",
     ],
+    "glossario": ["dicionario", "definicoes", "termos", "siglas", "significado", "vocabulario"],
     "alimentacao no domicilio": ["comida", "alimentos", "supermercado", "mercado", "feira"],
 }
 
@@ -1061,6 +1062,8 @@ def montar(saida: Path) -> list[Item]:
             local = f"{nome} › Um estado por dentro"
             itens.append(_item("O que o estado vende ao exterior", local, f"{h}/estado"))
             itens.append(_item("Pirâmide etária do estado", local, f"{h}/estado"))
+    # A página com todas as palavras (revisão das telas, 15/11/2026).
+    itens.append(_item("Glossário", "Consulta · todas as palavras do painel", "#glossario"))
     return itens
 
 

@@ -65,25 +65,38 @@ repetido no PROXIMOS-PASSOS.
 ## Achados da revisão das telas (15/11/2026)
 
 Caio: *"toque nas telas, veja se consegue pensar em algo que está faltando ou alguma tela
-quebrando [...] que eles encontrem oq estão procurando"*. Corrigido na hora: o menu lateral
-que escondia Previsões e Riscos, a busca (palavras de ligação, busca por parte das palavras,
-linhas das tabelas curtas, IPCA por grupo), o número separado do "%" na quebra de linha e as
-frases do PIB dos estados e da Selic. Fica:
+quebrando [...] que eles encontrem oq estão procurando"*. Corrigido: o menu lateral que
+escondia Previsões e Riscos, a busca (palavras de ligação, busca por parte das palavras,
+linhas das tabelas curtas, IPCA por grupo, o glossário), o número separado do "%" na quebra
+de linha, as frases do PIB dos estados e da Selic, as tabelas no celular (sombra na borda
+enquanto há coluna escondida; as que passavam 10 px agora cabem) e a página do glossário
+(`#glossario`, no menu e no rodapé). Fica:
 
-- **O que se procura e o painel não tem** (busca testada com 65 termos):
+- **O que se procura e o painel não tem** (busca testada com 65 termos; são dados novos,
+  ficaram para depois):
   - juros do cartão de crédito, do rotativo e do cheque especial (SGS, taxa por modalidade;
     conferir os códigos no CKAN);
   - salário mínimo, em reais e descontada a inflação (o valor do decreto, lido na norma);
   - itens do IPCA: gasolina, energia elétrica, aluguel (SIDRA 7060 tem os subitens; hoje a
     busca leva ao grupo, Transportes ou Habitação);
   - IPCA-15 como série (hoje só no detalhe do cartão do IPCA do mês e no glossário).
-- **Tabelas no celular**: a 390 px, 23 tabelas rolam para o lado sem sinal de que há coluna
-  escondida; várias passam só 10 px (o IPCA por grupo corta o "Peso no índice"). Uma sombra na
-  borda direita enquanto houver o que rolar, e apertar as que passam por pouco.
-- **Mapa dos estados**: a 1280 px ocupa meia largura e o resto fica vazio; as siglas dos
-  estados pequenos (RN, PB, PE, AL, SE, ES, RJ, DF) somem ou se sobrepõem.
-- **Página do glossário**: uma lista de todos os termos, no menu ou no rodapé, para quem quer
-  ler as definições sem caçá-las na tela.
+- **Estados** (Caio, 15/11/2026: *"anote [...] dos Estados em propostas mas não mexa"*; fica
+  para a sessão de Estados):
+  - a tela abre no crescimento do PIB de 2024, o número oficial mais novo, com quase dois
+    anos (a prévia de 2025 só aparece escolhendo em "até"). Abrir na desocupação do
+    trimestre, na prévia de 2025, ou deixar como está?
+  - o mapa, a 1280 px, ocupa meia largura e o resto fica vazio; as siglas dos estados
+    pequenos (RN, PB, PE, AL, SE, ES, RJ, DF) somem ou se sobrepõem.
+- **Produtividade total dos fatores (PTF, ou TFP)** (Caio, 15/11/2026: *"temos a comparação
+  da TFP?"*; não mexer, fica para outra sessão). Hoje Demografia › Produtividade só tem a
+  produtividade do trabalho (PIB por ocupado e por hora, IBGE) e a repartição do crescimento
+  entre mais gente e mais produto por ocupado; nada contra outros países. Nenhum órgão
+  oficial brasileiro publica a PTF em série regular. As opções, todas fora da regra da fonte
+  oficial e por isso decisão do Caio: a Penn World Table (Universidade de Groningen,
+  acadêmica, versão nova a cada poucos anos, quase todos os países, PTF contra os EUA: a
+  melhor para comparar com os 22 de Brasil no mundo); o Observatório da Produtividade da FGV
+  IBRE (PTF do Brasil com regularidade, privada); a Total Economy Database (Conference Board,
+  privada). Conferir versão e cobertura antes de decidir.
 
 ## Em espera
 

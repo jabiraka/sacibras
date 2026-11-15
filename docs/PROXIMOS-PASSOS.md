@@ -56,9 +56,9 @@ As próximas:
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).
-- **Estados abre no PIB de 2024**: o número oficial mais novo tem quase dois anos (a prévia
-  de 2025 só aparece escolhendo em "até"). Abrir na desocupação do trimestre, na prévia de
-  2025, ou deixar como está?
+- **Estados e PTF**: em que métrica Estados abre, o mapa a 1280 px e a produtividade total
+  dos fatores; tudo no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas", para uma
+  sessão própria (Caio, 15/11/2026).
 - Para olhar: a ficha do estado tem agora 9 abas (quatro números à vista, o resto em "Mais
   números"); a CAPAG e o acordo da dívida aparecem com posição no ranking, como se fossem
   número.

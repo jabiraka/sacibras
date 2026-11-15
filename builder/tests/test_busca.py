@@ -33,7 +33,7 @@ def test_indice_le_os_json_gravados(tmp_path: Path) -> None:
     }
     for nome, dados in [("painel", painel), ("juros", juros), ("estados", estados)]:
         (tmp_path / f"{nome}.json").write_text(json.dumps(dados), encoding="utf-8")
-    assert busca.gravar(tmp_path) == 7  # a seção sem JSON fica de fora
+    assert busca.gravar(tmp_path) == 8  # a seção sem JSON fica de fora; o glossário entra
     itens = {i["h"]: i for i in json.loads((tmp_path / "busca.json").read_text("utf-8"))}
     assert set(itens) == {
         "#juros",
@@ -43,6 +43,7 @@ def test_indice_le_os_json_gravados(tmp_path: Path) -> None:
         "#estados",
         "#estados/m-icms",
         "#estados/uf-RJ",
+        "#glossario",
     }
     assert "copom" in itens["#juros/c-selic-meta"]["p"]
     assert itens["#estados/uf-RJ"]["o"] == "Estados · RJ"
@@ -135,3 +136,9 @@ def test_linhas_das_tabelas_curtas_vao_ao_indice(tmp_path: Path) -> None:
     assert "alimentacao e bebidas transportes" in p
     assert all(w in p for w in ("gasolina", "aluguel", "conta de luz", "alimentos"))
     assert "estado 3" not in itens["#inflacao/t-longa"].p
+
+
+def test_glossario_entra_na_busca(tmp_path: Path) -> None:
+    (tmp_path / "painel.json").write_text(json.dumps({"secoes": []}), encoding="utf-8")
+    item = next(i for i in busca.montar(tmp_path) if i.h == "#glossario")
+    assert "dicionario" in item.p and "siglas" in item.p
