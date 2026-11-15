@@ -7,9 +7,17 @@ from typing import Any
 import pytest
 
 from sacibras import organizacao
-from sacibras.fontes import banco_mundial, ibge_sidra, ipeadata, receita_centis, receita_irpf
+from sacibras.fontes import (
+    banco_mundial,
+    ibge_sidra,
+    ipeadata,
+    receita_centis,
+    receita_irpf,
+    sinisa,
+)
 from sacibras.secoes import pobreza
 from sacibras.secoes.base import Contexto
+from sacibras.secoes.estados import UFS
 from sacibras.tipos import Ponto
 
 A12, A25 = date(2012, 1, 1), date(2025, 1, 1)
@@ -82,13 +90,66 @@ def test_centis_acha_as_colunas_nas_duas_linhas_do_cabecalho() -> None:
     embaixo = (None, None, None, "Limite superior", "Soma de RB4 do Centil", "Lucros e dividendos")
     embaixo += ("Outros", None, "Total Bens e Direitos", None)
     assert receita_centis.colunas(em_cima, embaixo) == {
-        "declarantes": 2,
-        "renda": 4,
-        "dividendos": 5,
-        "imposto": 7,
-        "bens": 8,
-        "dividas": 9,
+        "declarantes": [2],
+        "renda": [4],
+        "dividendos": [5],
+        "imposto": [7],
+        "bens": [8],
+        "dividas": [9],
     }
+
+
+def test_centis_ate_2021_somam_as_quatro_partes_dos_bens() -> None:
+    """Os arquivos de 2017 a 2021 não têm "Total Bens e Direitos" (conferido em 15/11/2026)."""
+    em_cima = ("", "Centil", "Quantidade de Contribu intes", "RB4", None, "Rendimentos Isentos")
+    em_cima += ("Imposto Devido", "Bens e Direitos", None, None, None, "Dívidas e Ônus")
+    embaixo = (None, None, None, "Limite superior", "Soma de RB4 do Centil", "Lucros e dividendos")
+    embaixo += (None, "Imóveis", "Móveis", "Financeiros", "Outros Bens e Direitos", None)
+    onde = receita_centis.colunas(em_cima, embaixo)
+    assert onde["bens"] == [7, 8, 9, 10]
+    assert onde["dividas"] == [11]
+
+
+def test_centis_ate_2021_abrem_o_topo_nas_colunas_ao_lado() -> None:
+    """No arquivo de 2021 (conferido em 15/11/2026) as linhas do centil 100 aberto trazem o
+    número em duas colunas sem cabeçalho ao lado da do centil, de 1 a 10."""
+    import io
+
+    import openpyxl  # type: ignore[import-untyped]
+
+    livro = openpyxl.Workbook()
+    folha = livro.active
+    folha.title = "BRV"
+    folha.append(["Tabela V"])
+    folha.append([None, "Centil", None, None, "Quantidade de Contribu intes", "RB4"])
+    folha.append([None, None, None, None, None, "Soma de RB4 do Centil"])
+    for n in range(1, 101):
+        folha.append([None, n, None, None, 100, 1.0])
+    for coluna in (2, 3):
+        for n in range(1, 11):
+            linha: list[object] = [None, None, None, None, 10, 0.5]
+            linha[coluna] = n
+            folha.append(linha)
+    # as colunas que faltam ficam no cabeçalho de verdade: aqui, só as duas que o teste usa
+    em_cima = [None, "Centil", None, None, "Quantidade de Contribu intes", "RB4", "Imposto Devido"]
+    em_cima += ["Bens e Direitos", None, None, None, "Dívidas e Ônus", "Rendimentos Isentos"]
+    embaixo = [None] * 5 + ["Soma de RB4 do Centil", None, "Imóveis", "Móveis", "Financeiros"]
+    embaixo += ["Outros Bens e Direitos", None, "Lucros e dividendos"]
+    for i, (a, b) in enumerate(zip(em_cima, embaixo, strict=True), start=1):
+        folha.cell(row=2, column=i, value=a)
+        folha.cell(row=3, column=i, value=b)
+    bruto = io.BytesIO()
+    livro.save(bruto)
+    centis = receita_centis.ler_planilha(bruto.getvalue())
+    numeros = [c.numero for c in centis]
+    assert numeros[:3] == [1, 2, 3] and numeros[100] == 101 and numeros[-1] == 120
+    assert len(centis) == 120
+
+
+def test_fatia_do_topo_no_ano() -> None:
+    centis = _centis()
+    assert receita_centis.fatia(centis, range(100, 101)) == pytest.approx(10 / 109 * 100)
+    assert receita_centis.fatia(centis, range(120, 121), "bens") == pytest.approx(9 / 218 * 100)
 
 
 @pytest.fixture
@@ -114,6 +175,12 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
             return {"6795": [(A23, 4.0), (A24, 3.1)], "1": [(A24, 2.8)], "2": [(A24, 4.9)]}
         if tabela == 9751:
             return {"1140": [(A24, 3.0)], "6798": [(A24, 2.0)]}
+        if tabela == 6665:
+            anos = [date(a, 1, 1) for a in (2004, 2009, 2013, 2018, 2023, 2024)]
+            return {
+                "109102": list(zip(anos, [8.2, 5.8, 3.6, 5.0, 4.0, 3.1], strict=True)),
+                "109101": list(zip(anos, [11.3, 7.4, 5.1, 9.0, 5.5, 4.6], strict=True)),
+            }
         if tabela == 7192:  # duas categorias de esgoto por situação, somadas depois
             return {"6795": [(A24, 60.0), (A24, 6.0)], "1": [(A24, 70.0), (A24, 6.0)]}
         if tabela == 7457:
@@ -166,6 +233,13 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     )
     monkeypatch.setattr(receita_irpf, "grandes_numeros", irpf)
     monkeypatch.setattr(receita_centis, "mais_novo", centis)
+    monkeypatch.setattr(receita_centis, "todos", lambda: {2017: _centis(), 2024: _centis()})
+    lugares = {"brasil": {"rede": 62.3, "tratado_domicilios": 47.8, "tratado_coletado": 85.2}}
+    lugares |= {
+        sinisa.chave(nome): {"rede": float(i), "tratado_domicilios": i / 2}
+        for i, (_, _, nome, _) in enumerate(UFS)
+    }
+    monkeypatch.setattr(sinisa, "esgoto", lambda: sinisa.Esgoto(2024, "18/12/2025", lugares))
     monkeypatch.setattr(pobreza, "dispersao_paises", sem_banco_mundial)
     monkeypatch.setattr(
         banco_mundial,
@@ -226,6 +300,18 @@ def test_montar_poe_tudo_numa_parte(ctx: Contexto) -> None:
     assert (
         secao.resumo.startswith("Em 2025, ") and "3,1 % moravam em casas com fome" in secao.resumo
     )
+    fome = next(g for g in secao.graficos if g.id == "fome-pesquisas")
+    grave = next(s for s in fome.series if s.id == "grave")
+    assert grave.pontos[0] == (date(2004, 1, 1), 8.2)
+    mod = next(s for s in fome.series if s.id == "moderada-grave")
+    assert mod.pontos[-1] == (date(2024, 1, 1), 7.7)
+    assert "2018 (POF 2017-2018)" in fome.fonte and "2023 (PNAD Contínua)" in fome.fonte
+    esgoto_uf = next(t for t in secao.tabelas if t.id == "pobreza-sinisa")
+    assert esgoto_uf.linhas[0].rotulo == "Brasil" and len(esgoto_uf.linhas) == 28
+    assert esgoto_uf.linhas[1].rotulo == UFS[0][2]  # o de menor rede vem primeiro
+    topo = next(g for g in secao.graficos if g.id == "irpf-topo-tempo")
+    assert [p[0].year for p in topo.series[0].pontos] == [2017, 2024]
+    assert topo.series[0].pontos[0][1] == pytest.approx(round(10 / 109 * 100, 1))
 
 
 def test_banco_mundial_fica_com_o_ano_mais_novo_de_cada_pais() -> None:
@@ -238,3 +324,42 @@ def test_banco_mundial_fica_com_o_ano_mais_novo_de_cada_pais() -> None:
         {"countryiso3code": "LCN", "date": "2024", "value": 45.0},
     ]
     assert banco_mundial.ultimos(linhas, {"BRA"}) == {"BRA": (2024, 50.3)}
+
+
+def test_sinisa_le_o_consolidado_pelo_codigo_do_indicador() -> None:
+    """Cabeçalho em três linhas (nome, unidade, código); Sergipe e Sudeste têm a mesma sigla."""
+    import io
+
+    import openpyxl  # type: ignore[import-untyped]
+
+    livro = openpyxl.Workbook()
+    folha = livro.active
+    folha.append(["MINISTÉRIO DAS CIDADES"])
+    folha.append(["Ano de referência 2024"])
+    folha.append(["Data de publicação: 18/12/2025"])
+    folha.append(["UF/Macrorregião", "Sigla", "Atendimento", "Outro", "Tratamento", "Tratado"])
+    folha.append(["Percentual"] * 6)
+    folha.append(["UF/Macrorregião", "Sigla", "IES0001", "IES0002", "IES0007", "IES2004"])
+    folha.append(["Brasil", "BR", 62.3, 68.4, 47.8, 85.2])
+    folha.append(["Sudeste", "SE", 81.9, 85.8, 60.4, 82.8])
+    for _, sigla, nome, _ in UFS:
+        folha.append([nome, sigla, "64,55", 1, "Não calculado (condições não atendidas)", 3])
+    folha.append(["CRITÉRIOS PARA CÁLCULO DOS INDICADORES"])
+    bruto = io.BytesIO()
+    livro.save(bruto)
+    dados = sinisa.ler_planilha(bruto.getvalue())
+    assert (dados.ano, dados.publicado) == (2024, "18/12/2025")
+    assert dados.por_lugar["sudeste"]["rede"] == 81.9
+    assert dados.por_lugar["sergipe"] == {
+        "rede": 64.55,
+        "rede_urbana": 1.0,
+        "tratado_coletado": 3.0,
+    }
+    assert "criterios para calculo dos indicadores" not in dados.por_lugar
+
+
+def test_ano_fora_da_curva_no_topo() -> None:
+    anos = [date(a, 1, 1) for a in range(2017, 2025)]
+    pontos = list(zip(anos, [4.0, 24.4, 4.9, 5.0, 6.1, 5.4, 9.1, 6.4], strict=True))
+    assert pobreza.fora_da_curva(pontos) == [(date(2018, 1, 1), 24.4)]
+    assert pobreza.fora_da_curva(pontos[:2]) == []

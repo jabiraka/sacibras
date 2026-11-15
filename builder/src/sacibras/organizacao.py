@@ -139,10 +139,10 @@ PARTES: dict[str, list[Parte]] = {
             "envelhecimento",
             "Envelhecimento e Previdência",
             "Idosos para cada pessoa em idade de trabalhar, por estado e contra o mundo, e o "
-            "déficit do INSS.",
-            cartoes=["idosos-por-100", "deficit-inss"],
-            graficos=["dependencia", "idosos", "idosos-paises", "inss"],
-            tabelas=["demografia-estados"],
+            "déficit do INSS, dos servidores e dos militares da União.",
+            cartoes=["idosos-por-100", "deficit-inss", "deficit-servidores-militares"],
+            graficos=["dependencia", "idosos", "idosos-paises", "inss", "previdencia-uniao"],
+            tabelas=["demografia-estados", "previdencia-uniao"],
         ),
         Parte(
             "produtividade",
@@ -165,19 +165,20 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "fome",
             "Fome",
-            "Quantos moram em casas onde falta comida, e se o Brasil está no Mapa da Fome.",
+            "Quantos moram em casas onde falta comida, desde 2004, e se o Brasil está no Mapa "
+            "da Fome.",
             cartoes=["fome", "inseguranca-moderada-grave", "subalimentacao"],
-            graficos=["fome-fao"],
+            graficos=["fome-fao", "fome-pesquisas"],
             tabelas=["pobreza-fome"],
         ),
         Parte(
             "saneamento",
             "A casa: água, esgoto, aluguel",
-            "Água, esgoto e lixo contra a meta de 2033, luz, internet, fogão a lenha e quem "
-            "mora de aluguel.",
+            "Água, esgoto e lixo contra a meta de 2033, o esgoto tratado em cada estado, luz, "
+            "internet, fogão a lenha e quem mora de aluguel.",
             cartoes=["agua", "esgoto", "lixo", "internet", "lenha", "aluguel"],
             graficos=["saneamento", "internet-lenha", "moradia"],
-            tabelas=["pobreza-saneamento"],
+            tabelas=["pobreza-saneamento", "pobreza-sinisa"],
         ),
         Parte(
             "desigualdade",
@@ -191,8 +192,9 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "quem-ganha-mais",
             "O topo pelo Imposto de Renda",
-            "Renda, patrimônio e dividendos de quem declara, do pé ao topo.",
+            "Renda, patrimônio e dividendos de quem declara, do pé ao topo, e o topo ano a ano.",
             cartoes=["irpf-topo-renda", "irpf-topo-dividendos", "irpf-1-patrimonio"],
+            graficos=["irpf-topo-tempo"],
             tabelas=["pobreza-irpf", "pobreza-centis"],
         ),
         Parte(
@@ -460,7 +462,8 @@ PARTES: dict[str, list[Parte]] = {
             "reforma",
             "Reforma do consumo",
             "O que muda no imposto das compras de 2026 a 2033, quanto vai numa compra, o "
-            "Imposto Seletivo, o Simples e o IBS indo para o destino.",
+            "Imposto Seletivo, o Simples, os setores com regra própria e o IBS indo para o "
+            "destino.",
             cartoes=["reforma-cbs-2027", "reforma-aliquota-cheia", "reforma-icms-iss"],
             graficos=["reforma-transicao", "reforma-destino"],
             tabelas=[
@@ -468,17 +471,18 @@ PARTES: dict[str, list[Parte]] = {
                 "reforma-aliquota",
                 "reforma-descontos",
                 "reforma-seletivo-simples",
+                "reforma-regimes",
             ],
             extras=["simulador-reforma"],
         ),
         Parte(
             "carga",
             "Carga tributária",
-            "Quanto do PIB vai para impostos, quem arrecada, sobre o que se cobra e como o "
-            "Brasil se compara, também no crescimento.",
-            cartoes=["carga-tributaria", "carga-consumo"],
+            "Quanto do PIB vai para impostos, quem arrecada, sobre o que se cobra (renda, "
+            "consumo, salário) e como o Brasil se compara, também no crescimento.",
+            cartoes=["carga-tributaria", "carga-consumo", "ir-pessoas"],
             graficos=["carga-tributaria", "carga-composicao", "carga-esferas", "carga-crescimento"],
-            tabelas=["carga-paises"],
+            tabelas=["carga-paises", "carga-bases-paises"],
         ),
         Parte(
             "quem-paga",

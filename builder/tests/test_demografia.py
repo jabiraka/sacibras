@@ -9,7 +9,14 @@ from typing import Any
 import openpyxl
 import pytest
 
-from sacibras.fontes import banco_mundial, ibge_projecao, ibge_sidra, onu_wpp, tesouro_rtn
+from sacibras.fontes import (
+    banco_mundial,
+    ibge_projecao,
+    ibge_sidra,
+    onu_wpp,
+    siconfi,
+    tesouro_rtn,
+)
 from sacibras.fontes.ibge_projecao import PlanilhaMudouError, ler_por_ano, ler_quinquenal
 from sacibras.secoes import demografia
 from sacibras.secoes.base import Contexto
@@ -292,6 +299,13 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     )
     monkeypatch.setattr(onu_wpp, "populacao", _projecao)
     monkeypatch.setattr(
+        siconfi,
+        "previdencia_uniao",
+        lambda hoje: [
+            siconfi.PrevidenciaUniao(a, 40e9, -60e9, 9e9, -48e9, -5e9) for a in (2024, 2025)
+        ],
+    )
+    monkeypatch.setattr(
         banco_mundial,
         "series_dos_paises",
         lambda paises, *a: {p: [(2000, 5.0), (2025, 10.0)] for p in paises},
@@ -327,6 +341,18 @@ def test_monta_a_secao_com_o_ano_corrente_e_o_inss(ctx: Contexto) -> None:
     hora = next(c for c in secao.cartoes if c.id == "produtividade-hora")
     assert hora.procedencia == "calculado" and len(hora.detalhe) <= 60
 
+    # servidores e militares: R$ 60 bi e R$ 48 bi de déficit, PIB de R$ 12 tri no ano
+    uniao = next(c for c in secao.cartoes if c.id == "deficit-servidores-militares")
+    assert uniao.valor == pytest.approx(0.9) and uniao.referencia == date(2025, 1, 1)
+    assert len(uniao.detalhe) <= 60
+    prev = graficos["previdencia-uniao"]
+    assert [s.id for s in prev.series] == ["inss", "civis", "militares"]
+    assert prev.series[0].pontos[-1] == (date(2025, 1, 1), 2.5)
+    tabela = next(t for t in secao.tabelas if t.id == "previdencia-uniao")
+    assert [li.rotulo for li in tabela.linhas] == ["INSS", "Servidores civis da União", "Militares"]
+    assert tabela.linhas[1].valores == [40.0, 100.0, 60.0, 0.5]
+    assert tabela.linhas[2].valores == [9.0, 57.0, 48.0, 0.4]
+
     estados = next(t for t in secao.tabelas if t.id == "demografia-estados")
     assert [linha.rotulo for linha in estados.linhas] == ["Brasil", "São Paulo", "Acre"]
     assert "filho," in secao.resumo or "filhos," in secao.resumo
@@ -358,3 +384,40 @@ def test_banco_mundial_traduz_o_agregado_sem_codigo_de_tres_letras(
     monkeypatch.setattr(banco_mundial, "baixar_json", lambda *a, **k: resposta)
     series = banco_mundial.series_dos_paises(["BRA", "HIC"], banco_mundial.IDOSOS, 2024, 2025)
     assert series == {"HIC": [(2024, 19.6), (2025, 20.0)], "BRA": [(2025, 11.5)]}
+
+
+def test_previdencia_da_uniao_pela_coluna_do_ano_do_relatorio() -> None:
+    """O RREO de 2020 traz o ano anterior ao lado; o de 2021, a coluna sem o ano."""
+
+    def item(conta: str, coluna: str, valor: float) -> dict[str, Any]:
+        return {"cod_conta": conta, "coluna": coluna, "valor": valor}
+
+    itens = [
+        item("RREO4ResultadoRPPSPrevidenciario", "DESPESAS LIQUIDADAS ATÉ O BIMESTRE / 2019", -1),
+        item("RREO4ResultadoRPPSPrevidenciario", "DESPESAS LIQUIDADAS ATÉ O BIMESTRE / 2020", -48),
+        item("TotalReceitasRPPSPrevidenciario", "PREVISÃO INICIAL", 43),
+        item("TotalReceitasRPPSPrevidenciario", "Até o Bimestre / 2020", 39),
+        item("RREO4ResultadoRPPSFinanceiro", "DESPESAS LIQUIDADAS ATÉ O BIMESTRE / 2020", -17),
+        item("ResultadoInativosMilitares", "DESPESAS LIQUIDADAS ATÉ O BIMESTRE / 2020", -28),
+        item("TotalReceitasRPPSFinanceiro", "Até o Bimestre / 2020", 7),
+    ]
+    p = siconfi.parse_previdencia_uniao(itens, 2020)
+    assert p is not None
+    assert (p.civis_resultado, p.civis_receita, p.civis_despesa) == (-48, 39, 87)
+    assert (p.militares_resultado, p.militares_despesa, p.fcdf_resultado) == (-45, 52, 0)
+    sem_ano = [item("RREO4ResultadoRPPSPrevidenciario", "DESPESAS LIQUIDADAS ATÉ O BIMESTRE", -9)]
+    assert (
+        siconfi.do_ano(
+            sem_ano,
+            "RREO4ResultadoRPPSPrevidenciario",
+            ("DESPESAS LIQUIDADAS ATÉ O BIMESTRE",),
+            2021,
+        )
+        == -9
+    )
+    assert siconfi.parse_previdencia_uniao(sem_ano, 2021) is None  # sem os militares
+
+
+def test_soma_do_ano_so_com_os_doze_meses() -> None:
+    mensal = _mensal(date(2024, 3, 1), 22, 1.0)
+    assert demografia.soma_do_ano(mensal) == {2025: 12.0}

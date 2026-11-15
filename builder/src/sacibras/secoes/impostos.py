@@ -522,6 +522,99 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
     return cartoes, graficos, tabelas, frase + "."
 
 
+BASES_DETALHADAS = {
+    "T_1100": "IR das pessoas",
+    "T_1200": "IR e CSLL das empresas",
+    "T_5110": "consumo em geral",
+    "T_5120": "produtos específicos",
+    "salario": "sobre o salário",
+}
+"""As colunas da tabela de bases contra outros países, códigos da OCDE (o salário soma as
+contribuições sociais, T_2000, e a folha, T_3000). Conferido em 15/11/2026 no
+`DF_RSGLOBAL`: o Brasil tem todos até 2024, e a média da OCDE e a da América Latina (A9), até
+2023."""
+
+
+def tabela_de_bases(
+    dados: ocde_receita.Tabela, paises: list[str], nome: Callable[[str], str]
+) -> tuple[int, list[LinhaTabela]]:
+    """O ano mais novo em que o Brasil e as duas médias têm o IR das pessoas, e uma linha por
+    país com cada base em % do PIB."""
+
+    def de(pais: str, cat: str) -> dict[int, float]:
+        return dados.get((pais, "S13", cat), {})
+
+    comuns = sorted(set.intersection(*(set(de(p, "T_1100")) for p in paises[:3])), reverse=True)
+    if not comuns:
+        raise RuntimeError("OCDE: sem ano comum do IR das pessoas")
+    ano = comuns[0]
+    linhas = []
+    for p in paises:
+        valores: list[float | None] = []
+        for cat in BASES_DETALHADAS:
+            if cat == "salario":
+                contrib, folha = de(p, "T_2000").get(ano), de(p, "T_3000").get(ano)
+                v = None if contrib is None else contrib + (folha or 0)
+            else:
+                v = de(p, cat).get(ano)
+            valores.append(None if v is None else round(v, 1))
+        if any(v is not None for v in valores):
+            linhas.append(LinhaTabela(rotulo=nome(p), valores=valores, unidade="", casas=1))
+    return ano, linhas
+
+
+def _bases_paises(ctx: Contexto) -> Pecas:
+    """IR das pessoas, consumo e salário em % do PIB, Brasil contra outros países."""
+    paises = ["BRA", *AGREGADOS, *COMPARAR]
+    categorias = [c for c in BASES_DETALHADAS if c.startswith("T_")] + ["T_2000", "T_3000"]
+    dados = ocde_receita.carga(paises, ["S13"], categorias, inicio=ctx.hoje.year - 6)
+    traducao = _nomes()
+
+    def nome(p: str) -> str:
+        return "Brasil" if p == "BRA" else AGREGADOS.get(p) or nome_do_pais(p, traducao)
+
+    ano, linhas = tabela_de_bases(dados, paises, nome)
+    pf = {p: dados.get((p, "S13", "T_1100"), {}) for p in ("BRA", "OECD_REP", "A9")}
+    fonte = (
+        f"{ocde_receita.FONTE} (que junta o Revenue Statistics da OCDE e o da América Latina e "
+        "Caribe, feito com a CEPAL, o CIAT e o BID)"
+    )
+    cartoes = [
+        cartao(
+            "ir-pessoas",
+            "IR das pessoas físicas",
+            _pontos_anuais(pf["BRA"]),
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            detalhe=(
+                f"{ano}: OCDE {br(pf['OECD_REP'][ano])} %, América Latina {br(pf['A9'][ano])} %"
+            ),
+            fonte=fonte,
+            secao="impostos",
+            mini=30,
+        )
+    ]
+    tabela = Tabela(
+        id="carga-bases-paises",
+        titulo="Imposto de renda, consumo e salário: o Brasil e outros países",
+        subtitulo=f"{ano}; % do PIB",
+        colunas=list(BASES_DETALHADAS.values()),
+        linhas=linhas,
+        fonte=fonte,
+        nota=(
+            "IR das pessoas: o Imposto de Renda de quem trabalha, se aposenta ou investe, "
+            "inclusive o retido na fonte. Consumo em geral: os tributos sobre quase tudo o que "
+            "se vende (no Brasil, ICMS, IPI, PIS, Cofins e ISS; lá fora, o IVA). Produtos "
+            "específicos: os que pesam só sobre alguns bens, como combustível, bebida e "
+            "cigarro, e o imposto de importação. Sobre o salário: contribuições à previdência "
+            "de quem trabalha e de quem emprega e as contribuições sobre a folha (no Brasil, "
+            "salário-educação e Sistema S). Mesmo método para todos os países."
+        ),
+    )
+    return cartoes, [], [tabela], ""
+
+
 def _crescimento(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
     """Um ponto por país: carga média e crescimento médio por habitante nos mesmos anos."""
     todos = ocde_receita.carga(None, ["S13"], ["_T"], inicio=ctx.hoje.year - 15)
@@ -881,7 +974,7 @@ def _simulador_da_reforma(
             "estados e municípios podem devolver mais.\n\n"
             "O desconto vale para o que está nas listas da lei, não para tudo o que o nome "
             "sugere (nem todo alimento, nem todo remédio). Combustíveis, bancos, planos de saúde, "
-            "imóveis, bares e restaurantes têm regras próprias, que não estão aqui."
+            "imóveis, bares e restaurantes têm regras próprias, na tabela dos regimes."
         ),
     )
 
@@ -1522,10 +1615,32 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
             "pague o IBS e a CBS por fora."
         ),
     )
-    return [], [transicao, destino], [regras], ""
+    regimes = Tabela(
+        id="reforma-regimes",
+        titulo="Quem tem regra própria na reforma",
+        subtitulo="combustíveis, bancos, planos de saúde, imóveis e os outros regimes da lei",
+        colunas=["O que muda", "Onde está"],
+        linhas=[
+            LinhaTabela(rotulo=r.tema, valores=[], unidade="", textos=[r.diz, r.norma])
+            for r in leis.REGIMES_PROPRIOS
+        ],
+        fonte=(
+            "Lei Complementar nº 214/2025, em texto atualizado (com a LC nº 227/2026), lida na "
+            "Câmara dos Deputados (Títulos IV e V do Livro I)"
+        ),
+        nota=(
+            "Regime específico é o setor em que a conta do imposto é outra: a base (só a "
+            "margem, nos bancos e nos planos de saúde), a alíquota (em reais por litro, nos "
+            "combustíveis) ou o crédito de quem compra. Os descontos são sobre a alíquota "
+            "cheia do IBS e da CBS. Sem crédito para quem compra quer dizer que a empresa que "
+            "paga o restaurante ou o hotel não abate esse imposto do que deve."
+        ),
+    )
+    return [], [transicao, destino], [regras, regimes], ""
 
 
 MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
+    ("bases contra outros países", _bases_paises),
     ("arrecadação por estado", _por_estado),
     ("FPE e FPM", _transferencias),
     ("imposto retido na fonte", _quem_paga_retido),

@@ -14,7 +14,10 @@ De onde vem cada coisa (tudo conferido em 14/11/2026):
   (7527); a renda média por pessoa de cada grupo (7533); a renda do trabalho por cor (7441) e
   por sexo (7444). "Características dos domicílios": água (6731), esgoto (7192, desde 2019;
   antes a classificação era outra) e lixo (6736). "Segurança alimentar" (2023 e 2024, escala
-  EBIA): 9552 (por situação do domicílio) e 9751 (por idade).
+  EBIA): 9552 (por situação do domicílio) e 9751 (por idade); e a 6665, em que o IBGE junta as
+  pesquisas de antes (PNAD 2004, 2009 e 2013, POF 2017-2018) à Contínua (conferida em
+  15/11/2026: variável 2133, % dos moradores; classificação 12404, a mesma).
+- **Ministério das Cidades, SINISA**: o esgoto coletado e tratado por estado (`fontes/sinisa`).
 - **Ipea (Ipeadata)**: o Gini e a pobreza desde 1995, com a PNAD antiga emendada à
   Contínua (Souza e Hecksher, 2025), e a pobreza por estado (SIS do IBGE).
 - **Receita Federal, Grandes Números do IRPF** (o mesmo arquivo de Impostos › Quem paga) e
@@ -36,7 +39,14 @@ from dataclasses import dataclass
 from datetime import date
 
 from sacibras import leis
-from sacibras.fontes import banco_mundial, ibge_sidra, ipeadata, receita_centis, receita_irpf
+from sacibras.fontes import (
+    banco_mundial,
+    ibge_sidra,
+    ipeadata,
+    receita_centis,
+    receita_irpf,
+    sinisa,
+)
 from sacibras.schema import (
     Cartao,
     Dispersao,
@@ -98,6 +108,17 @@ FOME = (9552, 10117, "c12404/109102,109101")
 """% dos moradores em domicílios com insegurança alimentar grave (109102) e moderada (109101),
 escala EBIA. A grave é a fome: alguém da casa passou um dia sem comer por falta de dinheiro."""
 FOME_GRAVE, FOME_MODERADA = "109102", "109101"
+FOME_PESQUISAS = (6665, 2133, "c12404/109102,109101")
+"""A mesma escala nas pesquisas do IBGE desde 2004: PNAD 2004, 2009 e 2013, POF 2017-2018 (o
+ano 2018) e PNAD Contínua de 2023 em diante. % dos moradores; 2023 e 2024 batem com a 9552."""
+PESQUISA_DO_ANO = {2004: "PNAD", 2009: "PNAD", 2013: "PNAD", 2018: "POF 2017-2018"}
+TOPO_NO_TEMPO = [
+    ("um", "1 % de cima", range(100, 101)),
+    ("milesimo", "0,1 % de cima", range(110, 111)),
+    ("dez-milesimo", "0,01 % de cima", range(120, 121)),
+]
+"""As fatias do topo no gráfico do tempo: os centis do arquivo da Receita (o 110 é o último
+milésimo, o 120 o último décimo de milésimo)."""
 FOME_IDADE = (9751, 10117, "c58/1140,100448,109110,104871,6798/c12404/109102")
 IDADES = {
     "1140": "0 a 4 anos",
@@ -556,6 +577,10 @@ def montar(ctx: Contexto) -> Secao:
         tabelas += t_centis
     except Exception as erro:
         avisos.append(f"centis do IRPF: {erro}")
+    try:
+        graficos.append(topo_no_tempo())
+    except Exception as erro:
+        avisos.append(f"centis do IRPF no tempo: {erro}")
 
     # ---------------------------------------------------------------- pobreza
     try:
@@ -693,6 +718,10 @@ def montar(ctx: Contexto) -> Secao:
         tabelas += t_fome
     except Exception as erro:
         avisos.append(f"fome: {erro}")
+    try:
+        graficos.append(fome_nas_pesquisas())
+    except Exception as erro:
+        avisos.append(f"fome desde 2004: {erro}")
 
     # ---------------------------------------------------------------- saneamento
     esgoto: list[Ponto] = []
@@ -703,6 +732,10 @@ def montar(ctx: Contexto) -> Secao:
         tabelas += t_san
     except Exception as erro:
         avisos.append(f"saneamento: {erro}")
+    try:
+        tabelas.append(esgoto_por_estado())
+    except Exception as erro:
+        avisos.append(f"SINISA: {erro}")
     try:
         c_casa, g_casa = moradia()
         cartoes += c_casa
@@ -890,10 +923,129 @@ def fome(avisos: list[str]) -> tuple[list[Cartao], list[Grafico], list[Tabela], 
             "Escala Brasileira de Insegurança Alimentar (EBIA): oito perguntas sobre os últimos "
             "três meses. Grave é quando alguém da casa, adulto ou criança, ficou sem comer ou "
             "passou fome por falta de dinheiro. A PNAD Contínua mede desde 2023; as pesquisas "
-            "de antes (PNAD 2004, 2009 e 2013, POF 2018) não se comparam direto."
+            "de antes (PNAD 2004, 2009 e 2013, POF 2018) estão no gráfico da fome desde 2004."
         ),
     )
     return cartoes, graficos, [tabela], grave
+
+
+def fome_nas_pesquisas() -> Grafico:
+    """A fome e a comida faltando nas pesquisas do IBGE desde 2004 (SIDRA 6665)."""
+    tipos = _pct(FOME_PESQUISAS, por="Situação de segurança")
+    grave = tipos.get(FOME_GRAVE, [])
+    mod_ou_grave = soma(tipos, [FOME_GRAVE, FOME_MODERADA])
+    if len(grave) < 3:
+        raise RuntimeError("SIDRA 6665 sem as pesquisas antigas")
+    quais = ", ".join(
+        f"{a} ({PESQUISA_DO_ANO.get(a, 'PNAD Contínua')})" for a in (d.year for d, _ in grave)
+    )
+    return grafico(
+        "fome-pesquisas",
+        "Fome desde 2004, nas pesquisas do IBGE",
+        [
+            serie("moderada-grave", "Comida faltando (moderada ou grave)", mod_ou_grave, casas=1),
+            serie("grave", "Fome (grave)", grave, casas=1),
+        ],
+        unidade="% das pessoas",
+        casas=1,
+        periodicidade="A",
+        fonte=f"IBGE, segurança alimentar (SIDRA 6665: {quais})",
+        nota=(
+            "A mesma escala (EBIA) em pesquisas diferentes: a PNAD de 2004, 2009 e 2013, a "
+            "POF de 2017-2018 e a PNAD Contínua de 2023 em diante, juntas pelo IBGE numa "
+            "tabela só. A comparação entre elas é aproximada. Só há os anos com pesquisa: a "
+            "linha liga um ao outro, sem medir o que houve entre eles."
+        ),
+    )
+
+
+def esgoto_por_estado() -> Tabela:
+    """O esgoto coletado e tratado por estado, do SINISA (o que chega dos prestadores)."""
+    dados = sinisa.esgoto()
+    brasil = dados.por_lugar["brasil"]
+
+    def linha(rotulo: str, v: dict[str, float]) -> LinhaTabela:
+        return LinhaTabela(
+            rotulo=rotulo,
+            valores=[v.get("rede"), v.get("tratado_domicilios"), v.get("tratado_coletado")],
+            unidade="",
+            casas=1,
+        )
+
+    estados = [(nome, dados.por_lugar.get(sinisa.chave(nome))) for _, _, nome, _ in UFS]
+    achados = [(n, v) for n, v in estados if v and v.get("rede") is not None]
+    if len(achados) < 20:
+        raise RuntimeError(f"SINISA: só {len(achados)} estados")
+    achados.sort(key=lambda nv: nv[1]["rede"])
+    return Tabela(
+        id="pobreza-sinisa",
+        titulo="Esgoto coletado e tratado, por estado",
+        subtitulo=(
+            f"{dados.ano}; % das pessoas com rede de esgoto, % das casas com coleta e "
+            "tratamento e quanto do esgoto coletado é tratado"
+        ),
+        colunas=["rede, % pessoas", "tratamento, % casas", "% tratado"],
+        linhas=[linha("Brasil", brasil)] + [linha(n, v) for n, v in achados],
+        fonte=(
+            f"{sinisa.FONTE} {dados.ano + 1}, ano de referência {dados.ano}"
+            + (f", publicado em {dados.publicado}" if dados.publicado else "")
+            + " (indicadores IES0001, IES0007 e IES2004)"
+        ),
+        nota=(
+            "O que os prestadores de esgoto (empresas, autarquias e prefeituras) informam ao "
+            "Ministério das Cidades, dividido pela população do IBGE. É outra conta que a da "
+            "PNAD acima, que pergunta a cada casa: a PNAD conta também a fossa ligada à rede e "
+            "não diz se o esgoto é tratado. Do pior estado para o melhor, pela rede."
+        ),
+    )
+
+
+def topo_no_tempo() -> Grafico:
+    """A fatia da renda declarada do 1 %, do 0,1 % e do 0,01 % de cima, ano a ano."""
+    por_ano = receita_centis.todos()
+    if len(por_ano) < 2:
+        raise RuntimeError("centis do IRPF: só um ano")
+    fatias = {
+        id_: [(date(a, 1, 1), receita_centis.fatia(c, numeros)) for a, c in por_ano.items()]
+        for id_, _, numeros in TOPO_NO_TEMPO
+    }
+    series_ = [serie(id_, nome, fatias[id_], casas=1) for id_, nome, _ in TOPO_NO_TEMPO]
+    anos = list(por_ano)
+    saltos = fora_da_curva(fatias[TOPO_NO_TEMPO[-1][0]])
+    aviso = "".join(
+        f" Em {d.year}, a fatia do 0,01 % de cima salta para {br(v)} % e volta no ano seguinte: "
+        "é o que está no arquivo da Receita, que não explica o salto."
+        for d, v in saltos
+    )
+    return grafico(
+        "irpf-topo-tempo",
+        "O topo de quem declara, ano a ano",
+        series_,
+        unidade="% da renda declarada",
+        casas=1,
+        periodicidade="A",
+        fonte=(
+            f"{receita_centis.FONTE}, anos-calendário {anos[0]} a {anos[-1]} (tabela V); "
+            "as fatias: conta nossa"
+        ),
+        nota=(
+            "Quanto da renda de quem entregou a declaração ficou com o 1 %, o 0,1 % e o "
+            "0,01 % de renda mais alta. Renda é a tributável, a isenta (lucros e dividendos "
+            "inclusive) e a de tributação exclusiva, sem heranças e doações. Quem não declara "
+            "fica de fora; o ano é o da renda, declarada no ano seguinte." + aviso
+        ),
+    )
+
+
+def fora_da_curva(pontos: list[Ponto], vezes: float = 2.0) -> list[Ponto]:
+    """Os anos com mais de `vezes` a mediana da série inteira (o 0,01 % de 2018: 24 % da
+    renda, contra 4 a 9 % nos outros anos, no próprio arquivo da Receita)."""
+    valores = sorted(v for _, v in pontos)
+    if len(valores) < 3:
+        return []
+    meio = len(valores) // 2
+    mediana = valores[meio] if len(valores) % 2 else (valores[meio - 1] + valores[meio]) / 2
+    return [(d, v) for d, v in pontos if v > vezes * mediana]
 
 
 def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]]:
