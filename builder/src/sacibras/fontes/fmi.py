@@ -13,11 +13,13 @@ ano). Valores em dólares, sem multiplicador.
 
 from __future__ import annotations
 
+import csv
+import io
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from sacibras.rede import baixar_json
+from sacibras.rede import baixar, baixar_json
 
 BASE = "https://api.imf.org/external/sdmx/2.1/data/IMF.RES,WEO,9.0.0"
 BASE_STA = "https://api.imf.org/external/sdmx/2.1/data/IMF.STA,"
@@ -25,6 +27,10 @@ RESERVAS = ("IL", "TRGMV_REVS.USD.A")
 IMPORTACOES = ("BOP", "DB_T.GS.USD.A")
 HIERARQUIAS = "https://api.imf.org/external/sdmx/2.1/hierarchicalcodelist/all/all/latest"
 HIERARQUIA_PAISES = "H_WEO_COUNTRIES"
+COMMODITIES = "https://api.imf.org/external/sdmx/2.1/data/IMF.RES,PCPS"
+OURO = "PGOLD"
+"""Ouro, US$ por onça troy, média do mês (conferido em 15/11/2026: mensal desde 1990, com
+dado até out/2026; chave `G001.PGOLD.USD.M`)."""
 
 
 @dataclass(frozen=True)
@@ -157,3 +163,24 @@ def grupos() -> dict[str, list[str]]:
         tempo_limite=180,
     )
     return grupos_da_resposta(bruto)
+
+
+def preco_commodity(indicador: str, inicio: date) -> list[tuple[date, float]]:
+    """O preço mensal de uma commodity no Primary Commodity Price System (PCPS) do FMI, em
+    US$, média do mês: [(1º dia do mês, preço)]. O PCPS converte em média do mês as cotações
+    diárias ou semanais de referência (no ouro, o fixing de Londres)."""
+    corpo = baixar(
+        f"{COMMODITIES}/G001.{indicador}.USD.M",
+        params={"startPeriod": f"{inicio:%Y-%m}"},
+        cabecalhos={"Accept": "application/vnd.sdmx.data+csv"},
+        validade=24 * 3600,
+        tempo_limite=120,
+    )
+    saida: list[tuple[date, float]] = []
+    for linha in csv.DictReader(io.StringIO(corpo.decode("utf-8-sig"))):
+        valor = linha.get("OBS_VALUE") or ""
+        ano, _, mes = (linha.get("TIME_PERIOD") or "").partition("-M")
+        if valor in ("", "NaN") or not mes:
+            continue
+        saida.append((date(int(ano), int(mes), 1), float(valor)))
+    return sorted(saida)

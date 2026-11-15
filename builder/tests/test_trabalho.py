@@ -46,6 +46,12 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     c = Contexto(hoje=date(2026, 11, 14))
     estoque = [(d, 47_000_000 + 100_000 * i) for i, (d, _) in enumerate(_mensal(0, 0))]
     c._sgs[("EMPREGO_FORMAL", 16)] = estoque
+    # Por setor: cada um dos 17 da lista com 1/20 do total; os serviços valem 14/20 (as 11
+    # partes dos serviços e mais 3/20 sem série própria), e os seis outros, 6/20.
+    vigesimo = [(d, v / 20) for d, v in estoque]
+    for chave, _ in trabalho.SETORES_CAGED:
+        c._sgs[(chave, 16)] = vigesimo
+    c._sgs[("EMPREGO_SERVICOS", 16)] = [(d, v * 14 / 20) for d, v in estoque]
     return c
 
 
@@ -60,10 +66,46 @@ def test_montar(ctx: Contexto) -> None:
     assert graficos[:4] == ["desocupacao", "emprego-formal", "rendimento", "massa"]
     caged = secao.graficos[1]
     assert [s.id for s in caged.series] == ["saldo", "saldo-3m"]
-    (tabela,) = secao.tabelas
+    tabela, setores = secao.tabelas
+    assert setores.id == "emprego-setores"
+    assert setores.linhas[-1].rotulo == "Total"
+    # 17 setores, os "demais serviços" e o total; a coluna das vagas fecha no total.
+    assert len(setores.linhas) == 19
+    vagas = [linha.valores[1] or 0.0 for linha in setores.linhas[:-1]]
+    assert sum(vagas) == pytest.approx(setores.linhas[-1].valores[1] or 0.0)
+    assert setores.linhas[-1].valores[1] == pytest.approx(1200.0)  # 100 mil por mês
+    por_setor = next(g for g in secao.graficos if g.id == "emprego-setores")
+    assert [s.id for s in por_setor.series] == [
+        "agro",
+        "industria",
+        "construcao",
+        "comercio",
+        "servicos",
+    ]
     assert tabela.colunas[0] == "Trimestre até set/2026"
     rotulos = [linha.rotulo for linha in tabela.linhas]
     assert "Procuram trabalho há 2 anos ou mais (2º tri/2026)" in rotulos
     ocupados = next(linha for linha in tabela.linhas if linha.rotulo == "Ocupados")
     assert ocupados.valores[0] == pytest.approx(100.39)
     assert ocupados.valores[1] == pytest.approx(100.36)
+
+
+def test_emprego_por_setor_ordena_pelas_vagas() -> None:
+    antes, agora = date(2025, 9, 1), date(2026, 9, 1)
+    estoques = [
+        ("Comércio", [(antes, 10_000_000.0), (agora, 10_100_000.0)]),
+        ("Agropecuária", [(antes, 2_000_000.0), (agora, 1_980_000.0)]),
+        ("Serviços", [(antes, 20_000_000.0), (agora, 20_500_000.0)]),
+    ]
+    total = [(antes, 32_000_000.0), (agora, 32_580_000.0)]
+    quando, linhas = trabalho.emprego_por_setor(estoques, total)
+    assert quando == agora
+    assert [linha.rotulo for linha in linhas] == ["Serviços", "Comércio", "Agropecuária", "Total"]
+    assert linhas[2].valores == pytest.approx([1980.0, -20.0, -1.0])
+    assert linhas[-1].valores[1] == pytest.approx(580.0)
+
+
+def test_somar_so_nas_datas_comuns() -> None:
+    a = [(date(2026, 1, 1), 1.0), (date(2026, 2, 1), 2.0)]
+    b = [(date(2026, 2, 1), 10.0)]
+    assert trabalho.somar([a, b]) == [(date(2026, 2, 1), 12.0)]

@@ -1,7 +1,8 @@
 """Brasil no mundo: as mesmas métricas para ~20 países, com as projeções do FMI.
 
-Anuais e projeções: World Economic Outlook (FMI). Juro básico e inflação em 12 meses, para o
-juro real: BIS. Cada métrica guarda a fonte; projeção é sempre a da própria fonte.
+Anuais e projeções: World Economic Outlook (FMI). Juro básico, inflação em 12 meses e câmbio
+contra o dólar: BIS. Juro de 10 anos: OCDE (o do Brasil, do Tesouro Direto). Cada métrica
+guarda a fonte; projeção é sempre a da própria fonte.
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from datetime import date, timedelta
 
 import pycountry
 
-from sacibras.fontes import bis, fmi, ocde_receita
+from sacibras.fontes import bis, fmi, ocde_juros, ocde_receita, tesouro_direto
 from sacibras.modelos import risco
 from sacibras.schema import GrupoMundo, MetricaMundo, Mundo, MundoPaises, Pais
 from sacibras.secoes.base import Contexto, br
@@ -329,6 +330,202 @@ def _metricas_de_credito(
     ]
 
 
+# ---- câmbio, inflação em 12 meses e juro de 10 anos: mensais, no fim de cada ano
+
+# Os quatro países do euro da lista principal: o BIS dá a cada um a própria inflação e o câmbio
+# do euro (no juro básico, eles usam o XM, o BCE).
+EURO_NA_LISTA = ["DE", "FR", "IT", "ES"]
+
+
+def variacao_no_ano(moedas: dict[str, list[Ponto]], anos: list[int]) -> list[float | None]:
+    """Quanto a moeda ganhou (positivo) ou perdeu (negativo) de valor contra o dólar em cada
+    ano, em %: o fim do ano (no ano corrente, o último mês) contra o fim do ano anterior, as
+    duas pontas na mesma moeda (o ano em que o país trocou de moeda fica em branco).
+
+    `moedas`: {moeda: [(mês, unidades da moeda por dólar)]}. A moeda vale 1/cotação em
+    dólares: ganhou valor quando a cotação caiu."""
+    saida: list[float | None] = []
+    for a in anos:
+        valor: float | None = None
+        for pontos in moedas.values():
+            base = dict(pontos).get(date(a - 1, 12, 1))
+            no_ano = [v for d, v in pontos if d.year == a]
+            if base and no_ano:
+                valor = round((base / no_ano[-1] - 1) * 100, 2)
+        saida.append(valor)
+    return saida
+
+
+def _iso3_da_area(iso2: str) -> str | None:
+    """ISO3 de uma área do BIS; o XM (zona do euro) vira o grupo do FMI G163."""
+    return "G163" if iso2 == "XM" else _iso2_do_bis(iso2)
+
+
+def _cambio(
+    desde: date, anos: list[int], so_estes: list[str] | None
+) -> tuple[dict[str, list[float | None]], date]:
+    """Variação de cada moeda contra o dólar no ano, por ISO3. Quem usa o dólar fica de fora."""
+    pedir = [] if so_estes is None else sorted({*so_estes, *EURO_NA_LISTA})
+    dados = bis.cambio_contra_dolar(pedir, date(desde.year - 1, 12, 1))
+    saida: dict[str, list[float | None]] = {}
+    ultimo = desde
+    for iso2, moedas in dados.items():
+        iso3 = _iso3_da_area(iso2)
+        if iso3 is None or "USD" in moedas:
+            continue
+        valores = variacao_no_ano(moedas, anos)
+        if any(v is not None for v in valores):
+            saida[iso3] = valores
+            ultimo = max(ultimo, *(p[-1][0] for p in moedas.values()))
+    return saida, ultimo
+
+
+def _inflacao_12m(
+    desde: date, anos: list[int], so_estes: list[str] | None
+) -> tuple[dict[str, list[float | None]], date]:
+    """Inflação ao consumidor em 12 meses, em dezembro de cada ano (no ano corrente, o último
+    mês publicado), por ISO3. O mesmo pedido do juro real (`_juros`), que já está guardado."""
+    pedir = [] if so_estes is None else sorted({*so_estes, *EURO_NA_LISTA})
+    saida: dict[str, list[float | None]] = {}
+    ultimo = desde
+    for iso2, pontos in bis.inflacao_12m(pedir, desde).items():
+        iso3 = _iso3_da_area(iso2)
+        if iso3 and pontos:
+            saida[iso3] = _fim_de_ano(pontos, anos)
+            ultimo = max(ultimo, pontos[-1][0])
+    return saida, ultimo
+
+
+# O título do Tesouro que faz as vezes do de 10 anos no Brasil: o prefixado com juros
+# semestrais (a NTN-F, como os títulos de 10 anos dos outros países, que pagam cupom) com
+# vencimento mais perto de 10 anos, entre 7 e 13 anos à frente. Antes de 2006 não há nenhum.
+PRAZO_10_ANOS = (7.0, 13.0)
+
+
+def juro_10_anos_brasil(por_data: dict[date, list[Ponto]]) -> list[Ponto]:
+    """[(mês, % a.a.)]: a média do mês da taxa (média entre compra e venda) do Tesouro
+    Prefixado com Juros Semestrais de vencimento mais perto de 10 anos."""
+    por_mes: dict[date, list[float]] = {}
+    for d, titulos in por_data.items():
+        candidatos = [
+            (v, t)
+            for v, t in titulos
+            if PRAZO_10_ANOS[0] <= (v - d).days / 365.25 <= PRAZO_10_ANOS[1]
+        ]
+        if not candidatos:
+            continue
+        _, taxa = min(candidatos, key=lambda x: abs((x[0] - d).days / 365.25 - 10))
+        por_mes.setdefault(d.replace(day=1), []).append(taxa)
+    return sorted((m, sum(v) / len(v)) for m, v in por_mes.items())
+
+
+def _juro_10_anos(
+    ctx: Contexto, desde: date, anos: list[int]
+) -> tuple[dict[str, list[float | None]], date]:
+    """Juro de 10 anos em dezembro de cada ano (média do mês; no ano corrente, o último mês),
+    por ISO3: a OCDE para todos, menos o Brasil, que vem do Tesouro Direto (a OCDE dá a TJLP)."""
+    if "mundo_juro_10a" not in ctx.memo:
+        dados = ocde_juros.juro_longo(desde)
+        try:
+            pre = tesouro_direto.curvas(desde)[tesouro_direto.PREFIXADO_JUROS]
+            dados["BRA"] = juro_10_anos_brasil(pre)
+        except Exception as erro:
+            dados.pop("BRA", None)
+            print(f"  aviso: mundo: juro de 10 anos do Brasil indisponível ({str(erro)[:120]})")
+        ctx.memo["mundo_juro_10a"] = dados
+    brutos: dict[str, list[Ponto]] = ctx.memo["mundo_juro_10a"]
+    # O mês mais novo da OCDE (o dos EUA): o Brasil, que o Tesouro Direto tem até ontem, fica
+    # no mesmo mês dos outros.
+    ultimo = max((p[-1][0] for a, p in brutos.items() if a != "BRA" and p), default=desde)
+    saida: dict[str, list[float | None]] = {}
+    for area, pontos in brutos.items():
+        iso3 = "G163" if area == ocde_juros.ZONA_DO_EURO else area
+        if iso3 != "G163" and pycountry.countries.get(alpha_3=iso3) is None:
+            continue
+        valores = _fim_de_ano([p for p in pontos if anos[0] <= p[0].year and p[0] <= ultimo], anos)
+        if any(v is not None for v in valores):
+            saida[iso3] = valores
+    return saida, ultimo
+
+
+def _mes_ano(d: date) -> str:
+    return f"{MESES[d.month - 1]} de {d.year}"
+
+
+def _metricas_mensais(
+    ctx: Contexto, desde: date, anos: list[int], so_estes: list[str] | None
+) -> list[MetricaMundo]:
+    """Câmbio no ano, inflação em 12 meses e juro de 10 anos. A que falhar fica de fora."""
+    ano = anos[-1]
+    saida: list[MetricaMundo] = []
+    try:
+        valores, ultimo = _inflacao_12m(desde, anos, so_estes)
+        saida.append(
+            MetricaMundo(
+                id="inflacao_12m",
+                nome="Inflação em 12 meses",
+                descricao=(
+                    "Preços ao consumidor nos 12 meses até dezembro de cada ano; em "
+                    f"{ano}, até o último mês publicado (o mais novo: {_mes_ano(ultimo)}). "
+                    "Sai todo mês; a métrica Inflação, do FMI, é a média do ano."
+                ),
+                unidade="% em 12 meses",
+                casas=1,
+                maior_e_melhor=False,
+                fonte="BIS, preços ao consumidor (WS_LONG_CPI)",
+                anos=anos,
+                valores=valores,
+            )
+        )
+    except Exception as erro:
+        print(f"  aviso: mundo: inflação em 12 meses indisponível ({str(erro)[:120]})")
+    try:
+        valores, ultimo = _cambio(desde, anos, so_estes)
+        saida.append(
+            MetricaMundo(
+                id="cambio",
+                nome="Moeda contra o dólar",
+                descricao=(
+                    "Quanto a moeda do país ganhou (positivo) ou perdeu (negativo) de valor "
+                    "contra o dólar no ano: a cotação do fim do ano contra a do fim do ano "
+                    f"anterior; em {ano}, até {_mes_ano(ultimo)}. Os EUA ficam de fora (a moeda "
+                    "é o dólar); os países do euro têm todos o número do euro."
+                ),
+                unidade="% no ano",
+                casas=1,
+                maior_e_melhor=None,
+                fonte="BIS, câmbio contra o dólar no fim do mês (WS_XRU)",
+                anos=anos,
+                valores=valores,
+            )
+        )
+    except Exception as erro:
+        print(f"  aviso: mundo: câmbio do BIS indisponível ({str(erro)[:120]})")
+    try:
+        valores, ultimo = _juro_10_anos(ctx, desde, anos)
+        saida.append(
+            MetricaMundo(
+                id="juro_10a",
+                nome="Juro de 10 anos",
+                descricao=(
+                    "Taxa dos títulos do governo de 10 anos, média de dezembro de cada ano; em "
+                    f"{ano}, do último mês ({_mes_ano(ultimo)}). Brasil: o Tesouro Prefixado "
+                    "com Juros Semestrais de vencimento mais perto de 10 anos (a OCDE traz a "
+                    "TJLP, que não é título de 10 anos). Fora da OCDE, só alguns países."
+                ),
+                unidade="% a.a.",
+                casas=2,
+                maior_e_melhor=None,
+                fonte=f"{ocde_juros.FONTE}; Brasil: Tesouro Nacional, Tesouro Direto",
+                anos=anos,
+                valores=valores,
+            )
+        )
+    except Exception as erro:
+        print(f"  aviso: mundo: juro de 10 anos indisponível ({str(erro)[:120]})")
+    return saida
+
+
 def _carga_tributaria(ctx: Contexto, inicio: int) -> dict[str, dict[int, float]]:
     """{ISO3: {ano: carga tributária em % do PIB}} de todos os países da OCDE Global Revenue
     Statistics, uma chamada por rodada."""
@@ -496,8 +693,14 @@ def _todos_os_paises(
         credito = {"servico_divida": v_dsr, "hiato_credito": v_hiato}
     quando = f"{MESES[ultimo_mes.month - 1]} de {ultimo_mes.year}"
     manter = set(paises)
+    mensais = {x.id: x for x in _metricas_mensais(ctx, date(a0, 1, 1), anos_bis, None)}
     saida: list[MetricaMundo] = []
     for m in metricas:
+        if m.id in mensais:
+            todos = mensais[m.id].valores
+            valores = {iso: todos[iso] for iso in sorted(manter) if iso in todos}
+            saida.append(m.model_copy(update={"anos": anos_bis, "valores": valores}))
+            continue
         if m.id in indicador:
             valores = {
                 iso: [round(mapa[a], m.casas + 1) if a in mapa else None for a in anos_weo]
@@ -616,6 +819,11 @@ def montar(ctx: Contexto) -> Mundo:
         metricas += _metricas_de_credito(v_dsr, v_hiato, anos_bis, ultimo_tri)
     except Exception as erro:
         print(f"  aviso: mundo: crédito do BIS indisponível ({str(erro)[:120]})")
+
+    # Inflação em 12 meses, câmbio no ano e juro de 10 anos (mensais), só dos países da lista.
+    for m in _metricas_mensais(ctx, desde, anos_bis, sorted({p[1] for p in PAISES if p[1]})):
+        m.valores = {iso: v for iso, v in m.valores.items() if iso in isos}
+        metricas.append(m)
 
     # Carga tributária (OCDE). Sem ela, segue o resto.
     try:

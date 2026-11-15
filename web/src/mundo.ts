@@ -38,11 +38,14 @@ const TEMAS: Record<string, string> = {
   inflacao: "Preços e juros",
   juro: "Preços e juros",
   juro_real: "Preços e juros",
+  inflacao_12m: "Preços e juros",
+  juro_10a: "Preços e juros",
   divida: "Contas públicas",
   primario: "Contas públicas",
   nominal: "Contas públicas",
   carga: "Contas públicas",
   conta_corrente: "Contas externas",
+  cambio: "Contas externas",
   servico_divida: "Crédito",
   hiato_credito: "Crédito",
 };
@@ -558,7 +561,9 @@ export function montarMundo(m: Mundo): HTMLElement {
         }
         rolavel.append(tabela);
         const pe = el("footer", "grafico-pe");
-        pe.append(el("span", "fonte", `Fonte: FMI, ${m.edicao}; juros: BIS.`));
+        pe.append(
+          el("span", "fonte", `Fonte: FMI, ${m.edicao}; juro básico, inflação em 12 meses e câmbio: BIS; juro de 10 anos: OCDE e Tesouro Nacional.`),
+        );
         return [rolavel, pe];
       }),
     );

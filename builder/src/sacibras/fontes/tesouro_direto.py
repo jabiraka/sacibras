@@ -62,6 +62,30 @@ def curvas(desde: date) -> Curvas:
     return saida
 
 
+Precos = dict[date, list[Ponto]]
+"""{vencimento: [(data-base, preço unitário de venda, R$)]}, de um tipo de título."""
+
+
+def precos(tipo: str, desde: date) -> Precos:
+    """O preço unitário de cada título de um tipo, dia a dia: o "PU Venda Manhã", o que o
+    Tesouro paga a quem vende antes do vencimento (o mesmo que o "PU Base"). Sem ele, o dia
+    fica de fora."""
+    corpo = baixar(URL, validade=12 * 3600, tempo_limite=180)
+    leitor = csv.DictReader(io.StringIO(corpo.decode("latin-1")), delimiter=";")
+    saida: Precos = {}
+    for linha in leitor:
+        if linha["Tipo Titulo"].strip() != tipo:
+            continue
+        base = _data(linha["Data Base"])
+        pu = (linha["PU Venda Manha"] or linha["PU Base Manha"]).replace(",", ".")
+        if base < desde or not pu or float(pu) <= 0:
+            continue
+        saida.setdefault(_data(linha["Data Vencimento"]), []).append((base, float(pu)))
+    for pontos in saida.values():
+        pontos.sort()
+    return saida
+
+
 def no_dia(por_data: dict[date, list[Ponto]], alvo: date) -> tuple[date, list[Ponto]]:
     """A curva da data-base mais recente que não passa de `alvo`."""
     datas = [d for d in por_data if d <= alvo]

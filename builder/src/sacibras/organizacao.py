@@ -106,10 +106,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "quem-trabalha",
             "Quem trabalha",
-            "Emprego com carteira, informalidade e participação na força de trabalho.",
+            "Emprego com carteira, setor a setor, informalidade e participação na força de "
+            "trabalho.",
             cartoes=["emprego-formal", "informalidade", "participacao", "nivel-ocupacao"],
-            graficos=["emprego-formal", "informalidade", "participacao"],
-            tabelas=["trabalho-detalhe"],
+            graficos=["emprego-formal", "emprego-setores", "informalidade", "participacao"],
+            tabelas=["emprego-setores", "trabalho-detalhe"],
         ),
     ],
     "demografia": [
@@ -333,7 +334,7 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "retornos",
             "Quanto rendeu",
-            "R$ 100 aplicados em bolsa, dólar, CDI ou poupança, contra a inflação.",
+            "R$ 100 aplicados em bolsa, dólar, CDI, poupança, Tesouro ou ouro, contra a inflação.",
             graficos=["retornos-em-reais"],
             tabelas=["variacoes"],
         ),
@@ -342,10 +343,10 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "conta-corrente",
             "Conta corrente",
-            "O que entra e sai do país, em partes, e o investimento estrangeiro.",
+            "O que entra e sai do país, em partes, os serviços e o investimento estrangeiro.",
             cartoes=["transacoes-correntes"],
-            graficos=["conta-corrente", "conta-corrente-partes"],
-            tabelas=["balanco-pagamentos"],
+            graficos=["conta-corrente", "conta-corrente-partes", "servicos-partes"],
+            tabelas=["balanco-pagamentos", "servicos-partes"],
         ),
         Parte(
             "comercio",
@@ -357,10 +358,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "setores",
             "O que vende e compra",
-            "Commodities nas exportações e os setores de cada lado do comércio.",
+            "Commodities nas exportações, os setores de cada lado do comércio e o uso do que "
+            "se importa.",
             cartoes=["commodities-exportacoes"],
-            graficos=["exportacoes-composicao"],
-            tabelas=["exportacoes-setores", "importacoes-setores"],
+            graficos=["exportacoes-composicao", "importacoes-uso"],
+            tabelas=["exportacoes-setores", "importacoes-setores", "importacoes-uso"],
         ),
         Parte(
             "produtos",

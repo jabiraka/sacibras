@@ -107,6 +107,58 @@ def tabela_balanco(
     )
 
 
+# ---------------------------------------------------------------- serviços em partes
+# (chave do catálogo, nome de todo dia). As treze somam o saldo de serviços (BP_SERVICOS); as
+# seis primeiras são as que mais pesam (de 2023 a 2026, cada uma passa de US$ 3 bi em 12 meses).
+SERVICOS: list[tuple[str, str]] = [
+    ("BP_SERV_TRANSPORTES", "Transportes (fretes e passagens)"),
+    ("BP_SERV_ALUGUEL", "Aluguel de equipamentos"),
+    ("BP_SERV_TELECOM", "Telecomunicação e informática"),
+    ("BP_SERV_VIAGENS", "Viagens"),
+    ("BP_SERV_PROPRIEDADE", "Marcas, patentes e direitos autorais"),
+    ("BP_SERV_NEGOCIOS", "Serviços técnicos e de negócios"),
+    ("BP_SERV_FINANCEIROS", "Serviços financeiros"),
+    ("BP_SERV_SEGUROS", "Seguros"),
+    ("BP_SERV_GOVERNO", "Serviços de governo (embaixadas)"),
+    ("BP_SERV_CULTURAIS", "Culturais, pessoais e de lazer"),
+    ("BP_SERV_MANUTENCAO", "Manutenção e reparo"),
+    ("BP_SERV_CONSTRUCAO", "Construção"),
+    ("BP_SERV_MANUFATURA", "Industrialização por encomenda"),
+]
+SERVICOS_NO_GRAFICO = 6
+
+
+def tabela_servicos(
+    partes: list[tuple[str, list[Ponto]]], total: list[Ponto], fonte: str
+) -> Tabela:
+    """Cada parte dos serviços (rótulo, soma de 12 meses em US$ bi) no último mês e 12 meses
+    antes, da que mais tira dólares do país à que mais traz, e o total, que fecha a coluna."""
+    quando = min(min(p[-1][0] for _, p in partes), total[-1][0])
+    antes = date(quando.year - 1, quando.month, 1)
+
+    def linha(rotulo: str, pontos: list[Ponto]) -> LinhaTabela:
+        mapa = dict(pontos)
+        return LinhaTabela(rotulo=rotulo, valores=[mapa.get(quando), mapa.get(antes)], unidade="")
+
+    ordem = sorted(partes, key=lambda x: dict(x[1]).get(quando, 0.0))
+    agora_txt, antes_txt = periodo(quando, "M"), periodo(antes, "M")
+    return Tabela(
+        id="servicos-partes",
+        titulo="Serviços com o exterior, parte a parte",
+        subtitulo=f"Saldo em 12 meses até {agora_txt} e até {antes_txt}; negativo é déficit",
+        colunas=[f"Até {agora_txt} (US$ bi)", f"Até {antes_txt} (US$ bi)"],
+        linhas=[linha(r, p) for r, p in ordem] + [linha("Serviços, total", total)],
+        fonte=fonte,
+        nota=(
+            "Receita menos despesa de cada tipo de serviço no balanço de pagamentos (BPM6), "
+            "somas de 12 meses feitas por nós. Aluguel de equipamentos inclui o de "
+            "plataformas e navios de petróleo; transportes, o frete das importações e as "
+            "passagens; viagens, o que brasileiros gastam fora menos o que estrangeiros "
+            "gastam aqui."
+        ),
+    )
+
+
 # ---------------------------------------------------------------- comércio por setor e produto
 FONTE_COMEX = f"{comexstat.FONTE}, valores em US$ FOB"
 NOTA_FOB = (
@@ -246,6 +298,12 @@ def composicao(sitc: comexstat.Valores) -> dict[str, list[Ponto]]:
     return saida
 
 
+def importacoes_por_uso(valores: comexstat.Valores, codigo: str) -> list[Ponto]:
+    """Os US$ bilhões de uma categoria de uso (CGCE nível 1) em cada ano."""
+    anos = next((a for item, a in valores.items() if item.codigo == codigo), {})
+    return [(date(a, 1, 1), v / 1e9) for a, v in sorted(anos.items())]
+
+
 def participacao(valores: comexstat.Valores, nome: str) -> list[Ponto]:
     """A parte de um item (um país, um bloco) no total de cada ano, em %."""
     totais: dict[int, float] = {}
@@ -324,6 +382,60 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
     # As tabelas de setor e de produto em ordem: setores (vende, compra), produtos (vende, compra).
     tabelas = [tabelas[0], tabelas[2], tabelas[1], tabelas[3]]
 
+    # ---- as importações por categoria de uso (CGCE): máquinas, insumos, consumo, combustível
+    graficos: list[Grafico] = []
+    try:
+        ano, acumulado = consulta("import", "BECLevel1")
+        nota_uso = (
+            "Categoria de uso pela CGCE, a classificação do IBGE e do MDIC que separa o que "
+            "vira investimento (bens de capital), o que entra na produção (intermediários), o "
+            "que vai às famílias (consumo) e os combustíveis. " + NOTA_FOB
+        )
+        tabelas.append(
+            tabela_ranking(
+                "importacoes-uso",
+                "O que o Brasil importa, por uso",
+                ano,
+                fechado,
+                nome=comexstat.uso_curto,
+                demais="Demais",
+                fonte=FONTE_COMEX,
+                nota=nota_uso,
+                acumulado=acumulado,
+                n=5,
+            )
+        )
+        historia = comexstat.consultar("import", "BECLevel1", comexstat.PRIMEIRO_ANO, fechado)
+        graficos.append(
+            grafico(
+                "importacoes-uso",
+                "Importações por uso",
+                [
+                    serie(
+                        f"uso-{codigo}",
+                        nome,
+                        importacoes_por_uso(historia, codigo),
+                        casas=1,
+                    )
+                    for codigo, nome in comexstat.USOS.items()
+                    if codigo != "9"
+                ],
+                tipo="empilhado",
+                unidade="US$ bilhões por ano",
+                casas=1,
+                periodicidade="A",
+                fonte=FONTE_COMEX,
+                nota=(
+                    "Bens de capital sobem quando as empresas investem; intermediários, com a "
+                    "produção; combustíveis, com o preço do petróleo. Pela CGCE, a "
+                    "classificação por uso do IBGE; valores FOB, sem frete nem seguro."
+                ),
+                largura="inteira",
+            )
+        )
+    except Exception as erro:
+        print(f"    externo: importações por uso (CGCE) ficaram de fora: {str(erro)[:160]}")
+
     # ---- o que pesa nas exportações, desde 1997
     sitc = comexstat.consultar("export", "SITCGroup", comexstat.PRIMEIRO_ANO, fechado)
     grupos = composicao(sitc)
@@ -332,7 +444,8 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
         for k, (d, _) in enumerate(grupos["alimentos"])
     ]
     nomes_grupo = dict(comexstat.GRUPOS_UNCTAD)
-    graficos = [
+    graficos.insert(
+        0,
         grafico(
             "exportacoes-composicao",
             "Do que são feitas as exportações",
@@ -349,8 +462,8 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
                 "manufaturado). Classificação aplicada por nós aos grupos da CUCI do Comex Stat."
             ),
             largura="inteira",
-        )
-    ]
+        ),
+    )
     # ---- para onde vendem
     paises_x = comexstat.consultar("export", "country", comexstat.PRIMEIRO_ANO, fechado)
     blocos_x = comexstat.consultar("export", "economicBlock", comexstat.PRIMEIRO_ANO, fechado)
@@ -613,6 +726,37 @@ def montar(ctx: Contexto) -> Secao:
             fonte=ctx.fonte_sgs(*chaves_bp, "TC_12M", "TC_12M_PIB"),
         )
     ]
+    # ---- os serviços em partes (viagens, fretes, aluguel de equipamentos…)
+    try:
+        servicos = [(nome, em_12m_bi(ctx.sgs(chave))) for chave, nome in SERVICOS]
+        fonte_servicos = ctx.fonte_sgs(*(c for c, _ in SERVICOS), "BP_SERVICOS")
+        graficos.append(
+            grafico(
+                "servicos-partes",
+                "Serviços: onde o país gasta e ganha dólares",
+                [
+                    serie(
+                        chave.removeprefix("BP_SERV_").lower(), nome, pontos, desde=inicio, casas=1
+                    )
+                    for (chave, _), (nome, pontos) in zip(
+                        SERVICOS[:SERVICOS_NO_GRAFICO], servicos, strict=False
+                    )
+                ],
+                unidade="US$ bilhões, saldo em 12 meses",
+                casas=1,
+                periodicidade="M",
+                janela_anos=10,
+                fonte=fonte_servicos,
+                nota=(
+                    "Receita menos despesa de cada tipo de serviço, em 12 meses; abaixo de zero, "
+                    "o país paga mais do que recebe. As seis maiores partes; todas estão na "
+                    "tabela."
+                ),
+            )
+        )
+        tabelas.append(tabela_servicos(servicos, partes["BP_SERVICOS"][1], fonte=fonte_servicos))
+    except Exception as erro:
+        print(f"    externo: serviços em partes ficaram de fora: {str(erro)[:160]}")
 
     try:
         c, g, t, frase = comercio_detalhado(ctx)

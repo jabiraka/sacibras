@@ -91,6 +91,7 @@ def _consultar(fluxo: str, detalhe: str, de: int, ate: int, mes_ate: int = 12) -
         "SITCGroup": [Item("333", "Petróleo"), Item("222a1", "Soja"), Item("781", "Carros")],
         "country": [Item("China", "China"), Item("Estados Unidos", "Estados Unidos")],
         "economicBlock": [Item("União Europeia - UE", "União Europeia - UE"), Item("Ásia", "Ásia")],
+        "BECLevel1": [Item("1", "BENS DE CAPITAL (BK)"), Item("2", "BENS INTERMEDIÁRIOS (BI)")],
     }[detalhe]
     return {
         item: {ano: (k + 1) * 10e9 * fator * (1 + (ano - de) / 10) for ano in range(de, ate + 1)}
@@ -107,14 +108,28 @@ def test_comercio_detalhado(monkeypatch: pytest.MonkeyPatch) -> None:
         "maior-exportacao",
         "china-exportacoes",
     ]
-    assert [g.id for g in graficos] == ["exportacoes-composicao", "exportacoes-destinos"]
+    assert [g.id for g in graficos] == [
+        "exportacoes-composicao",
+        "importacoes-uso",
+        "exportacoes-destinos",
+    ]
     assert [t.id for t in tabelas] == [
         "exportacoes-setores",
         "importacoes-setores",
         "exportacoes-produtos",
         "importacoes-produtos",
+        "importacoes-uso",
         "parceiros",
     ]
+    # Importações por uso: os nomes de todo dia, em US$ bilhões por ano desde 1997.
+    uso = graficos[1]
+    assert [s.nome for s in uso.series][:2] == [
+        "Bens de capital (máquinas e equipamentos)",
+        "Bens intermediários (insumos e peças)",
+    ]
+    assert uso.series[0].pontos[0] == (date(1997, 1, 1), 10.0)
+    # Categoria sem dado no Comex Stat (aqui, consumo e combustíveis) sai vazia, sem quebrar.
+    assert uso.series[2].pontos == []
     # Petróleo (10) + soja (20) de 60: metade são commodities, em todo ano.
     assert cartoes[0].valor == pytest.approx(50.0)
     assert cartoes[0].referencia == date(2025, 1, 1)

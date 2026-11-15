@@ -11,6 +11,10 @@ colunas muda entre os conjuntos, então se lê pelo nome.
 Diário (testado em 15/11/2026): câmbio contra o dólar (WS_XRU, D.<país>..A, moeda local por
 US$, média do dia), 74 áreas; os países da zona do euro vêm cada um com o euro. O período
 vem em "2026-11-10".
+
+Mensal (conferido em 15/11/2026): câmbio contra o dólar (WS_XRU, `M.<país>.<moeda>.E`, unidades da
+moeda por dólar no fim do mês, 180 áreas, com dado até out/2026. Cada membro da zona do euro
+vem com o EUR; os EUA, com 1.
 """
 
 from __future__ import annotations
@@ -83,3 +87,35 @@ def hiato_de_credito(paises: list[str], inicio: date) -> dict[str, list[Ponto]]:
 def cambio_diario(inicio: date) -> dict[str, list[Ponto]]:
     """{ISO2: [(dia, moeda local por US$)]} de todos os países do BIS."""
     return _ler("WS_XRU", "D...A", inicio, diario=True)
+
+
+Cambio = dict[str, dict[str, list[Ponto]]]
+"""{ISO2: {moeda: [(mês, unidades da moeda por US$ no fim do mês)]}}: a Croácia, por
+exemplo, tem a kuna até dez/2022 e o euro depois."""
+
+
+def cambio_contra_dolar(paises: list[str], inicio: date) -> Cambio:
+    """O câmbio de cada área contra o dólar, no fim de cada mês. Lista vazia pede todas."""
+    corpo = baixar(
+        f"{BASE}/WS_XRU/1.0/M.{'+'.join(paises)}..E",
+        params={"startPeriod": inicio.strftime("%Y-%m"), "format": "csv"},
+        validade=24 * 3600,
+        tempo_limite=120,
+    )
+    return ler_cambio(corpo.decode("utf-8-sig"))
+
+
+def ler_cambio(texto: str) -> Cambio:
+    saida: Cambio = {}
+    for linha in csv.DictReader(io.StringIO(texto)):
+        valor = linha.get("OBS_VALUE") or ""
+        if valor in ("", "NaN") or float(valor) <= 0:
+            continue
+        area, moeda = linha.get("REF_AREA") or "", linha.get("CURRENCY") or ""
+        saida.setdefault(area, {}).setdefault(moeda, []).append(
+            (_periodo(linha["TIME_PERIOD"]), float(valor))
+        )
+    for moedas in saida.values():
+        for pontos in moedas.values():
+            pontos.sort()
+    return saida
