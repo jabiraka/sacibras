@@ -229,6 +229,8 @@ function montarPiramideDoEstado(c: ContasEstado, p: Piramide): HTMLElement {
   return montarPiramide(g, p);
 }
 
+const NUMEROS_DA_FICHA = 4;
+
 /** O nome curto de cada bloco, na aba. Blocos com o mesmo nome dividem a aba. */
 const ABA: Record<string, string> = {
   receita: "Receita",
@@ -245,7 +247,7 @@ export function montarFicha(c: ContasEstado, todas: EstadosContas, regiao?: Regi
   const saida: HTMLElement[] = [];
   if (c.numeros.length) {
     const grade = el("div", "ficha-numeros");
-    for (const n of c.numeros) {
+    const numero = (n: (typeof c.numeros)[number]): HTMLElement => {
       const item = el("div", "ficha-numero");
       const valor = el("strong");
       valor.textContent = numeroDaFicha(n);
@@ -253,9 +255,24 @@ export function montarFicha(c: ContasEstado, todas: EstadosContas, regiao?: Regi
       if (n.detalhe) item.append(el("span", "detalhe", n.detalhe));
       item.append(el("span", "quando", periodo(n.referencia, n.periodicidade)));
       item.title = `Fonte: ${n.fonte}`;
-      grade.append(item);
-    }
+      return item;
+    };
+    // Pouca coisa por tela: quatro números à vista, o resto atrás de "Mais números".
+    c.numeros.slice(0, NUMEROS_DA_FICHA).forEach((n) => grade.append(numero(n)));
     saida.push(grade);
+    const resto = c.numeros.slice(NUMEROS_DA_FICHA);
+    if (resto.length) {
+      const caixa = el("div", "abrir");
+      const botao = el("button", "", "Mais números");
+      botao.type = "button";
+      botao.append(el("span", "", `+${resto.length}`));
+      botao.addEventListener("click", () => {
+        resto.forEach((n) => grade.append(numero(n)));
+        caixa.remove();
+      });
+      caixa.append(botao);
+      saida.push(caixa);
+    }
   }
   // Um bloco de cada vez (Caio, 14/11/2026: "não precisa mostrar tudo em uma página só"):
   // as abas em cima, o bloco escolhido embaixo. "No tempo" é a última aba.
