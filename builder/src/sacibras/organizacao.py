@@ -62,15 +62,18 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "pib",
             "PIB",
-            "O crescimento a cada trimestre, pela demanda, pela oferta e o gasto privado.",
+            "O crescimento a cada trimestre, o gasto privado, e quem produziu e quem comprou.",
             cartoes=["pib-tt", "pib-4t", "demanda-privada", "pib-carrego"],
+            # Em pares, lado a lado na tela larga (Caio, 15/11/2026): o PIB e a demanda
+            # privada; quem produziu e quem comprou; a oferta e a demanda. A oferta fica sempre
+            # à esquerda.
             graficos=[
                 "pib-trimestral",
-                "pib-contribuicoes-demanda",
-                "pib-contribuicoes-oferta",
-                "pib-demanda",
-                "pib-oferta",
                 "demanda-privada",
+                "pib-contribuicoes-oferta",
+                "pib-contribuicoes-demanda",
+                "pib-oferta",
+                "pib-demanda",
             ],
             tabelas=["pib-componentes"],
         ),
@@ -87,6 +90,30 @@ PARTES: dict[str, list[Parte]] = {
             "Quanto do PIB vira máquinas e obras, e quanto o país poupa.",
             cartoes=["taxa-investimento", "taxa-poupanca"],
             graficos=["investimento-poupanca"],
+        ),
+        Parte(
+            "produtividade",
+            "Produtividade",
+            "PIB por pessoa ocupada e por hora trabalhada, e de onde veio o crescimento.",
+            cartoes=["produtividade", "produtividade-hora"],
+            graficos=["produtividade", "crescimento-decomposto"],
+        ),
+        Parte(
+            "eficiencia",
+            "Eficiência (PTF)",
+            "De onde veio o crescimento desde 1955 (capital, horas, estudo e eficiência) e a "
+            "eficiência do Brasil contra a dos EUA.",
+            cartoes=["ptf-eua", "ptf-desde-o-pico", "ptf-estimativa"],
+            graficos=["ptf-brasil", "ptf-paises"],
+            tabelas=["pwt-contabilidade"],
+            veja=[
+                Elo(
+                    endereco="#mundo/m-ptf",
+                    titulo="PTF no mundo",
+                    resumo="O Brasil ao lado de 120 países, e o produto por hora, o capital e "
+                    "o estudo de cada um.",
+                )
+            ],
         ),
         Parte(
             "confianca",
@@ -158,30 +185,6 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["idosos-por-100", "deficit-inss", "deficit-servidores-militares"],
             graficos=["dependencia", "idosos", "idosos-paises", "inss", "previdencia-uniao"],
             tabelas=["demografia-estados", "previdencia-uniao"],
-        ),
-        Parte(
-            "produtividade",
-            "Produtividade",
-            "PIB por pessoa ocupada e por hora trabalhada, e de onde veio o crescimento.",
-            cartoes=["produtividade", "produtividade-hora"],
-            graficos=["produtividade", "crescimento-decomposto"],
-        ),
-        Parte(
-            "eficiencia",
-            "Eficiência (PTF)",
-            "De onde veio o crescimento desde 1955 (capital, horas, estudo e eficiência) e a "
-            "eficiência do Brasil contra a dos EUA e a de outros emergentes.",
-            cartoes=["ptf-eua", "ptf-desde-o-pico", "ptf-estimativa"],
-            graficos=["ptf-brasil", "ptf-paises"],
-            tabelas=["pwt-contabilidade"],
-            veja=[
-                Elo(
-                    endereco="#mundo/m-ptf",
-                    titulo="PTF no mundo",
-                    resumo="O Brasil ao lado de 120 países, e o produto por hora, o capital e "
-                    "o estudo de cada um.",
-                )
-            ],
         ),
     ],
     "pobreza": [

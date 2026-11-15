@@ -156,7 +156,7 @@ TERMOS: list[Termo] = [
         "estudo de quem trabalha: tecnologia, organização, gente e capital no lugar certo. É "
         "calculada como o que sobra da conta, por isso também sobe e desce com o ciclo.",
         ("PTF", "produtividade total dos fatores", "eficiência da economia"),
-        "#demografia/eficiencia",
+        "#atividade/eficiencia",
     ),
     Termo(
         "capital-humano",
@@ -165,7 +165,7 @@ TERMOS: list[Termo] = [
         "índice feito dos anos de estudo da população e do quanto cada ano a mais costuma "
         "render no salário.",
         ("capital humano",),
-        "#demografia/eficiencia",
+        "#atividade/eficiencia",
     ),
     Termo(
         "parte-do-trabalho",
@@ -182,7 +182,7 @@ TERMOS: list[Termo] = [
         "185 países desde 1950, com o mesmo método para todos. Sai a cada dois anos, mais ou "
         "menos, sob licença aberta (CC BY 4.0).",
         ("Penn World Table", "PWT"),
-        "#demografia/eficiencia",
+        "#atividade/eficiencia",
     ),
     Termo(
         "ibge",

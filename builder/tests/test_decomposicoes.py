@@ -238,7 +238,7 @@ def test_contribuicoes_do_pib_saem_pela_demanda_e_pela_oferta(
         return {c: _trimestres(2025, [100.0] * 4 + [102.0] * 4) for c in codigos}
 
     monkeypatch.setattr(atividade.ibge_sidra, "series", series)
-    demanda, oferta = atividade.contribuicoes_do_pib(date(2020, 1, 1))
+    oferta, demanda = atividade.contribuicoes_do_pib(date(2020, 1, 1))  # a oferta à esquerda
     assert demanda.id == "pib-contribuicoes-demanda" and oferta.id == "pib-contribuicoes-oferta"
     assert [s.id for s in demanda.series][-2:] == ["resto", "total"]
     assert [s.id for s in oferta.series] == ["agro", "industria", "servicos", "impostos", "total"]

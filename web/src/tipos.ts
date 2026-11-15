@@ -91,14 +91,36 @@ export interface Cartao {
   ao_vivo: { tipo: "sgs" | "sidra"; codigo: number | null; caminho: string; escala: number } | null;
 }
 
+export interface LinhaTabela {
+  rotulo: string;
+  valores: (number | null)[];
+  unidade: string;
+  casas: number;
+  fonte: string;
+  textos?: string[];
+  /** O bloco da linha ("Quem comprou"): vira uma linha de título quando muda. */
+  grupo?: string;
+}
+
+/** Um período que a pessoa escolhe na lista (um trimestre, um ano). */
+export interface VisaoTabela {
+  rotulo: string;
+  grupo: string;
+  subtitulo: string;
+  colunas: string[];
+  linhas: LinhaTabela[];
+}
+
 export interface Tabela {
   id: string;
   titulo: string;
   subtitulo: string;
   colunas: string[];
-  linhas: { rotulo: string; valores: (number | null)[]; unidade: string; casas: number; fonte: string; textos?: string[] }[];
+  linhas: LinhaTabela[];
   fonte: string;
   nota: string;
+  visoes?: VisaoTabela[];
+  rotulo_visoes?: string;
 }
 
 export interface SimuladorDivida {

@@ -1472,6 +1472,15 @@ main {
   color: var(--tinta-2);
 }
 
+/* O nome da série não encolhe até quebrar palavra por palavra: a dica cresce até o limite. */
+.dica {
+  width: max-content;
+}
+
+.dica-linha span {
+  min-width: 7em;
+}
+
 .dica-linha b {
   margin-left: auto;
   padding-left: 12px;
@@ -1634,6 +1643,37 @@ table.dados thead th {
   background: var(--superficie);
   color: var(--tinta-2);
   font-size: 0.75rem;
+}
+
+/* Linha de título de um bloco de linhas (o PIB: quem comprou, quem produziu). */
+table.dados tbody tr.grupo th {
+  text-align: left;
+  padding-top: 14px;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tinta-3);
+}
+
+table.dados tbody tr.no-grupo th:first-child {
+  padding-left: 24px;
+}
+
+/* A lista do período em cima da tabela, com o que está aberto ao lado. */
+.tabela-controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 16px;
+  margin: 4px 0 12px;
+}
+
+.tabela-visao {
+  margin: 0;
+  flex: 1 1 14rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--tinta-2);
 }
 
 table.dados tr.brasil th,

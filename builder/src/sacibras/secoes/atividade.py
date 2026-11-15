@@ -7,7 +7,8 @@ from datetime import date
 from sacibras import contas
 from sacibras.fontes import bcb_focus, ibge_sidra
 from sacibras.modelos import decomposicoes
-from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela
+from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela, VisaoTabela
+from sacibras.secoes import produtividade
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -22,6 +23,7 @@ COMPONENTES = {
     "90687": "Agropecuária",
     "90691": "Indústria",
     "90696": "Serviços",
+    "90706": "Impostos sobre produtos",
 }
 FONTE_PIB = "IBGE, Contas Nacionais Trimestrais (SIDRA 5932)"
 # Taxa de investimento (FBCF / PIB, SIDRA 6727, variável 2517) e de poupança (poupança bruta /
@@ -73,7 +75,7 @@ DEMANDA: dict[str, tuple[str, str, int]] = {
     "93405": ("governo", "Consumo do governo", 1),
     "93406": ("fbcf", "Investimento (FBCF)", 1),
     "93407": ("exportacoes", "Exportações", 1),
-    "93408": ("importacoes", "Importações (tiram do PIB)", -1),
+    "93408": ("importacoes", "Importações", -1),
 }
 OFERTA: dict[str, tuple[str, str, int]] = {
     "90687": ("agro", "Agropecuária", 1),
@@ -82,12 +84,19 @@ OFERTA: dict[str, tuple[str, str, int]] = {
     "90706": ("impostos", "Impostos sobre produtos", 1),
 }
 FONTE_CONTRIBUICOES = "IBGE, Contas Nacionais Trimestrais (SIDRA 1620 e 1846); conta nossa"
+NOTA_IMPORTACOES = (
+    "As importações entram com o sinal trocado não porque tirem do PIB, mas para não contar "
+    "duas vezes: o que veio de fora já está no consumo, no investimento e nas exportações."
+)
 FONTE_CARREGO = "IBGE, Contas Nacionais Trimestrais (SIDRA 1621, com ajuste sazonal); conta nossa"
 
 
-def contribuicoes_do_pib(inicio: date) -> list[Grafico]:
-    """De onde veio o crescimento do PIB, pela demanda e pela oferta: os pontos de cada
-    componente (`decomposicoes.pib_por_componente`), empilhados, um trimestre por barra."""
+Contribuicoes = dict[str, list[Ponto]]
+
+
+def baixar_contas() -> tuple[dict[str, list[Ponto]], dict[str, list[Ponto]]]:
+    """O índice de volume e o valor em reais correntes, trimestre a trimestre, do PIB e de
+    cada componente da demanda e da oferta."""
     cats = ",".join(["90707", *DEMANDA, *OFERTA])
     volume = ibge_sidra.series(
         1620, 583, classificacao=f"c11255/{cats}", por="Setores", trimestral=True
@@ -95,42 +104,76 @@ def contribuicoes_do_pib(inicio: date) -> list[Grafico]:
     valor = ibge_sidra.series(
         1846, 585, classificacao=f"c11255/{cats}", por="Setores", trimestral=True
     )
+    return volume, valor
+
+
+def por_ano(trimestral: dict[str, list[Ponto]]) -> dict[str, list[Ponto]]:
+    """A soma dos quatro trimestres de cada ano completo, com a data de 1º de janeiro: o
+    volume e o valor do ano, para a conta das contribuições no ano."""
+    saida: dict[str, list[Ponto]] = {}
+    for c, pontos in trimestral.items():
+        anos: dict[int, list[float]] = {}
+        for d, v in pontos:
+            anos.setdefault(d.year, []).append(v)
+        saida[c] = [(date(a, 1, 1), sum(vs)) for a, vs in sorted(anos.items()) if len(vs) == 4]
+    return saida
+
+
+def contribuicoes(
+    volume: dict[str, list[Ponto]], valor: dict[str, list[Ponto]]
+) -> tuple[Contribuicoes, Contribuicoes]:
+    """Os pontos do crescimento do PIB que vieram de cada componente, pela demanda (com o
+    resto à parte: estoques e ajuste) e pela oferta (o resto repartido pela fatia). Serve
+    para trimestres (contra o mesmo do ano anterior) e para anos (`por_ano`)."""
+
+    def sinais(partes: dict[str, tuple[str, str, int]]) -> dict[str, int]:
+        return {c: sinal for c, (_, _, sinal) in partes.items()}
+
+    return (
+        decomposicoes.pib_por_componente(volume, valor, "90707", sinais(DEMANDA), True),
+        decomposicoes.pib_por_componente(volume, valor, "90707", sinais(OFERTA), False),
+    )
+
+
+def graficos_das_contribuicoes(
+    demanda: Contribuicoes, oferta: Contribuicoes, inicio: date
+) -> list[Grafico]:
+    """De onde veio o crescimento, quem produziu e quem comprou, empilhados, um trimestre por
+    barra. A oferta vem primeiro: na tela larga fica à esquerda."""
     saida = []
-    for id_, titulo, partes, resto, nota in (
-        (
-            "pib-contribuicoes-demanda",
-            "De onde veio o crescimento: quem comprou",
-            DEMANDA,
-            "Estoques e ajuste",
-            "Quantos pontos do crescimento do PIB, contra o mesmo trimestre do ano anterior, "
-            "vieram de cada gasto: a fatia dele no PIB um ano antes vezes o quanto cresceu. "
-            "As barras somadas dão o crescimento do PIB (a linha). O IBGE publica o quanto cada "
-            "componente cresceu, não a contribuição: a conta é nossa. Estoques e ajuste: o "
-            "que sobra, a variação dos estoques mais a diferença do encadeamento de preços.",
-        ),
+    for id_, titulo, partes, contrib, resto, nota in (
         (
             "pib-contribuicoes-oferta",
             "De onde veio o crescimento: quem produziu",
             OFERTA,
+            oferta,
             "",
             "Quantos pontos do crescimento do PIB, contra o mesmo trimestre do ano anterior, "
             "vieram de cada setor: a fatia dele no PIB um ano antes vezes o quanto cresceu. "
             "As barras somadas dão o crescimento do PIB (a linha); a diferença do encadeamento de "
             "preços (em média, 0,1 ponto) foi repartida pela fatia. Conta nossa.",
         ),
+        (
+            "pib-contribuicoes-demanda",
+            "De onde veio o crescimento: quem comprou",
+            DEMANDA,
+            demanda,
+            "Estoques e ajuste",
+            "Quantos pontos do crescimento do PIB, contra o mesmo trimestre do ano anterior, "
+            "vieram de cada gasto: a fatia dele no PIB um ano antes vezes o quanto cresceu. "
+            "As barras somadas dão o crescimento do PIB (a linha). O IBGE publica o quanto cada "
+            "componente cresceu, não a contribuição: a conta é nossa. Estoques e ajuste: o "
+            "que sobra, a variação dos estoques mais a diferença do encadeamento de preços. "
+            + NOTA_IMPORTACOES,
+        ),
     ):
-        contrib = decomposicoes.pib_por_componente(
-            volume, valor, "90707", {c: sinal for c, (_, _, sinal) in partes.items()}, bool(resto)
-        )
         series = [
             serie(sid, nome, contrib[c], desde=inicio) for c, (sid, nome, _) in partes.items()
         ]
         if resto:
             series.append(serie("resto", resto, contrib[decomposicoes.RESTO], desde=inicio))
-        soma = [
-            (t, sum(dict(p)[t] for p in contrib.values()))
-            for t, _ in contrib["93404" if resto else "90687"]
-        ]
+        primeiro = next(iter(partes))
+        soma = [(t, sum(dict(p)[t] for p in contrib.values())) for t, _ in contrib[primeiro]]
         series.append(serie("total", "PIB", soma, desde=inicio))
         saida.append(
             grafico(
@@ -148,6 +191,126 @@ def contribuicoes_do_pib(inicio: date) -> list[Grafico]:
             )
         )
     return saida
+
+
+def contribuicoes_do_pib(inicio: date) -> list[Grafico]:
+    """Os dois gráficos de onde veio o crescimento, com os dados baixados aqui."""
+    return graficos_das_contribuicoes(*contribuicoes(*baixar_contas()), inicio)
+
+
+TRIMESTRES_NA_TABELA = 20
+ANOS_NA_TABELA = 15
+NOTA_COMPONENTES = (
+    "Taxas: o quanto cada parte cresceu sozinha. Não se somam: cada uma pesa diferente no PIB, "
+    "e demanda e oferta são duas maneiras de medir o mesmo PIB. Pontos do PIB: a taxa vezes a "
+    "fatia da parte no PIB do ano anterior (conta nossa); estes somam: os de quem comprou dão "
+    "o PIB, e os de quem produziu também (a menos do arredondamento). Estoques e ajuste: a "
+    "variação dos estoques, que o IBGE não publica em volume, mais a diferença do "
+    "encadeamento de preços. " + NOTA_IMPORTACOES
+)
+
+
+def tabela_componentes(
+    taxas_tt: dict[str, list[Ponto]],
+    taxas_aa: dict[str, list[Ponto]],
+    taxas_4t: dict[str, list[Ponto]],
+    tri: tuple[Contribuicoes, Contribuicoes],
+    ano: tuple[Contribuicoes, Contribuicoes],
+) -> Tabela:
+    """O PIB por componente, um trimestre ou um ano escolhido na lista: a taxa de cada parte
+    e os pontos do PIB que vieram dela. O ano é o fechado: a taxa de quatro trimestres no 4º
+    trimestre e a conta das contribuições com os quatro somados."""
+
+    def valor(series: dict[str, list[Ponto]], c: str, t: date) -> float | None:
+        return dict(series.get(c, [])).get(t)
+
+    def linhas(
+        t: date, taxas: list[dict[str, list[Ponto]]], contrib: tuple[Contribuicoes, Contribuicoes]
+    ) -> list[LinhaTabela]:
+        demanda, oferta = contrib
+        pontos_pib = (
+            round(sum(dict(p).get(t, 0.0) for p in demanda.values()), 6)
+            if demanda and t in dict(demanda[decomposicoes.RESTO])
+            else None
+        )
+        saida = [
+            LinhaTabela(
+                rotulo="PIB",
+                valores=[valor(x, "90707", t) for x in taxas] + [pontos_pib],
+                unidade="",
+                casas=1,
+            )
+        ]
+        for grupo, partes, contr in (
+            ("Quem comprou (demanda)", DEMANDA, demanda),
+            ("Quem produziu (oferta)", OFERTA, oferta),
+        ):
+            for c, (_, nome, _) in partes.items():
+                saida.append(
+                    LinhaTabela(
+                        rotulo=nome,
+                        valores=[valor(x, c, t) for x in taxas] + [valor(contr, c, t)],
+                        unidade="",
+                        casas=1,
+                        grupo=grupo,
+                    )
+                )
+            if contr is demanda:
+                saida.append(
+                    LinhaTabela(
+                        rotulo="Estoques e ajuste",
+                        valores=[
+                            *(None for _ in taxas),
+                            valor(contr, decomposicoes.RESTO, t),
+                        ],
+                        unidade="",
+                        casas=1,
+                        grupo=grupo,
+                    )
+                )
+        return saida
+
+    visoes: list[VisaoTabela] = []
+    for t, _ in reversed(taxas_aa["90707"][-TRIMESTRES_NA_TABELA:]):
+        visoes.append(
+            VisaoTabela(
+                rotulo=periodo(t, "T"),
+                grupo="Trimestres",
+                subtitulo=f"{periodo(t, 'T')}: quanto cada parte cresceu e quanto somou ao PIB",
+                colunas=[
+                    "Contra o trimestre anterior (%)",
+                    "Contra um ano antes (%)",
+                    "Pontos do PIB em um ano",
+                ],
+                linhas=linhas(t, [taxas_tt, taxas_aa], tri),
+            )
+        )
+    quartos = [d for d, _ in taxas_4t["90707"] if d.month == 10]
+    for d in reversed(quartos[-ANOS_NA_TABELA:]):
+        t = date(d.year, 1, 1)
+        anual = {c: [(t, v) for q, v in pts if q == d] for c, pts in taxas_4t.items()}
+        visoes.append(
+            VisaoTabela(
+                rotulo=str(d.year),
+                grupo="Anos",
+                subtitulo=f"{d.year}, o ano inteiro: quanto cada parte cresceu e quanto somou ao "
+                "PIB",
+                colunas=["No ano (%)", "Pontos do PIB no ano"],
+                linhas=linhas(t, [anual], ano),
+            )
+        )
+    primeira = visoes[0]
+    return Tabela(
+        id="pib-componentes",
+        titulo="PIB por componente",
+        subtitulo="Escolha o trimestre ou o ano: quanto cada parte cresceu e quanto somou ao PIB",
+        colunas=primeira.colunas,
+        linhas=primeira.linhas,
+        visoes=visoes,
+        rotulo_visoes="Período",
+        fonte=f"{FONTE_PIB}, variáveis 6564, 6561 e 6562; pontos: {FONTE_CONTRIBUICOES}",
+        nota=NOTA_COMPONENTES,
+    )
 
 
 def cartao_carrego() -> Cartao | None:
@@ -213,7 +376,10 @@ def montar(ctx: Contexto) -> Secao:
     pib_aa = ibge_sidra.series(
         5932, 6561, classificacao=f"c11255/{cats}", por="Setores", trimestral=True
     )
-    pib_4t = ibge_sidra.series(5932, 6562, classificacao="c11255/90707", trimestral=True)[""]
+    pib_4t_todos = ibge_sidra.series(
+        5932, 6562, classificacao=f"c11255/{cats}", por="Setores", trimestral=True
+    )
+    pib_4t = pib_4t_todos["90707"]
     em_reais = ibge_sidra.series(
         1846, 585, classificacao="c11255/93404,93406", por="Setores", trimestral=True
     )
@@ -354,6 +520,7 @@ def montar(ctx: Contexto) -> Secao:
                 serie("fbcf", "Investimento (FBCF)", pib_aa["93406"], desde=inicio),
                 serie("governo", "Consumo do governo", pib_aa["93405"], desde=inicio),
                 serie("exportacoes", "Exportações", pib_aa["93407"], desde=inicio),
+                serie("pib", "PIB", aa, desde=inicio),
             ],
             unidade="% em um ano",
             casas=1,
@@ -456,32 +623,26 @@ def montar(ctx: Contexto) -> Secao:
         ),
     ]
 
+    vazio: Contribuicoes = {}
+    tri, ano = (vazio, vazio), (vazio, vazio)
     try:
-        graficos += contribuicoes_do_pib(inicio)
+        volume, valor = baixar_contas()
+        tri = contribuicoes(volume, valor)
+        ano = contribuicoes(por_ano(volume), por_ano(valor))
+        graficos += graficos_das_contribuicoes(*tri, inicio)
         carrego = cartao_carrego()
         if carrego:
             cartoes.append(carrego)
     except Exception as erro:  # as contas a mais não derrubam a seção
         print(f"  aviso: atividade sem as contribuições ou o carrego: {str(erro)[:120]}")
-
-    tabela = Tabela(
-        id="pib-componentes",
-        titulo=f"PIB do {trimestre}, por componente",
-        colunas=["Contra o trimestre anterior (%)", "Em um ano (%)"],
-        linhas=[
-            LinhaTabela(
-                rotulo=nome,
-                valores=[
-                    pib_tt[codigo][-1][1] if codigo in pib_tt else None,
-                    pib_aa[codigo][-1][1] if codigo in pib_aa else None,
-                ],
-                unidade="",
-                casas=1,
-            )
-            for codigo, nome in COMPONENTES.items()
-        ],
-        fonte=f"{FONTE_PIB}, variáveis 6564 e 6561",
-    )
+    tabelas = [tabela_componentes(pib_tt, pib_aa, pib_4t_todos, tri, ano)]
+    try:  # produtividade e eficiência (PTF): vieram da Demografia (Caio, 15/11/2026)
+        c_prod, g_prod, t_prod = produtividade.pecas()
+        cartoes += c_prod
+        graficos += g_prod
+        tabelas += t_prod
+    except Exception as erro:
+        print(f"  aviso: atividade sem a produtividade: {str(erro)[:120]}")
     resumo = (
         f"O PIB cresceu {br(tt[-1][1])} % no {trimestre} contra o trimestre anterior e "
         f"{br(aa[-1][1])} % contra um ano antes; em quatro trimestres acumula "
@@ -493,6 +654,6 @@ def montar(ctx: Contexto) -> Secao:
         resumo=resumo,
         cartoes=cartoes,
         graficos=graficos,
-        tabelas=[tabela],
+        tabelas=tabelas,
         gerado_em=ctx.agora(),
     )

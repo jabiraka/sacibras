@@ -30,6 +30,20 @@ export function comUnidade(valor: number, unidade: string, casas = 1): string {
   return `${n} ${unidade}`.trim();
 }
 
+/** A unidade curta para a dica do gráfico: a inteira fica no subtítulo, e na dica ela
+ *  espremia o nome das séries (Caio, 15/11/2026: "está cortando os cartões [...] Se quiser
+ *  diminuir a frase"). "% a.a., por vencimento" → "% a.a."; "% da PTF dos EUA" → "%";
+ *  "pontos percentuais" → "pp"; "índice, 2012 = 100" → "". */
+export function unidadeCurta(unidade: string): string {
+  const u = (unidade.split(",")[0] ?? "").trim();
+  if (u.startsWith("% a.a.")) return "% a.a.";
+  if (u === "% do PIB") return u;
+  if (u.startsWith("%")) return "%";
+  if (u.startsWith("pontos percentuais")) return "pp";
+  if (u.startsWith("índice")) return "";
+  return u.length > 14 ? "" : u;
+}
+
 /** "R$ 1,2 tri", "US$ 345,6 bi", "R$ 12,3 mi". */
 export function dinheiro(valor: number, moeda = "R$"): string {
   const abs = Math.abs(valor);

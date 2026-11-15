@@ -13,7 +13,12 @@ ficou sem CSV nem PNG, e na tela só se a licença deixar (a FGV saiu), com as l
 `licencas.py`. Outra sessão do mesmo dia fez o PIB trimestral por estado, as decomposições
 (IPCA por grupo, PIB por componente, fatores da dívida e da desocupação, carrego do PIB), o
 IBC-R dos quatro estados novos e a conferência contra os institutos estaduais; o Caio olhou e
-mandou juntar (*"junte no main e pode fazer oq recomendar"*). Tudo no `main`.
+mandou juntar (*"junte no main e pode fazer oq recomendar"*). Tudo no `main`. Depois, a pedido do Caio:
+Produtividade e Eficiência (PTF) saíram de Demografia para Atividade (`secoes/produtividade.py`),
+a PTF contra a dos EUA ficou só com o Brasil, os gráficos do PIB ficaram em pares lado a lado,
+a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos que somam o PIB,
+a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibovespa e a pessoa
+escolhe o resto.
 
 ## Releituras com prazo
 
@@ -69,8 +74,9 @@ As próximas:
   `anterior.SITE`.
 - **Previsões próprias** de IPCA, desocupação e o PIB agora com indústria, varejo e serviços:
   fora por enquanto (Caio, 15/11/2026: *"sem próprias previsões por enquanto"*).
-- Para olhar: Atividade › PIB ficou com seis gráficos (Caio, 15/11/2026: *"pode deixar por
-  enquanto"*); se pesar, os dois antigos de linhas (demanda e oferta) são os candidatos a sair.
+- Para olhar: Atividade › PIB tem seis gráficos em três pares (o PIB e a demanda privada;
+  quem produziu e quem comprou; oferta e demanda em linhas). Se pesar, o par de linhas é o
+  candidato a sair: a tabela com a escolha do período já dá a taxa de cada parte.
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).

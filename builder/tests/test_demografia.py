@@ -19,7 +19,7 @@ from sacibras.fontes import (
     tesouro_rtn,
 )
 from sacibras.fontes.ibge_projecao import PlanilhaMudouError, ler_por_ano, ler_quinquenal
-from sacibras.secoes import demografia
+from sacibras.secoes import demografia, produtividade
 from sacibras.secoes.base import Contexto
 from sacibras.tipos import Ponto
 
@@ -115,7 +115,7 @@ def test_pico_crescimento_e_primeiro_ano() -> None:
 
 def test_trimestre_civil_vem_do_movel_que_fecha_o_trimestre() -> None:
     movel = [(date(2026, m, 1), float(m)) for m in range(1, 10)]
-    assert demografia.trimestre_civil(movel) == [
+    assert produtividade.trimestre_civil(movel) == [
         (date(2026, 1, 1), 3.0),
         (date(2026, 4, 1), 6.0),
         (date(2026, 7, 1), 9.0),
@@ -130,7 +130,7 @@ def test_decomposicao_soma_o_crescimento_do_pib() -> None:
     # PIB cresce 3 % ao ano e os ocupados 1 %: a produtividade cresce (1,03 / 1,01) − 1.
     pib = _trimestres(range(2012, 2016), lambda a, t: 100 * 1.03 ** (a - 2012))
     ocupados = _trimestres(range(2012, 2016), lambda a, t: 90_000 * 1.01 ** (a - 2012))
-    anos = demografia.decomposicao_anual(pib, ocupados)
+    anos = produtividade.decomposicao_anual(pib, ocupados)
     assert [x.ano for x in anos] == [2013, 2014, 2015]
     for x in anos:
         assert x.pib == pytest.approx(3.0)
@@ -138,7 +138,7 @@ def test_decomposicao_soma_o_crescimento_do_pib() -> None:
         assert x.produtividade == pytest.approx((1.03 / 1.01 - 1) * 100)
         assert x.parte_ocupados + x.parte_produtividade == pytest.approx(x.pib)
         assert x.parte_ocupados == pytest.approx(3.0 * math.log(1.01) / math.log(1.03))
-    assert demografia.media_geometrica([x.produtividade for x in anos]) == pytest.approx(
+    assert produtividade.media_geometrica([x.produtividade for x in anos]) == pytest.approx(
         (1.03 / 1.01 - 1) * 100
     )
 
@@ -148,7 +148,7 @@ def test_decomposicao_pula_ano_incompleto_e_pib_parado() -> None:
     ocupados = _trimestres(range(2012, 2014), lambda a, t: 90_000 * (1.02 if a == 2013 else 1))
     pib.append((date(2014, 1, 1), 100.0))  # 2014 só com um trimestre
     ocupados.append((date(2014, 1, 1), 90_000.0))
-    anos = demografia.decomposicao_anual(pib, ocupados)
+    anos = produtividade.decomposicao_anual(pib, ocupados)
     assert [x.ano for x in anos] == [2013]
     assert anos[0].pib == 0
     assert anos[0].parte_ocupados == pytest.approx(2.0)
@@ -158,7 +158,7 @@ def test_decomposicao_pula_ano_incompleto_e_pib_parado() -> None:
 def test_produtividade_tem_100_na_primeira_janela_completa() -> None:
     pib = _trimestres(range(2012, 2015), lambda a, t: 100 * 1.02 ** (a - 2012))
     ocupados = _trimestres(range(2012, 2015), lambda a, t: 1000.0)
-    prod = demografia.produtividade(pib, ocupados)
+    prod = produtividade.produtividade(pib, ocupados)
     assert prod["por_ocupado"][0] == (date(2012, 10, 1), 100.0)
     assert prod["por_ocupado"][-1][1] == pytest.approx(100 * 1.02**2)
     assert prod["ocupados"][-1][1] == pytest.approx(100.0)
@@ -169,11 +169,11 @@ def test_por_hora_desconta_as_horas_que_caem() -> None:
     pib = _trimestres(range(2012, 2015), lambda a, t: 100 * 1.02 ** (a - 2012))
     ocupados = _trimestres(range(2012, 2015), lambda a, t: 1000.0)
     horas = _trimestres(range(2012, 2015), lambda a, t: 40 * 0.99 ** (a - 2012))
-    hora = demografia.por_hora(pib, ocupados, horas)
+    hora = produtividade.por_hora(pib, ocupados, horas)
     assert hora[0] == (date(2012, 10, 1), 100.0)
     assert hora[-1][1] == pytest.approx(100 * (1.02 / 0.99) ** 2)
     # Trimestre sem horas fica de fora da janela, em vez de valer zero.
-    assert demografia.por_hora(pib, ocupados, horas[4:])[0][0] == date(2013, 10, 1)
+    assert produtividade.por_hora(pib, ocupados, horas[4:])[0][0] == date(2013, 10, 1)
 
 
 def _projecao() -> onu_wpp.Projecao:
@@ -292,7 +292,7 @@ def _ano_pwt(a: int) -> dict[str, float]:
 
 
 def _pwt() -> pwt.PorPais:
-    return {cod: {a: _ano_pwt(a) for a in range(1954, 2024)} for cod in demografia.PAISES_PTF}
+    return {cod: {a: _ano_pwt(a) for a in range(1954, 2024)} for cod in produtividade.PAISES_PTF}
 
 
 @pytest.fixture
@@ -302,9 +302,9 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
     monkeypatch.setattr(ibge_projecao, "quinquenal", lambda: ler_quinquenal(_quinquenal()))
 
     def serie(tabela: int, variavel: int, **kw: Any) -> list[Ponto]:
-        if tabela == demografia.PIB_VOLUME[0]:
+        if tabela == produtividade.PIB_VOLUME[0]:
             return _trimestres(range(2012, 2027), lambda a, t: 150 * 1.02 ** (a - 2012))[:-2]
-        if tabela == demografia.HORAS[0]:
+        if tabela == produtividade.HORAS[0]:
             return _trimestres(range(2012, 2027), lambda a, t: 40.0)
         return [(d, 90_000 * 1.01 ** (d.year - 2012)) for d, _ in _mensal(date(2012, 3, 1), 175, 0)]
 
@@ -353,14 +353,14 @@ def test_monta_a_secao_com_o_ano_corrente_e_o_inss(ctx: Contexto) -> None:
     dependencia = graficos["dependencia"].series[0]
     assert dependencia.tracejado_desde == date(2023, 1, 1)
     assert dependencia.pontos[-1][0] == date(2070, 1, 1)
-    assert "crescimento-decomposto" in graficos and "inss" in graficos
+    assert "inss" in graficos
+    # A produtividade e a PTF foram para Atividade (Caio, 15/11/2026).
+    assert not {"produtividade", "crescimento-decomposto", "ptf-brasil"} & set(graficos)
+    assert not {"produtividade", "ptf-eua"} & {c.id for c in secao.cartoes}
     onu = graficos["populacao-onu"]
     assert [s.id for s in onu.series] == ["ibge", "onu"]
     assert onu.intervalos[0].serie == "onu" and len(onu.intervalos[0].pontos) == 8
     assert len(graficos["idosos-paises"].series) == 6
-    assert "por-hora" in [s.id for s in graficos["produtividade"].series]
-    hora = next(c for c in secao.cartoes if c.id == "produtividade-hora")
-    assert hora.procedencia == "calculado" and len(hora.detalhe) <= 60
 
     # servidores e militares: R$ 60 bi e R$ 48 bi de déficit, PIB de R$ 12 tri no ano
     uniao = next(c for c in secao.cartoes if c.id == "deficit-servidores-militares")
@@ -377,18 +377,29 @@ def test_monta_a_secao_com_o_ano_corrente_e_o_inss(ctx: Contexto) -> None:
     estados = next(t for t in secao.tabelas if t.id == "demografia-estados")
     assert [linha.rotulo for linha in estados.linhas] == ["Brasil", "São Paulo", "Acre"]
     assert "filho," in secao.resumo or "filhos," in secao.resumo
+    secao.model_dump_json()  # o JSON do site sai
+
+
+def test_produtividade_e_ptf_saem_para_atividade(ctx: Contexto) -> None:
+    cartoes, graficos_, tabelas = produtividade.pecas()
+    graficos = {g.id: g for g in graficos_}
+    assert "crescimento-decomposto" in graficos
+    assert "por-hora" in [s.id for s in graficos["produtividade"].series]
+    hora = next(c for c in cartoes if c.id == "produtividade-hora")
+    assert hora.procedencia == "calculado" and len(hora.detalhe) <= 60
+    assert all(c.secao == "atividade" for c in cartoes)
 
     # A PWT: o pico da PTF relativa é 1980, e a tabela vai década a década.
-    ptf_eua = next(c for c in secao.cartoes if c.id == "ptf-eua")
+    ptf_eua = next(c for c in cartoes if c.id == "ptf-eua")
     assert ptf_eua.referencia == date(2023, 1, 1) and ptf_eua.detalhe == "76 % em 1980, o auge"
-    assert len(graficos["ptf-paises"].series) == 6
+    # Contra os EUA, só o Brasil; os outros países ficam em Brasil no mundo.
+    assert [s.id for s in graficos["ptf-paises"].series] == ["bra"]
     assert "CC BY 4.0" in graficos["ptf-brasil"].fonte and not graficos["ptf-brasil"].sem_download
-    contabil = next(t for t in secao.tabelas if t.id == "pwt-contabilidade")
+    contabil = next(t for t in tabelas if t.id == "pwt-contabilidade")
     assert (
         contabil.linhas[0].rotulo == "1955 a 1960" and contabil.linhas[-1].rotulo == "2021 a 2023"
     )
     assert "parte do trabalho na renda de 2021 em 2022 e 2023" in contabil.nota
-    secao.model_dump_json()  # o JSON do site sai
 
 
 def test_contabilidade_soma_o_pib_e_bate_com_a_ptf_da_pwt() -> None:
@@ -412,12 +423,12 @@ def test_contabilidade_soma_o_pib_e_bate_com_a_ptf_da_pwt() -> None:
             + peso * math.log(x["emp"] * x["avh"] * x["hc"] / (ant["emp"] * ant["avh"] * ant["hc"]))
         )
         x["rgdpna"] = ant["rgdpna"] * math.exp(crescimento)
-    parcelas = demografia.contabilidade(anos)
+    parcelas = produtividade.contabilidade(anos)
     assert [p.ano for p in parcelas] == list(range(2001, 2011))
     for p in parcelas:
         assert p.capital + p.horas + p.escolaridade + p.ptf == pytest.approx(p.pib)
         assert p.ptf == pytest.approx(p.ptf_pwt) and p.ptf == pytest.approx(math.log(1.01) * 100)
-    decadas = demografia.periodos(parcelas)
+    decadas = produtividade.periodos(parcelas)
     assert [r for r, _ in decadas] == ["2001 a 2010"]
     assert decadas[0][1].horas == pytest.approx(0.0 + 100 * math.log(1.02) * 0.5555, rel=1e-2)
 
@@ -425,8 +436,8 @@ def test_contabilidade_soma_o_pib_e_bate_com_a_ptf_da_pwt() -> None:
 def test_anos_em_que_a_pwt_repete_o_dado() -> None:
     anos = {2019: {"labsh": 0.57}, 2020: {"labsh": 0.54}, 2021: {"labsh": 0.51}}
     anos |= {2022: {"labsh": 0.51}, 2023: {"labsh": 0.51}}
-    assert demografia.anos_repetidos(anos, "labsh") == [2022, 2023]
-    assert demografia.anos_repetidos({2020: {"labsh": 0.5}, 2021: {"labsh": 0.6}}, "labsh") == []
+    assert produtividade.anos_repetidos(anos, "labsh") == [2022, 2023]
+    assert produtividade.anos_repetidos({2020: {"labsh": 0.5}, 2021: {"labsh": 0.6}}, "labsh") == []
 
 
 def test_pwt_le_a_aba_data_e_acha_a_planilha_no_dataverse() -> None:
@@ -522,7 +533,7 @@ def test_soma_do_ano_so_com_os_doze_meses() -> None:
     assert demografia.soma_do_ano(mensal) == {2025: 12.0}
 
 
-def _economia(ate: int) -> tuple[dict[int, dict[str, float]], demografia.Insumos]:
+def _economia(ate: int) -> tuple[dict[int, dict[str, float]], produtividade.Insumos]:
     """Uma economia em que a PWT e o IBGE contam a mesma história: capital pelo inventário
     perpétuo (5 % de depreciação), PIB Cobb-Douglas com o trabalho pesando 0,5 e PTF subindo
     1 % ao ano; a PWT vai até 2023 e o IBGE, até `ate`."""
@@ -534,7 +545,7 @@ def _economia(ate: int) -> tuple[dict[int, dict[str, float]], demografia.Insumos
         investimento = 60 * 1.03**t
         capital = 0.95 * capital + investimento
         s = 9.0 + 0.1 * t
-        hc = math.exp(demografia.retorno_do_estudo(s))
+        hc = math.exp(produtividade.retorno_do_estudo(s))
         emp, avh, ptf = 50 * 1.01**t, 1900 * 0.999**t, 1.01 ** (a - 2021)
         y = ptf * capital**0.5 * (emp * avh * hc) ** 0.5
         pib[a], fbcf[a], ocupados[a], horas[a], estudo[a] = y, investimento, emp, avh, s
@@ -549,19 +560,19 @@ def _economia(ate: int) -> tuple[dict[int, dict[str, float]], demografia.Insumos
                 "emp": emp,
                 "avh": avh,
             }
-    return brasil, demografia.Insumos(pib, fbcf, ocupados, horas, estudo)
+    return brasil, produtividade.Insumos(pib, fbcf, ocupados, horas, estudo)
 
 
 def test_ptf_estendida_com_o_ibge_segue_a_conta_da_pwt() -> None:
     brasil, insumos = _economia(2025)
-    estendida = demografia.estender_ptf(brasil, insumos)
+    estendida = produtividade.estender_ptf(brasil, insumos)
     assert [x.ano for x in estendida] == [2024, 2025]
     for x in estendida:
         assert x.ptf == pytest.approx(100 * 1.01 ** (x.ano - 2021))
         assert x.ptf_ritmo_pwt == pytest.approx(x.ptf)  # o estudo sobe no mesmo ritmo
         p = x.parcela
         assert p.capital + p.horas + p.escolaridade + p.ptf == pytest.approx(p.pib)
-    erro, vies, desde = demografia.conferir_ptf(brasil, insumos)
+    erro, vies, desde = produtividade.conferir_ptf(brasil, insumos)
     assert erro == pytest.approx(0, abs=1e-9) and vies == pytest.approx(0, abs=1e-9)
     assert desde == 2012
 
@@ -569,12 +580,12 @@ def test_ptf_estendida_com_o_ibge_segue_a_conta_da_pwt() -> None:
 def test_ptf_estendida_para_onde_falta_numero_do_ibge() -> None:
     brasil, insumos = _economia(2025)
     sem_estudo = insumos._replace(estudo={a: v for a, v in insumos.estudo.items() if a != 2025})
-    assert [x.ano for x in demografia.estender_ptf(brasil, sem_estudo)] == [2024]
-    assert demografia.estender_ptf(brasil, insumos._replace(pib={})) == []
+    assert [x.ano for x in produtividade.estender_ptf(brasil, sem_estudo)] == [2024]
+    assert produtividade.estender_ptf(brasil, insumos._replace(pib={})) == []
 
 
 def test_ano_sem_pnad_de_educacao_fica_na_reta() -> None:
-    ins = demografia.Insumos({}, {}, {}, {}, {2019: 9.8, 2022: 10.1})
+    ins = produtividade.Insumos({}, {}, {}, {}, {2019: 9.8, 2022: 10.1})
     assert ins.estudo_em(2020) == pytest.approx(9.9) and ins.estudo_em(2023) is None
     # 4 anos a 13,4 %, 4 a 10,1 % e 2 a 6,8 %
-    assert demografia.retorno_do_estudo(10) == pytest.approx(0.536 + 0.404 + 0.136)
+    assert produtividade.retorno_do_estudo(10) == pytest.approx(0.536 + 0.404 + 0.136)

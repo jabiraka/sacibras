@@ -1,8 +1,10 @@
 // "Quanto rendeu R$ 100", em Mercados: a pessoa escolhe desde quando (lista suspensa), vê o
 // ranking em pontos (com a inflação como marco: à direita dela, ganhou poder de compra) e o
 // gráfico com as linhas partindo de R$ 100 na mesma data. São mais aplicações do que cores na
-// paleta: o gráfico mostra a inflação e até cinco delas, e tocar numa linha do ranking a põe
-// ou tira do gráfico (como os países em Brasil no mundo). A cor segue a aplicação.
+// paleta: o gráfico abre com duas e a inflação (Caio, 15/11/2026: "mostre menos métricas e
+// deixe a pessoa escolher quais quer comparar"), e a pessoa põe até cinco pela lista em cima
+// do gráfico ou tocando numa linha do ranking, e tira pelo × (como os países em Brasil no
+// mundo). A cor segue a aplicação.
 
 import { data, dinheiro, numero, periodo } from "./formato";
 import { montarGrafico, tema } from "./grafico";
@@ -12,7 +14,7 @@ import type { Grafico, Serie } from "./tipos";
 
 const DIA = 86_400_000;
 /** As que abrem no gráfico, e quantas cabem nele além da inflação. */
-const INICIAIS = ["cdi", "ibov", "dolar", "tesouro-ipca", "ouro"];
+const INICIAIS = ["cdi", "ibov"];
 const MAXIMO = 5;
 
 function iso(d: Date): string {
@@ -59,7 +61,7 @@ export function montarRetornos(g: Grafico): HTMLElement {
   const titulos = el("div");
   titulos.append(
     el("h3", "", g.titulo),
-    el("p", "sub", "Retorno no período, em %, antes de imposto · toque numa aplicação para pô-la no gráfico ou tirá-la"),
+    el("p", "sub", "Retorno no período, em %, antes de imposto · toque numa aplicação para pô-la no gráfico"),
   );
   cabeca.append(titulos);
   const barra = el("div", "barra-controles");
@@ -89,7 +91,7 @@ export function montarRetornos(g: Grafico): HTMLElement {
   const casas = new Map<string, number>();
   const aplicacoesIds = g.series.filter((s) => s.papel === "realizado").map((s) => s.id);
   const iniciais = INICIAIS.filter((id) => aplicacoesIds.includes(id));
-  for (const id of aplicacoesIds) if (iniciais.length < MAXIMO && !iniciais.includes(id)) iniciais.push(id);
+  for (const id of aplicacoesIds) if (iniciais.length < INICIAIS.length && !iniciais.includes(id)) iniciais.push(id);
   iniciais.forEach((id, i) => casas.set(id, i));
   function alternar(id: string): void {
     if (casas.has(id)) {
@@ -143,15 +145,51 @@ export function montarRetornos(g: Grafico): HTMLElement {
           ? `Ganharam dela: ${ganharam.join(", ")}.`
           : "Nenhuma das aplicações ganhou dela.");
     }
-    lugarDoGrafico.replaceChildren(
-      montarGrafico({
-        ...g,
-        titulo: "R$ 100 ao longo do período",
-        subtitulo: `a partir de ${periodo(inicio, "D")}`,
-        janela_anos: null,
-        series: series.filter((s) => s.cor !== undefined),
-      }),
-    );
+    const grafico = montarGrafico({
+      ...g,
+      titulo: "R$ 100 ao longo do período",
+      subtitulo: `a partir de ${periodo(inicio, "D")}`,
+      janela_anos: null,
+      series: series.filter((s) => s.cor !== undefined),
+    });
+    grafico.querySelector("header")?.after(fichas());
+    lugarDoGrafico.replaceChildren(grafico);
+  }
+
+  /** As aplicações no gráfico, cada uma com o × para tirar, e a lista para pôr outra. */
+  function fichas(): HTMLElement {
+    const caixa = el("div", "escolhidos");
+    const nomeDe = (id: string): string => g.series.find((s) => s.id === id)?.nome ?? id;
+    for (const [id, casa] of [...casas.entries()].sort((a, b) => a[1] - b[1])) {
+      const ficha = el("button", "ficha escolhida");
+      ficha.type = "button";
+      ficha.style.setProperty("--cor", cores[casa % cores.length] ?? "");
+      ficha.append(el("i"), document.createTextNode(nomeDe(id)));
+      if (casas.size > 1) {
+        ficha.append(el("span", "tirar", "×"));
+        ficha.setAttribute("aria-label", `Tirar ${nomeDe(id)} do gráfico`);
+        ficha.addEventListener("click", () => alternar(id));
+      } else ficha.disabled = true;
+      caixa.append(ficha);
+    }
+    const disponiveis = aplicacoesIds.filter((id) => !casas.has(id));
+    if (casas.size < MAXIMO && disponiveis.length) {
+      const adicionar = listaSuspensa(
+        "retornos-adicionar",
+        "",
+        [
+          { valor: "", rotulo: "+ Comparar com…" },
+          ...disponiveis.map((id) => ({ valor: id, rotulo: nomeDe(id) })),
+        ],
+        "",
+        (id) => {
+          if (id) alternar(id);
+        },
+      );
+      adicionar.caixa.classList.add("adicionar");
+      caixa.append(adicionar.caixa);
+    }
+    return caixa;
   }
   pintar();
   return caixa;

@@ -24,6 +24,7 @@ import { montarDispersao } from "./dispersao";
 import { montarPiramide } from "./piramide";
 import { montarRetornos } from "./retornos";
 import { el, guardar } from "./pecas";
+import { listaSuspensa } from "./pontos";
 import { montarSimulador } from "./simulador";
 import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
@@ -40,6 +41,7 @@ import type {
   ComparadorSalario,
   SimuladorSelic,
   Subcategoria,
+  LinhaTabela,
   Tabela,
 } from "./tipos";
 
@@ -138,27 +140,67 @@ function montarCartao(c: Cartao): HTMLElement {
   return no;
 }
 
+/** As linhas e colunas de uma tabela; linha com `grupo` novo ganha antes uma linha de título. */
+function corpoDaTabela(colunas: string[], linhas: LinhaTabela[]): HTMLTableElement {
+  const tabela = el("table", "dados");
+  const cab = tabela.createTHead().insertRow();
+  cab.append(el("th", "", ""));
+  for (const c of colunas) cab.append(el("th", "", c));
+  const corpo = tabela.createTBody();
+  let grupo = "";
+  for (const l of linhas) {
+    if (l.grupo && l.grupo !== grupo) {
+      const titulo = corpo.insertRow();
+      titulo.className = "grupo";
+      const th = el("th", "", l.grupo);
+      th.colSpan = colunas.length + 1;
+      titulo.append(th);
+    }
+    grupo = l.grupo ?? "";
+    const tr = corpo.insertRow();
+    if (l.grupo) tr.className = "no-grupo";
+    const th = el("th", "", l.rotulo);
+    protegerNomeDeEstado(th, l.rotulo);
+    if (l.unidade) th.append(el("span", "sub", ` ${l.unidade}`));
+    tr.append(th);
+    if (l.textos?.length) for (const x of l.textos) tr.append(el("td", "texto", x));
+    else for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
+  }
+  return tabela;
+}
+
 function montarTabela(t: Tabela): HTMLElement {
   const caixa = guardar(t.titulo, t.subtitulo, () => {
     const rolavel = el("div", "tabela-rolavel");
-    const tabela = el("table", "dados");
-    const cab = tabela.createTHead().insertRow();
-    cab.append(el("th", "", ""));
-    for (const c of t.colunas) cab.append(el("th", "", c));
-    const corpo = tabela.createTBody();
-    for (const l of t.linhas) {
-      const tr = corpo.insertRow();
-      const th = el("th", "", l.rotulo);
-      protegerNomeDeEstado(th, l.rotulo);
-      if (l.unidade) th.append(el("span", "sub", ` ${l.unidade}`));
-      tr.append(th);
-      if (l.textos?.length) for (const x of l.textos) tr.append(el("td", "texto", x));
-      else for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
+    const partes: HTMLElement[] = [];
+    const visoes = t.visoes ?? [];
+    if (visoes.length > 1) {
+      // O período numa lista suspensa (Caio, 15/11/2026: "com parâmetro pra indicar se quer
+      // ver qual trimestre ou qual ano"); o subtítulo diz o que está aberto.
+      const legenda = el("p", "tabela-visao", visoes[0]?.subtitulo ?? "");
+      const mostrar = (i: number): void => {
+        const v = visoes[i];
+        if (!v) return;
+        rolavel.replaceChildren(corpoDaTabela(v.colunas, v.linhas));
+        legenda.textContent = v.subtitulo;
+      };
+      const { caixa: lista } = listaSuspensa(
+        `visao-${t.id}`,
+        t.rotulo_visoes || "Período",
+        visoes.map((v, i) => ({ valor: String(i), rotulo: v.rotulo, grupo: v.grupo || undefined })),
+        "0",
+        (valor) => mostrar(Number(valor)),
+      );
+      const barra = el("div", "tabela-controles");
+      barra.append(lista, legenda);
+      partes.push(barra);
+      mostrar(0);
+    } else {
+      rolavel.append(corpoDaTabela(t.colunas, t.linhas));
     }
-    rolavel.append(tabela);
     const pe = el("footer", "grafico-pe");
     pe.append(el("span", "fonte", `Fonte: ${t.fonte}`));
-    const partes: HTMLElement[] = [rolavel, pe];
+    partes.push(rolavel, pe);
     if (t.nota) partes.push(el("p", "nota", t.nota));
     return partes;
   });

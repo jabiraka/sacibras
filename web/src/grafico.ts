@@ -3,7 +3,7 @@
 // ou mais, tabela, CSV e PNG sempre à mão, consenso e previsão tracejados.
 
 import * as Plot from "@observablehq/plot";
-import { comUnidade, data, eixo, mesCurto, numero, periodo } from "./formato";
+import { comUnidade, data, eixo, mesCurto, numero, periodo, unidadeCurta } from "./formato";
 import type { Grafico, Serie } from "./tipos";
 
 interface Linha {
@@ -703,6 +703,7 @@ function pairar(
     regua.setAttribute("x1", String(xi));
     regua.setAttribute("x2", String(xi));
     const linhas: HTMLElement[] = [];
+    const curta = unidadeCurta(g.unidade);
     let iso = "";
     g.series.forEach((s, k) => {
       const ponto = porSerie[k]?.get(instante);
@@ -720,7 +721,7 @@ function pairar(
       const linha = el("div", "dica-linha");
       const chave = el("i", "chave");
       chave.style.setProperty("--cor", cor(k));
-      const valor = el("b", "", valorNoEixo(g, ponto.v, comUnidade(ponto.v, g.unidade, g.casas)));
+      const valor = el("b", "", valorNoEixo(g, ponto.v, comUnidade(ponto.v, curta, g.casas)));
       linha.append(chave, el("span", "", s.nome), valor);
       linhas.push(linha);
       // Se a série tem barra de erro nesta data, a faixa vai escrita logo abaixo.
@@ -729,7 +730,7 @@ function pairar(
         const faixa = intervalo.pontos.find(([d]) => d === ponto.iso);
         const meio = intervalo.meio?.find(([d]) => d === ponto.iso);
         const de = (f: [string, number, number]): string =>
-          `de ${numero(f[1], g.casas)} a ${comUnidade(f[2], g.unidade, g.casas)}`;
+          `de ${numero(f[1], g.casas)} a ${comUnidade(f[2], curta, g.casas)}`;
         if (faixa) {
           linhas.push(el("div", "dica-faixa", meio ? `8 em 10: ${de(faixa)}` : de(faixa)));
         }

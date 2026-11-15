@@ -201,6 +201,21 @@ class LinhaTabela(Modelo):
     textos: list[str] = Field(default_factory=list)
     """Quando há, as células da linha são estes textos (uma linha do tempo, um quadro de
     regras) e `valores` fica vazio."""
+    grupo: str = ""
+    """O bloco da linha ("Quem comprou"): a tela põe o nome numa linha de título quando o
+    grupo muda."""
+
+
+class VisaoTabela(Modelo):
+    """Um período da tabela que a pessoa escolhe na lista (um trimestre, um ano)."""
+
+    rotulo: str
+    """O nome na lista: "2º tri/2026", "2025"."""
+    grupo: str = ""
+    """Onde ele fica na lista ("Trimestres", "Anos")."""
+    subtitulo: str = ""
+    colunas: list[str]
+    linhas: list[LinhaTabela]
 
 
 class Tabela(Modelo):
@@ -211,6 +226,12 @@ class Tabela(Modelo):
     linhas: list[LinhaTabela]
     fonte: str
     nota: str = ""
+    visoes: list[VisaoTabela] = Field(default_factory=list)
+    """Com elas, a tela abre a primeira e põe uma lista para escolher o período (Caio,
+    15/11/2026: o PIB por componente "com parâmetro pra indicar [...] qual trimestre ou qual
+    ano"); `colunas` e `linhas` repetem a primeira, para a busca e para quem não lê as visões."""
+    rotulo_visoes: str = ""
+    """O nome da lista ("Período")."""
 
 
 class SimuladorDivida(Modelo):
