@@ -112,3 +112,26 @@ def test_assuntos_em_chines_japones_e_arabe() -> None:
     # Árabe sem as vogais curtas, como o navegador compara.
     assert busca.normalizar("التَّضَخُّم") == "التضخم"
     assert "مؤشر أسعار المستهلك" in busca.OUTRAS_ESCRITAS["ipca"]
+
+
+def test_linhas_das_tabelas_curtas_vao_ao_indice(tmp_path: Path) -> None:
+    """15/11/2026: "gasolina", "aluguel" e "alimentos" não achavam a tabela do IPCA por grupo,
+    e "Derivados de petróleo (diesel, gasolina)" só existia como linha de tabela."""
+    painel = {"secoes": [{"id": "inflacao", "titulo": "Inflação", "arquivo": "inflacao.json"}]}
+    grupos = [{"rotulo": r, "valores": [1.0]} for r in ("Alimentação e bebidas", "Transportes")]
+    longa = [
+        {"rotulo": f"Estado {i}", "valores": [1.0]} for i in range(busca.LINHAS_POR_TABELA + 1)
+    ]
+    inflacao = {
+        "tabelas": [
+            {"id": "ipca-grupos", "titulo": "IPCA por grupo em out/2026", "linhas": grupos},
+            {"id": "longa", "titulo": "Longa", "linhas": longa},
+        ]
+    }
+    (tmp_path / "painel.json").write_text(json.dumps(painel), encoding="utf-8")
+    (tmp_path / "inflacao.json").write_text(json.dumps(inflacao), encoding="utf-8")
+    itens = {i.h: i for i in busca.montar(tmp_path)}
+    p = itens["#inflacao/t-ipca-grupos"].p
+    assert "alimentacao e bebidas transportes" in p
+    assert all(w in p for w in ("gasolina", "aluguel", "conta de luz", "alimentos"))
+    assert "estado 3" not in itens["#inflacao/t-longa"].p

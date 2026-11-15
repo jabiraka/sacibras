@@ -62,6 +62,29 @@ repetido no PROXIMOS-PASSOS.
 - Agenda: as reuniões do Copom na caixa "O que sai esta semana" (não há API de datas
   futuras; só lendo o calendário publicado pelo BC).
 
+## Achados da revisão das telas (15/11/2026)
+
+Caio: *"toque nas telas, veja se consegue pensar em algo que está faltando ou alguma tela
+quebrando [...] que eles encontrem oq estão procurando"*. Corrigido na hora: o menu lateral
+que escondia Previsões e Riscos, a busca (palavras de ligação, busca por parte das palavras,
+linhas das tabelas curtas, IPCA por grupo), o número separado do "%" na quebra de linha e as
+frases do PIB dos estados e da Selic. Fica:
+
+- **O que se procura e o painel não tem** (busca testada com 65 termos):
+  - juros do cartão de crédito, do rotativo e do cheque especial (SGS, taxa por modalidade;
+    conferir os códigos no CKAN);
+  - salário mínimo, em reais e descontada a inflação (o valor do decreto, lido na norma);
+  - itens do IPCA: gasolina, energia elétrica, aluguel (SIDRA 7060 tem os subitens; hoje a
+    busca leva ao grupo, Transportes ou Habitação);
+  - IPCA-15 como série (hoje só no detalhe do cartão do IPCA do mês e no glossário).
+- **Tabelas no celular**: a 390 px, 23 tabelas rolam para o lado sem sinal de que há coluna
+  escondida; várias passam só 10 px (o IPCA por grupo corta o "Peso no índice"). Uma sombra na
+  borda direita enquanto houver o que rolar, e apertar as que passam por pouco.
+- **Mapa dos estados**: a 1280 px ocupa meia largura e o resto fica vazio; as siglas dos
+  estados pequenos (RN, PB, PE, AL, SE, ES, RJ, DF) somem ou se sobrepõem.
+- **Página do glossário**: uma lista de todos os termos, no menu ou no rodapé, para quem quer
+  ler as definições sem caçá-las na tela.
+
 ## Em espera
 
 - **Selo "dado anterior"** na peça mantida (`mantidos` já está no `painel.json`).

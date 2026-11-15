@@ -4,9 +4,10 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
-fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Tudo publicado no `main`; nenhum branch com trabalho pendente.
+Última atualização: 15/11/2026 (revisão das telas). A sessão da nuvem de 15/11 fez tudo o que
+dava para fazer de fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca
+com 65 termos: o que corrigiu está no git, o que ficou está no [PROPOSTAS](PROPOSTAS.md),
+"Achados da revisão das telas".
 
 ## Releituras com prazo
 
@@ -55,6 +56,9 @@ As próximas:
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).
+- **Estados abre no PIB de 2024**: o número oficial mais novo tem quase dois anos (a prévia
+  de 2025 só aparece escolhendo em "até"). Abrir na desocupação do trimestre, na prévia de
+  2025, ou deixar como está?
 - Para olhar: a ficha do estado tem agora 9 abas (quatro números à vista, o resto em "Mais
   números"); a CAPAG e o acordo da dívida aparecem com posição no ranking, como se fossem
   número.

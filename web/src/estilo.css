@@ -428,16 +428,51 @@ font[style] {
     display: none;
   }
 
+  /* Numa tela de 1280 × 900, Previsões e Riscos ficavam abaixo da dobra do menu sem nada
+     dizer que ele rola (15/11/2026): itens mais juntos, e o texto se apaga na ponta enquanto
+     houver o que rolar para aquele lado (as classes vêm de `marcarRolagem` em main.ts). */
   .menu {
     display: block;
     flex: 1;
+    min-height: 0;
     max-height: none;
     margin: 0 -14px;
     padding: 0 14px 12px;
+    --apaga-cima: 0px;
+    --apaga-baixo: 0px;
+    -webkit-mask-image: linear-gradient(
+      transparent,
+      #000 var(--apaga-cima),
+      #000 calc(100% - var(--apaga-baixo)),
+      transparent
+    );
+    mask-image: linear-gradient(
+      transparent,
+      #000 var(--apaga-cima),
+      #000 calc(100% - var(--apaga-baixo)),
+      transparent
+    );
+  }
+
+  .menu.mais-acima {
+    --apaga-cima: 36px;
+  }
+
+  .menu.mais-abaixo {
+    --apaga-baixo: 56px;
+  }
+
+  .menu-inicio,
+  .menu-assunto {
+    padding: 5px 10px;
+  }
+
+  .menu-parte {
+    padding: 4px 10px 4px 12px;
   }
 
   .menu-grupo {
-    margin-top: 18px;
+    margin-top: 12px;
   }
 
   .idioma {

@@ -403,6 +403,31 @@ function marcarMenu(assunto: string, parte: string): void {
     if (aqui) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   }
+  // O menu rola por dentro: o assunto aberto (Riscos, no pé) fica à vista, sem mexer na página.
+  marcarRolagem(menu);
+  const ativo = menu.querySelector<HTMLElement>("a.ativo[data-parte], a.ativo[data-assunto]");
+  if (ativo && menu.scrollHeight > menu.clientHeight) {
+    const m = menu.getBoundingClientRect();
+    const a = ativo.getBoundingClientRect();
+    if (a.top < m.top || a.bottom > m.bottom) {
+      menu.scrollTop += a.top - m.top - menu.clientHeight / 3;
+    }
+  }
+}
+
+/** Diz ao CSS se o menu tem o que rolar para cima ou para baixo (o texto se apaga na ponta). */
+function marcarRolagem(menu: HTMLElement): void {
+  const marcar = (): void => {
+    const resto = menu.scrollHeight - menu.clientHeight - menu.scrollTop;
+    menu.classList.toggle("mais-acima", menu.scrollTop > 2);
+    menu.classList.toggle("mais-abaixo", resto > 2);
+  };
+  if (!menu.dataset.rolagem) {
+    menu.dataset.rolagem = "1";
+    menu.addEventListener("scroll", marcar, { passive: true });
+    window.addEventListener("resize", marcar);
+  }
+  window.requestAnimationFrame(marcar);
 }
 
 function abrirMenu(abrir: boolean): void {

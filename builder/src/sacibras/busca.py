@@ -426,6 +426,28 @@ SINONIMOS: dict[str, list[str]] = {
     "onu": ["nacoes unidas", "world population prospects", "projecao da onu"],
     "por hora": ["produtividade por hora", "horas trabalhadas", "hora de trabalho"],
     "idosos na populacao": ["envelhecimento no mundo", "japao", "china", "paises ricos"],
+    # O que alguém procura quando o preço de algo sobe: o grupo do IPCA em que o item mora
+    # (15/11/2026: "gasolina", "aluguel", "conta de luz" não achavam nada).
+    "ipca por grupo": [
+        "alimentos",
+        "comida",
+        "supermercado",
+        "gasolina",
+        "combustivel",
+        "passagem",
+        "aluguel",
+        "conta de luz",
+        "energia eletrica",
+        "condominio",
+        "remedio",
+        "plano de saude",
+        "mensalidade",
+        "escola",
+        "roupa",
+        "celular",
+        "internet",
+    ],
+    "alimentacao no domicilio": ["comida", "alimentos", "supermercado", "mercado", "feira"],
 }
 
 
@@ -935,8 +957,23 @@ def _no_titulo(titulo: str) -> str:
     return " ".join(_palavras((OUTRAS_LINGUAS, OUTRAS_ESCRITAS), normalizar(titulo)))
 
 
-def _item(t: str, o: str, h: str, extra: str = "", numeros: str = "") -> Item:
-    return Item(t=t, o=o, h=h, p=sinonimos_de(f"{t} {extra}"), lt=_no_titulo(t), n=numeros)
+def _item(t: str, o: str, h: str, extra: str = "", numeros: str = "", linhas: str = "") -> Item:
+    """`linhas`: os nomes das linhas de uma tabela, que vão ao índice como estão ("Soja em
+    grão", "Transportes") e trazem os sinônimos deles."""
+    palavras = " ".join(x for x in (normalizar(linhas), sinonimos_de(f"{t} {extra} {linhas}")) if x)
+    return Item(t=t, o=o, h=h, p=palavras, lt=_no_titulo(t), n=numeros)
+
+
+# As tabelas dos 27 estados e dos 22 países já têm cada nome no índice (`ufs`, `paises`): as linhas
+# entram só nas tabelas curtas (grupos do IPCA, produtos, parceiros, setores).
+LINHAS_POR_TABELA = 20
+
+
+def _linhas_da_tabela(t: dict[str, Any]) -> str:
+    linhas = t.get("linhas", [])
+    if len(linhas) > LINHAS_POR_TABELA:
+        return ""
+    return " ".join(str(linha.get("rotulo", "")) for linha in linhas)
 
 
 def montar(saida: Path) -> list[Item]:
@@ -972,7 +1009,15 @@ def montar(saida: Path) -> list[Item]:
         for t in dados.get("tabelas", []):
             alvo = f"t-{t['id']}"
             local = f"{onde.get(alvo, nome)} · tabela"
-            itens.append(_item(t["titulo"], local, f"{h}/{alvo}", numeros=_numeros_da_tabela(t)))
+            itens.append(
+                _item(
+                    t["titulo"],
+                    local,
+                    f"{h}/{alvo}",
+                    numeros=_numeros_da_tabela(t),
+                    linhas=_linhas_da_tabela(t),
+                )
+            )
         if dados.get("simulador_selic"):
             parte = next(
                 (
