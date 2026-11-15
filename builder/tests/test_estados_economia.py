@@ -189,9 +189,14 @@ def test_metricas_saem_na_ordem_dos_grupos(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setattr(estados.ipeadata, "por_territorio", cai)
     monkeypatch.setattr(estados.tesouro_capag, "capag", cai)
     monkeypatch.setattr(estados.ibge_contas_regionais, "setores", cai)
+    monkeypatch.setattr(estados.comexstat, "exportacoes_por_estado_e", cai)
+    monkeypatch.setattr(estados.comexstat, "exportacoes_por_mes", cai)
+    monkeypatch.setattr(estados.ibge_projecao, "quinquenal_por_uf", cai)
+    monkeypatch.setattr(estados.siconfi, "capitais", cai)
     e = estados.montar(Contexto(hoje=date(2026, 11, 14)))
     assert e.metricas[0].id == "pib_crescimento"
-    assert [m.grupo for m in e.metricas][-1] == "Trabalho e renda"
+    # Depois do trabalho, só o acordo da dívida (lido à mão, sempre presente), das contas.
+    assert [m.grupo for m in e.metricas][-2:] == ["Trabalho e renda", estados.CONTAS]
     assert e.resumo.startswith("Em 2024, o PIB cresceu de")
 
 

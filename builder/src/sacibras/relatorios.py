@@ -511,3 +511,71 @@ FONTE_RGPS_PROJECAO = (
     "Projeto da LDO 2027, Anexo IV.10, Projeções Atuariais para o Regime Geral de "
     "Previdência Social (Ministério da Previdência, abr/2026), tabela 5.2"
 )
+
+
+# ------------------------------------------------------------------ acordos da dívida dos estados
+
+
+@dataclass(frozen=True)
+class AcordoDaDivida:
+    """Em que regime de pagamento da dívida com a União o estado está."""
+
+    regime: str
+    """"RRF", "Propag" ou "Nenhum"."""
+    detalhe: str
+    """O que muda dentro do regime, em poucas palavras (até 60 letras, vai ao cartão)."""
+
+
+# O Regime de Recuperação Fiscal (LC 159/2017) e o Programa de Pleno Pagamento de Dívidas dos
+# Estados (Propag, LC 212/2025, art. 2º, § 1º: adesão "até 31 de dezembro de 2025"; LC lida em
+# 15/11/2026 no Senado, legis.senado.leg.br/norma/40157164/publicacao/40157952). A LC 212,
+# art. 4º, § 6º, dá a quem estava no RRF a saída gradual; a página do Tesouro sobre o Propag
+# (gov.br/tesouronacional, "Programa de Pleno Pagamento de Dívidas dos Estados", modificada em
+# 29/07/2026, lida em 15/11/2026) diz que "a assinatura do termo aditivo do Propag fica
+# condicionada à homologação do encerramento do RRF".
+#
+# Quem está em cada um, lido em 15/11/2026:
+# - Tesouro Nacional, Relatório Mensal de Garantias Honradas (RMGH) de out/2025, publicado em
+#   17/11/2025 (cdn.tesouro.gov.br, "RMGH - 2025_10.pdf", p. 5): "Atualmente se encontram no
+#   RRF os Estados de Goiás, Rio de Janeiro, Rio Grande do Sul e Minas Gerais." O RMGH de 2026
+#   não abriu (o Tesouro Transparente dava "Falha na integração THOT/3PRO").
+# - Instituição Fiscal Independente (Senado), Relatório de Acompanhamento Fiscal nº 114, jul/2026,
+#   p. 63–65 (www2.senado.leg.br/jspui/bitstream/id/935943/4/RAF114_JUL2026_3_Propag.pdf): "Das
+#   27 unidades da federação, 22 aderiram ao Propag [...] Os cinco entes federativos que não
+#   aderiram foram Mato Grosso, Pará, Paraná, Santa Catarina e o Distrito Federal. Piauí e
+#   Tocantins, apesar de não disporem de dívidas refinanciadas com a União, aderiram ao Propag
+#   para acessar os recursos do FEF e do FGF." A Tabela 17 ("Termos aditivos assinados até
+#   30/06/2026", fonte: Ministério da Fazenda via LAI) lista AC, AL, AM, AP, BA, CE, ES, GO, MA,
+#   MG, MS, PB, PE, RJ, RO, RR, SE e SP com o termo assinado; RN "termo aditivo ainda não
+#   assinado"; RS "termo aditivo ainda não assinado (§3º do art. 2º da LCP 212/2025)", que
+#   "está sob a regra da LC nº 206, de 2024" e depois "estará sujeito às regras dos estados
+#   sob o RRF".
+# Daí: GO, MG e RJ assinaram o Propag e, com isso, saíram do RRF; o RS segue no RRF.
+# LER DE NOVO a cada RMGH (mensal) ou RAF da IFI que fale do Propag, e quando o RS assinar.
+ACORDOS_EM = date(2026, 6, 30)
+_SAIU_DO_RRF = "saiu do RRF ao assinar o Propag"
+_SEM_DIVIDA = "sem dívida a renegociar; aderiu pelo fundo de investimentos"
+ACORDOS: dict[str, AcordoDaDivida] = {
+    **{
+        uf: AcordoDaDivida("Propag", "termo assinado")
+        for uf in ("AC", "AL", "AM", "AP", "BA", "CE", "ES", "MA", "MS", "PB", "PE", "RO")
+    },
+    **{uf: AcordoDaDivida("Propag", "termo assinado") for uf in ("RR", "SE", "SP")},
+    "GO": AcordoDaDivida("Propag", _SAIU_DO_RRF),
+    "MG": AcordoDaDivida("Propag", _SAIU_DO_RRF),
+    "RJ": AcordoDaDivida("Propag", _SAIU_DO_RRF),
+    "PI": AcordoDaDivida("Propag", _SEM_DIVIDA),
+    "TO": AcordoDaDivida("Propag", _SEM_DIVIDA),
+    "RN": AcordoDaDivida("Propag", "aderiu; termo ainda não assinado"),
+    "RS": AcordoDaDivida("RRF", "aderiu ao Propag; termo ainda não assinado"),
+    **{
+        uf: AcordoDaDivida("Nenhum", "não aderiu ao Propag")
+        for uf in ("DF", "MT", "PA", "PR", "SC")
+    },
+}
+FONTE_ACORDOS = (
+    "Instituição Fiscal Independente (Senado), Relatório de Acompanhamento Fiscal nº 114, "
+    "jul/2026, tabela 17 (termos do Propag assinados até 30/06/2026, dados do Ministério da "
+    "Fazenda); Tesouro Nacional, Relatório Mensal de Garantias Honradas de out/2025 (estados "
+    "no RRF)"
+)

@@ -1849,6 +1849,20 @@ def _juros_sobre_receita(ctx: Contexto) -> Bloco:
             ),
         )
     )
+    bloco.alertas.append(
+        alerta(
+            "juros-sobre-receita",
+            FISCAL,
+            "Juros sobre a receita da União",
+            razao,
+            pior_quando="alto",
+            unidade="% da receita líquida",
+            periodicidade="M",
+            casas=0,
+            fonte=fonte,
+            procedencia="calculado",
+        )
+    )
     return bloco
 
 
@@ -1894,6 +1908,19 @@ def _vencimento(ctx: Contexto) -> Bloco:
                 "maior a parte que vence logo, mais dívida o governo precisa trocar por nova no "
                 "ano, ao juro do momento."
             ),
+        )
+    )
+    bloco.alertas.append(
+        alerta(
+            "vence-em-12-meses",
+            FISCAL,
+            "Dívida bruta que vence em até 12 meses",
+            curta,
+            pior_quando="alto",
+            unidade="% da dívida bruta",
+            periodicidade="M",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+            procedencia="calculado",
         )
     )
     return bloco

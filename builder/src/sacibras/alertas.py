@@ -76,6 +76,22 @@ EXPLICACOES: dict[str, Explicacao] = {
         "juros do momento.",
         "Numa crise, refinanciar fica caro ou difícil (o chamado risco de rolagem).",
     ),
+    "juros-sobre-receita": Explicacao(
+        "Quanto da receita líquida do governo federal, em 12 meses, vai para pagar os juros da "
+        "dívida.",
+        "Cada real que vai para juros não paga saúde, educação ou investimento; e, quando a "
+        "Selic sobe, essa parte cresce mesmo sem o governo gastar mais.",
+        "Orçamento cada vez mais preso aos juros, pressão para cortar outros gastos ou subir "
+        "impostos e agências de risco rebaixando a nota do país.",
+    ),
+    "vence-em-12-meses": Explicacao(
+        "A parte da dívida bruta do governo que vence nos próximos 12 meses e precisa ser "
+        "paga ou trocada por dívida nova.",
+        "Quanto mais vence de uma vez, mais o governo depende de achar quem compre títulos "
+        "novos, ao juro do momento, num prazo curto.",
+        "Numa crise de confiança, refinanciar fica caro ou difícil: o governo paga juro mais "
+        "alto ou encurta ainda mais a dívida, como em 2002.",
+    ),
     # ---------------------------------------------------------------- câmbio e contas externas
     "reservas-cobertura": Explicacao(
         "Quantas vezes as reservas internacionais do Banco Central cobrem a dívida externa "

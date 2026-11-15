@@ -24,9 +24,11 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from statistics import median
 
-from sacibras import leis, organizacao
+from sacibras import leis, organizacao, relatorios
 from sacibras.fontes import (
+    comexstat,
     ibge_contas_regionais,
+    ibge_projecao,
     ibge_sidra,
     ipeadata,
     receita_arrecadacao,
@@ -36,6 +38,7 @@ from sacibras.fontes import (
 from sacibras.schema import (
     UF,
     BlocoDeConta,
+    Capitais,
     Cartao,
     ContasEstado,
     Estados,
@@ -45,6 +48,7 @@ from sacibras.schema import (
     LinhaRef,
     LinhaTabela,
     MetricaEstados,
+    Piramide,
     Tabela,
 )
 from sacibras.secoes import estados_economia
@@ -424,6 +428,167 @@ def _cartao_capag(sigla: str, c: tesouro_capag.Capag) -> Cartao | None:
     )
 
 
+# ---------------------------------------------------------------- RRF e Propag
+
+REGIMES = {"Nenhum": 0.0, "Propag": 1.0, "RRF": 2.0}
+"""O regime como número, para pintar o mapa; a tela escreve o nome (`marcas`)."""
+
+
+def _ref_acordos() -> str:
+    return f"termos até {periodo(relatorios.ACORDOS_EM, 'M')}"
+
+
+def acordos() -> MetricaEstados:
+    """Em que regime da dívida com a União cada estado está (lido à mão: `relatorios.py`)."""
+    return MetricaEstados(
+        id="acordo_divida",
+        nome="Acordo da dívida com a União",
+        descricao=(
+            "O Regime de Recuperação Fiscal (RRF, Lei Complementar 159/2017) suspende parte "
+            "das parcelas da dívida com a União em troca de um plano de ajuste com teto de "
+            "gastos. O Propag (Lei Complementar 212/2025) refinancia a dívida em até 30 anos "
+            "com juros menores, em troca de investir em educação e aportar num fundo dos "
+            "estados; quem estava no RRF sai dele ao assinar o Propag."
+        ),
+        unidade="regime",
+        casas=0,
+        referencia=_ref_acordos(),
+        maior_e_melhor=None,
+        fonte=relatorios.FONTE_ACORDOS,
+        valores={
+            s: (REGIMES[a.regime] if (a := relatorios.ACORDOS.get(s)) else None)
+            for s in SIGLA.values()
+        },
+        grupo=CONTAS,
+        marcas=[LinhaRef(valor=v, rotulo=k) for k, v in REGIMES.items()],
+    )
+
+
+def _cartao_acordo(sigla: str) -> Cartao | None:
+    a = relatorios.ACORDOS.get(sigla)
+    if a is None:
+        return None
+    return Cartao(
+        id=f"{sigla.lower()}_acordo",
+        rotulo="Acordo da dívida com a União",
+        valor=REGIMES[a.regime],
+        texto=a.regime,
+        unidade="regime",
+        casas=0,
+        referencia=relatorios.ACORDOS_EM,
+        periodicidade="M",
+        detalhe=a.detalhe,
+        fonte=relatorios.FONTE_ACORDOS,
+    )
+
+
+# ---------------------------------------------------------------- capitais
+
+
+def contas_das_capitais(
+    coleta: siconfi.ColetaCapitais, capitais: dict[str, tuple[int, str]]
+) -> Capitais:
+    """Pessoal, dívida e primário das capitais, com os limites da lei para os municípios."""
+    ref = f"{coleta.quadrimestre}º quadrimestre de {coleta.ano}"
+    fonte_rgf = f"Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal das capitais ({ref})"
+    cod = {uf: c for uf, (c, _) in capitais.items()}
+    pes = {uf: coleta.pessoal.get(c) for uf, c in cod.items()}
+    div = {uf: coleta.divida.get(c) for uf, c in cod.items()}
+    metricas = [
+        MetricaEstados(
+            id="pessoal",
+            nome="Despesa com pessoal",
+            descricao="Do Poder Executivo da capital, nos últimos 12 meses.",
+            unidade="% da RCL",
+            casas=1,
+            referencia=ref,
+            maior_e_melhor=False,
+            fonte=f"{fonte_rgf}, Anexo 01",
+            valores={uf: (p.percentual if p else None) for uf, p in pes.items()},
+            limites=[
+                LinhaRef(valor=leis.PESSOAL_EXECUTIVO_MUNICIPAL.valor, rotulo="limite máximo"),
+                LinhaRef(valor=leis.PESSOAL_PRUDENCIAL_MUNICIPAL.valor, rotulo="limite prudencial"),
+                LinhaRef(valor=leis.PESSOAL_ALERTA_MUNICIPAL.valor, rotulo="limite de alerta"),
+            ],
+        ),
+        MetricaEstados(
+            id="divida",
+            nome="Dívida consolidada líquida",
+            descricao="Dívida já descontados o caixa e os haveres.",
+            unidade="% da RCL",
+            casas=1,
+            referencia=ref,
+            maior_e_melhor=False,
+            fonte=f"{fonte_rgf}, Anexo 02",
+            valores={uf: (d.dcl_percentual if d else None) for uf, d in div.items()},
+            limites=[
+                LinhaRef(valor=leis.DIVIDA_MUNICIPAL.valor, rotulo="limite"),
+                LinhaRef(valor=leis.DIVIDA_ALERTA_MUNICIPAL.valor, rotulo="limite de alerta"),
+            ],
+        ),
+    ]
+    if coleta.bimestre:
+        ano_b, b = coleta.bimestre
+        ref_pri = f"jan–{MESES[b * 2 - 1]}/{ano_b}"
+        valores: dict[str, float | None] = {}
+        for uf, c in cod.items():
+            p, rcl = coleta.primario.get(c), coleta.rcl.get(c)
+            valores[uf] = round(p / rcl * 100, 2) if p is not None and rcl else None
+        metricas.append(
+            MetricaEstados(
+                id="primario",
+                nome="Resultado primário",
+                descricao=(
+                    "Receitas menos despesas sem contar juros, no ano até o bimestre, sem os "
+                    "fundos de previdência próprios."
+                ),
+                unidade="% da RCL",
+                casas=1,
+                referencia=ref_pri,
+                maior_e_melhor=True,
+                fonte=(
+                    "Tesouro Nacional, SICONFI, RREO das capitais, Anexo 06 (resultado primário "
+                    f"sem RPPS, acima da linha, {ref_pri}) e Anexo 03 (RCL de 12 meses)"
+                ),
+                valores=valores,
+            )
+        )
+    return Capitais(nomes={uf: n for uf, (_, n) in capitais.items()}, metricas=metricas)
+
+
+def _capitais(ctx: Contexto) -> Capitais | None:
+    try:
+        caps = siconfi.capitais()
+        coleta = siconfi.coletar_capitais([c for c, _ in caps.values()], ctx.hoje)
+    except Exception as erro:
+        print(f"  aviso: contas das capitais indisponíveis: {str(erro)[:160]}")
+        return None
+    if coleta is None:
+        print("  aviso: nenhum quadrimestre recente com 20 capitais no RGF")
+        return None
+    return contas_das_capitais(coleta, caps)
+
+
+# ---------------------------------------------------------------- pirâmide
+
+
+def piramides(
+    por_uf: dict[str, dict[str, dict[str, dict[int, float]]]], ano_corrente: int
+) -> dict[str, Piramide]:
+    """A pirâmide de cada UF, nos mesmos anos da do Brasil em Demografia."""
+    from sacibras.secoes import demografia  # demografia importa UFS daqui
+
+    saida: dict[str, Piramide] = {}
+    for sigla in SIGLA.values():
+        dados = por_uf.get(sigla)
+        if dados and {"Homens", "Mulheres"} <= set(dados):
+            saida[sigla] = demografia.montar_piramide(dados, ano_corrente)
+    return saida
+
+
+FONTE_PIRAMIDE = f"{ibge_projecao.FONTE} (tabela 2, grupos de cinco anos)"
+
+
 # ---------------------------------------------------------------- anos fechados
 
 Fracao = tuple[float, float | None, float | None]
@@ -792,6 +957,7 @@ class Extras:
     blocos: dict[str, list[BlocoDeConta]] = field(default_factory=dict)
     historicos: dict[str, list[HistoricoEstado]] = field(default_factory=dict)
     brasil: dict[str, dict[int, float]] = field(default_factory=dict)
+    piramides: dict[str, Piramide] = field(default_factory=dict)
 
 
 def _extras(ctx: Contexto) -> Extras:
@@ -824,26 +990,54 @@ def _extras(ctx: Contexto) -> Extras:
             x.blocos[sigla] = [bloco]
     except Exception as erro:
         print(f"  aviso: PIB por atividade indisponível: {str(erro)[:160]}")
+    # O acordo da dívida logo depois da CAPAG (a nota, se veio, é o primeiro número).
+    for sigla in SIGLA.values():
+        if c := _cartao_acordo(sigla):
+            numeros = x.numeros.setdefault(sigla, [])
+            numeros.insert(1 if numeros and numeros[0].id.endswith("_capag") else 0, c)
+    try:
+        fim, produtos = comexstat.exportacoes_por_estado_e("heading")
+        _, paises = comexstat.exportacoes_por_estado_e("country")
+        for sigla, f in estados_economia.exportacoes_da_ficha(UFS, fim, produtos, paises).items():
+            x.numeros.setdefault(sigla, []).append(f.numero)
+            x.blocos.setdefault(sigla, []).extend(f.blocos)
+    except Exception as erro:
+        print(f"  aviso: exportações da ficha indisponíveis: {str(erro)[:160]}")
+    try:
+        x.piramides = piramides(ibge_projecao.quinquenal_por_uf(), ctx.hoje.year)
+    except Exception as erro:
+        print(f"  aviso: pirâmide por UF indisponível: {str(erro)[:160]}")
     return x
 
 
 def _enriquecer(contas: EstadosContas | None, x: Extras, agora: datetime) -> EstadosContas | None:
     """Junta à ficha o que veio de fora da DCA (a nota e a previdência primeiro, nos números)."""
-    if not (x.numeros or x.blocos or x.historicos):
+    if not (x.numeros or x.blocos or x.historicos or x.piramides):
         return contas
+    veio_vazio = contas is None
     contas = contas or EstadosContas(contas={}, gerado_em=agora)
     for _, sigla, nome, _ in UFS:
         numeros, blocos = x.numeros.get(sigla, []), x.blocos.get(sigla, [])
         historico = x.historicos.get(sigla, [])
-        if not (numeros or blocos or historico):
+        piramide = x.piramides.get(sigla)
+        # O acordo da dívida sozinho não abre uma ficha (sem a DCA nem outra fonte).
+        so_o_acordo = all(n.id.endswith("_acordo") for n in numeros)
+        if so_o_acordo and not (blocos or historico or piramide or sigla in contas.contas):
             continue
         c = contas.contas.get(sigla) or ContasEstado(uf=sigla, nome=nome, blocos=[])
-        c.numeros = numeros + c.numeros
+        # Os números da DCA (investimento, dívida com a União, impostos por habitante) ficam
+        # entre os de cima (CAPAG, acordo, previdência) e as exportações, que fecham a lista.
+        de_fora = [n for n in numeros if not n.id.endswith("_exportacoes")]
+        exportacoes = [n for n in numeros if n.id.endswith("_exportacoes")]
+        c.numeros = de_fora + c.numeros + exportacoes
         c.blocos = c.blocos + blocos
         c.historico = historico
+        if piramide:
+            c.piramide = piramide
+            c.fonte_piramide = FONTE_PIRAMIDE
         contas.contas[sigla] = c
     contas.historico_brasil = x.brasil
-    return contas
+    return None if veio_vazio and not contas.contas else contas
 
 
 ARQUIVO_CONTAS = "estados-contas.json"
@@ -1148,6 +1342,20 @@ def _contas(
     return EstadosContas(contas=contas, gerado_em=agora)
 
 
+def _exportacoes_no_pib(ctx: Contexto) -> MetricaEstados:
+    """O último ano com PIB do IBGE: as exportações dele, mês a mês, contra o PIB dele."""
+    edicao, corrente, _ = ibge_contas_regionais.pib()
+    ano = max(corrente["Brasil"])
+    return estados_economia.exportacoes_no_pib(
+        UFS,
+        comexstat.exportacoes_por_mes(ano),
+        ctx.sgs("DOLAR_MEDIA_MES", ctx.hoje.year - ano + 2),
+        corrente,
+        ano,
+        edicao,
+    )
+
+
 def _economia(ctx: Contexto) -> list[MetricaEstados]:
     """PIB, prévia do PIB, inflação, exportações e concentração; cada fonte por conta própria."""
     saida: list[MetricaEstados] = []
@@ -1169,6 +1377,7 @@ def _economia(ctx: Contexto) -> list[MetricaEstados]:
             "exportações por UF",
             lambda: [estados_economia.exportacoes(UFS, siconfi.entes())],
         ),
+        ("exportações em % do PIB", lambda: [_exportacoes_no_pib(ctx)]),
         ("concentração do PIB", lambda: [estados_economia.concentracao(UFS)]),
     ]
     for nome, passo in passos:
@@ -1252,6 +1461,7 @@ def montar(ctx: Contexto) -> Estados:
     # atividade. Cada fonte por conta própria.
     extras = _extras(ctx)
     metricas += extras.metricas
+    metricas.append(acordos())
     contas = _enriquecer(contas, extras, ctx.agora())
     try:
         metricas.append(_arrecadacao_federal(siconfi.entes()))
@@ -1302,5 +1512,6 @@ def montar(ctx: Contexto) -> Estados:
         metricas=metricas,
         arquivo_contas=ARQUIVO_CONTAS if contas else "",
         subcategorias=organizacao.partes_dos_estados(contas is not None),
+        capitais=_capitais(ctx),
         gerado_em=ctx.agora(),
     )

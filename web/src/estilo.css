@@ -3098,6 +3098,30 @@ input.escolha[type="number"] {
   padding-top: 0;
 }
 
+/* Dois blocos na mesma aba (o que o estado vende e para onde): um embaixo do outro. */
+.ficha-juntos {
+  display: grid;
+  gap: 20px;
+}
+
+.ficha-palco .ficha-juntos .ficha-bloco + .ficha-bloco {
+  border-top: 1px solid var(--fio);
+  padding-top: 16px;
+}
+
+/* Na tela larga, lado a lado: o que vende e para onde se leem juntos. */
+@media (min-width: 1024px) {
+  .ficha-juntos {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+
+  .ficha-palco .ficha-juntos .ficha-bloco + .ficha-bloco {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
 /* A visão geral de Estados: só o mapa, sem ocupar a tela inteira. */
 .estados-so-mapa {
   margin-top: 18px;
@@ -3510,6 +3534,14 @@ table.dados.limites-tabela td {
 .limites-tabela .nota-fraca {
   color: var(--alerta);
   font-weight: 500;
+}
+
+.limites-tabela .deficit {
+  color: var(--vermelho);
+}
+
+.limites-abas {
+  margin-bottom: 14px;
 }
 
 .ficha-tempo .barra-controles {

@@ -85,9 +85,9 @@ def ler_por_ano(conteudo: bytes) -> dict[str, dict[str, PorAno]]:
     return saida
 
 
-def ler_quinquenal(conteudo: bytes, sigla: str = "BR") -> dict[str, dict[str, PorAno]]:
-    """tab2: {sexo ("Homens", "Mulheres", "Ambos"): {grupo ("00-04"… "90+"): {ano: pessoas}}},
-    os grupos na ordem da planilha (do mais novo ao mais velho)."""
+def ler_quinquenal_todos(conteudo: bytes) -> dict[str, dict[str, dict[str, PorAno]]]:
+    """tab2 de todos os locais de uma vez: {sigla: {sexo: {grupo: {ano: pessoas}}}}. A planilha
+    tem 1 a 2 MB; ler uma vez e separar por local é bem mais rápido que ler 28 vezes."""
     linhas = _linhas(conteudo)
     i = _achar_cabecalho(linhas, "GRUPO ETÁRIO")
     cabecalho = linhas[i]
@@ -96,15 +96,23 @@ def ler_quinquenal(conteudo: bytes, sigla: str = "BR") -> dict[str, dict[str, Po
         raise PlanilhaMudouError("projeção do IBGE: sem os anos no cabeçalho da tab2")
     nomes = [str(c).strip().upper() if c is not None else "" for c in cabecalho]
     col_sexo, col_sigla = nomes.index("SEXO"), nomes.index("SIGLA")
-    saida: dict[str, dict[str, PorAno]] = {}
+    saida: dict[str, dict[str, dict[str, PorAno]]] = {}
     for linha in linhas[i + 1 :]:
-        if not linha or not isinstance(linha[0], str) or linha[col_sigla] != sigla:
+        if not linha or not isinstance(linha[0], str) or not isinstance(linha[col_sigla], str):
             continue
+        local = saida.setdefault(linha[col_sigla].strip(), {})
         grupo = linha[0].strip()
         sexo = str(linha[col_sexo]).strip()
-        saida.setdefault(sexo, {})[grupo] = {
+        local.setdefault(sexo, {})[grupo] = {
             ano: float(linha[j]) for j, ano in anos if isinstance(linha[j], (int, float))
         }
+    return saida
+
+
+def ler_quinquenal(conteudo: bytes, sigla: str = "BR") -> dict[str, dict[str, PorAno]]:
+    """tab2: {sexo ("Homens", "Mulheres", "Ambos"): {grupo ("00-04"… "90+"): {ano: pessoas}}},
+    os grupos na ordem da planilha (do mais novo ao mais velho)."""
+    saida = ler_quinquenal_todos(conteudo).get(sigla, {})
     if not {"Homens", "Mulheres"} <= set(saida):
         raise PlanilhaMudouError(f"projeção do IBGE: sem homens e mulheres de {sigla} na tab2")
     return saida
@@ -125,3 +133,8 @@ def grupos() -> dict[str, dict[str, PorAno]]:
 
 def quinquenal() -> dict[str, dict[str, PorAno]]:
     return ler_quinquenal(_baixar("quinquenal"))
+
+
+def quinquenal_por_uf() -> dict[str, dict[str, dict[str, PorAno]]]:
+    """A pirâmide de cada local ("BR" e as 27 siglas), lida da mesma planilha."""
+    return ler_quinquenal_todos(_baixar("quinquenal"))

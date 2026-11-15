@@ -347,6 +347,8 @@ export interface BlocoDeConta {
   fonte: string;
   fatias: { nome: string; valor: number }[];
   total: number | null;
+  /** Falso quando as partes mudam de estado para estado (produtos, países): sem médias. */
+  compara?: boolean;
 }
 
 export interface ContasEstado {
@@ -355,6 +357,8 @@ export interface ContasEstado {
   blocos: BlocoDeConta[];
   numeros: Cartao[];
   historico?: HistoricoEstado[];
+  piramide?: Piramide | null;
+  fonte_piramide?: string;
 }
 
 export interface EstadosContas {
@@ -373,7 +377,15 @@ export interface Estados {
   metricas: MetricaEstados[];
   arquivo_contas: string;
   subcategorias?: Subcategoria[];
+  /** As capitais contra os limites da lei (Perto dos limites). */
+  capitais?: Capitais | null;
   gerado_em: string;
+}
+
+export interface Capitais {
+  /** {sigla da UF: nome da capital}. */
+  nomes: Record<string, string>;
+  metricas: MetricaEstados[];
 }
 
 export interface ItemSecao {

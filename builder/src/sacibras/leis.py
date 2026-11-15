@@ -61,6 +61,19 @@ PESSOAL_ALERTA = LimiteLegal(round(0.90 * 49.0, 2), "LRF, art. 59, § 1º, II")
 DIVIDA_ESTADUAL = LimiteLegal(200.0, "Resolução do Senado nº 40/2001, art. 3º, I")
 DIVIDA_ALERTA = LimiteLegal(180.0, "LRF, art. 59, § 1º, III")
 
+# ---- Capitais (municípios): pessoal do Executivo e dívida consolidada líquida.
+# Lidos em 15/11/2026 no Senado, LC 101/2000 em texto atualizado
+# (legis.senado.leg.br/norma/572856/publicacao/34621009), art. 20, III: "na esfera municipal:
+# [...] b) 54% (cinqüenta e quatro por cento) para o Executivo"; o prudencial (95 %) e o alerta
+# (90 %) são os mesmos arts. 22 e 59 dos estados. E a Resolução do Senado nº 40/2001
+# (legis.senado.leg.br/norma/562458/publicacao/16433576), art. 3º, II: "no caso dos Municípios:
+# a 1,2 (um inteiro e dois décimos) vezes a receita corrente líquida".
+PESSOAL_EXECUTIVO_MUNICIPAL = LimiteLegal(54.0, "LRF, art. 20, III, b")
+PESSOAL_PRUDENCIAL_MUNICIPAL = LimiteLegal(round(0.95 * 54.0, 2), "LRF, art. 22, parágrafo único")
+PESSOAL_ALERTA_MUNICIPAL = LimiteLegal(round(0.90 * 54.0, 2), "LRF, art. 59, § 1º, II")
+DIVIDA_MUNICIPAL = LimiteLegal(120.0, "Resolução do Senado nº 40/2001, art. 3º, II")
+DIVIDA_ALERTA_MUNICIPAL = LimiteLegal(108.0, "LRF, art. 59, § 1º, III")
+
 
 @dataclass(frozen=True)
 class MetaPrimaria:

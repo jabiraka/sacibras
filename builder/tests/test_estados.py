@@ -245,6 +245,11 @@ def _sem_economia(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(estados.ibge_contas_regionais, "setores", cai)
     monkeypatch.setattr(estados.tesouro_capag, "capag", cai)
     monkeypatch.setattr(estados.siconfi, "coletar_historico", cai)
+    # Exportações da ficha, pirâmide e capitais (testados à parte).
+    monkeypatch.setattr(estados.comexstat, "exportacoes_por_estado_e", cai)
+    monkeypatch.setattr(estados.comexstat, "exportacoes_por_mes", cai)
+    monkeypatch.setattr(estados.ibge_projecao, "quinquenal_por_uf", cai)
+    monkeypatch.setattr(estados.siconfi, "capitais", cai)
 
 
 def _pobreza_uf() -> dict[str, list[tuple[date, float]]]:
@@ -279,6 +284,7 @@ def test_montar_sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
         "divida",
         "primario",
         "icms_per_capita",
+        "acordo_divida",
         "rcl_per_capita",
     ]
     assert e.metricas[0].referencia == "2º tri/2026" and e.metricas[0].brasil == 5.4
@@ -305,6 +311,7 @@ def test_rreo_fora_do_ar_nao_derruba_as_outras_metricas(monkeypatch: pytest.Monk
         "gini",
         "pessoal",
         "divida",
+        "acordo_divida",
         "rcl_per_capita",
     ]
 
