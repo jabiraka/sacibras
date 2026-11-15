@@ -10,7 +10,13 @@ saíram em 15/11/2026: eram estudos de uma vez só (Caio: só o que sai com regu
 
 Fontes: a arrecadação federal mês a mês vem da Receita (CSV por UF e tributo); a carga
 tributária e a composição, da OCDE (Global Revenue Statistics: o mesmo método para ~145
-países, Brasil até 2024); o crescimento por habitante, do WEO do FMI.
+países, Brasil até 2024); o crescimento por habitante, do WEO do FMI; o FPE e o FPM de cada
+estado, das transferências constitucionais do Tesouro. Na reforma do consumo, o Imposto
+Seletivo, o Simples e a ida do IBS para o destino saem da lei lida (`leis.py`).
+
+O ICMS de hoje por estado (a alíquota modal de cada uma das 27 leis) fica de fora: não há
+tabela oficial consolidada que abra daqui (o site do Confaz não respondeu em 15/11/2026), e o
+quanto cada estado ganha ou perde com a cobrança no destino não tem número oficial publicado.
 """
 
 from __future__ import annotations
@@ -31,6 +37,7 @@ from sacibras.fontes import (
     receita_irpf,
     siconfi,
     tesouro_rtn,
+    tesouro_transferencias,
 )
 from sacibras.fontes.ocde_receita import BASES, ESFERAS
 from sacibras.fontes.receita_arrecadacao import COMPLETO_DESDE, NOMES
@@ -65,6 +72,8 @@ ANOS_DA_DISPERSAO = 10
 MINIMO_DE_ANOS = 8
 """País com menos anos que isso, nos dez, fica fora do gráfico."""
 
+
+Pecas = tuple[list[Cartao], list[Grafico], list[Tabela], str]
 
 # ------------------------------------------------------------------ contas
 
@@ -938,7 +947,7 @@ def _simulador_da_reforma(
             "depois. A reforma foi desenhada para arrecadar o mesmo no total; o que muda é "
             "quanto cada coisa paga. Também ficam de fora os regimes próprios (combustíveis, "
             "bancos, planos de saúde, imóveis, bares e restaurantes), o Simples Nacional e o "
-            "Imposto Seletivo."
+            "Imposto Seletivo (as regras dos dois estão na tabela logo abaixo)."
         ),
     )
     return cartoes, [estimativas, descontos], simulador
@@ -1281,9 +1290,246 @@ def _reforma(ctx: Contexto) -> Pecas:
     return [], [], [tabela], ""
 
 
-Pecas = tuple[list[Cartao], list[Grafico], list[Tabela], str]
+def _transferencias(ctx: Contexto) -> Pecas:
+    """O FPE e o FPM de cada estado nos 12 meses, ao lado da arrecadação federal dele."""
+    fpe, ate_fpe = tesouro_transferencias.doze_meses(tesouro_transferencias.fpe())
+    fpm, ate_fpm = tesouro_transferencias.doze_meses(tesouro_transferencias.fpm())
+    arrecadado, ate_receita = receita_arrecadacao.doze_meses_por_uf(
+        receita_arrecadacao.arrecadacao()
+    )
+    populacao = siconfi.entes()
+    linhas: list[tuple[float, LinhaTabela]] = []
+    for codigo, sigla, nome, _ in UFS:
+        e, m, pop = fpe.get(sigla, 0.0), fpm.get(sigla, 0.0), populacao.get(codigo)
+        if not (e or m) or not pop:
+            continue
+        receita = arrecadado.get(sigla)
+        linhas.append(
+            (
+                (e + m) / pop,
+                LinhaTabela(
+                    rotulo=nome,
+                    valores=[
+                        round((e + m) / pop / 1e3, 2),
+                        round((e + m) / 1e9, 1),
+                        round((e + m) / receita * 100, 0) if receita else None,
+                    ],
+                    unidade="",
+                    casas=1,
+                ),
+            )
+        )
+    if len(linhas) < 20:
+        raise RuntimeError(f"FPE e FPM: só {len(linhas)} estados")
+    linhas.sort(key=lambda x: -x[0])
+    total_fpe, total_fpm = sum(fpe.values()), sum(fpm.values())
+    total_receita = sum(arrecadado.values())
+    meses = (
+        periodo(ate_fpe, "M")
+        if ate_fpe == ate_fpm
+        else (f"{periodo(ate_fpe, 'M')} (FPE) e {periodo(ate_fpm, 'M')} (FPM)")
+    )
+    fonte = (
+        f"{tesouro_transferencias.FONTE}; arrecadação: {receita_arrecadacao.FONTE}; população: "
+        "Tesouro Nacional, cadastro de entes do SICONFI; as divisões: conta nossa"
+    )
+    soma = round((total_fpe + total_fpm) / 1e9, 1)
+    cartoes = [
+        Cartao(
+            id="fpe-fpm-12m",
+            rotulo="FPE e FPM, 12 meses",
+            valor=soma,
+            unidade="R$ bi",
+            casas=0,
+            referencia=ate_fpe,
+            periodicidade="M",
+            detalhe=(
+                f"{br((total_fpe + total_fpm) / total_receita * 100, 0)} % do que a Receita "
+                "arrecada"
+            ),
+            fonte=fonte,
+            procedencia="calculado",
+            secao="impostos",
+        )
+    ]
+    tabela = Tabela(
+        id="fpe-fpm-estados",
+        titulo="O que volta aos estados: FPE e FPM",
+        subtitulo=f"12 meses até {meses}, do maior ao menor por habitante",
+        colunas=[
+            "R$ mil por habitante",
+            "R$ bi",
+            "% da arrecadação federal no estado",
+        ],
+        linhas=[linha for _, linha in linhas],
+        fonte=fonte,
+        nota=(
+            f"FPE e FPM somados (no país, R$ {br(total_fpe / 1e9, 0)} bi de FPE e "
+            f"R$ {br(total_fpm / 1e9, 0)} bi de FPM). "
+            "O FPE vai ao governo do estado e o FPM, às prefeituras; os dois saem do Imposto "
+            "de Renda e do IPI arrecadados pela União e são repartidos com mais peso para os "
+            "estados e municípios mais pobres e menores. Os valores são os que chegam ao ente, "
+            "já sem os 20 % que vão para o Fundeb (metadado do Tesouro). A última coluna "
+            "divide o FPE e o FPM pela arrecadação federal no estado (todos os tributos, 12 "
+            f"meses até {periodo(ate_receita, 'M')}): acima de 100, o estado recebe nesses "
+            "dois fundos mais do que a Receita arrecada nele. A arrecadação conta para o "
+            "endereço fiscal de quem paga, o que infla o Distrito Federal, São Paulo e o Rio de "
+            "Janeiro."
+        ),
+    )
+    return cartoes, [], [tabela], ""
+
+
+def _quem_paga_retido(ctx: Contexto) -> Pecas:
+    """O imposto pago antes da declaração (retido na fonte, carnê-leão) e o acerto, por faixa."""
+    ano, faixas = receita_irpf.grandes_numeros()
+    pago = sum(f.pago for f in faixas)
+    restituir = sum(f.a_restituir for f in faixas)
+    a_pagar = sum(f.a_pagar for f in faixas)
+    tabela = Tabela(
+        id="quem-paga-retido",
+        titulo="Imposto retido na fonte e o acerto na declaração",
+        subtitulo=f"declarações de {ano + 1}, renda de {ano}; faixas em salários mínimos",
+        colunas=["pago antes, % da renda", "devido, % da renda", "saldo do acerto, R$ bi"],
+        linhas=[
+            LinhaTabela(
+                rotulo=f.nome,
+                valores=[
+                    round(f.pago / f.renda * 100, 1) if f.renda else None,
+                    round(f.aliquota, 1),
+                    round((f.a_pagar - f.a_restituir) / 1e9, 1),
+                ],
+                unidade="",
+                casas=1,
+            )
+            for f in faixas
+        ],
+        fonte=f"{receita_irpf.FONTE}, ano-calendário {ano} (tabela 8)",
+        nota=(
+            "Pago antes: o imposto retido na fonte (no salário, na aposentadoria, no aluguel "
+            "pago por empresa), o carnê-leão e o que foi pago no exterior, durante o ano. "
+            "Devido: o que a declaração calcula. Se o pago antes passa do devido, a Receita "
+            "devolve a diferença; se fica abaixo, a pessoa paga no acerto. O saldo é o pago no "
+            "acerto menos o devolvido: negativo, a faixa recebeu mais de volta. No total, "
+            f"R$ {br(pago / 1e9, 0)} bi foram pagos antes, R$ {br(restituir / 1e9, 0)} bi "
+            f"voltaram como restituição e R$ {br(a_pagar / 1e9, 0)} bi foram pagos na "
+            "declaração. Não entra o imposto retido sobre 13º, aplicações, ganho de capital e "
+            "participação nos lucros, que é definitivo e não passa pelo acerto; a renda, no "
+            "denominador, inclui tudo."
+        ),
+    )
+    return [], [], [tabela], ""
+
+
+def _reforma_regras(ctx: Contexto) -> Pecas:
+    """O Imposto Seletivo e o Simples na reforma, a transição de 2026 a 2033 e o IBS indo para
+    o destino, de 2029 a 2077: tudo da lei lida (`leis.py`); a aritmética do art. 131 é nossa e
+    está dita na nota."""
+    anos = leis.REFORMA_ANOS
+    transicao = grafico(
+        "reforma-transicao",
+        "O que sobra dos impostos de hoje, ano a ano",
+        [
+            serie(
+                "icms-iss",
+                "ICMS e ISS",
+                [(date(a, 1, 1), float(leis.ICMS_ISS_QUE_CONTINUA[a])) for a in anos],
+                casas=0,
+            ),
+            serie(
+                "pis-cofins",
+                "PIS e Cofins",
+                [(date(a, 1, 1), float(leis.PIS_COFINS_QUE_CONTINUA[a])) for a in anos],
+                casas=0,
+            ),
+        ],
+        tipo="degrau",
+        unidade="% da alíquota de hoje",
+        casas=0,
+        periodicidade="A",
+        fonte="Emenda Constitucional nº 132/2023 (ADCT, arts. 126, 128 e 129)",
+        nota=(
+            "Quanto da alíquota de hoje cada imposto ainda cobra em cada ano. PIS e Cofins "
+            "acabam em 2027, quando entra a CBS (o IPI vai a zero no mesmo ano, menos no que a "
+            "Zona Franca de Manaus fabrica). O ICMS e o ISS ficam inteiros até 2028, caem para "
+            "9/10 em 2029, 8/10 em 2030, 7/10 em 2031, 6/10 em 2032 e acabam em 2033; os "
+            "benefícios fiscais deles caem na mesma proporção. O IBS sobe no lugar, na "
+            "alíquota que o Senado fixar a cada ano."
+        ),
+    )
+    retido = leis.IBS_PELA_RECEITA_ANTIGA
+    seguro = leis.IBS_SEGURO_PARA_QUEM_PERDE / 100
+    anos_destino = sorted(retido)
+    destino = grafico(
+        "reforma-destino",
+        "O IBS indo para onde se consome, de 2029 a 2077",
+        [
+            serie(
+                "antes",
+                "Pela receita de ICMS e ISS de antes",
+                [(date(a, 1, 1), retido[a]) for a in anos_destino],
+                casas=1,
+            ),
+            serie(
+                "destino",
+                "Pelo destino (onde se consome)",
+                [(date(a, 1, 1), (100 - retido[a]) * (1 - seguro)) for a in anos_destino],
+                casas=1,
+            ),
+            serie(
+                "seguro",
+                "Para quem mais perde",
+                [(date(a, 1, 1), (100 - retido[a]) * seguro) for a in anos_destino],
+                casas=1,
+            ),
+        ],
+        tipo="empilhado",
+        unidade="% do IBS de estados e municípios",
+        casas=1,
+        periodicidade="A",
+        fonte=f"{leis.IBS_DESTINO_NORMA}; a conta ano a ano: cálculo próprio",
+        nota=(
+            "Como o IBS de estados e municípios é repartido. Hoje o ICMS fica, em boa parte, "
+            "com o estado onde a mercadoria é feita (a origem); o IBS vai para onde ela é "
+            "consumida (o destino). A troca é lenta: de 2029 a 2032, 80 % do IBS é repartido "
+            "pela receita média de ICMS e ISS que cada um tinha; em 2033, 90 %; depois, essa "
+            "parte cai 1/45 por ano até acabar em 2078. Do resto, 5 % vão aos que mais perdem "
+            "com a troca e 95 %, pelo destino. A conta de cada ano é nossa, a partir do texto "
+            "da emenda. Quanto cada estado ganha ou perde não tem número oficial publicado: "
+            "depende do consumo e das alíquotas de cada um."
+        ),
+        largura="inteira",
+    )
+    regras = Tabela(
+        id="reforma-seletivo-simples",
+        titulo="Imposto Seletivo e Simples Nacional",
+        subtitulo="o que a lei complementar diz; as alíquotas do Seletivo ficam para outra lei",
+        colunas=["O que a lei diz", "Onde está"],
+        linhas=[
+            LinhaTabela(rotulo=r.tema, valores=[], unidade="", textos=[r.diz, r.norma])
+            for r in leis.SELETIVO_E_SIMPLES
+        ],
+        fonte=(
+            "Lei Complementar nº 214/2025, em texto atualizado (com a LC nº 227/2026), lida na "
+            "Câmara dos Deputados; Emenda Constitucional nº 132/2023"
+        ),
+        nota=(
+            "O Imposto Seletivo é federal e cobra a mais sobre o que faz mal à saúde ou ao meio "
+            "ambiente; não dá crédito a quem compra depois. A lei complementar diz sobre o que "
+            "ele incide e deixa as alíquotas para uma lei ordinária (as tabelas por produto não "
+            "estão na lei complementar). No Simples, a empresa pequena continua com a guia "
+            "única, mas quem compra dela abate menos imposto: por isso a lei deixa que ela "
+            "pague o IBS e a CBS por fora."
+        ),
+    )
+    return [], [transicao, destino], [regras], ""
+
+
 MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
     ("arrecadação por estado", _por_estado),
+    ("FPE e FPM", _transferencias),
+    ("imposto retido na fonte", _quem_paga_retido),
+    ("Seletivo, Simples e destino", _reforma_regras),
     ("arrecadação por setor", _por_setor),
     ("previsto × realizado", _previsto),
     ("quem paga", _quem_paga),

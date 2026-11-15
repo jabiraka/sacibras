@@ -23,7 +23,12 @@ SUBALIMENTACAO = "SN.ITK.DEFC.ZS"
 publica "menos de 2,5 %", o Banco Mundial grava 2,5."""
 INSEGURANCA_GRAVE = "SN.ITK.SVFI.ZS"
 """Insegurança alimentar grave (% da população), escala FIES da FAO; média de três anos."""
+IDOSOS = "SP.POP.65UP.TO.ZS"
+"""População de 65 anos ou mais (% do total), da Divisão de População da ONU (World Population
+Prospects) e das estatísticas dos países; conferido em 15/11/2026, de 1960 a 2025."""
 FONTE = "Banco Mundial, World Development Indicators"
+AGREGADOS = {"1W": "WLD", "ZJ": "LCN", "XD": "HIC", "OE": "OED"}
+"""O `country.id` de duas letras de alguns agregados e o código de três que se pede."""
 VALIDADE = 7 * 24 * 3600
 """O Gini dos países muda poucas vezes por ano; a API às vezes demora ou recusa."""
 
@@ -120,3 +125,27 @@ def serie_do_pais(pais: str, codigo: str, desde: int, ate: int) -> list[tuple[in
     if not isinstance(bruto, list) or len(bruto) < 2 or not bruto[1]:
         raise FonteForaDoArError(f"Banco Mundial {codigo} ({pais}): sem dados")
     return sorted((int(x["date"]), float(x["value"])) for x in bruto[1] if x["value"] is not None)
+
+
+def series_dos_paises(
+    paises: list[str], codigo: str, desde: int, ate: int
+) -> dict[str, list[tuple[int, float]]]:
+    """{código: [(ano, valor)]} de vários países ou agregados numa chamada só. Alguns agregados
+    vêm com `countryiso3code` vazio (o de alta renda, HIC, em 15/11/2026): a chave sai do
+    `country.id` de duas letras, traduzido por `AGREGADOS`."""
+    bruto = baixar_json(
+        f"{BASE}/country/{';'.join(paises)}/indicator/{codigo}",
+        params={"format": "json", "date": f"{desde}:{ate}", "per_page": "2000"},
+        validade=VALIDADE,
+        tempo_limite=180,
+    )
+    if not isinstance(bruto, list) or len(bruto) < 2 or not bruto[1]:
+        raise FonteForaDoArError(f"Banco Mundial {codigo}: sem dados")
+    saida: dict[str, list[tuple[int, float]]] = {}
+    for x in bruto[1]:
+        if x.get("value") is None:
+            continue
+        id2 = str(x.get("country", {}).get("id") or "")
+        chave = str(x.get("countryiso3code") or AGREGADOS.get(id2, id2))
+        saida.setdefault(chave, []).append((int(x["date"]), float(x["value"])))
+    return {k: sorted(v) for k, v in saida.items()}

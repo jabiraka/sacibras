@@ -117,9 +117,10 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "populacao",
             "População",
-            "Quantos somos, a pirâmide etária e quem está em idade de trabalhar.",
+            "Quantos somos, a pirâmide etária, quem está em idade de trabalhar e a projeção "
+            "da ONU, com a faixa.",
             cartoes=["populacao", "populacao-15-64", "idade-mediana"],
-            graficos=["piramide", "populacao", "crescimento-15-64"],
+            graficos=["piramide", "populacao", "populacao-onu", "crescimento-15-64"],
             tabelas=["demografia-marcos"],
         ),
         Parte(
@@ -137,16 +138,17 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "envelhecimento",
             "Envelhecimento e Previdência",
-            "Idosos para cada pessoa em idade de trabalhar, por estado, e o déficit do INSS.",
+            "Idosos para cada pessoa em idade de trabalhar, por estado e contra o mundo, e o "
+            "déficit do INSS.",
             cartoes=["idosos-por-100", "deficit-inss"],
-            graficos=["dependencia", "idosos", "inss"],
+            graficos=["dependencia", "idosos", "idosos-paises", "inss"],
             tabelas=["demografia-estados"],
         ),
         Parte(
             "produtividade",
             "Produtividade",
-            "PIB por pessoa ocupada e de onde veio o crescimento.",
-            cartoes=["produtividade"],
+            "PIB por pessoa ocupada e por hora trabalhada, e de onde veio o crescimento.",
+            cartoes=["produtividade", "produtividade-hora"],
             graficos=["produtividade", "crescimento-decomposto"],
         ),
     ],
@@ -154,9 +156,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "linha-de-pobreza",
             "Pobreza",
-            "Quantos vivem abaixo das linhas de pobreza e quantas casas recebem Bolsa Família.",
+            "Quantos vivem abaixo das linhas de pobreza, quantas casas recebem Bolsa Família e "
+            "a pobreza em cada estado.",
             cartoes=["pobreza", "extrema-pobreza", "bolsa-familia"],
             graficos=["pobreza", "programas-sociais"],
+            tabelas=["pobreza-estados"],
         ),
         Parte(
             "fome",
@@ -168,40 +172,48 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "saneamento",
-            "A casa: água, esgoto, luz",
-            "Água, esgoto e lixo contra a meta de 2033, luz, internet e fogão a lenha.",
-            cartoes=["agua", "esgoto", "lixo", "internet", "lenha"],
-            graficos=["saneamento", "internet-lenha"],
+            "A casa: água, esgoto, aluguel",
+            "Água, esgoto e lixo contra a meta de 2033, luz, internet, fogão a lenha e quem "
+            "mora de aluguel.",
+            cartoes=["agua", "esgoto", "lixo", "internet", "lenha", "aluguel"],
+            graficos=["saneamento", "internet-lenha", "moradia"],
             tabelas=["pobreza-saneamento"],
         ),
         Parte(
             "desigualdade",
             "Desigualdade",
-            "O Gini e quem fica com quanto da renda: os mais pobres, o meio e os mais ricos.",
+            "O Gini e quem fica com quanto da renda: os mais pobres, o meio e os mais ricos; e "
+            "o Gini do Brasil no mundo.",
             cartoes=["gini", "fatia-10-ricos", "fatia-1-rico", "fatia-40-pobres", "razao-10-40"],
-            graficos=["gini", "fatias", "renda-por-grupo"],
+            graficos=["gini", "fatias", "renda-por-grupo", "gini-paises"],
             tabelas=["pobreza-decimos"],
         ),
         Parte(
             "quem-ganha-mais",
-            "Quem ganha mais",
-            "O topo pelo Imposto de Renda e a renda do trabalho por sexo e cor.",
+            "O topo pelo Imposto de Renda",
+            "Renda, patrimônio e dividendos de quem declara, do pé ao topo.",
+            cartoes=["irpf-topo-renda", "irpf-topo-dividendos", "irpf-1-patrimonio"],
+            tabelas=["pobreza-irpf", "pobreza-centis"],
+        ),
+        Parte(
+            "diferencas",
+            "Sexo, cor, escola e idade",
+            "A renda do trabalho por sexo, cor, escolaridade e idade, e quem não sabe ler.",
             cartoes=[
-                "irpf-topo-renda",
-                "irpf-topo-dividendos",
                 "mulheres-homens",
                 "pretos-brancos",
                 "pardos-brancos",
+                "superior-medio",
+                "analfabetismo",
+                "anos-de-estudo",
             ],
-            graficos=["diferencas", "renda-trabalho-grupos"],
-            tabelas=["pobreza-irpf"],
-        ),
-        Parte(
-            "estados-e-paises",
-            "Estados e países",
-            "Pobreza, fome, esgoto e água por estado, e o Gini do Brasil no mundo.",
-            graficos=["gini-paises"],
-            tabelas=["pobreza-estados"],
+            graficos=[
+                "diferencas",
+                "renda-trabalho-grupos",
+                "renda-escolaridade",
+                "analfabetismo",
+            ],
+            tabelas=["pobreza-escola-idade"],
         ),
     ],
     "inflacao": [
@@ -439,15 +451,24 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "por-estado",
             "Por estado e por setor",
-            "De onde vem a arrecadação federal: cada estado e cada setor da economia.",
-            tabelas=["arrecadacao-estados", "arrecadacao-setores"],
+            "De onde vem a arrecadação federal, cada estado e cada setor, e o que volta aos "
+            "estados no FPE e no FPM.",
+            cartoes=["fpe-fpm-12m"],
+            tabelas=["arrecadacao-estados", "fpe-fpm-estados", "arrecadacao-setores"],
         ),
         Parte(
             "reforma",
             "Reforma do consumo",
-            "O que muda no imposto das compras de 2026 a 2033, e quanto vai numa compra.",
+            "O que muda no imposto das compras de 2026 a 2033, quanto vai numa compra, o "
+            "Imposto Seletivo, o Simples e o IBS indo para o destino.",
             cartoes=["reforma-cbs-2027", "reforma-aliquota-cheia", "reforma-icms-iss"],
-            tabelas=["reforma-linha-do-tempo", "reforma-aliquota", "reforma-descontos"],
+            graficos=["reforma-transicao", "reforma-destino"],
+            tabelas=[
+                "reforma-linha-do-tempo",
+                "reforma-aliquota",
+                "reforma-descontos",
+                "reforma-seletivo-simples",
+            ],
             extras=["simulador-reforma"],
         ),
         Parte(
@@ -462,10 +483,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "quem-paga",
             "Quem paga",
-            "O Imposto de Renda por faixa de quem declara e o imposto das empresas.",
+            "O Imposto de Renda por faixa de quem declara, o retido na fonte e o imposto das "
+            "empresas.",
             cartoes=["imposto-lucro"],
             graficos=["imposto-lucro"],
-            tabelas=["quem-paga-irpf", "imposto-lucro-paises"],
+            tabelas=["quem-paga-irpf", "quem-paga-retido", "imposto-lucro-paises"],
         ),
         Parte(
             "gasto-tributario",

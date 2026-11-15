@@ -129,12 +129,29 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Reforma do consumo, ano a ano (EC 132 e LC 214)",
         "leis.REFORMA_DO_CONSUMO",
-        date(2026, 11, 14),
-        date(2026, 12, 15),
-        "Lida no Senado, na publicação original. Reler no Planalto (texto compilado da EC "
-        "132/2023, arts. 124 a 133 do ADCT, e da LC 214/2025, arts. 343 a 349) para ver se "
-        "norma posterior mexeu. Depois, uma vez por ano.",
-        do_pc=True,
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "Câmara, Constituição em texto atualizado (legin, constituicao-1988-…-normaatualizada), "
+        "arts. 124 a 137 do ADCT, e a LC 214/2025 também em texto atualizado (arts. 343 a "
+        "349): ver se emenda ou lei nova mexeu. O Planalto, do PC, serve de conferência. Uma "
+        "vez por ano.",
+    ),
+    Leitura(
+        "IBS pelo destino: quanto se reparte pela receita de antes (2029 a 2077)",
+        "leis.IBS_PELA_RECEITA_ANTIGA",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "Câmara, Constituição em texto atualizado, ADCT, arts. 131 e 132; e a lei complementar "
+        "que reparte o IBS (LC 214/2025). Uma vez por ano.",
+    ),
+    Leitura(
+        "Imposto Seletivo e Simples Nacional na reforma (LC 214)",
+        "leis.SELETIVO_E_SIMPLES",
+        date(2026, 11, 15),
+        date(2027, 2, 15),
+        "Câmara, LC 214/2025 em texto atualizado (arts. 41, 47, 409 a 438) e a LC 123/2006 "
+        "(art. 13). Procurar a lei ordinária com as alíquotas do Seletivo, que a LC deixa para "
+        "ela, e trocar a linha das alíquotas quando sair. A cada três meses até 2027.",
     ),
     Leitura(
         "CBS de 2027: o cálculo do TCU e a resolução do Senado",

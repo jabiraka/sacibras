@@ -160,6 +160,11 @@ SINONIMOS: dict[str, list[str]] = {
     "imposto de renda por faixa": ["irpf", "leao", "aliquota efetiva", "dividendos", "super ricos"],
     "imposto sobre o lucro": ["irpj", "csll", "imposto das empresas", "corporate tax"],
     "imposto por estado": ["arrecadacao por uf", "quanto cada estado paga", "pacto federativo"],
+    "fpe": ["fundo de participacao", "repasses da uniao", "transferencias", "pacto federativo"],
+    "fpm": ["fundo de participacao dos municipios", "repasses as prefeituras", "transferencias"],
+    "retido na fonte": ["irrf", "imposto na fonte", "restituicao", "desconto no salario"],
+    "seletivo": ["imposto do pecado", "cigarro", "bebida", "refrigerante", "carros", "apostas"],
+    "destino": ["origem e destino", "guerra fiscal", "partilha do ibs", "estados que perdem"],
     "primario": ["deficit", "superavit", "rombo", "resultado fiscal", "contas do governo"],
     "nominal": ["deficit nominal", "juros da divida"],
     "fiscal": ["contas publicas", "governo", "gastos publicos", "orcamento"],
@@ -370,6 +375,15 @@ SINONIMOS: dict[str, list[str]] = {
     "mulheres": ["diferenca salarial", "genero", "desigualdade de genero", "salario das mulheres"],
     "pretos": ["negros", "racismo", "desigualdade racial", "cor ou raca"],
     "pardos": ["negros", "desigualdade racial", "cor ou raca"],
+    "analfabetismo": ["analfabetos", "ler e escrever", "educacao", "alfabetizacao"],
+    "escolaridade": ["educacao", "diploma", "faculdade", "ensino superior", "anos de estudo"],
+    "anos de estudo": ["escolaridade", "educacao", "escola"],
+    "aluguel": ["moradia", "casa propria", "habitacao", "deficit habitacional", "inquilinos"],
+    "patrimonio": ["riqueza", "bens e direitos", "fortuna", "super-ricos", "ricos"],
+    "do pe ao topo": ["centis", "centil", "percentil", "0,1% mais rico", "1% mais rico"],
+    "onu": ["nacoes unidas", "world population prospects", "projecao da onu"],
+    "por hora": ["produtividade por hora", "horas trabalhadas", "hora de trabalho"],
+    "idosos na populacao": ["envelhecimento no mundo", "japao", "china", "paises ricos"],
 }
 
 

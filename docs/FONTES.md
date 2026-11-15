@@ -103,6 +103,22 @@ Da aba de riscos (14/11/2026):
 | BCB, Relatório de Estabilidade Financeira (PDF, maio e outubro) | teste de estresse dos bancos | `bcb.gov.br/content/publicacoes/ref/AAAAMM/RELESTABAAAAMM-refPub.pdf`. Lido à mão (seção 1.2.5). |
 | Tesouro Nacional, classificação de risco | nota de crédito do país nas três agências | A página do gov.br está com a tabela vazia e o sistema que a serve (`sisweb.tesouro.gov.br/apex/f?p=2810:2`) dava 503 em 14/11/2026. Histórico lido no PDF do Tesouro (até fev/2016) e em cópias do sisweb no Internet Archive (2018 e 2024); atos de 2023 a 2025 nos comunicados de `gov.br/tesouronacional`. Não serve para o builder chamar: entra lido à mão. |
 
+Pobreza, Demografia e Impostos (15/11/2026):
+
+| Fonte | O que dá | Observações |
+|-------|----------|-------------|
+| IBGE SIDRA, PNAD Contínua anual: 7442 (c58, idade) e 7443 (c1568, nível de instrução), variável 10774 | renda média habitual de todos os trabalhos por idade e por escolaridade, desde 2012 | Conferidas pela resposta. Instrução: 18837 sem instrução, 11628 fundamental completo, 11630 médio completo, 99713 superior completo, 120704 total. |
+| IBGE SIDRA, PNAD Contínua anual, educação: 7113 (v10267, c2/6794, c58: 2795 15+, 3302 60+), 7125 (c86: 2776 brancos, 119525 pretos ou pardos), 7126 (v3593, c58/108866, 25+) | analfabetismo e anos de estudo | Desde 2016, sem 2020 e 2021. |
+| IBGE SIDRA 6821 (v10117, c63) | % dos moradores por condição da casa: alugada 1055, própria paga 4342, própria pagando 4343, cedida 2519 | O número da classificação saiu tentando c1 a c800 (63). |
+| IBGE SIDRA 6371 (v8190, c2/6794), trimestre civil | horas habituais por semana em todos os trabalhos (39,8 no 2º tri/2026) | Para o PIB por hora trabalhada (conta nossa). |
+| Receita Federal, Distribuição da Renda por Centis (`…/publicacoes/estudos/distribuicao-da-renda`) | renda, imposto, dividendos e bens e direitos declarados em cem grupos, com o topo aberto até 0,01 % | XLSX de ~1 MB por ano, aba `BRV` (fila pela RB4). Pasta "…estudo-ampliado-2017-a-2023", que já guarda 2024; o nome do arquivo muda por ano (`centis-br-ac2024.xlsx`, `centis-br_ac2022_abril_2025.xlsx`); 2017 a 2021 vêm noutro formato (não é zip válido para o openpyxl) e não são lidos. |
+| Receita Federal, Grandes Números do IRPF, colunas `imposto_pago`, `imposto_a_pagar`, `imposto_a_restituir` | imposto retido na fonte e antecipado e o acerto, por faixa | O metadado: "soma de imposto retido na fonte, carnê leão, imposto complementar, imposto pago no exterior e imposto retido RRA". Não há o retido sobre tributação exclusiva. |
+| Tesouro Transparente (CKAN), `transferencias-constitucionais-para-estados` e `…-para-municipios` | FPE de cada estado e FPM dos municípios, mês a mês, por decêndio | CSV latin-1 `;`. O nome do arquivo é o mês da publicação (o `202610` traz set/2026). Municipal: 5 a 8 MB por mês. Valores já sem os 20 % do Fundeb. Brasília recebe FPM. |
+| ONU, World Population Prospects 2024, projeção probabilística (`population.un.org/wpp/assets/Excel%20Files/2_Indicators%20(Probabilistic)/…/UN_PPP2024_Output_PopTot.xlsx`) | população com faixas de 80 % e 95 %, 2024 a 2100 | A API de dados (`dataportalapi`) pede token (HTTP 401); a lista dos arquivos está em `population.un.org/wpp/assets/downloads.json`. 1 MB, responde em < 1 s. Abrir sem `read_only` (no modo rápido, só uma coluna de ano). |
+| Banco Mundial `SP.POP.65UP.TO.ZS` | % de 65 anos ou mais, 1960 a 2025 | Vários países numa chamada (`country/BRA;WLD;…`), ~60 s. O agregado de renda alta vem com `countryiso3code` vazio: usar `country.id` (XD). |
+| Câmara, Constituição em texto atualizado (`www2.camara.leg.br/legin/fed/consti/1988/constituicao-1988-5-outubro-1988-322142-normaatualizada-pl.html`, 1,7 MB) | ADCT compilado: arts. 124 a 137 da reforma | Responde de fora do Brasil: dispensa o Planalto para conferir se emenda nova mexeu na transição. |
+| Fundação João Pinheiro (déficit habitacional), Confaz (ICMS por estado) | — | 403 (FJP) e sem resposta (Confaz) da nuvem em 15/11/2026. |
+
 ## Testadas, ainda sem uso (próximas fases)
 
 | Fonte | O que dá | Responde de fora? | CORS | Observações |

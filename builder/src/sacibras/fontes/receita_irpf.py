@@ -47,6 +47,9 @@ COLUNAS = {
     "isentos": "rend_isentos_e_nao_tributaveis",
     "dividendos": "rend_isentos_lucros_dividendos",
     "imposto": "imposto_devido_total",
+    "pago": "imposto_pago",
+    "a_pagar": "imposto_a_pagar",
+    "a_restituir": "imposto_a_restituir",
 }
 
 
@@ -60,6 +63,12 @@ class Faixa:
     isentos: float = 0.0
     dividendos: float = 0.0
     imposto: float = 0.0
+    pago: float = 0.0
+    """O que já foi pago antes da declaração. O metadado da Receita (lido em 15/11/2026): "soma
+    de imposto retido na fonte, carnê leão, imposto complementar, imposto pago no exterior e
+    imposto retido RRA". Não inclui o retido sobre a tributação exclusiva."""
+    a_pagar: float = 0.0
+    a_restituir: float = 0.0
 
     @property
     def renda(self) -> float:

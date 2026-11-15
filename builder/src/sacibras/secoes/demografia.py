@@ -2,7 +2,11 @@
 produtividade e da previdência.
 
 A projeção é a oficial do IBGE (revisão 2024). Até 2022 é dado ajustado aos Censos; dali em
-diante, hipótese: nos gráficos a linha segue tracejada. O IBGE não publica faixa de erro.
+diante, hipótese: nos gráficos a linha segue tracejada. O IBGE não publica faixa de erro; a
+ONU publica (World Population Prospects 2024, projeção probabilística), e vai ao lado.
+O envelhecimento contra outros países vem do Banco Mundial (% de 65 anos ou mais) e a
+produtividade por hora é conta nossa: PIB em volume sobre as horas habituais da PNAD
+(ocupados × horas por semana).
 """
 
 from __future__ import annotations
@@ -13,12 +17,13 @@ from datetime import date
 from typing import NamedTuple
 
 from sacibras import contas
-from sacibras.fontes import ibge_projecao, ibge_sidra, tesouro_rtn
+from sacibras.fontes import banco_mundial, ibge_projecao, ibge_sidra, onu_wpp, tesouro_rtn
 from sacibras.fontes.ibge_projecao import FONTE as PROJECAO
 from sacibras.fontes.ibge_projecao import ULTIMO_ANO_AJUSTADO, PorAno
 from sacibras.schema import (
     Cartao,
     Grafico,
+    Intervalo,
     LinhaRef,
     LinhaTabela,
     Piramide,
@@ -36,6 +41,21 @@ PIB a preços de mercado. Conferido pela própria resposta em 14/11/2026."""
 OCUPADOS = (6318, 1641, "c629/32387")
 """PNAD Contínua, pessoas de 14 anos ou mais ocupadas (mil), trimestre móvel; a mesma tabela
 da seção Trabalho."""
+
+HORAS = (6371, 8190, "c2/6794")
+"""PNAD Contínua, média de horas habitualmente trabalhadas por semana em todos os trabalhos,
+pessoas ocupadas de 14 anos ou mais, os dois sexos; trimestre civil. Conferido pela resposta
+em 15/11/2026 (39,8 horas no 2º tri/2026)."""
+PAISES_IDOSOS = {
+    "BRA": "Brasil",
+    "WLD": "Mundo",
+    "LCN": "América Latina e Caribe",
+    "HIC": "Países de renda alta",
+    "CHN": "China",
+    "JPN": "Japão",
+}
+"""As seis séries do envelhecimento contra o mundo (seis cores de série)."""
+ANOS_DAS_BARRAS_ONU = list(range(2030, 2101, 10))
 
 PROJETADO_DESDE = date(ULTIMO_ANO_AJUSTADO + 1, 1, 1)
 ANOS_DA_PIRAMIDE = [2000, 2010, 2022, 2030, 2040, 2050, 2060, 2070]
@@ -92,6 +112,30 @@ def produtividade(pib: list[Ponto], ocupados: list[Ponto]) -> dict[str, list[Pon
         "ocupados": contas.base_100([(d, ocup_4t[d]) for d in datas]),
         "por_ocupado": contas.base_100(por_ocupado),
     }
+
+
+def por_hora(pib: list[Ponto], ocupados: list[Ponto], horas: list[Ponto]) -> list[Ponto]:
+    """PIB de quatro trimestres sobre as horas trabalhadas dos mesmos quatro (ocupados × horas
+    por semana, na média), com 100 na primeira janela completa."""
+    horas_por_tri = dict(horas)
+    total = [(d, v * horas_por_tri[d]) for d, v in ocupados if d in horas_por_tri]
+    pib_4t = dict(contas.soma_movel(pib, 4))
+    horas_4t = dict(contas.media_movel(total, 4))
+    datas = sorted(set(pib_4t) & set(horas_4t))
+    return contas.base_100([(d, pib_4t[d] / horas_4t[d]) for d in datas])
+
+
+def barras_onu(projecao: onu_wpp.Projecao, anos: list[int]) -> list[tuple[date, float, float]]:
+    """A faixa de 80 % da ONU nos anos pedidos, em milhões."""
+    return [
+        (
+            date(a, 1, 1),
+            round(projecao.inferior80[a] / 1e3, 1),
+            round(projecao.superior80[a] / 1e3, 1),
+        )
+        for a in anos
+        if a in projecao.inferior80 and a in projecao.superior80
+    ]
 
 
 class Ano(NamedTuple):
@@ -339,6 +383,12 @@ def montar(ctx: Contexto) -> Secao:
     )
     var_prod = contas.variacao(prod["por_ocupado"], 4)
     media_anual = media_geometrica([x.produtividade for x in decomposicao])
+    try:
+        horas = ibge_sidra.serie(HORAS[0], HORAS[1], classificacao=HORAS[2], trimestral=True)
+        hora = por_hora(pib_vol, ocupados, horas)
+    except Exception as erro:  # sem as horas, fica só o PIB por ocupado
+        print(f"    horas da PNAD ficaram de fora da demografia: {str(erro)[:120]}")
+        hora = []
 
     cartoes += [
         cartao_proj(
@@ -393,6 +443,26 @@ def montar(ctx: Contexto) -> Secao:
             mini=40,
         ),
     ]
+    fonte_hora = (
+        f"{fonte_prod}; horas: PNAD Contínua (SIDRA {HORAS[0]}, horas habituais em todos os "
+        "trabalhos); conta nossa"
+    )
+    if hora:
+        cartoes.append(
+            cartao(
+                "produtividade-hora",
+                "PIB por hora trabalhada, em 4 trimestres",
+                contas.variacao(hora, 4),
+                unidade="%",
+                periodicidade="T",
+                casas=1,
+                detalhe=f"desde {hora[0][0].year}: {br(hora[-1][1] - 100, 1)} % no total",
+                fonte=fonte_hora,
+                procedencia="calculado",
+                secao="demografia",
+                mini=40,
+            )
+        )
 
     # --- Gráficos ---
     cresc_pia = crescimento(pia)
@@ -538,19 +608,28 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "produtividade",
-            "PIB, ocupados e PIB por pessoa ocupada",
+            "PIB, ocupados e PIB por pessoa e por hora",
             [
                 serie("por-ocupado", "PIB por ocupado", prod["por_ocupado"], casas=1),
+                *([serie("por-hora", "PIB por hora trabalhada", hora, casas=1)] if hora else []),
                 serie("pib", "PIB", prod["pib"], casas=1),
                 serie("ocupados", "Ocupados", prod["ocupados"], casas=1),
             ],
             unidade="índice, 2012 = 100",
             casas=1,
             periodicidade="T",
-            fonte=fonte_prod,
+            fonte=fonte_hora if hora else fonte_prod,
             nota=(
                 "Somas de quatro trimestres: o PIB em volume e a média de ocupados. A PNAD "
-                "começa em 2012. É produto por pessoa, não por hora trabalhada."
+                "começa em 2012. "
+                + (
+                    "Por hora: o PIB dividido pelas horas da média de quatro trimestres, cada "
+                    "uma os ocupados vezes as horas que costumam trabalhar por semana (conta "
+                    "nossa). São as horas habituais, não as feitas de fato: férias, faltas e "
+                    "hora extra não entram."
+                    if hora
+                    else "É produto por pessoa, não por hora trabalhada."
+                )
             ),
         ),
     ]
@@ -585,6 +664,14 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
     graficos += graficos_inss
+    try:
+        graficos.append(_grafico_onu(populacao))
+    except Exception as erro:  # a ONU fora do ar não derruba a seção
+        print(f"    a projeção da ONU ficou de fora: {str(erro)[:120]}")
+    try:
+        graficos.append(_grafico_idosos_paises(agora))
+    except Exception as erro:
+        print(f"    o Banco Mundial ficou de fora da demografia: {str(erro)[:120]}")
 
     tabelas = [_tabela_marcos(agora, ind, br_grupos), _tabela_estados(agora, grupos)]
 
@@ -683,4 +770,72 @@ def _tabela_estados(agora: int, grupos: dict[str, dict[str, PorAno]]) -> Tabela:
         ],
         fonte=f"{PROJECAO} (tabela 3, por unidade da federação)",
         nota=f"Até {ULTIMO_ANO_AJUSTADO}, dado ajustado aos Censos; depois, projeção.",
+    )
+
+
+def _grafico_onu(populacao_ibge: PorAno) -> Grafico:
+    """A população pela ONU (o meio e a faixa de 80 %) ao lado da projeção do IBGE."""
+    onu = onu_wpp.populacao()
+    mediana = [(date(a, 1, 1), v / 1e3) for a, v in sorted(onu.mediana.items())]
+    if not mediana:
+        raise RuntimeError("ONU sem a mediana")
+    a50, a100 = 2050, 2100
+    return grafico(
+        "populacao-onu",
+        "População: a projeção da ONU, com a faixa, e a do IBGE",
+        [
+            serie(
+                "ibge",
+                "IBGE",
+                pontos(populacao_ibge, 1e-6),
+                casas=1,
+                tracejado_desde=PROJETADO_DESDE,
+            ),
+            serie("onu", "ONU, o meio da faixa", mediana, casas=1, tracejado_desde=mediana[0][0]),
+        ],
+        unidade="milhões de pessoas",
+        casas=1,
+        periodicidade="A",
+        fonte=f"{onu_wpp.FONTE}; {PROJECAO} (tabela 3)",
+        intervalos=[
+            Intervalo(
+                nome="8 em cada 10 futuros da ONU ficam entre as pontas",
+                serie="onu",
+                pontos=barras_onu(onu, ANOS_DAS_BARRAS_ONU),
+            )
+        ],
+        nota=(
+            "Como ler: a ONU sorteia milhares de futuros para a fecundidade e a esperança de "
+            "vida; a linha é o do meio, e a barra vai de onde ficam os 10 % mais baixos a onde "
+            "ficam os 10 % mais altos. Com 19 de cada 20 futuros, a faixa de "
+            f"{a50} vai de {br(onu.inferior95[a50] / 1e3, 0)} a "
+            f"{br(onu.superior95[a50] / 1e3, 0)} milhões, e a de {a100}, de "
+            f"{br(onu.inferior95[a100] / 1e3, 0)} a {br(onu.superior95[a100] / 1e3, 0)}. O "
+            "IBGE não publica faixa; até 2022, a linha dele é dado ajustado aos Censos."
+        ),
+        largura="inteira",
+    )
+
+
+def _grafico_idosos_paises(agora: int) -> Grafico:
+    """O peso dos idosos no Brasil e em outros países, pelo Banco Mundial."""
+    series = banco_mundial.series_dos_paises(list(PAISES_IDOSOS), banco_mundial.IDOSOS, 1960, agora)
+    if "BRA" not in series:
+        raise RuntimeError("Banco Mundial sem o Brasil")
+    return grafico(
+        "idosos-paises",
+        "Idosos na população: o Brasil e o mundo",
+        [
+            serie(cod.lower(), nome, [(date(a, 1, 1), v) for a, v in series[cod]], casas=1)
+            for cod, nome in PAISES_IDOSOS.items()
+            if series.get(cod)
+        ],
+        unidade="% da população",
+        casas=1,
+        periodicidade="A",
+        fonte=f"{banco_mundial.FONTE} ({banco_mundial.IDOSOS}), a partir da ONU",
+        nota=(
+            "Pessoas de 65 anos ou mais em % da população. O número do Brasil é o da ONU e "
+            "não bate exatamente com o do IBGE, que já usa o Censo de 2022."
+        ),
     )
