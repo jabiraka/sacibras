@@ -370,27 +370,51 @@ compartilhamento, domínio.
 
 ## 11. Em aberto
 
-- **B3: ligar ou não a coleta do site** (decisão do Caio). A página do Boletim Diário diz que
-  é "expressamente vedada a coleta automatizada, inclusive por meio de ferramentas de
-  inteligência artificial". O builder nasceu com a B3 desligada (`SB_B3`): Ibovespa pelo
-  IPEADATA, câmbio pelo Banco Central, curva pelo Tesouro Direto. Ligar dá índices setoriais,
-  futuros e ETFs; as saídas são (a) deixar desligado, (b) ligar por conta e risco, (c) pedir
-  autorização ou contratar o dado da B3. Detalhe em [FONTES.md](FONTES.md).
-- **Normas ainda não lidas** (o Planalto redireciona de fora do Brasil): LC 200/2023 e LDO
-  (meta de primário e banda), LC 101/2000 arts. 19–20, Resolução do Senado 40/2001, Decreto
-  12.079/2024. Só a Resolução CMN 5.141/2024 (meta de inflação) foi lida e está em
-  `builder/src/sacibras/leis.py`. Alguém no Brasil precisa abrir e colar o trecho.
-- **Calendário**: a API de calendário do IBGE (`servicodados`) cai de fora do Brasil, e o BCB
-  não publica as reuniões futuras do Copom em API. No gráfico da Selic, as reuniões futuras
-  estão no mês da reunião de mesma ordem do último calendário conhecido.
-- **Teste de fumaça de dentro do Actions**: falta disparar; pode revelar bloqueio que daqui
-  não aparece.
-- **Cache em Postgres** (`SB_CACHE_URL`): o builder usa cache em arquivo (`.cache/`), que
-  bastou; o `sb_postgres` segue no compose, sem uso.
-- **Rodada que falha numa fonte**: a seção fica marcada e o resto publica, mas o JSON bom
-  anterior só é reaproveitado se estiver na pasta de saída; falta lê-lo do site no ar.
+Decidido ou feito em 14/11/2026: a B3 fica desligada (`SB_B3`), as normas foram lidas
+(`leis.py`), o calendário do IBGE é buscado pelo navegador, o teste de fumaça roda no Actions e
+a fonte que falha fica com o dado do site no ar (`anterior.py`). O que segue em aberto:
+
+- **Calendário do Copom**: o BCB não publica as reuniões futuras em API. No gráfico da Selic,
+  as reuniões futuras estão no mês da reunião de mesma ordem do último calendário conhecido.
+- **Cache em Postgres** (`SB_CACHE_URL`): o cache em arquivo (`.cache/`) bastou; o
+  `sb_postgres` segue no compose, sem uso.
 - **Nome e domínio** (`sacibras` é o nome de trabalho).
-- **Novo Caged**: o saldo hoje sai da diferença do estoque no SGS (28763); o IPEADATA tem o
-  saldo ajustado (`CAGED12_SALDONAJU12`) para conferir.
-- **Portal da Transparência**: pede chave gratuita (vira segredo do Actions) — só na Fase 2+.
+- **Novo Caged**: o saldo sai da diferença do estoque no SGS (28763); o IPEADATA tem o saldo
+  ajustado (`CAGED12_SALDONAJU12`) para conferir.
+- **Portal da Transparência**: pede chave gratuita (vira segredo do Actions).
 - **Municípios além das capitais**: custo de chamadas ao SICONFI × valor.
+
+## 12. Limites conhecidos
+
+O que a tela já diz, ou deveria dizer, sobre o que os números não medem.
+
+- **Previsões**: o "PIB agora" é reta com o IBC-Br (com dois meses do trimestre, o erro real é
+  maior que o típico). O acerto do Focus compara com o dado revisado de hoje, não com o da
+  época.
+- **Simulador da dívida**: ordem de grandeza; não separa a dívida atrelada ao câmbio, e o juro
+  não reage à inflação. A participação por indexador no SGS não traz o IPCA.
+- **Simulador da Selic**: linear e de um ano, com risco-país e juro de fora parados; a faixa do
+  IPCA é do modelo de dez/2021 e a da dívida soma pontas. A soma das três parcelas da dívida é
+  nossa. O gancho de Lara Resende mede só o primeiro ano. As tabelas dos ciclos mostram o que
+  veio depois, não o que a Selic causou.
+- **Simulador da reforma**: só IBS e CBS (em 2027 e 2028 falta o ICMS ou ISS), sem comparar com
+  o imposto de hoje; a alíquota de 2033 é faixa, e a ponta de cima é conta nossa. Regimes
+  próprios, Simples e Imposto Seletivo ficam de fora.
+- **Juros**: inflação implícita só a partir de mai/2029; a diferença títulos × Focus junta
+  expectativa e prêmio de prazo. Os anualizados de 3 meses da inflação são sem ajuste sazonal.
+- **Trabalho**: o saldo do Caged é a diferença do estoque (set/2026: 121 mil contra 115 mil do
+  oficial com ajuste).
+- **Estados**: o primário é o acumulado do ano sobre a RCL de 12 meses.
+- **Demografia**: a projeção do IBGE não tem faixa de erro; o PIB por ocupado é por pessoa, não
+  por hora (2020 a 2022 distorcidos pela pandemia); o déficit do INSS é só o Regime Geral.
+- **Impostos**: o IRPF por faixa não traz o retido na fonte (o topo paga mais do que a tabela
+  mostra); os dez grupos de renda são do Ipea com a POF 2017-2018; a arrecadação por estado
+  conta quem recolhe, não quem arca; a carga é a da OCDE, não a da Receita; o gasto tributário
+  é só o federal, com dois anos de atraso; carga × crescimento não mede efeito.
+- **Riscos**: o painel compara com a própria história, não com um nível perigoso; o leque e os
+  testes usam a conta do simulador; o "juro que a dívida paga" não é a taxa implícita oficial;
+  as janelas das crises são escolha nossa; a dívida externa de curto prazo (SGS 21519) não diz
+  se o prazo é o original ou o residual.
+- **Tela**: no celular, tabelas largas rolam de lado com a primeira coluna parada; o calendário
+  mostra só o dia (a API não diz o fuso) e some se o IBGE não responder em 6 s.
+- **Build**: a frio leva perto de 3 minutos (SICONFI, DCA e Focus sem cache).

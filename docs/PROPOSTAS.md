@@ -1,211 +1,110 @@
 # Propostas
 
-A lista do que foi pedido ou pensado e ainda não está pronto, e do que ficou pronto, com a
-data. Pedido novo vira linha aqui antes de virar código. A ordem do que fazer agora fica no
+O que foi pedido ou pensado e ainda falta, por assunto. Pedido novo vira linha aqui antes de
+virar código; o que fica pronto sai (a história está no git e no
+[PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-## Pedidas pelo Caio em 14/11/2026
+Última atualização: 14/11/2026. Tudo o que foi pedido até aqui está no ar (Impostos, Selic,
+reforma do consumo, Pobreza, Estados com PIB, comércio por setor, Riscos, Demografia,
+glossário com 182 termos, tradução, valor nunca em branco, prazos de releitura); abaixo, só o
+que ficou faltando em cada um.
 
-| Pedido | Situação |
-|--------|----------|
-| Comparar retornos em reais (mais em Mercados) | ✅ "Quanto rendeu R$ 100": Ibovespa, dólar, euro, CDI e poupança contra o IPCA, período em lista suspensa. Falta: Tesouro IPCA+ e prefixado (o CSV do Tesouro Direto tem o preço diário), ouro, IFIX e índices da B3 (dependem do `SB_B3`), Ibovespa com dividendos. |
-| O Focus está abaixo dos títulos públicos? | ✅ Respondido na tela de Juros: os títulos contra o Focus no mesmo prazo, no juro e na inflação, com a distância numa frase e num cartão. |
-| Barra de busca por nome ou sinônimo | ✅ Lupa no cabeçalho e caixa na entrada; índice `busca.json` com sinônimos (`busca.py`). Falta: sugestões quando nada é achado, busca por número ("13,75"). |
-| Inflação implícita nos títulos (o Jabs tem uma curva) | ✅ Curva zero pelo método do Jabs (`curvas.py`). Falta: o trecho antes de mai/2029 (não há IPCA+ sem cupom mais curto; o cupom de IPCA da B3, DAP, depende do `SB_B3`). |
-| O que dá para abrir por estado | Ver abaixo. |
-| Glossário: tocar na palavra ou num "?" abre a definição num balão, sem sair da tela | ✅ 89 termos em `glossario.py` (`glossario.json`); o navegador sublinha a palavra no texto corrido e põe "?" no nome dos números, gráficos e alertas (`web/src/glossario.ts`). Falta: o glossário na busca ("o que é spread"), uma lista de todos os termos se alguém pedir. |
-| Painel de alerta: classificar, não mostrar tudo de uma vez, dizer o que significa, por que é alerta e no que pode dar | ✅ grupos que abrem no toque (o com mais acesos em cima, um ponto por indicador), atalho com os seis piores acesos, e cada linha abre "O que é / Por que é alerta / Pode levar a" (`alertas.py`) com a história do indicador. |
-| Brasil no mundo: os emergentes mudam só o gráfico ou a tabela também? Lista com muitas métricas | Mudavam só o ranking. ✅ Agora a lista "Países" (os 22 principais, médias dos grupos ou todos os países de um grupo do FMI) vale para ranking, duas métricas e tabela; métricas agrupadas por tema na lista; grupo inteiro rola numa caixa com o Brasil à vista. |
-| Painel de alerta: comparar com outros países, sobretudo os parecidos, e outras formas de ver além da régua da história | ✅ lista "Ver os alertas": contra a própria história; contra outros países (emergentes por padrão, América Latina, os 22 de Brasil no mundo, avançados, mundo; FMI e BIS, mesmo número e ano para todos; dívida, primário, nominal, juros, conta corrente, inflação, e fora do painel juro real, crescimento e desemprego); o que mudou em um ano; e o quadro-resumo. Falta par internacional para crédito (BIS: serviço da dívida das famílias, hiato de crédito), reservas (FMI, IFS), volatilidade do câmbio (BIS, câmbio diário) e previdência. |
-| Melhorar as faixas das projeções (a barra azul) | ✅ traço fino em tinta neutra com as pontas marcadas; no leque, a parte de 50 % mais grossa. Regra no `CLAUDE.md`. |
-| Riscos: faixa e "sorteio" mais intuitivos | ✅ "como ler" em palavras de todo dia no leque e nas previsões ("8 em cada 10 futuros sorteados ficam entre as pontas"), nomes da legenda e do cartão reescritos, verbetes no glossário. |
-| Uma seção sobre impostos, ou o impacto dos impostos no crescimento | ✅ Assunto "Impostos" em Contas públicas, cinco partes: arrecadação federal por tributo (Receita, mês a mês, a preços de hoje), carga tributária e quem arrecada (OCDE), sobre o que se cobra com outros países, impostos e crescimento (carga × crescimento por habitante, um ponto por país, com o aviso de que andar junto não é causa; e os estudos oficiais lidos, `relatorios.EFEITOS_DE_IMPOSTO`), gasto tributário (Receita, 2014–2023). Escolha do Caio: as quatro peças do crescimento. Depois, as dez sugestões (tabela abaixo). Falta: o gasto tributário de antes de 2014 (só em PDF) e o multiplicador de receita da SPE quando sair a nota metodológica. |
-| O primário do Brasil no mundo e o de Contas públicas se conversam? | Conversam, mas não são a mesma conta (FMI: governo geral, receitas menos despesas; BC: setor público com estatais, variação da dívida). ✅ Tabela lado a lado em Contas públicas › Primário e juros, e a diferença dita na descrição da métrica em Brasil no mundo. |
-| Uma seção sobre o impacto da Selic na inflação, ou um simulador: se reduzir a taxa, o que acontece com inflação, câmbio e dívida | ✅ Juros › Efeito da Selic: o simulador "E se a Selic mudar?" (a Selic até 3 pp abaixo ou acima do Focus durante o ano seguinte; IPCA, dólar e dívida bruta contra o Focus, e o caminho do IPCA por trimestre), três números, a tabela com as contas do BC e duas com o que veio depois de cada ciclo de corte e de alta desde 2003. Tudo do boxe dos modelos do BC (jun/2024) e da nota fiscal, lidos à mão (`relatorios.py`). Falta: o efeito na atividade e no desemprego (o boxe não traz a resposta do hiato à Selic), no crédito (o RPM de mar/2026 tem um boxe: 1 pp de Selic tira 3,7 % das concessões de crédito livre de longo prazo às famílias em 12 meses), um atalho em Inflação e em Contas públicas para esta parte, e o gráfico dos ciclos alinhados pelo mês do primeiro corte (o gráfico de hoje só sabe eixo de datas). |
-| Faixas de erro claras, principalmente no simulador da Selic | ✅ cada efeito com a faixa de 90 % do BC logo abaixo do número (IPCA: a do Relatório de Inflação de dez/2021, a última que o BC publicou; dólar: a do coeficiente; dívida: as pontas do dólar e da inflação somadas); cada nível numa régua com o Focus e o erro típico dele (IPCA 1,3 pp, dólar 13 %, dívida 7,8 pp) e a frase "mais do que este efeito"; barras de erro no gráfico por trimestre; os números e a tabela das contas do BC com a faixa. Falta: a faixa da versão de 2024 do modelo se o BC a publicar, e a faixa do efeito por grupo de preços. |
-| Gancho: a proposta de André Lara Resende para baixar o juro, para alguém estimar o impacto no site | ✅ botão "Proposta de André Lara Resende: Selic rumo a 7,5 %" no simulador: põe a Selic do ano seguinte 2,5 pp abaixo do Focus (a média do ano num caminho em linha reta até 7,5 %), com o resumo do texto "Eu Acuso" (25/09/2026), o que o autor espera, o aviso de que o simulador usa a visão que ele contesta e o link. Falta: o segundo ano em diante (a proposta é de juro baixo para ficar; a conta do BC que temos é de um ano), um endereço próprio para compartilhar (`#juros/efeito` abre a parte, não o cenário) e outros ganchos se aparecerem. |
-| Simulador de impostos: a reforma tributária vai chegar | ✅ Impostos › Reforma do consumo: o simulador "Quanto de imposto vai numa compra?" (valor, tipo de compra, 2027–28 ou 2033, alíquota cheia entre o teto da lei e a soma das contas oficiais, devolução à baixa renda), três números, o calendário da transição ano a ano, as contas oficiais da alíquota cheia e os descontos da lei. Falta: comparar com o imposto de hoje (não há número oficial por produto; daria para fazer por estado com a alíquota modal do ICMS, lendo 27 leis), os regimes próprios (combustíveis, bancos, planos de saúde, imóveis, bares e restaurantes), o Imposto Seletivo (as alíquotas vêm em lei ordinária), o Simples, os anos de 2029 a 2032 (o IBS de cada ano só existe quando o Senado fixar) e o que muda para cada estado com a cobrança no destino. |
+## Fora, por decisão do Caio
 
-| Contas externas: o que se exporta e importa, por setor; qual o maior setor exportador | ✅ (14/11/2026) Setor externo ganhou três partes, do Comex Stat (MDIC): **O que vende e compra** (commodities nas exportações desde 1997 pelos grupos da UNCTAD, de 45 % em 1997 a 74 % em 2025; exportação e importação por setor da ISIC), **Principais produtos** (os dez maiores de cada lado, com nome de todo dia) e **Com quem negocia** (China, EUA, União Europeia e Argentina desde 1997; os dez maiores parceiros com o saldo). Ano fechado e o acumulado do ano contra o mesmo período do ano passado. Falta: o estado de origem das exportações (na ficha de cada estado), as categorias de uso (bens de capital, intermediários, consumo, combustíveis: CGCE), preço × quantidade (o Comex Stat dá o peso: separar se a exportação subiu por preço ou por volume), e serviços (só no balanço de pagamentos do BC, sem setor). |
-| Como o site atualiza e quem cuida das leis e números lidos à mão | ✅ (14/11/2026) Prazo de releitura de cada número lido à mão em `leituras.py`; `sacibras leituras` lista o que venceu, o build avisa, e o workflow "Prazos de releitura" (dias úteis, 8h23) abre a issue "releitura" e fica vermelho com prazo vencido. Fonte que falha no build abre a issue "fonte fora do ar", que fecha sozinha quando ela volta. |
-| Tarefa agendada que relê sozinha os relatórios do BC e o bimestral (Caio, 14/11/2026: *"o 3 anote no propostas"*) | Em espera. Uma sessão do Claude agendada, disparada pela issue "releitura" ou por data (fim do mês para a nota fiscal do BC; até o dia 22 do mês par para o bimestral; fim de março, junho, setembro e dezembro para o RPM), lê o PDF, atualiza `relatorios.py`/`leis.py` e `leituras.py` e abre um PR para o Caio conferir. Não serve para o que só se lê do PC (Planalto, `servicodados` do IBGE): LDO, LRF, EC 132 e LC 214 continuam à mão. Cuidado: número de quadro que é imagem no PDF (as elasticidades) pede conferência humana. |
+- **B3**: o site veda coleta automatizada; `SB_B3` desligado. O que depende dela (IFIX, DI,
+  probabilidade do Copom, cupom de IPCA curto) fica fora.
+- **Desemprego de equilíbrio (NAIRU)** (14/11/2026): o BC não publica número oficial; só há
+  um estudo no blog do BC (7,2 % em mai/2026, faixa de 5,4 a 9,1 %) e o hiato do produto do
+  RPM. Não entra.
+- **Fonte não oficial** nos Riscos (EMBI, CDS) e cenário montado pela pessoa fora dos três
+  simuladores.
 
-## Pobreza e condições de vida (Caio, 14/11/2026)
+## Falta, por assunto
 
-Pedidos: *"Coloque uma aba de Desigualdade [...] tem gini, concentração de renda?"* e, no
-mesmo dia, *"Na verdade coloque algo como Pobreza, onde a desigualdade vai ser um campo, tbm
-coloque índices de saneamento básico lá, fome, etc"*.
+**Juros e Selic**
+- Efeito da Selic na atividade e no crédito (boxe do RPM de mar/2026: 1 pp tira 3,7 % das
+  concessões de crédito livre às famílias em 12 meses); atalho em Inflação e em Contas
+  públicas; ciclos alinhados pelo primeiro corte (o gráfico só sabe eixo de datas).
+- Faixa de erro do modelo de 2024, se o BC publicar; efeito por grupo de preços.
+- Gancho de Lara Resende: o segundo ano em diante e um endereço próprio para o cenário.
+- Inflação implícita antes de mai/2029 (só com a B3).
 
-✅ Assunto "Pobreza e condições de vida" em Atividade e emprego, seis partes: Pobreza (linhas
-do Banco Mundial desde 1995), Fome (insegurança alimentar da PNAD, 2023–2024, por lugar e
-idade; subalimentação da FAO e o Mapa da Fome), Água, esgoto e lixo (2016–2025, cidade e
-campo), Desigualdade (Gini desde 1995, fatias da renda, a renda de cada décimo), Quem ganha
-mais (o topo pelo IRPF, renda do trabalho por sexo e cor), Estados e países (pobreza, fome,
-esgoto, água e Gini por UF; Gini × PIB por habitante dos países). Pobreza e Gini também no
-mapa de Estados. Depois, no mesmo dia (*"Faça oq der e depois leve pro main"*): Bolsa
-Família, BPC e algum programa social (desde 2012, com a renda de quem recebe), internet, luz e
-fogão a lenha, a meta do Marco do Saneamento (lida na Lei 11.445/2007, art. 11-B) nas linhas do
-gráfico e nos cartões, a mortalidade infantil em Demografia (projeção do IBGE) e os nomes dos
-estados protegidos do tradutor automático. O que fica:
+**Mercados**
+- "Quanto rendeu R$ 100": Tesouro IPCA+ e prefixado (CSV do Tesouro Direto), ouro, Ibovespa
+  com dividendos.
 
-| Ideia | Fonte | Situação |
-|-------|-------|----------|
-| Moradia: casas precárias, adensamento, déficit habitacional | PNAD anual (SIDRA, a achar) e Fundação João Pinheiro (déficit, oficial para o MCidades) | a conferir |
-| Saneamento pelo SINISA (o antigo SNIS, das empresas de saneamento): esgoto tratado, perdas de água, por município | Ministério das Cidades | a conferir o arquivo aberto |
-| Fome nas pesquisas de antes (PNAD 2004, 2009, 2013, POF 2018), para a série longa | SIDRA (tabelas a achar) | a conferir se são comparáveis |
-| Educação: analfabetismo, crianças fora da escola, anos de estudo (talvez um assunto próprio) | PNAD Contínua, educação (SIDRA, a achar) | a conferir |
-| Concentração no topo com dado de imposto (1 % e 0,1 % dos adultos, não só dos declarantes) | Receita (DIRPF por centil, só em estudos avulsos) ou WID (não oficial) | a conferir se há arquivo aberto |
-| Riqueza: bens e direitos declarados por faixa | Receita, Grandes Números (outras abas) | a conferir as abas |
-| Renda por escolaridade e idade | SIDRA 7442, 7443 | possível |
+**Atividade** (Caio, 14/11/2026: *"falta aquela de demanda privada que o econvitals tem,
+oferta também?"*)
+- Demanda privada (o *real final sales to private domestic purchasers* do Econvitals): consumo
+  das famílias + investimento, sem governo, estoques e exterior, em Atividade › PIB. Os dados
+  já vêm do SIDRA 5932; somar pede pesar cada parte pelo tamanho em reais (conta nossa, dita na
+  nota).
+- PIB pela oferta no tempo (agropecuária, indústria e serviços): hoje só na tabela "PIB por
+  componente", do último trimestre; falta o gráfico, como o "PIB pela demanda". Sem conta
+  nossa. O Econvitals não tem oferta.
 
-## Por estado
+**Inflação e Trabalho**
+- Serviços subjacentes (código SGS não achado), Caged por setor (as séries 28764 a 28783 não
+  têm nome legível).
+- Previsões próprias de IPCA e desocupação (modelo sazonal) e o PIB agora com indústria,
+  varejo e serviços; sempre ao lado do Focus.
 
-Pronto em 14/11/2026 (a ficha do estado: escolha na lista ou toque no ranking):
+**Riscos**
+- Dívida: taxa implícita oficial da DBGG e vencimento em 12 meses (planilha mensal da nota
+  fiscal do BC), o FMI no leque, juros sobre a receita.
+- Mercado: juro real de 10 anos do Brasil menos o dos EUA (falta a história do juro real
+  brasileiro de 10 anos), inflação implícita longa contra a meta.
+- Painel: hiato de crédito na régua da própria história (contra outros países já está),
+  liquidez dos bancos (SGS 29407/29408), expectativa de inflação contra a meta.
+- Alerta contra outros países: reservas (FMI), volatilidade do câmbio (BIS), previdência.
+- Jurídico: Anexo de Riscos Fiscais da LDO, precatórios, governança do Banco Mundial.
+- Estados perto dos limites de pessoal e dívida, com a nota CAPAG.
+- Projeção atuarial do RGPS (anexo da LDO).
 
-- **Receita em partes** (DCA 2025, Anexo I-C): ICMS, IPVA, ITCMD, FPE, outras transferências da
-  União, Fundeb, outros impostos, outras. Com a média dos estados ao lado.
-- **Despesa por natureza** (DCA I-D): pessoal, custeio, investimentos, inversões, juros e
-  amortização da dívida.
-- **Despesa por função** (DCA I-E): previdência, educação, saúde, segurança, transporte,
-  administração, encargos especiais, outras.
-- **Dívida em partes** (RGF Anexo 02, 2º quadrimestre de 2026): renegociação com a União (Lei
-  9.496/97), empréstimos no país e no exterior, precatórios; e o que se desconta (caixa,
-  haveres).
-- **Números soltos**: investimento em % da RCL (com a mediana), dívida com a União (R$, % da
-  dívida, % da RCL), ICMS, IPVA, ITCMD e FPE por habitante com a posição entre as 27.
+**Contas públicas e Impostos**
+- Reforma: o imposto de hoje ao lado (ICMS modal por estado, 27 leis), regimes próprios,
+  Imposto Seletivo, Simples, 2029 a 2032, o que muda por estado com a cobrança no destino.
+- IR da pessoa física, imposto sobre consumo e sobre salário contra outros países (a OCDE não
+  traz o Brasil; achar outra fonte oficial).
+- FPE/FPM ao lado da arrecadação por estado; imposto retido na fonte por faixa de renda;
+  gasto tributário antes de 2014 (só PDF); multiplicador de receita da SPE.
 
-Pronto em 14/11/2026 (Caio: *"Quais outras métricas dos Estados dá pra colocar? Não vi o
-crescimento do PIB por Estado"*; *"pode fazer todas que vc sugeriu"*), no mapa, no ranking,
-nas duas métricas e na tabela, com as opções agrupadas (Economia, Trabalho e renda, Crédito,
-Contas do governo do estado, Impostos federais):
+**Estados**
+- Mínimos de saúde e educação (SIOPS e SIOPE; o RREO não traz pela API).
+- Estados no tempo (3º quadrimestre de cada ano), CAPAG, previdência do estado (RREO Anexo 04),
+  PIB por setor (tab05 das Contas Regionais), Caged por UF (testar do PC).
+- Regime de Recuperação Fiscal e Propag, capitais, repasses da União, comparação com a região.
 
-- **PIB das Contas Regionais** (IBGE, edição 2024 de 13/11/2026): crescimento no ano,
-  crescimento médio em 10 anos, PIB por habitante (com a população da projeção do mesmo ano)
-  e peso no PIB do Brasil.
-- **Prévia do PIB pelo IBC-R** (13 estados): 12 meses e o último ano fechado (2025), conta
-  nossa com o índice do BC, dita como tal.
-- **Trabalho**: subutilização, informalidade e renda média (PNAD por UF).
-- **Inflação na capital** (IPCA das 16 áreas), **exportações por habitante** (Comex Stat),
-  **crédito por habitante** e **inadimplência** (SGS por UF) e **concentração do PIB nos
-  municípios** (Gini, SIDRA 5939).
+**Setor externo**
+- Exportações por estado de origem na ficha, categorias de uso (CGCE), preço × quantidade,
+  serviços.
 
-- **Prévia do PIB dos 14 estados sem IBC-R** (Caio, 14/11/2026: *"faça a nossa conta...
-  uma regra simples é preferível, isso é previsão"*): o estado cresce como a região dele (o
-  IBC-R da região). Com a faixa de erro do teste contra o PIB oficial de 2011 a 2024, refeito
-  a cada rodada; ponto vazado no ranking.
+**Pobreza**
+- Moradia e déficit habitacional (PNAD, Fundação João Pinheiro), SINISA por município, fome
+  nas pesquisas antigas, educação, topo pelo IR por centil, riqueza declarada, renda por
+  escolaridade e idade (SIDRA 7442, 7443).
 
-Ideias que ficam:
+**Demografia**
+- Contribuintes por beneficiário (tabela do SIDRA, testar do PC), projeção da ONU com faixa de
+  erro, produtividade por hora, previdência dos servidores e militares, envelhecimento contra
+  outros países, pirâmide na ficha do estado.
 
-- **Emprego formal (Novo Caged) por estado**: o site do Ministério do Trabalho deu 403 da
-  nuvem; testar do PC (FONTES, "Não funcionam daqui").
-- **PIB por setor em cada estado** (tab05 das Contas Regionais: agro, indústria, serviços) na
-  ficha do estado.
+**Brasil no mundo**
+- Câmbio no ano (BIS `WS_XRU`), juro de 10 anos (OCDE), inflação mensal.
 
-- **Estados no tempo**: a série de cada número do estado contra o Brasil (3º quadrimestre de
-  cada ano, para não multiplicar as chamadas ao SICONFI).
-- **Nota CAPAG** do Tesouro (CSV no Tesouro Transparente) e o que ela significa para o estado
-  pegar empréstimo com garantia da União.
-- **Previdência do estado** (RREO Anexo 04): déficit do regime próprio, servidores ativos e
-  inativos.
-- **Despesa por função per capita**: saúde e educação por habitante, contra os mínimos
-  constitucionais (12 % e 25 %; normas lidas em 14/11/2026, a base de cálculo vem do RREO
-  Anexos 12 e 08).
-- **Regime de Recuperação Fiscal e Propag**: quem está, desde quando, o que muda na dívida com a
-  União (precisa ler as leis).
-- **Capitais**: os mesmos números para as 27 capitais (SICONFI tem os municípios).
-- **Repasses da União**: FPE, SUS, Fundeb e emendas, mês a mês (Tesouro Transparente).
-- **Comparação na ficha**: o estado contra a região e contra quem tem tamanho parecido.
-
-## Do Econvitals para o Brasil (Caio, 14/11/2026: *"veja se algumas métricas do Econvitals dá pra implementar aqui"*)
-
-Lido do `data/dashboard.json` do econvitals.org em 14/11/2026. O que tem par brasileiro em
-fonte aberta:
-
-| Econvitals (EUA) | Par brasileiro | Fonte | Situação |
-|------------------|----------------|-------|----------|
-| 2, 5, 10 e 30 anos; 2s10s | juro prefixado de 2, 5 e 10 anos e a inclinação | curva zero do Tesouro (`curvas.py`) | ✅ tabela "Juro e inflação implícita por prazo" (Juros) |
-| Real 10y, breakeven 10y, 5y5y forward | juro real e inflação implícita de 5 e 10 anos; a implícita de 5 anos daqui a 5 anos | idem | ✅ na tabela e no cartão da implícita de 5 a 10 anos (6,98 % em 12/11/2026) |
-| 10-year decomposition | o prefixado de 10 anos = juro real + inflação implícita, no tempo | idem, um ponto por semana | ✅ no maior prazo que cobre os dois anos (8 anos hoje: o de 10 não existia em 2025) |
-| Core PCE 1 e 3 meses anualizados; tabela de medidas | IPCA, núcleos, serviços, industriais, alimentação, livres e administrados em 1, 3 e 12 meses | SGS | ✅ tabela, gráfico e cartão (sem ajuste sazonal, dito na tela). Falta: serviços subjacentes (código SGS não achado) |
-| Participação, EPOP, U-6, desemprego de longo prazo | participação, nível de ocupação, subutilização, desalento, informalidade | SIDRA (PNAD Contínua) | ✅ quatro cartões, cinco gráficos e a tabela "Mercado de trabalho, em detalhe" |
-| Payrolls com média de 3 meses, por setor | Caged com média de 3 meses, por setor | IPEADATA / Novo Caged | ✅ média de 3 meses. Falta: por setor (o IPEADATA não tem; as séries SGS 28764 a 28783 parecem setoriais, mas sem nome que dê para ler) |
-| Current e financial account em partes | balança, renda primária e secundária; investimento direto, carteira, outros, reservas | SGS (BPM6) | ✅ gráfico empilhado e tabela em US$ e % do PIB |
-| Mortgage rate, house prices | juro do financiamento imobiliário, IVG-R (preço dos imóveis financiados) | SGS | ✅ juro de mercado e regulado, concessões, IVG-R contra o IPCA |
-| Debt service, interest payments | comprometimento da renda só com juros, endividamento sem o imobiliário | SGS | ✅ |
-| Saving rate, investimento | taxa de investimento e de poupança (% do PIB) | SIDRA 6727 e 6726 | ✅ Atividade › Investimento e poupança |
-| Real final sales to private domestic purchasers | consumo das famílias + investimento, sem governo e estoques | SIDRA | ideia |
-| Productivity | PIB por pessoa ocupada | SIDRA | ✅ em Demografia |
-| FedWatch (probabilidades da reunião) | probabilidade do Copom pelos DI curtos | B3 (desligada) | espera o `SB_B3` |
-| VIX, NFCI, petróleo, metais | risco-país, Brent, minério | sem fonte aberta estável (EMBI parou em 2024) | fora por ora |
-| UMich, Cleveland | expectativa do consumidor (FGV) | FGV cobra | fora |
-
-## Aba "Riscos" (Caio, 14/11/2026: *"me proponha algo que dê pra colocar numa aba só de riscos"*)
-
-No ar desde 14/11/2026 (`secoes/riscos.py`, `modelos/risco.py`, `relatorios.py`,
-`web/src/alertas.ts`). Decisões do Caio no mesmo dia: a palavra na tela é **sustentabilidade
-da dívida**, não "calote"; os **cenários de estresse entram** (fixos, tirados da história);
-**fonte não oficial fica de fora**; e pediu a mais risco de crédito, câmbio, juros sobre a
-dívida e o risco demográfico (*"de ficarmos sem grana pra previdência"*).
-
-| Bloco | Situação |
-|-------|----------|
-| 1. A dívida se sustenta? | ✅ primário que estabiliza a dívida contra o de hoje, juro da dívida menos crescimento, juros em reais (SGS 5045), prazo médio (10618), leque de trajetórias (4.000 sorteios com os choques de 2006 a 2025, cápsulas de 80 %) ao lado do Focus, e as elasticidades que o BC publica (lidas à mão). Falta: a taxa implícita oficial da DBGG e o vencimento em 12 meses (só na planilha mensal da nota fiscal do BC, tabelas 24 e 25: um arquivo por mês), o FMI no leque, juros sobre a receita. |
-| 2. O que o mercado cobra | ✅ volatilidade do dólar e do Ibovespa, distância do pico, câmbio real efetivo. Falta: juro real de 10 anos do Brasil menos o dos EUA (a fonte americana foi testada e responde, ver [FONTES](FONTES.md); pede a história do juro real brasileiro de 10 anos, que `juros.py` só calcula para hoje), inflação implícita longa contra a meta no painel. EMBI+ e CDS seguem sem fonte aberta. |
-| 3. Nota de crédito | ✅ escada das três agências desde 1994 e o cartão com a distância do grau de investimento, lidos à mão (`relatorios.py`). O sistema do Tesouro (sisweb) estava fora do ar: reler quando voltar e a cada ato de agência. |
-| 4. Painel de alerta | ✅ (classificado e explicado em 14/11/2026, ver acima) 32 indicadores em seis grupos, cada um na régua da própria história, com o lado ruim à direita; "aceso" = pior que 80 % da história; limite oficial onde há (teto da meta, mínimo de Basileia). Sem nota única. Falta: hiato de crédito do BIS (testado, ver FONTES), liquidez dos bancos (SGS 29407/29408, trimestrais), expectativa de inflação contra a meta. |
-| 5. Testes de estresse | ✅ cinco episódios (2002, 2008, 2015–16, 2020, fim de 2024): o que dólar, bolsa, Selic e PIB fizeram e o mesmo tranco na escala de hoje; a dívida com os choques de 2008, 2015–16 e 2020 somados à linha de base do Focus; o teste dos bancos do REF de out/2026 na nota (lido à mão). 2002 fica fora da conta da dívida (a DBGG atual começa em dez/2006). |
-| 6. Risco jurídico e institucional | ⬜ ações contra a União com perda provável e possível (Anexo de Riscos Fiscais da LDO), precatórios, indicadores de governança do Banco Mundial. Tudo lido à mão ou de API lenta: próximo passo. |
-| 7. Estados | ⬜ quem está perto do limite de pessoal e de dívida (os limites da lei já estão em `leis.py`), nota CAPAG. |
-| Longo prazo e energia (pedido a mais) | ✅ déficit e benefícios do INSS no painel, idosos por 100 em idade ativa (projeção do IBGE, com o resto em Demografia), reservatórios das hidrelétricas (ONS) contra o mesmo mês dos outros anos. Ideias: projeção atuarial do RGPS (LDO). A dependência de commodities nas exportações entrou em Setor externo (ver abaixo). |
-
-## Demografia (Caio, 14/11/2026: *"resultados demográficos… riscos demográficos, algo que envolve a produtividade, trabalho e previdência"*)
-
-Pronto em 14/11/2026 (assunto "Demografia"): população, fecundidade, esperança de vida, idade
-mediana, idosos e jovens por 100 de 15 a 64, pirâmide etária por ano, nascimentos × óbitos,
-idosos por estado (projeção do IBGE, revisão 2024); PIB por pessoa ocupada e a divisão do
-crescimento entre ocupação e produtividade; déficit do INSS (RTN).
-
-| Ideia | Fonte | Situação |
-|-------|-------|----------|
-| Contribuintes da previdência por beneficiário | PNAD Contínua (contribuintes) e boletim da Previdência (benefícios) | a tabela do SIDRA não foi achada sem o catálogo (`sidra.ibge.gov.br` dá 403 de fora); tentar no PC |
-| A projeção da ONU (WPP 2024) ao lado da do IBGE, com a faixa de 80 % e 95 % | ONU, World Population Prospects | o portal pede chave; ver o CSV de download. Daria a faixa de erro que o IBGE não publica |
-| Produtividade por hora trabalhada | PNAD (horas habituais) | a conferir |
-| Projeção atuarial do RGPS (despesa e receita em % do PIB até 2100) | anexo da LDO, lido à mão como as leis | a conferir |
-| Previdência dos servidores da União e dos militares | RTN (outras abas) | a conferir |
-| Envelhecimento contra outros países (idosos por 100, fecundidade) | Banco Mundial (lento) ou ONU | ligaria com "Brasil no mundo" |
-| Ficha do estado com a pirâmide e o ano do pico da população | a mesma projeção do IBGE, por UF | dado já baixado |
-
-## Impostos: as dez sugestões (Caio, 14/11/2026: *"todas entram, planeje e implemente"*)
-
-| Ideia | Situação |
-|-------|----------|
-| Linha do tempo da reforma do consumo (2026 a 2033) | ✅ Tabela em Impostos › Reforma do consumo (junto do simulador; a LC 214 foi conferida também no texto atualizado da Câmara), da EC 132/2023 e da LC 214/2025 lidas no Senado (publicação original; trechos em `leis.py`). Falta: reler no Planalto, do PC, para ver se norma posterior mexeu nos artigos. |
-| Quem paga: imposto em % da renda por faixa | ✅ Parte "Quem paga": os dez grupos de renda (Ipea TD 2823, lido à mão) e o IRPF por faixa de salários mínimos (Grandes Números da Receita, ano-calendário 2024). Falta: o imposto retido na fonte dos rendimentos de tributação exclusiva (a planilha não traz), que faz o topo parecer pagar menos do que paga. |
-| Alíquotas do Brasil contra outros países | 🟡 Só o imposto sobre o lucro das empresas (OCDE, `DF_CIT`, 143 países). IR máximo da pessoa física, imposto sobre o consumo e sobre o salário: as bases da OCDE não trazem o Brasil (conferido em 14/11/2026). Falta achar outra fonte oficial comparável. |
-| Imposto por estado | ✅ Arrecadação federal por estado, total e por habitante (tabela em Impostos e métrica em Estados). Falta: o que volta em FPE/FPM ao lado (o FPE já está na ficha do estado). |
-| Previsto × realizado no ano | ✅ Tabela em Impostos › Arrecadação: orçamento, previsão do 4º bimestre e o que entrou (RTN). Lido à mão em `relatorios.RECEITA_PREVISTA`: reler a cada bimestre. |
-| Gasto tributário previsto e por região | ✅ Linha tracejada com o previsto no PLOA (2024 a 2026) e tabela por região. |
-| Arrecadação por setor | ✅ Tabela do último ano fechado (CSV da Receita por seção da CNAE). Em 2026 os dados por setor têm uma quebra (indústria extrativa salta): por isso só o ano fechado. |
-| Carga tributária em Brasil no mundo | ✅ Métrica "Carga tributária" (OCDE), nos 22 países e em todos os dos grupos. |
-| Dívida ativa | ✅ Cartão e tabela em Impostos › O que não entra (PLDO 2027, Anexo de Riscos Fiscais; PGFN em Números), lidos à mão em `relatorios.py`. |
-| Calendário da arrecadação | ❌ A Receita não publica calendário (conferido em 14/11/2026): cada divulgação é avisada por notícia na véspera, entre os dias 21 e 30 do mês seguinte. Fica dito na nota da tabela previsto × realizado. |
-
-## Outras
-
-- Previsões próprias de IPCA e desocupação (modelo sazonal), sempre ao lado do Focus.
-- Brasil no mundo: câmbio no ano (BIS `WS_XRU`), juro de 10 anos (OCDE), inflação mensal.
+**Tela, busca e tradução**
+- Busca: sugestões quando nada é achado, busca por número ("13,75"), o glossário na busca
+  ("o que é spread"), outras escritas (chinês, japonês, árabe).
+- Nomes próprios protegidos do tradutor nos títulos e no menu (Copom, Focus, IPCA, Selic).
+- Agenda da semana na entrada, atrás de um clique.
 - Acabamento: "novo desde sua última visita", PNG dos gráficos, imagem de compartilhamento,
   domínio.
-- **Meta de primário do Governo Central** contra o realizado: a lei está lida; espera decisão
-  de como tratar os descontos da apuração oficial ([PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)).
-- **Agenda na entrada**: as divulgações da semana (IBGE, já buscado pelo navegador), guardada
-  atrás de um clique. O Copom não tem API com as reuniões futuras (ver [FONTES](FONTES.md)).
 
-## Tradução (14/11/2026)
+## Em espera
 
-- Busca em outros idiomas: feita para inglês, espanhol e francês (`OUTRAS_LINGUAS`). Falta
-  para línguas de outra escrita (chinês, japonês, árabe…).
-- Nomes próprios protegidos do tradutor (Copom, Focus, IPCA, Selic): marcar com
-  `translate="no"` onde aparecem nos títulos e no menu.
-- Simulador: inflação com efeito no juro da parte da dívida corrigida pelo IPCA (falta a
-  participação por indexador com o IPCA numa fonte com API; ver "Limites conhecidos").
+- **Selo "dado anterior"** na peça mantida (`mantidos` já está no `painel.json`).
+- **Tarefa agendada que relê** os relatórios (Caio, 14/11/2026: *"o 3 anote no propostas"*):
+  disparada pela issue `releitura` ou por data, lê o PDF, atualiza `relatorios.py`, `leis.py` e
+  `leituras.py` e abre PR. Não serve para o que só abre do PC (Planalto); número em imagem no
+  PDF pede conferência humana.
