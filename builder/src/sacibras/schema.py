@@ -544,6 +544,9 @@ class BlocoDeConta(Modelo):
     fatias: list[Fatia]
     total: float | None = None
     """O total da conta, quando a soma das fatias não é o total (sobra "outras")."""
+    compara: bool = True
+    """Com a média dos estados ao lado. Não quando as partes mudam de um estado para o outro
+    (os produtos e os países das exportações)."""
 
 
 class ContasEstado(Modelo):
@@ -554,6 +557,9 @@ class ContasEstado(Modelo):
     """Os números soltos do estado (investimento % da RCL, dívida com a União…)."""
     historico: list[HistoricoEstado] = Field(default_factory=list)
     """Pessoal, dívida, primário e previdência no fim de cada ano."""
+    piramide: Piramide | None = None
+    """A pirâmide etária do estado (projeção do IBGE), alguns anos de 2000 a 2070."""
+    fonte_piramide: str = ""
 
 
 class EstadosContas(Modelo):
@@ -566,6 +572,15 @@ class EstadosContas(Modelo):
     gerado_em: datetime
 
 
+class Capitais(Modelo):
+    """As contas das capitais contra os limites da lei, em Estados › Perto dos limites."""
+
+    nomes: dict[str, str]
+    """{sigla da UF: nome da capital}. Brasília fica de fora: o DF não tem relatório municipal."""
+    metricas: list[MetricaEstados]
+    """Pessoal, dívida e primário, com os valores pela sigla da UF da capital."""
+
+
 class Estados(Modelo):
     id: Literal["estados"] = "estados"
     titulo: str
@@ -576,6 +591,7 @@ class Estados(Modelo):
     """O JSON com `EstadosContas`, quando houver."""
     subcategorias: list[Subcategoria] = Field(default_factory=list)
     """As partes da tela (`organizacao.PARTES_ESTADOS`): o site monta cada uma sozinha."""
+    capitais: Capitais | None = None
     gerado_em: datetime
 
 

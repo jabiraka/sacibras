@@ -625,12 +625,12 @@ PARTES_ESTADOS: list[Parte] = [
     Parte(
         "estado",
         "Um estado por dentro",
-        "Receita, gasto, dívida, previdência, a economia por setor e as contas no tempo.",
+        "Receita, gasto, dívida, exportações, a pirâmide etária e as contas no tempo.",
     ),
     Parte(
         "limites",
         "Perto dos limites",
-        "Pessoal e dívida contra os limites da lei, com a nota CAPAG do Tesouro.",
+        "Estados e capitais contra os limites da lei, com a CAPAG e o acordo da dívida.",
     ),
     Parte("duas-metricas", "Duas métricas", "Um ponto por estado, com duas métricas juntas."),
     Parte("tabela", "Tabela completa", "Todas as métricas, estado por estado."),

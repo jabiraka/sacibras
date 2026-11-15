@@ -611,18 +611,33 @@ function situacao(v: number | null, degraus: { valor?: number; diz: string; grau
   return { grau: 0, diz: "" };
 }
 
-/** Os 27 estados contra os limites de pessoal e de dívida, com a CAPAG ao lado: quem passou
- * de algum alerta primeiro. Os limites são os da lei, que vêm nas próprias métricas. */
-function montarLimites(e: Estados): HTMLElement {
-  const painel = el("div", "painel-mundo limites");
-  const achar = (id: string): MetricaEstados | undefined => e.metricas.find((m) => m.id === id);
-  const pessoal = achar("pessoal");
-  const divida = achar("divida");
-  const capag = achar("capag");
-  if (!pessoal || !divida) {
-    painel.append(el("p", "vazio", "Os relatórios fiscais dos estados não vieram nesta rodada."));
-    return painel;
-  }
+/** Uma linha da tabela dos limites: o ente (estado ou capital) e onde o nome leva. */
+interface Ente {
+  sigla: string;
+  nome: string;
+  href?: string;
+}
+
+/** Uma coluna a mais, depois de pessoal e dívida (CAPAG, acordo da dívida, primário). */
+interface ColunaExtra {
+  titulo: string;
+  sub: string;
+  texto: (sigla: string) => string;
+  /** Classe da célula (a nota fraca em cor); vazio quando nada a destacar. */
+  classe?: (sigla: string) => string;
+  /** Peso a mais na ordem (a nota fraca sobe na lista). */
+  peso?: (sigla: string) => number;
+}
+
+/** Pessoal e dívida contra os limites da lei (que vêm nas próprias métricas), mais as
+ * colunas extras: quem passou de algum alerta primeiro. */
+function tabelaDeLimites(
+  entes: Ente[],
+  pessoal: MetricaEstados,
+  divida: MetricaEstados,
+  extras: ColunaExtra[],
+  primeiraColuna: string,
+): { tabela: HTMLTableElement; acima: number } {
   const limite = (m: MetricaEstados, rotulo: string): number | undefined =>
     m.limites.find((l) => l.rotulo === rotulo)?.valor;
   const degrausPessoal = [
@@ -634,43 +649,28 @@ function montarLimites(e: Estados): HTMLElement {
     { valor: limite(divida, "limite"), diz: "acima do limite", grau: 3 },
     { valor: limite(divida, "limite de alerta"), diz: "acima do alerta", grau: 1 },
   ];
-  const notaFraca = capag?.marcas?.find((m) => m.rotulo === "C")?.valor ?? 0;
-  const linhas = e.ufs.map((u) => {
+  const linhas = entes.map((u) => {
     const p = pessoal.valores[u.sigla] ?? null;
     const d = divida.valores[u.sigla] ?? null;
-    const n = capag?.valores[u.sigla] ?? null;
     const sp = situacao(p, degrausPessoal);
     const sd = situacao(d, degrausDivida);
-    const fraca = n !== null && n <= notaFraca;
-    return { u, p, d, n, sp, sd, fraca };
+    const peso = extras.reduce((a, c) => a + (c.peso?.(u.sigla) ?? 0), 0);
+    return { u, p, d, sp, sd, peso };
   });
   linhas.sort(
     (a, b) =>
       Math.max(b.sp.grau, b.sd.grau) - Math.max(a.sp.grau, a.sd.grau) ||
-      b.sp.grau + b.sd.grau + Number(b.fraca) - (a.sp.grau + a.sd.grau + Number(a.fraca)) ||
+      b.sp.grau + b.sd.grau + b.peso - (a.sp.grau + a.sd.grau + a.peso) ||
       (b.p ?? 0) - (a.p ?? 0),
-  );
-  const acima = linhas.filter((x) => x.sp.grau || x.sd.grau).length;
-  const fracas = linhas.filter((x) => x.fraca).length;
-  painel.append(
-    el("h3", "", "Os estados contra os limites da lei"),
-    el(
-      "p",
-      "sub",
-      `${acima} de ${linhas.length} estados acima de algum alerta` +
-        (capag ? `; ${fracas} com nota CAPAG C ou D.` : ".") +
-        ` Pessoal e dívida: RGF do ${pessoal.referencia}.` +
-        (capag ? ` CAPAG: ${capag.referencia}.` : ""),
-    ),
   );
   const tabela = el("table", "dados limites-tabela");
   const cab = tabela.createTHead().insertRow();
   const colunas: [string, string][] = [
-    ["Estado", ""],
+    [primeiraColuna, ""],
     ["Pessoal", "% da RCL"],
     ["Dívida", "% da RCL"],
+    ...extras.map((c): [string, string] => [c.titulo, c.sub]),
   ];
-  if (capag) colunas.push(["CAPAG", ""]);
   for (const [nome, sub] of colunas) {
     const th = el("th", "", nome);
     if (sub) th.append(el("span", "sub", ` ${sub}`));
@@ -691,41 +691,205 @@ function montarLimites(e: Estados): HTMLElement {
   for (const x of linhas) {
     const tr = corpo.insertRow();
     const th = el("th");
-    if (e.arquivo_contas) {
+    if (x.u.href) {
       const a = el("a", "", x.u.nome);
-      a.href = `#estados/uf-${x.u.sigla}`;
+      a.href = x.u.href;
       th.append(a);
     } else {
       th.textContent = x.u.nome;
     }
     protegerNomeDeEstado(th, x.u.nome);
     tr.append(th, celula(x.p, x.sp, pessoal), celula(x.d, x.sd, divida));
-    if (capag) {
-      const td = el("td", "", x.n === null ? "–" : escrito(capag, x.n));
-      if (x.fraca) td.className = "nota-fraca";
+    for (const c of extras) {
+      const td = el("td", c.classe?.(x.u.sigla) ?? "", c.texto(x.u.sigla));
       tr.append(td);
     }
   }
+  return { tabela, acima: linhas.filter((x) => x.sp.grau || x.sd.grau).length };
+}
+
+const limitesEmTexto = (m: MetricaEstados): string =>
+  m.limites.map((l) => `${l.rotulo} ${numero(l.valor, String(l.valor).split(".")[1]?.length ?? 0)} %`).join(", ");
+
+/** Os 27 estados contra os limites de pessoal e de dívida, com a CAPAG e o acordo da dívida. */
+function limitesDosEstados(e: Estados): HTMLElement {
+  const caixa = el("div");
+  const achar = (id: string): MetricaEstados | undefined => e.metricas.find((m) => m.id === id);
+  const pessoal = achar("pessoal");
+  const divida = achar("divida");
+  const capag = achar("capag");
+  const acordo = achar("acordo_divida");
+  if (!pessoal || !divida) {
+    caixa.append(el("p", "vazio", "Os relatórios fiscais dos estados não vieram nesta rodada."));
+    return caixa;
+  }
+  const notaFraca = capag?.marcas?.find((m) => m.rotulo === "C")?.valor ?? 0;
+  const fraca = (s: string): boolean => {
+    const n = capag?.valores[s] ?? null;
+    return n !== null && n <= notaFraca;
+  };
+  const extras: ColunaExtra[] = [];
+  if (capag) {
+    extras.push({
+      titulo: "CAPAG",
+      sub: "",
+      texto: (s) => {
+        const n = capag.valores[s] ?? null;
+        return n === null ? "–" : escrito(capag, n);
+      },
+      classe: (s) => (fraca(s) ? "nota-fraca" : ""),
+      peso: (s) => Number(fraca(s)),
+    });
+  }
+  if (acordo) {
+    extras.push({
+      titulo: "Acordo",
+      sub: "com a União",
+      texto: (s) => {
+        const n = acordo.valores[s] ?? null;
+        const nome = n === null ? "" : escrito(acordo, n);
+        return !nome || nome === "Nenhum" ? "–" : nome;
+      },
+    });
+  }
+  const { tabela, acima } = tabelaDeLimites(
+    e.ufs.map((u) => ({ sigla: u.sigla, nome: u.nome, href: e.arquivo_contas ? `#estados/uf-${u.sigla}` : undefined })),
+    pessoal,
+    divida,
+    extras,
+    "Estado",
+  );
+  const fracas = e.ufs.filter((u) => fraca(u.sigla)).length;
+  caixa.append(
+    el("h3", "", "Os estados contra os limites da lei"),
+    el(
+      "p",
+      "sub",
+      `${acima} de ${e.ufs.length} estados acima de algum alerta` +
+        (capag ? `; ${fracas} com nota CAPAG C ou D.` : ".") +
+        ` Pessoal e dívida: RGF do ${pessoal.referencia}.` +
+        (capag ? ` CAPAG: ${capag.referencia}.` : ""),
+    ),
+  );
   // A tabela inteira à vista: são 27 linhas, e quem está bem também conta.
   const rolavel = el("div", "tabela-rolavel inteira");
   rolavel.append(tabela);
   const pe = el("footer", "grafico-pe");
-  const lim = (m: MetricaEstados): string =>
-    m.limites.map((l) => `${l.rotulo} ${numero(l.valor, String(l.valor).split(".")[1]?.length ?? 0)} %`).join(", ");
-  const fontes = [pessoal.fonte, divida.fonte, ...(capag ? [capag.fonte] : [])];
+  const fontes = [pessoal.fonte, divida.fonte, ...(capag ? [capag.fonte] : []), ...(acordo ? [acordo.fonte] : [])];
   pe.append(el("span", "fonte", `Fontes: ${fontes.join("; ")}.`));
-  painel.append(
+  caixa.append(
     rolavel,
     pe,
     el(
       "p",
       "nota",
-      `Limites da lei, em % da receita corrente líquida. Pessoal do Poder Executivo: ${lim(pessoal)}. ` +
-        `Dívida: ${lim(divida)}.` +
+      `Limites da lei, em % da receita corrente líquida. Pessoal do Poder Executivo: ${limitesEmTexto(pessoal)}. ` +
+        `Dívida: ${limitesEmTexto(divida)}.` +
+        (acordo
+          ? ` Acordo: RRF é o Regime de Recuperação Fiscal; Propag, o programa de 2025 que refinancia a dívida em 30 anos (${acordo.referencia}).`
+          : "") +
         (e.arquivo_contas ? " Toque no nome para abrir as contas do estado." : ""),
     ),
   );
-  remarcar(painel);
+  return caixa;
+}
+
+/** As capitais contra os limites da lei para os municípios, com o resultado primário. */
+function limitesDasCapitais(e: Estados): HTMLElement {
+  const caixa = el("div");
+  const c = e.capitais;
+  const achar = (id: string): MetricaEstados | undefined => c?.metricas.find((m) => m.id === id);
+  const pessoal = achar("pessoal");
+  const divida = achar("divida");
+  const primario = achar("primario");
+  if (!c || !pessoal || !divida) {
+    caixa.append(el("p", "vazio", "Os relatórios fiscais das capitais não vieram nesta rodada."));
+    return caixa;
+  }
+  const extras: ColunaExtra[] = [];
+  if (primario) {
+    extras.push({
+      titulo: "Primário",
+      sub: `% da RCL, ${primario.referencia}`,
+      texto: (s) => {
+        const v = primario.valores[s] ?? null;
+        return v === null ? "–" : numero(Math.abs(v) < 0.05 ? 0 : v, primario.casas);
+      },
+      classe: (s) => ((primario.valores[s] ?? 0) < 0 ? "deficit" : ""),
+    });
+  }
+  const entes = Object.entries(c.nomes)
+    .map(([sigla, nome]) => ({ sigla, nome: `${nome} (${sigla})` }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+  const { tabela, acima } = tabelaDeLimites(entes, pessoal, divida, extras, "Capital");
+  const semRelatorio = entes.filter(
+    (x) => (pessoal.valores[x.sigla] ?? null) === null && (divida.valores[x.sigla] ?? null) === null,
+  );
+  caixa.append(
+    el("h3", "", "As capitais contra os limites da lei"),
+    el(
+      "p",
+      "sub",
+      `${acima} de ${entes.length - semRelatorio.length} capitais com relatório acima de algum alerta. ` +
+        `Pessoal e dívida: RGF do ${pessoal.referencia}.` +
+        (primario ? ` Primário: ${primario.referencia}.` : "") +
+        (semRelatorio.length
+          ? ` Sem relatório do período: ${semRelatorio.map((x) => x.nome).join(", ")}.`
+          : ""),
+    ),
+  );
+  const rolavel = el("div", "tabela-rolavel inteira");
+  rolavel.append(tabela);
+  const pe = el("footer", "grafico-pe");
+  const fontes = [pessoal.fonte, divida.fonte, ...(primario ? [primario.fonte] : [])];
+  pe.append(el("span", "fonte", `Fontes: ${fontes.join("; ")}.`));
+  caixa.append(
+    rolavel,
+    pe,
+    el(
+      "p",
+      "nota",
+      `Limites da lei para os municípios, em % da receita corrente líquida. Pessoal do Poder Executivo: ${limitesEmTexto(pessoal)}. ` +
+        `Dívida: ${limitesEmTexto(divida)}. Primário: receitas menos despesas sem os juros, no ano até o bimestre; negativo é déficit. ` +
+        "Brasília fica de fora: o Distrito Federal presta contas como estado.",
+    ),
+  );
+  return caixa;
+}
+
+/** Estados e capitais contra os limites, um de cada vez (as abas em cima). */
+function montarLimites(e: Estados): HTMLElement {
+  const painel = el("div", "painel-mundo limites");
+  const abas: { nome: string; montar: () => HTMLElement }[] = [{ nome: "Estados", montar: () => limitesDosEstados(e) }];
+  if (e.capitais?.metricas.length) abas.push({ nome: "Capitais", montar: () => limitesDasCapitais(e) });
+  const palco = el("div");
+  if (abas.length > 1) {
+    const barra = el("div", "ficha-abas limites-abas");
+    barra.setAttribute("role", "tablist");
+    barra.setAttribute("aria-label", "Estados ou capitais");
+    const botoes = abas.map((a, i) => {
+      const b = el("button", "pilula", a.nome);
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.addEventListener("click", () => mostrar(i));
+      barra.append(b);
+      return b;
+    });
+    const mostrar = (i: number): void => {
+      botoes.forEach((b, k) => {
+        b.setAttribute("aria-selected", String(k === i));
+        b.classList.toggle("atual", k === i);
+      });
+      palco.replaceChildren(abas[i]?.montar() ?? el("div"));
+      remarcar(palco);
+    };
+    painel.append(barra, palco);
+    mostrar(0);
+  } else {
+    painel.append(palco);
+    palco.append(limitesDosEstados(e));
+    remarcar(palco);
+  }
   return painel;
 }
 

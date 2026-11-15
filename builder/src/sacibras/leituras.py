@@ -74,6 +74,24 @@ LEITURAS: list[Leitura] = [
         do_pc=True,
     ),
     Leitura(
+        "Limites de pessoal e de dívida das capitais (LRF e Senado)",
+        "leis.PESSOAL_EXECUTIVO_MUNICIPAL",
+        date(2026, 11, 15),
+        date(2027, 11, 15),
+        "Senado, LC 101/2000 em texto atualizado (norma 572856), art. 20, III; e a Resolução nº "
+        "40/2001 (norma 562458), art. 3º, II. Uma vez por ano.",
+    ),
+    Leitura(
+        "Estados no RRF e no Propag",
+        "relatorios.ACORDOS",
+        date(2026, 11, 15),
+        date(2026, 12, 15),
+        "Tesouro Nacional, Relatório Mensal de Garantias Honradas (tesourotransparente.gov.br/"
+        "publicacoes/relatorio-mensal-de-garantias-honradas-rmgh, sai por volta do dia 15; diz "
+        "quem está no RRF), e o Relatório de Acompanhamento Fiscal da IFI (Senado) que trouxer "
+        "o Propag. Conferir se o RS e o RN assinaram o termo do Propag. Todo mês.",
+    ),
+    Leitura(
         "Limite da dívida dos estados (Senado)",
         "leis.DIVIDA_ESTADUAL",
         date(2026, 11, 14),

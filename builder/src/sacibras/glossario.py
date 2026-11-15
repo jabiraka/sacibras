@@ -1399,6 +1399,24 @@ TERMOS: list[Termo] = [
         "#estados/limites",
     ),
     Termo(
+        "rrf",
+        "Regime de Recuperação Fiscal",
+        "Acordo da Lei Complementar 159/2017 para estado com as contas em crise: a União "
+        "suspende parte das parcelas da dívida e o estado segue um plano de ajuste, com teto "
+        "de gastos e venda de empresas, vigiado por um conselho.",
+        ("Regime de Recuperação Fiscal", "RRF"),
+        "#estados/limites",
+    ),
+    Termo(
+        "propag",
+        "Propag",
+        "Programa de Pleno Pagamento de Dívidas dos Estados (Lei Complementar 212/2025): "
+        "refinancia a dívida com a União em até 30 anos, com juro menor para quem entrega "
+        "empresas ou imóveis, investe em ensino técnico e aporta num fundo dos estados.",
+        ("Propag",),
+        "#estados/limites",
+    ),
+    Termo(
         "valor-adicionado",
         "Valor adicionado",
         "O que cada atividade produz, descontado o que ela comprou de outras: a soma de todas "

@@ -2,12 +2,14 @@
 // vai a despesa, do que é feita a dívida, o que a economia produz), cada parte com a fatia
 // dela e a média dos estados e da região ao lado; e as contas no fim de cada ano, com a soma
 // dos estados ao lado. O arquivo das contas só é lido quando a pessoa escolhe um estado.
+// As exportações (o que vende e para onde) e a pirâmide etária entram como abas também.
 
 import { dinheiro, numero, periodo } from "./formato";
 import { montarGrafico, tema } from "./grafico";
 import { el } from "./pecas";
+import { montarPiramide } from "./piramide";
 import { listaSuspensa } from "./pontos";
-import type { BlocoDeConta, ContasEstado, EstadosContas, Grafico, HistoricoEstado } from "./tipos";
+import type { BlocoDeConta, ContasEstado, EstadosContas, Grafico, HistoricoEstado, Piramide } from "./tipos";
 
 /** R$ milhões por extenso curto: "R$ 1,2 tri", "R$ 34,5 bi", "R$ 820 mi". */
 export function reaisDeMilhoes(v: number): string {
@@ -17,8 +19,17 @@ export function reaisDeMilhoes(v: number): string {
   return `R$ ${numero(v, 0)} mi`;
 }
 
+/** US$ milhões por extenso curto: "US$ 1,2 bi", "US$ 820 mi". */
+function dolaresDeMilhoes(v: number): string {
+  const a = Math.abs(v);
+  if (a >= 1e3) return `US$ ${numero(v / 1e3, 1)} bi`;
+  return `US$ ${numero(v, a >= 10 ? 0 : 1)} mi`;
+}
+
 function emReais(v: number, unidade: string): string {
-  return unidade === "R$ milhões" ? reaisDeMilhoes(v) : `${numero(v, 1)} ${unidade}`;
+  if (unidade === "R$ milhões") return reaisDeMilhoes(v);
+  if (unidade === "US$ milhões") return dolaresDeMilhoes(v);
+  return `${numero(v, 1)} ${unidade}`;
 }
 
 /** "R$ 213,2 bi", "−R$ 25,4 bi", "R$ 3.756 por pessoa", "5,4 % da RCL"; a nota é o nome. */
@@ -27,6 +38,7 @@ function numeroDaFicha(n: ContasEstado["numeros"][number]): string {
   if (n.texto) return n.texto;
   if (unidade === "R$ milhões") return reaisDeMilhoes(v);
   if (unidade === "R$ bilhões") return dinheiro(v * 1e9);
+  if (unidade === "US$ bilhões") return `US$ ${numero(v, casas)} bi`;
   if (unidade.startsWith("R$ ")) return `R$ ${numero(v, casas)} ${unidade.slice(3)}`;
   return `${numero(v, casas)} ${unidade}`;
 }
@@ -83,7 +95,7 @@ function montarBloco(b: BlocoDeConta, todas: EstadosContas, regiao?: Regiao): HT
   const cores = tema().series;
   const corDe = (i: number, nome: string): string =>
     // Seis cores validadas; da sétima parte em diante, cinza escuro (não repete cor).
-    nome === "Outras" ? "var(--neutro-barra)" : (cores[i] ?? "var(--tinta-3)");
+    nome.startsWith("Outr") ? "var(--neutro-barra)" : (cores[i] ?? "var(--tinta-3)");
   if (lista.every((p) => p.valor >= 0) && total > 0) {
     const barra = el("div", "ficha-barra");
     barra.setAttribute("aria-hidden", "true");
@@ -96,12 +108,16 @@ function montarBloco(b: BlocoDeConta, todas: EstadosContas, regiao?: Regiao): HT
     });
     caixa.append(barra);
   }
-  const media = medias(todas, b.id);
+  // Sem média quando as partes mudam de estado para estado (os produtos e os países).
+  const compara = b.compara !== false;
+  const media = compara ? medias(todas, b.id) : undefined;
   // A média da região, com o próprio estado dentro, como na média dos estados.
-  const daRegiao = regiao && regiao.ufs.size > 1 ? medias(todas, b.id, regiao.ufs) : undefined;
+  const daRegiao =
+    compara && regiao && regiao.ufs.size > 1 ? medias(todas, b.id, regiao.ufs) : undefined;
   const tabela = el("table", "ficha-partes");
   const cabeca = tabela.createTHead().insertRow();
-  const titulosDasColunas = ["", "Valor", "Parte", "Média dos estados"];
+  const titulosDasColunas = ["", "Valor", "Parte"];
+  if (media) titulosDasColunas.push("Média dos estados");
   if (daRegiao && regiao) titulosDasColunas.push(`Média do ${regiao.nome}`);
   for (const t of titulosDasColunas) cabeca.append(el("th", "", t));
   const corpo = tabela.createTBody();
@@ -116,8 +132,8 @@ function montarBloco(b: BlocoDeConta, todas: EstadosContas, regiao?: Regiao): HT
       nome,
       el("td", "", emReais(p.valor, b.unidade)),
       el("td", "", `${numero(p.fatia * 100, 1)} %`),
-      el("td", "media", pct(media.get(p.nome))),
     );
+    if (media) tr.append(el("td", "media", pct(media.get(p.nome))));
     if (daRegiao) tr.append(el("td", "media", pct(daRegiao.get(p.nome))));
   });
   const rolavel = el("div", "tabela-rolavel");
@@ -188,7 +204,32 @@ function montarNoTempo(c: ContasEstado, todas: EstadosContas): HTMLElement {
   return caixa;
 }
 
-/** O nome curto de cada bloco, na aba. */
+/** A pirâmide etária do estado, com a mesma peça da de Demografia. */
+function montarPiramideDoEstado(c: ContasEstado, p: Piramide): HTMLElement {
+  const g: Grafico = {
+    id: `ficha-${c.uf}-piramide`,
+    titulo: `Pirâmide etária: ${c.nome}`,
+    subtitulo: "",
+    tipo: "barras",
+    unidade: "% da população",
+    casas: 1,
+    periodicidade: "A",
+    series: [],
+    faixa: null,
+    intervalos: [],
+    linhas: [],
+    janela_anos: null,
+    fonte: c.fonte_piramide ?? "IBGE, Projeções da População",
+    nota:
+      `Homens à esquerda, mulheres à direita, em % da população do estado no ano. O contorno é ${p.ano_contorno}. ` +
+      `Até ${p.primeiro_ano_projetado - 1}, dado ajustado aos Censos; depois, projeção do IBGE, que conta também quem muda de estado.`,
+    largura: "inteira",
+    piramide: p,
+  };
+  return montarPiramide(g, p);
+}
+
+/** O nome curto de cada bloco, na aba. Blocos com o mesmo nome dividem a aba. */
 const ABA: Record<string, string> = {
   receita: "Receita",
   despesa_grupo: "Gasto por tipo",
@@ -196,6 +237,8 @@ const ABA: Record<string, string> = {
   divida: "Dívida",
   deducoes: "Descontos da dívida",
   pib_setor: "Economia",
+  exportacoes_produtos: "Exportações",
+  exportacoes_destinos: "Exportações",
 };
 
 export function montarFicha(c: ContasEstado, todas: EstadosContas, regiao?: Regiao): HTMLElement[] {
@@ -216,9 +259,29 @@ export function montarFicha(c: ContasEstado, todas: EstadosContas, regiao?: Regi
   }
   // Um bloco de cada vez (Caio, 14/11/2026: "não precisa mostrar tudo em uma página só"):
   // as abas em cima, o bloco escolhido embaixo. "No tempo" é a última aba.
-  const abasDaFicha: { nome: string; montar: () => HTMLElement }[] = c.blocos
-    .filter((b) => b.fatias.length)
-    .map((b) => ({ nome: ABA[b.id] ?? b.titulo, montar: () => montarBloco(b, todas, regiao) }));
+  const abasDaFicha: { nome: string; montar: () => HTMLElement }[] = [];
+  const porNome = new Map<string, BlocoDeConta[]>();
+  for (const b of c.blocos.filter((x) => x.fatias.length)) {
+    const nome = ABA[b.id] ?? b.titulo;
+    const juntos = porNome.get(nome);
+    if (juntos) {
+      juntos.push(b);
+      continue;
+    }
+    const lista = [b];
+    porNome.set(nome, lista);
+    abasDaFicha.push({
+      nome,
+      montar: () => {
+        if (lista.length === 1) return montarBloco(b, todas, regiao);
+        const caixa = el("div", "ficha-juntos");
+        caixa.append(...lista.map((x) => montarBloco(x, todas, regiao)));
+        return caixa;
+      },
+    });
+  }
+  const piramide = c.piramide;
+  if (piramide) abasDaFicha.push({ nome: "Idade", montar: () => montarPiramideDoEstado(c, piramide) });
   if (c.historico?.length) abasDaFicha.push({ nome: "No tempo", montar: () => montarNoTempo(c, todas) });
   if (!abasDaFicha.length) return saida;
   const abas = el("div", "ficha-abas");

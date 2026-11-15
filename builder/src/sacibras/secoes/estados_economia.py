@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import date
 
 from sacibras.catalogo import (
@@ -27,7 +28,7 @@ from sacibras.catalogo import (
     SGS,
 )
 from sacibras.fontes import comexstat, ibge_contas_regionais, ibge_projecao, ibge_sidra
-from sacibras.schema import MetricaEstados
+from sacibras.schema import BlocoDeConta, Cartao, Fatia, MetricaEstados
 from sacibras.secoes.base import br, periodo
 from sacibras.tipos import Ponto
 
@@ -482,6 +483,150 @@ def exportacoes(ufs: UFs, populacao: dict[int, float]) -> MetricaEstados:
         brasil=soma / soma_pop if soma_pop else None,
         grupo=ECONOMIA,
     )
+
+
+def exportacoes_no_pib(
+    ufs: UFs,
+    por_mes: dict[str, dict[int, float]],
+    dolar: list[Ponto],
+    pib_corrente: dict[str, dict[int, float]],
+    ano: int,
+    edicao: int,
+) -> MetricaEstados:
+    """Exportações do ano em % do PIB do estado no mesmo ano: cada mês em dólares vira reais
+    pelo dólar médio do mês, e a soma vai sobre o PIB corrente das Contas Regionais."""
+    cambio = {(d.year, d.month): v for d, v in dolar}
+    faltam = [m for m in range(1, 13) if (ano, m) not in cambio]
+    if faltam:
+        raise RuntimeError(f"sem o dólar médio de {faltam} de {ano}")
+
+    def em_reais(meses: dict[int, float]) -> float:
+        return sum(v * cambio[(ano, m)] for m, v in meses.items())
+
+    valores: dict[str, float | None] = {}
+    soma_x = soma_pib = 0.0
+    for _, sigla, nome, _ in ufs:
+        pib_ano = pib_corrente.get(nome, {}).get(ano)
+        if nome in por_mes and pib_ano:
+            x = em_reais(por_mes[nome]) / 1e6  # R$ milhões, como o PIB
+            valores[sigla] = round(x / pib_ano * 100, 2)
+            soma_x += x
+            soma_pib += pib_ano
+        else:
+            valores[sigla] = None
+    pib_br = pib_corrente.get("Brasil", {}).get(ano)
+    # O Brasil: todas as exportações do ano (com as sem estado declarado) sobre o PIB do país.
+    total = sum(em_reais(m) for m in por_mes.values()) / 1e6
+    return MetricaEstados(
+        id="exportacoes_pib",
+        nome="Exportações em % do PIB",
+        descricao=(
+            f"Quanto o estado vendeu ao exterior em {ano}, em reais, sobre tudo o que produziu "
+            "no mesmo ano. Conta onde a mercadoria foi produzida, não o porto. Mostra o quanto "
+            "a economia do estado depende de vender para fora."
+        ),
+        unidade="% do PIB do estado",
+        casas=1,
+        referencia=str(ano),
+        maior_e_melhor=None,
+        fonte=(
+            f"{comexstat.FONTE} (valor FOB de {ano}, mês a mês, em reais pelo dólar médio do "
+            f"mês do Banco Central, SGS 3698); {ibge_contas_regionais.FONTE} (edição {edicao}, "
+            "PIB a preços correntes); cálculo próprio"
+        ),
+        valores=valores,
+        brasil=round(total / pib_br * 100, 2) if pib_br else None,
+        grupo=ECONOMIA,
+    )
+
+
+TOP_DA_FICHA = 6
+"""Quantos produtos e países a ficha mostra; o resto vai em "Outros"."""
+
+
+def _fatias_do_comercio(
+    itens: dict[comexstat.Item, float], nome: Callable[[comexstat.Item], str], outros: str
+) -> tuple[list[Fatia], float]:
+    total = sum(v for v in itens.values() if v > 0)
+    maiores = sorted(((i, v) for i, v in itens.items() if v > 0), key=lambda p: -p[1])
+    fatias = [Fatia(nome=nome(i), valor=round(v / 1e6, 1)) for i, v in maiores[:TOP_DA_FICHA]]
+    resto = total - sum(v for _, v in maiores[:TOP_DA_FICHA])
+    if resto > 0:
+        fatias.append(Fatia(nome=outros, valor=round(resto / 1e6, 1)))
+    return fatias, total
+
+
+@dataclass
+class FichaDoComercio:
+    numero: Cartao
+    blocos: list[BlocoDeConta]
+
+
+def exportacoes_da_ficha(
+    ufs: UFs, fim: date, produtos: comexstat.PorEstado, paises: comexstat.PorEstado
+) -> dict[str, FichaDoComercio]:
+    """Por UF: o cartão com o total de 12 meses (a fatia do Brasil e a posição) e os dois
+    blocos, o que vende e para onde."""
+    ref = f"12 meses até {periodo(fim, 'M')}"
+    fonte = f"{comexstat.FONTE}, exportações pelo estado de origem, valor FOB, {ref}"
+    totais = {
+        sigla: sum(v for v in produtos.get(nome, {}).values() if v > 0) for _, sigla, nome, _ in ufs
+    }
+    brasil = sum(sum(v for v in itens.values() if v > 0) for itens in produtos.values())
+    com_dado = {s: v for s, v in totais.items() if v > 0}
+    saida: dict[str, FichaDoComercio] = {}
+    for _, sigla, nome, _ in ufs:
+        if sigla not in com_dado:
+            continue
+        fat_prod, total = _fatias_do_comercio(
+            produtos.get(nome, {}), comexstat.nome_curto, "Outros produtos"
+        )
+        fat_paises, _ = _fatias_do_comercio(paises.get(nome, {}), lambda i: i.nome, "Outros países")
+        pos = 1 + sum(1 for v in com_dado.values() if v > com_dado[sigla])
+        bilhoes = total / 1e9
+        casas = 1 if bilhoes >= 1 else 2
+        saida[sigla] = FichaDoComercio(
+            numero=Cartao(
+                id=f"{sigla.lower()}_exportacoes",
+                rotulo="Exportações em 12 meses",
+                valor=round(bilhoes, casas),
+                unidade="US$ bilhões",
+                casas=casas,
+                referencia=fim,
+                periodicidade="M",
+                detalhe=(
+                    f"{br(total / brasil * 100)} % do Brasil; {pos}ª maior de {len(com_dado)}"
+                    if brasil
+                    else f"{pos}ª maior de {len(com_dado)}"
+                ),
+                fonte=fonte,
+            ),
+            blocos=[
+                BlocoDeConta(
+                    id="exportacoes_produtos",
+                    titulo="O que o estado vende ao exterior",
+                    descricao="Os produtos mais vendidos, pelo estado onde foram produzidos.",
+                    unidade="US$ milhões",
+                    referencia=ref,
+                    fonte=f"{fonte}, por posição do Sistema Harmonizado (SH4)",
+                    fatias=fat_prod,
+                    total=round(total / 1e6, 1),
+                    compara=False,
+                ),
+                BlocoDeConta(
+                    id="exportacoes_destinos",
+                    titulo="Para onde vende",
+                    descricao="Os países que mais compram do estado.",
+                    unidade="US$ milhões",
+                    referencia=ref,
+                    fonte=f"{fonte}, por país de destino",
+                    fatias=fat_paises,
+                    total=round(sum(v for v in paises.get(nome, {}).values() if v > 0) / 1e6, 1),
+                    compara=False,
+                ),
+            ],
+        )
+    return saida
 
 
 # ------------------------------------------------------------------ concentração do PIB

@@ -133,6 +133,81 @@ def exportacoes_12_meses() -> tuple[date, dict[str, float]]:
     return fim, saida
 
 
+def _pedacos_de_12_meses(fim: date) -> list[tuple[date, date]]:
+    """Os 12 meses até `fim`, um pedaço por ano (período que cruza o ano volta vazio)."""
+    inicio = _menos(fim, 11)
+    if inicio.year == fim.year:
+        return [(inicio, fim)]
+    return [(inicio, date(inicio.year, 12, 1)), (date(fim.year, 1, 1), fim)]
+
+
+PorEstado = dict[str, dict[Item, float]]
+"""Nome do estado → item (produto ou país) → US$."""
+
+
+def _por_estado_e_item(detalhe: str, inicio: date, fim: date) -> PorEstado:
+    codigo, nome = CAMPOS[detalhe]
+    filtro: dict[str, Any] = {
+        "flow": "export",
+        "monthDetail": False,
+        "period": {"from": f"{inicio:%Y-%m}", "to": f"{fim:%Y-%m}"},
+        "filters": [],
+        "details": ["state", detalhe],
+        "metrics": ["metricFOB"],
+    }
+    r = baixar_json(
+        f"{URL}?language=pt", metodo="POST", corpo_json=filtro, validade=24 * 3600, tempo_limite=120
+    )
+    saida: PorEstado = {}
+    for linha in r.get("data", {}).get("list") or []:
+        estado = str(linha.get("state", "")).strip()
+        if not estado:
+            continue
+        item = Item(str(linha[codigo]), str(linha[nome]).strip())
+        doestado = saida.setdefault(estado, {})
+        doestado[item] = doestado.get(item, 0.0) + float(linha["metricFOB"])
+    return saida
+
+
+def exportacoes_por_estado_e(detalhe: Literal["heading", "country"]) -> tuple[date, PorEstado]:
+    """(último mês, {estado: {produto SH4 ou país: US$ nos 12 meses até ele}}), pelo estado de
+    origem. Dois pedidos (um por ano), 3 MB no detalhe por produto (visto em 15/11/2026)."""
+    fim = ultimo_mes()
+    saida: PorEstado = {}
+    for de, ate in _pedacos_de_12_meses(fim):
+        for estado, itens in _por_estado_e_item(detalhe, de, ate).items():
+            doestado = saida.setdefault(estado, {})
+            for item, valor in itens.items():
+                doestado[item] = doestado.get(item, 0.0) + valor
+    if len(saida) < 27:
+        raise FonteForaDoArError(f"Comex Stat: só {len(saida)} estados com {detalhe}")
+    return fim, saida
+
+
+def exportacoes_por_mes(ano: int) -> dict[str, dict[int, float]]:
+    """{estado: {mês: US$ exportados}} de janeiro a dezembro de `ano`, pelo estado de origem
+    (`monthDetail`: o campo do mês é `monthNumber`, visto em 15/11/2026)."""
+    filtro: dict[str, Any] = {
+        "flow": "export",
+        "monthDetail": True,
+        "period": {"from": f"{ano}-01", "to": f"{ano}-12"},
+        "filters": [],
+        "details": ["state"],
+        "metrics": ["metricFOB"],
+    }
+    r = baixar_json(f"{URL}?language=pt", metodo="POST", corpo_json=filtro, validade=30 * 24 * 3600)
+    saida: dict[str, dict[int, float]] = {}
+    for linha in r.get("data", {}).get("list") or []:
+        estado = str(linha.get("state", "")).strip()
+        if estado and int(linha["year"]) == ano:
+            mes = int(linha["monthNumber"])
+            meses = saida.setdefault(estado, {})
+            meses[mes] = meses.get(mes, 0.0) + float(linha["metricFOB"])
+    if len(saida) < 27:
+        raise FonteForaDoArError(f"Comex Stat: só {len(saida)} estados em {ano}")
+    return saida
+
+
 def no_ano(valores: Valores, ano: int) -> dict[Item, float]:
     """O valor de cada item num ano (sem os itens que não aparecem nele)."""
     return {item: anos[ano] for item, anos in valores.items() if ano in anos}

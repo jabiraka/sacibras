@@ -198,6 +198,27 @@ SINONIMOS: dict[str, list[str]] = {
         "estados quebrados",
     ],
     "estados perto do limite": ["lrf", "estados endividados", "estados quebrados", "capag"],
+    "acordo da divida com a uniao": [
+        "regime de recuperacao fiscal",
+        "rrf",
+        "propag",
+        "renegociacao da divida dos estados",
+        "socorro aos estados",
+    ],
+    "capitais contra os limites": [
+        "prefeituras",
+        "capitais",
+        "municipios",
+        "contas das prefeituras",
+        "divida das capitais",
+    ],
+    "exportacoes em % do pib": ["abertura comercial", "quanto o estado exporta", "comex"],
+    "o que o estado vende ao exterior": [
+        "exportacoes do estado",
+        "produtos exportados",
+        "destino das exportacoes",
+    ],
+    "piramide etaria do estado": ["idade da populacao do estado", "envelhecimento por estado"],
     "previdencia dos servidores": [
         "deficit da previdencia",
         "rpps",
@@ -967,6 +988,13 @@ def montar(saida: Path) -> list[Item]:
             itens.append(_item(pais["nome"], f"{nome} · país", f"{h}/p-{pais['iso3']}"))
         for uf in dados.get("ufs", []):
             itens.append(_item(uf["nome"], f"{nome} · {uf['sigla']}", f"{h}/uf-{uf['sigla']}"))
+        if dados.get("capitais"):
+            local = f"{nome} › Perto dos limites"
+            itens.append(_item("As capitais contra os limites da lei", local, f"{h}/limites"))
+        if dados.get("arquivo_contas"):
+            local = f"{nome} › Um estado por dentro"
+            itens.append(_item("O que o estado vende ao exterior", local, f"{h}/estado"))
+            itens.append(_item("Pirâmide etária do estado", local, f"{h}/estado"))
     return itens
 
 

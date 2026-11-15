@@ -50,9 +50,11 @@ from __future__ import annotations
 import re
 import sys
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
+from functools import partial
 from typing import Any
 
 from sacibras.rede import FonteForaDoArError, baixar_json
@@ -144,9 +146,12 @@ def _demonstrativo(
     anexo: int,
     ente: int,
     validade: float = VALIDADE,
+    esfera_do_ente: str = "E",
 ) -> list[dict[str, Any]]:
-    """As linhas de um anexo do Executivo do estado `ente` (vazio se não entregou)."""
-    for esfera in ("E", "D") if ente == DF else ("E",):
+    """As linhas de um anexo do Executivo do ente (vazio se não entregou). `esfera_do_ente` é
+    "E" para os estados e "M" para os municípios (as capitais)."""
+    esferas = ("E", "D") if ente == DF and esfera_do_ente == "E" else (esfera_do_ente,)
+    for esfera in esferas:
         params = {
             "an_exercicio": str(ano),
             "in_periodicidade": periodicidade,
@@ -164,16 +169,27 @@ def _demonstrativo(
     return []
 
 
-def rgf(ano: int, quadrimestre: int, anexo: int, ente: int) -> list[dict[str, Any]]:
-    """As linhas do RGF-Anexo `anexo` do Executivo do estado `ente` (vazio se não entregou)."""
-    return _demonstrativo("RGF", "Q", ano, quadrimestre, anexo, ente)
+def rgf(
+    ano: int, quadrimestre: int, anexo: int, ente: int, esfera: str = "E"
+) -> list[dict[str, Any]]:
+    """As linhas do RGF-Anexo `anexo` do Executivo do ente (vazio se não entregou)."""
+    if esfera == "E":
+        return _demonstrativo("RGF", "Q", ano, quadrimestre, anexo, ente)
+    return _demonstrativo("RGF", "Q", ano, quadrimestre, anexo, ente, esfera_do_ente=esfera)
 
 
 def rreo(
-    ano: int, bimestre: int, anexo: int, ente: int, validade: float = VALIDADE
+    ano: int,
+    bimestre: int,
+    anexo: int,
+    ente: int,
+    validade: float = VALIDADE,
+    esfera: str = "E",
 ) -> list[dict[str, Any]]:
-    """As linhas do RREO-Anexo `anexo` do Executivo do estado `ente` (vazio se não entregou)."""
-    return _demonstrativo("RREO", "B", ano, bimestre, anexo, ente, validade)
+    """As linhas do RREO-Anexo `anexo` do Executivo do ente (vazio se não entregou)."""
+    if esfera == "E":
+        return _demonstrativo("RREO", "B", ano, bimestre, anexo, ente, validade)
+    return _demonstrativo("RREO", "B", ano, bimestre, anexo, ente, validade, esfera)
 
 
 def dca(ano: int, ente: int) -> list[dict[str, Any]]:
@@ -748,3 +764,96 @@ def coletar_historico(
             continue
         setattr(saida.setdefault(ano, {}).setdefault(e, AnoFechado()), tipo, achado)
     return saida
+
+
+# ------------------------------------------------------------------ capitais
+
+# As capitais respondem ao mesmo RGF e RREO, com `co_esfera=M` e os mesmos códigos de conta
+# (conferido em São Paulo, 3550308, no RGF do 2º quadrimestre e no RREO do 4º bimestre de
+# 2026, em 15/11/2026: pessoal 26,08 % da RCL, limite máximo 54 %, dívida 14,73 %, limite em
+# R$ igual a 1,2 vez a RCL ajustada). Brasília não tem relatório municipal: o DF é estado.
+SONDAGEM_CAPITAIS = [3550308, 3304557, 3106200]  # São Paulo, Rio de Janeiro, Belo Horizonte
+
+
+def capitais() -> dict[str, tuple[int, str]]:
+    """{sigla da UF: (código IBGE, nome)} das capitais com relatório municipal (sem Brasília)."""
+    bruto = baixar_json(f"{BASE}/entes", validade=VALIDADE)
+    return {
+        str(e["uf"]).strip(): (int(e["cod_ibge"]), str(e["ente"]).strip())
+        for e in bruto["items"]
+        if str(e.get("capital", "")).strip() == "1"
+        and e.get("esfera") == "M"
+        and str(e["uf"]).strip() != "DF"
+    }
+
+
+@dataclass
+class ColetaCapitais:
+    ano: int
+    quadrimestre: int
+    pessoal: dict[int, Pessoal | None]
+    divida: dict[int, Divida | None]
+    bimestre: tuple[int, int] | None = None
+    """(ano, bimestre) do RREO, quando houve um com quase todas as capitais."""
+    primario: dict[int, float | None] = field(default_factory=dict)
+    """Resultado primário (sem RPPS) do ano até o bimestre, em R$."""
+    rcl: dict[int, float | None] = field(default_factory=dict)
+    """RCL de 12 meses no mesmo bimestre (RREO-Anexo 03), em R$."""
+
+
+def _em_paralelo[T](tarefa: Callable[[int], T | None], cods: list[int]) -> dict[int, T | None]:
+    def fazer(e: int) -> T | None:
+        try:
+            return tarefa(e)
+        except FonteForaDoArError as erro:
+            _aviso(e, erro)
+            return None
+
+    with ThreadPoolExecutor(max_workers=6) as grupo:
+        return dict(zip(cods, grupo.map(fazer, cods), strict=True))
+
+
+def _pessoal_municipal(ano: int, q: int, e: int) -> Pessoal | None:
+    return parse_pessoal(rgf(ano, q, 1, e, "M"))
+
+
+def _divida_municipal(ano: int, q: int, e: int) -> Divida | None:
+    return parse_divida(rgf(ano, q, 2, e, "M"), q)
+
+
+def _receita_municipal(ano: int, b: int, e: int) -> Receita | None:
+    return parse_receita(rreo(ano, b, 3, e, esfera="M"))
+
+
+def _primario_municipal(ano: int, b: int, e: int) -> float | None:
+    return parse_primario(rreo(ano, b, 6, e, esfera="M"))
+
+
+def coletar_capitais(cods: list[int], hoje: date, minimo: int = 20) -> ColetaCapitais | None:
+    """O RGF do quadrimestre mais recente em que ao menos `minimo` capitais entregaram o Anexo
+    01, e o RREO do bimestre mais recente com o mesmo tanto. Um período só para todas."""
+    sondagem = [c for c in SONDAGEM_CAPITAIS if c in cods] or cods[:3]
+    for ano, q in candidatos(hoje):
+        try:
+            if not any(rgf(ano, q, 1, e, "M") for e in sondagem):
+                continue
+        except FonteForaDoArError as erro:
+            _aviso(sondagem[0], erro)
+            continue
+
+        pessoal = _em_paralelo(partial(_pessoal_municipal, ano, q), cods)
+        if sum(p is not None for p in pessoal.values()) < minimo:
+            continue
+        coleta = ColetaCapitais(
+            ano, q, pessoal, _em_paralelo(partial(_divida_municipal, ano, q), cods)
+        )
+        for ano_b, b in bimestres(hoje):
+            receita = _em_paralelo(partial(_receita_municipal, ano_b, b), cods)
+            if sum(r is not None for r in receita.values()) < minimo:
+                continue
+            coleta.bimestre = (ano_b, b)
+            coleta.primario = _em_paralelo(partial(_primario_municipal, ano_b, b), cods)
+            coleta.rcl = {e: (r.rcl if r else None) for e, r in receita.items()}
+            break
+        return coleta
+    return None
