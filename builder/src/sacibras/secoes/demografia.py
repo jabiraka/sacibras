@@ -55,6 +55,15 @@ HORAS = (6371, 8190, "c2/6794")
 """PNAD Contínua, média de horas habitualmente trabalhadas por semana em todos os trabalhos,
 pessoas ocupadas de 14 anos ou mais, os dois sexos; trimestre civil. Conferido pela resposta
 em 15/11/2026 (39,8 horas no 2º tri/2026)."""
+HORAS_EFETIVAS = (6371, 8192, "c2/6794")
+"""PNAD Contínua, média de horas efetivamente trabalhadas na semana de referência em todos os
+trabalhos, os dois sexos; trimestre civil. As habituais (8190) não pegam a queda de 2020: com
+elas a PTF estendida erra 4 pp em 2020 e 2021 contra a PWT; com estas, 0,2 pp (15/11/2026)."""
+FBCF_VOLUME = (1620, 583, "c11255/93406")
+"""Contas Trimestrais, formação bruta de capital fixo, a mesma série encadeada do PIB."""
+ESTUDO = (7126, 3593, "c2/6794/c58/2795")
+"""PNAD Contínua anual, número médio de anos de estudo das pessoas de 15 anos ou mais, os dois
+sexos. Sem 2020 e 2021 (o módulo de educação não foi a campo); uma casa decimal."""
 PAISES_IDOSOS = {
     "BRA": "Brasil",
     "WLD": "Mundo",
@@ -277,6 +286,153 @@ def contabilidade(anos: dict[int, dict[str, float]]) -> list[Parcela]:
             )
         )
     return saida
+
+
+def retorno_do_estudo(anos: float) -> float:
+    """A conta do capital humano da PWT (Caselli, 2005): cada ano de estudo rende 13,4 % até o
+    4º, 10,1 % do 5º ao 8º e 6,8 % daí em diante; o capital humano é exp(isto)."""
+    return 0.134 * min(anos, 4) + 0.101 * max(0.0, min(anos, 8) - 4) + 0.068 * max(0.0, anos - 8)
+
+
+def anual(trimestral: list[Ponto], media: bool = False) -> dict[int, float]:
+    """{ano: soma (ou média) dos quatro trimestres}, só nos anos com os quatro."""
+    por: dict[int, list[float]] = {}
+    for d, v in trimestral:
+        por.setdefault(d.year, []).append(v)
+    return {a: sum(v) / (4 if media else 1) for a, v in por.items() if len(v) == 4}
+
+
+class Insumos(NamedTuple):
+    """O que o IBGE publica para estender a PTF, por ano: PIB e FBCF em volume (soma dos
+    trimestres), ocupados e horas efetivas (média) e anos de estudo (PNAD anual)."""
+
+    pib: dict[int, float]
+    fbcf: dict[int, float]
+    ocupados: dict[int, float]
+    horas: dict[int, float]
+    estudo: dict[int, float]
+
+    def estudo_em(self, ano: int) -> float | None:
+        """Os anos de estudo do ano; ano sem PNAD (2020, 2021), na reta entre os vizinhos."""
+        if ano in self.estudo:
+            return self.estudo[ano]
+        antes = [a for a in self.estudo if a < ano]
+        depois = [a for a in self.estudo if a > ano]
+        if not antes or not depois:
+            return None
+        a, b = max(antes), min(depois)
+        return self.estudo[a] + (self.estudo[b] - self.estudo[a]) * (ano - a) / (b - a)
+
+
+class Estendida(NamedTuple):
+    """Um ano depois da PWT: o nível da PTF (2021 = 100) com o capital humano da PNAD e com
+    ele no ritmo dos últimos cinco anos da PWT, e as partes do crescimento (com o da PNAD)."""
+
+    ano: int
+    ptf: float
+    ptf_ritmo_pwt: float
+    parcela: Parcela
+
+
+def _log(a: float, b: float) -> float:
+    return math.log(a / b) * 100
+
+
+def _capital_seguinte(
+    capital: float, investimento: float, depreciacao: float, fbcf: dict[int, float], ano: int
+) -> tuple[float, float]:
+    """Inventário perpétuo, como a PWT: o investimento do ano cresce como a FBCF do IBGE e o
+    capital é o do ano anterior depreciado mais esse investimento."""
+    novo_investimento = investimento * fbcf[ano] / fbcf[ano - 1]
+    return (1 - depreciacao) * capital + novo_investimento, novo_investimento
+
+
+def estender_ptf(brasil: dict[int, dict[str, float]], ins: Insumos) -> list[Estendida]:
+    """A PTF dos anos depois da PWT, pela conta da PWT com os números do IBGE: PIB, FBCF
+    (capital pelo inventário perpétuo, com a depreciação da PWT), ocupados, horas efetivas e
+    anos de estudo; o peso do trabalho é a última parte do trabalho na renda da PWT. Para no
+    primeiro ano em que falta algum número."""
+    ult = max(a for a, v in brasil.items() if "rtfpna" in v)
+    fim, antes = brasil[ult], brasil.get(ult - 1, {})
+    precisa = ("rnna", "delta", "labsh", "hc")
+    if any(c not in fim for c in precisa) or "rnna" not in antes:
+        return []
+    peso = fim["labsh"]
+    capital = fim["rnna"]
+    # O investimento implícito do último ano da PWT; daí em diante, a depreciação dela fica.
+    investimento = fim["rnna"] - (1 - fim["delta"]) * antes["rnna"]
+    inicio_ritmo = brasil.get(ult - 5, {}).get("hc")
+    ritmo_hc = _log(fim["hc"], inicio_ritmo) / 5 if inicio_ritmo else 0.0
+    nivel = nivel_ritmo = fim["rtfpna"] * 100
+    saida: list[Estendida] = []
+    ano = ult + 1
+    while all(ano in x and ano - 1 in x for x in (ins.pib, ins.fbcf, ins.ocupados, ins.horas)):
+        s_ano, s_antes = ins.estudo_em(ano), ins.estudo_em(ano - 1)
+        if s_ano is None or s_antes is None:
+            break
+        novo_capital, investimento = _capital_seguinte(
+            capital, investimento, fim["delta"], ins.fbcf, ano
+        )
+        pib = _log(ins.pib[ano], ins.pib[ano - 1])
+        parte_capital = (1 - peso) * _log(novo_capital, capital)
+        horas = peso * (
+            _log(ins.ocupados[ano], ins.ocupados[ano - 1])
+            + _log(ins.horas[ano], ins.horas[ano - 1])
+        )
+        estudo = peso * (retorno_do_estudo(s_ano) - retorno_do_estudo(s_antes)) * 100
+        ptf = pib - parte_capital - horas - estudo
+        nivel *= math.exp(ptf / 100)
+        nivel_ritmo *= math.exp((ptf + estudo - peso * ritmo_hc) / 100)
+        saida.append(
+            Estendida(
+                ano,
+                nivel,
+                nivel_ritmo,
+                Parcela(ano, pib, parte_capital, horas, estudo, ptf, math.nan),
+            )
+        )
+        capital = novo_capital
+        ano += 1
+    return saida
+
+
+def conferir_ptf(brasil: dict[int, dict[str, float]], ins: Insumos) -> tuple[float, float, int]:
+    """A conta da extensão nos anos em que a PWT existe, um ano de cada vez a partir do capital
+    da PWT do ano anterior: (erro médio, em módulo, com o capital humano da PWT; quanto a PTF
+    sai mais alta, em média, com o da PNAD; primeiro ano conferido), em pp por ano."""
+    erros: list[float] = []
+    vies: list[float] = []
+    primeiro = 0
+    for ano in sorted(brasil):
+        a, b, c = brasil[ano], brasil.get(ano - 1, {}), brasil.get(ano - 2, {})
+        campos = ("rnna", "delta", "labsh", "hc", "rtfpna")
+        if not all(k in x for x in (a, b) for k in campos) or "rnna" not in c:
+            continue
+        if not all(ano in x and ano - 1 in x for x in (ins.pib, ins.fbcf, ins.ocupados, ins.horas)):
+            continue
+        # Como na extensão: o investimento implícito do ano anterior e a depreciação dele.
+        investimento = b["rnna"] - (1 - b["delta"]) * c["rnna"]
+        capital, _ = _capital_seguinte(b["rnna"], investimento, b["delta"], ins.fbcf, ano)
+        peso = (a["labsh"] + b["labsh"]) / 2
+        resto = (
+            _log(ins.pib[ano], ins.pib[ano - 1])
+            - (1 - peso) * _log(capital, b["rnna"])
+            - peso
+            * (
+                _log(ins.ocupados[ano], ins.ocupados[ano - 1])
+                + _log(ins.horas[ano], ins.horas[ano - 1])
+            )
+        )
+        da_pwt = _log(a["rtfpna"], b["rtfpna"])
+        erros.append(abs(resto - peso * _log(a["hc"], b["hc"]) - da_pwt))
+        primeiro = primeiro or ano
+        s_ano, s_antes = ins.estudo_em(ano), ins.estudo_em(ano - 1)
+        if s_ano is not None and s_antes is not None:
+            com_pnad = resto - peso * (retorno_do_estudo(s_ano) - retorno_do_estudo(s_antes)) * 100
+            vies.append(com_pnad - da_pwt)
+    if not erros:
+        return math.nan, math.nan, 0
+    return sum(erros) / len(erros), (sum(vies) / len(vies) if vies else math.nan), primeiro
 
 
 def anos_repetidos(anos: dict[int, dict[str, float]], campo: str) -> list[int]:
@@ -803,8 +959,26 @@ def montar(ctx: Contexto) -> Secao:
         )
     graficos += graficos_inss
     tabelas_pwt: list[Tabela] = []
+    insumos: Insumos | None = None
+    try:  # o que o IBGE publica para estender a PTF depois da PWT
+        insumos = Insumos(
+            pib=anual(pib_vol),
+            fbcf=anual(
+                ibge_sidra.serie(*FBCF_VOLUME[:2], classificacao=FBCF_VOLUME[2], trimestral=True)
+            ),
+            ocupados=anual(ocupados, media=True),
+            horas=anual(
+                ibge_sidra.serie(
+                    *HORAS_EFETIVAS[:2], classificacao=HORAS_EFETIVAS[2], trimestral=True
+                ),
+                media=True,
+            ),
+            estudo={d.year: v for d, v in ibge_sidra.serie(*ESTUDO[:2], classificacao=ESTUDO[2])},
+        )
+    except Exception as erro:  # sem o IBGE, fica só a PWT
+        print(f"    a PTF estendida ficou de fora: {str(erro)[:120]}")
     try:
-        c_pwt, g_pwt, t_pwt = _pwt()
+        c_pwt, g_pwt, t_pwt = _pwt(insumos)
         cartoes += c_pwt
         graficos += g_pwt
         tabelas_pwt.append(t_pwt)
@@ -1066,8 +1240,9 @@ def _grafico_onu(populacao_ibge: PorAno) -> Grafico:
     )
 
 
-def _pwt() -> tuple[list[Cartao], list[Grafico], Tabela]:
-    """A eficiência da economia (PTF) e de onde veio o crescimento desde 1955, pela PWT."""
+def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], Tabela]:
+    """A eficiência da economia (PTF) e de onde veio o crescimento desde 1955, pela PWT; com
+    os `insumos` do IBGE, a estimativa nossa dos anos depois dela."""
     todos = pwt.dados(set(PAISES_PTF))
     brasil = todos.get("BRA")
     if not brasil:
@@ -1100,6 +1275,25 @@ def _pwt() -> tuple[list[Cartao], list[Grafico], Tabela]:
         else ""
     )
 
+    estendida = estender_ptf(brasil, insumos) if insumos else []
+    if estendida:
+        erro, vies, desde = conferir_ptf(brasil, insumos)  # type: ignore[arg-type]
+        fim_est = estendida[-1].ano
+        fonte_ibge = (
+            f"IBGE: Contas Trimestrais (SIDRA {PIB_VOLUME[0]}, PIB e FBCF) e PNAD Contínua "
+            f"(SIDRA {OCUPADOS[0]}, ocupados; {HORAS_EFETIVAS[0]}, horas efetivas; "
+            f"{ESTUDO[0]}, anos de estudo); conta nossa"
+        )
+        fonte_est = f"{fonte_ibge}, emendada na {pwt.FONTE.split(' (')[0]} de {ultimo}"
+        nota_est = (
+            f" De {ultimo + 1} a {fim_est}, estimativa nossa: a mesma conta da PWT com os "
+            "números do IBGE (PIB, investimento, ocupados, horas efetivas e anos de estudo da "
+            "PNAD), emendada no último ano da PWT. Feita nos anos em que a PWT existe, a conta "
+            f"repete a PTF dela desde {desde} com erro médio de {br(erro, 1)} pp por ano, mas "
+            f"o estudo da PNAD sobe mais devagar que o da PWT, e com ele a PTF sai em média "
+            f"{br(vies, 1)} pp por ano mais alta. A barra vai até a PTF com o capital humano "
+            "no ritmo dos últimos cinco anos da PWT."
+        )
     cartoes = [
         cartao(
             "ptf-eua",
@@ -1127,21 +1321,67 @@ def _pwt() -> tuple[list[Cartao], list[Grafico], Tabela]:
             mini=80,
         ),
     ]
+    series_ptf = [serie("ptf", "PTF do Brasil (Penn World Table)", ptf, casas=1)]
+    intervalos: list[Intervalo] = []
+    if estendida:
+        series_ptf.append(
+            serie(
+                "estimativa",
+                "Estimativa nossa (IBGE)",
+                [ptf[-1]] + [(date(x.ano, 1, 1), x.ptf) for x in estendida],
+                casas=1,
+            )
+        )
+        intervalos.append(
+            Intervalo(
+                nome="Com o capital humano no ritmo da PWT",
+                serie="estimativa",
+                pontos=[
+                    (
+                        date(x.ano, 1, 1),
+                        round(min(x.ptf, x.ptf_ritmo_pwt), 2),
+                        round(max(x.ptf, x.ptf_ritmo_pwt), 2),
+                    )
+                    for x in estendida
+                ],
+            )
+        )
+        base = ptf[-1][1]
+        cartoes.append(
+            cartao(
+                "ptf-estimativa",
+                f"PTF de {ultimo} a {fim_est}, estimativa nossa",
+                [(ptf[-1][0], 0.0)]
+                + [(date(x.ano, 1, 1), (x.ptf / base - 1) * 100) for x in estendida],
+                unidade="%",
+                periodicidade="A",
+                casas=1,
+                detalhe=(
+                    "com o estudo no ritmo da PWT: "
+                    f"{br((estendida[-1].ptf_ritmo_pwt / base - 1) * 100, 1)} %"
+                ),
+                fonte=fonte_est,
+                procedencia="calculado",
+                secao="demografia",
+            )
+        )
     graficos = [
         grafico(
             "ptf-brasil",
             "Eficiência da economia brasileira (PTF)",
-            [serie("ptf", "PTF do Brasil", ptf, casas=1)],
+            series_ptf,
             unidade="índice, 2021 = 100",
             casas=1,
             periodicidade="A",
-            fonte=fonte_ptf,
+            fonte=f"{fonte_ptf}"
+            + (f"; {ultimo + 1} a {fim_est}: {fonte_ibge}" if estendida else ""),
+            intervalos=intervalos,
             nota=(
                 "A produtividade total dos fatores é o que o país produz além do que explicam "
                 "as máquinas e prédios, as horas trabalhadas e o estudo de quem trabalha: "
                 "tecnologia, organização, alocação. A PWT a calcula como o resto da conta, "
                 f"então ela carrega o ciclo. Atualizada a cada dois anos, mais ou menos; vai "
-                f"até {ultimo}."
+                f"até {ultimo}." + (nota_est if estendida else "")
             ),
         ),
         grafico(
@@ -1178,8 +1418,23 @@ def _pwt() -> tuple[list[Cartao], list[Grafico], Tabela]:
                 casas=1,
             )
             for rotulo, m in decadas
-        ],
-        fonte=fonte_conta,
+        ]
+        + (
+            [
+                LinhaTabela(
+                    rotulo=f"{ultimo + 1} a {fim_est}, estimativa nossa",
+                    valores=[
+                        sum(getattr(x.parcela, c) for x in estendida) / len(estendida)
+                        for c in ("pib", "capital", "horas", "escolaridade", "ptf")
+                    ],
+                    unidade="",
+                    casas=1,
+                )
+            ]
+            if estendida
+            else []
+        ),
+        fonte=fonte_conta + (f"; {ultimo + 1} a {fim_est}: {fonte_ibge}" if estendida else ""),
         nota=(
             "Capital, horas trabalhadas e capital humano somam o crescimento que as máquinas e "
             "prédios, o trabalho e o estudo explicam, cada um pesado pela sua parte na renda; "

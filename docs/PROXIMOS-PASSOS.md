@@ -6,10 +6,11 @@ aberto: o que foi feito sai (a história está no git), as ideias em espera fica
 
 Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil (Caio: *"faça oq está nos próximos passos e propostas, deixe só oq precisar do
-PC"*). Depois, a Penn World Table entrou (Demografia › Eficiência (PTF) e oito métricas de
-produtividade em Brasil no mundo) e o dado privado ficou sem CSV nem PNG, e na tela só se a
-licença deixar (a FGV saiu), com as licenças em `licencas.py`. Isso está no branch
-`ccr-47e59384-8x2d1m`, para juntar ao `main`.
+PC"*). Depois, a Penn World Table entrou (Demografia › Eficiência (PTF), com a PTF estendida
+até 2025 por conta nossa com dados do IBGE, e oito métricas de produtividade em Brasil no
+mundo) e o dado privado ficou sem CSV nem PNG, e na tela só se a licença deixar (a FGV saiu),
+com as licenças em `licencas.py`. Isso está no branch `ccr-47e59384-8x2d1m`, para juntar ao
+`main`.
 
 ## Releituras com prazo
 
@@ -64,6 +65,10 @@ As próximas:
 - Selo "dado anterior" na peça que ficou com o dado da véspera (o campo `mantidos` já está no
   `painel.json`).
 - Tarefa agendada que relê os relatórios e abre PR ([PROPOSTAS](PROPOSTAS.md)).
+- Para olhar: a PTF estendida (2024 e 2025) é estimativa do que já passou, com dado oficial,
+  não previsão. O ponto usa o capital humano da PNAD, que sobe mais devagar que o da PWT; a
+  barra vai até a versão com o ritmo da PWT. Quando sair a PWT 12, comparar e, se a
+  diferença for grande, rever a escolha.
 - Para olhar: em Brasil no mundo, a PTF da Turquia (109 % da dos EUA) e a da Argentina
   passam a de vários países ricos; é o número da Penn World Table (PPC de cada ano), não erro
   daqui. O elo `#mundo/m-…` leva uns 4 s para trocar a métrica (já era assim).

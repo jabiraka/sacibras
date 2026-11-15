@@ -520,3 +520,61 @@ def test_previdencia_da_uniao_pela_coluna_do_ano_do_relatorio() -> None:
 def test_soma_do_ano_so_com_os_doze_meses() -> None:
     mensal = _mensal(date(2024, 3, 1), 22, 1.0)
     assert demografia.soma_do_ano(mensal) == {2025: 12.0}
+
+
+def _economia(ate: int) -> tuple[dict[int, dict[str, float]], demografia.Insumos]:
+    """Uma economia em que a PWT e o IBGE contam a mesma história: capital pelo inventário
+    perpétuo (5 % de depreciação), PIB Cobb-Douglas com o trabalho pesando 0,5 e PTF subindo
+    1 % ao ano; a PWT vai até 2023 e o IBGE, até `ate`."""
+    brasil: dict[int, dict[str, float]] = {}
+    pib, fbcf, ocupados, horas, estudo = {}, {}, {}, {}, {}
+    capital = 1000.0
+    for a in range(2010, ate + 1):
+        t = a - 2010
+        investimento = 60 * 1.03**t
+        capital = 0.95 * capital + investimento
+        s = 9.0 + 0.1 * t
+        hc = math.exp(demografia.retorno_do_estudo(s))
+        emp, avh, ptf = 50 * 1.01**t, 1900 * 0.999**t, 1.01 ** (a - 2021)
+        y = ptf * capital**0.5 * (emp * avh * hc) ** 0.5
+        pib[a], fbcf[a], ocupados[a], horas[a], estudo[a] = y, investimento, emp, avh, s
+        if a <= 2023:
+            brasil[a] = {
+                "rgdpna": y,
+                "rnna": capital,
+                "delta": 0.05,
+                "labsh": 0.5,
+                "hc": hc,
+                "rtfpna": ptf,
+                "emp": emp,
+                "avh": avh,
+            }
+    return brasil, demografia.Insumos(pib, fbcf, ocupados, horas, estudo)
+
+
+def test_ptf_estendida_com_o_ibge_segue_a_conta_da_pwt() -> None:
+    brasil, insumos = _economia(2025)
+    estendida = demografia.estender_ptf(brasil, insumos)
+    assert [x.ano for x in estendida] == [2024, 2025]
+    for x in estendida:
+        assert x.ptf == pytest.approx(100 * 1.01 ** (x.ano - 2021))
+        assert x.ptf_ritmo_pwt == pytest.approx(x.ptf)  # o estudo sobe no mesmo ritmo
+        p = x.parcela
+        assert p.capital + p.horas + p.escolaridade + p.ptf == pytest.approx(p.pib)
+    erro, vies, desde = demografia.conferir_ptf(brasil, insumos)
+    assert erro == pytest.approx(0, abs=1e-9) and vies == pytest.approx(0, abs=1e-9)
+    assert desde == 2012
+
+
+def test_ptf_estendida_para_onde_falta_numero_do_ibge() -> None:
+    brasil, insumos = _economia(2025)
+    sem_estudo = insumos._replace(estudo={a: v for a, v in insumos.estudo.items() if a != 2025})
+    assert [x.ano for x in demografia.estender_ptf(brasil, sem_estudo)] == [2024]
+    assert demografia.estender_ptf(brasil, insumos._replace(pib={})) == []
+
+
+def test_ano_sem_pnad_de_educacao_fica_na_reta() -> None:
+    ins = demografia.Insumos({}, {}, {}, {}, {2019: 9.8, 2022: 10.1})
+    assert ins.estudo_em(2020) == pytest.approx(9.9) and ins.estudo_em(2023) is None
+    # 4 anos a 13,4 %, 4 a 10,1 % e 2 a 6,8 %
+    assert demografia.retorno_do_estudo(10) == pytest.approx(0.536 + 0.404 + 0.136)

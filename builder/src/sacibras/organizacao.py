@@ -156,7 +156,7 @@ PARTES: dict[str, list[Parte]] = {
             "Eficiência (PTF)",
             "De onde veio o crescimento desde 1955 (capital, horas, estudo e eficiência) e a "
             "eficiência do Brasil contra a dos EUA e a de outros emergentes.",
-            cartoes=["ptf-eua", "ptf-desde-o-pico"],
+            cartoes=["ptf-eua", "ptf-desde-o-pico", "ptf-estimativa"],
             graficos=["ptf-brasil", "ptf-paises"],
             tabelas=["pwt-contabilidade"],
             veja=[
