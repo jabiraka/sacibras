@@ -62,19 +62,9 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "pib",
             "PIB",
-            "O crescimento a cada trimestre, o gasto privado, e quem produziu e quem comprou.",
+            "O crescimento a cada trimestre, e quem produziu e quem comprou.",
             cartoes=["pib-tt", "pib-4t", "demanda-privada", "pib-carrego"],
-            # Em pares, lado a lado na tela larga (Caio, 15/11/2026): o PIB e a demanda
-            # privada; quem produziu e quem comprou; a oferta e a demanda. A oferta fica sempre
-            # à esquerda.
-            graficos=[
-                "pib-trimestral",
-                "demanda-privada",
-                "pib-contribuicoes-oferta",
-                "pib-contribuicoes-demanda",
-                "pib-oferta",
-                "pib-demanda",
-            ],
+            graficos=["pib-trimestral", "pib-contribuicoes-oferta", "pib-contribuicoes-demanda"],
             tabelas=["pib-componentes"],
         ),
         Parte(
@@ -98,33 +88,21 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "produtividade",
-            "Produtividade",
-            "PIB por pessoa ocupada e por hora trabalhada, e de onde veio o crescimento.",
-            cartoes=["produtividade", "produtividade-hora"],
-            graficos=["produtividade", "crescimento-decomposto"],
-        ),
-        Parte(
-            "eficiencia",
-            "Eficiência (PTF)",
-            "De onde veio o crescimento desde 1955 (capital, horas, estudo e eficiência) e a "
-            "eficiência do Brasil contra a dos EUA.",
-            cartoes=["ptf-eua", "ptf-desde-o-pico", "ptf-estimativa"],
-            graficos=["ptf-brasil", "ptf-paises"],
+            "Produtividade e eficiência",
+            "Quanto cada trabalhador produz, a eficiência (PTF) e de onde veio o crescimento.",
+            cartoes=["produtividade", "produtividade-hora", "ptf-eua", "ptf-desde-o-pico"],
+            graficos=["crescimento-decomposto", "ptf-brasil", "ptf-paises"],
             tabelas=["pwt-contabilidade"],
             veja=[
                 Elo(
                     endereco="#mundo/m-ptf",
                     titulo="PTF no mundo",
-                    resumo="O Brasil ao lado de 120 países, e o produto por hora, o capital e "
-                    "o estudo de cada um.",
-                )
+                    resumo=(
+                        "O Brasil ao lado de 120 países, e o produto por hora, o capital e o "
+                        "estudo de cada um."
+                    ),
+                ),
             ],
-        ),
-        Parte(
-            "confianca",
-            "Confiança do consumidor",
-            "Como o consumidor vê a economia agora e o que espera dela.",
-            graficos=["confianca"],
         ),
     ],
     "trabalho": [
@@ -133,19 +111,13 @@ PARTES: dict[str, list[Parte]] = {
             "Desemprego",
             "Desocupação, subutilização, desalento e quem procura há muito tempo.",
             cartoes=["desocupacao", "subutilizacao"],
-            graficos=[
-                "desocupacao",
-                "desocupacao-fatores",
-                "subutilizacao",
-                "desalento",
-                "procura-longa",
-            ],
+            graficos=["desocupacao", "desocupacao-fatores", "subutilizacao"],
         ),
         Parte(
             "renda",
             "Renda",
-            "O rendimento médio e a massa de rendimento, já descontada a inflação, e o salário "
-            "mínimo.",
+            "O rendimento médio e a massa de rendimento, já descontada a inflação, e o "
+            "salário mínimo.",
             cartoes=["rendimento", "massa", "salario-minimo"],
             graficos=["rendimento", "massa"],
             extras=["salario-minimo"],
@@ -156,7 +128,7 @@ PARTES: dict[str, list[Parte]] = {
             "Emprego com carteira, setor a setor, informalidade e participação na força de "
             "trabalho.",
             cartoes=["emprego-formal", "informalidade", "participacao", "nivel-ocupacao"],
-            graficos=["emprego-formal", "emprego-setores", "informalidade", "participacao"],
+            graficos=["emprego-formal", "informalidade", "participacao"],
             tabelas=["emprego-setores", "trabalho-detalhe"],
         ),
     ],
@@ -167,7 +139,7 @@ PARTES: dict[str, list[Parte]] = {
             "Quantos somos, a pirâmide etária, quem está em idade de trabalhar e a projeção "
             "da ONU, com a faixa.",
             cartoes=["populacao", "populacao-15-64", "idade-mediana"],
-            graficos=["piramide", "populacao", "populacao-onu", "crescimento-15-64"],
+            graficos=["piramide", "populacao", "crescimento-15-64"],
             tabelas=["demografia-marcos"],
         ),
         Parte(
@@ -175,12 +147,7 @@ PARTES: dict[str, list[Parte]] = {
             "Nascimentos e vida",
             "Filhos por mulher, nascimentos, óbitos, esperança de vida e mortalidade infantil.",
             cartoes=["fecundidade", "esperanca-de-vida", "mortalidade-infantil"],
-            graficos=[
-                "nascimentos-obitos",
-                "fecundidade",
-                "esperanca-de-vida",
-                "mortalidade-infantil",
-            ],
+            graficos=["nascimentos-obitos", "fecundidade", "esperanca-de-vida"],
         ),
         Parte(
             "envelhecimento",
@@ -188,45 +155,26 @@ PARTES: dict[str, list[Parte]] = {
             "Idosos para cada pessoa em idade de trabalhar, por estado e contra o mundo, e o "
             "déficit do INSS, dos servidores e dos militares da União.",
             cartoes=["idosos-por-100", "deficit-inss", "deficit-servidores-militares"],
-            graficos=["dependencia", "idosos", "idosos-paises", "inss", "previdencia-uniao"],
+            graficos=["dependencia", "idosos-paises", "inss"],
             tabelas=["demografia-estados", "previdencia-uniao"],
         ),
     ],
     "pobreza": [
         Parte(
             "linha-de-pobreza",
-            "Pobreza",
-            "Quantos vivem abaixo das linhas de pobreza, quantas casas recebem Bolsa Família e "
-            "a pobreza em cada estado.",
-            cartoes=["pobreza", "extrema-pobreza", "bolsa-familia"],
-            graficos=["pobreza", "programas-sociais"],
-            tabelas=["pobreza-estados"],
-        ),
-        Parte(
-            "fome",
-            "Fome",
-            "Quantos moram em casas onde falta comida, desde 2004, e se o Brasil está no Mapa "
-            "da Fome.",
-            cartoes=["fome", "inseguranca-moderada-grave", "subalimentacao"],
-            graficos=["fome-fao", "fome-pesquisas"],
-            tabelas=["pobreza-fome"],
-        ),
-        Parte(
-            "saneamento",
-            "A casa: água, esgoto, aluguel",
-            "Água, esgoto e lixo contra a meta de 2033, o esgoto tratado em cada estado, luz, "
-            "internet, fogão a lenha e quem mora de aluguel.",
-            cartoes=["agua", "esgoto", "lixo", "internet", "lenha", "aluguel"],
-            graficos=["saneamento", "internet-lenha", "moradia"],
-            tabelas=["pobreza-saneamento", "pobreza-sinisa"],
+            "Pobreza e fome",
+            "Quantos vivem abaixo da linha de pobreza, quantos passam fome e os programas sociais.",
+            cartoes=["pobreza", "extrema-pobreza", "fome", "bolsa-familia"],
+            graficos=["pobreza", "fome-pesquisas", "programas-sociais"],
+            tabelas=["pobreza-estados", "pobreza-fome"],
         ),
         Parte(
             "desigualdade",
             "Desigualdade",
-            "O Gini e quem fica com quanto da renda: os mais pobres, o meio e os mais ricos; e "
-            "o Gini do Brasil no mundo.",
-            cartoes=["gini", "fatia-10-ricos", "fatia-1-rico", "fatia-40-pobres", "razao-10-40"],
-            graficos=["gini", "fatias", "renda-por-grupo", "gini-paises"],
+            "O Gini e quem fica com quanto da renda: os mais pobres, o meio e os mais ricos; "
+            "e o Gini do Brasil no mundo.",
+            cartoes=["gini", "fatia-10-ricos", "fatia-1-rico", "fatia-40-pobres"],
+            graficos=["renda-por-grupo", "fatias", "gini-paises"],
             tabelas=["pobreza-decimos"],
         ),
         Parte(
@@ -241,21 +189,18 @@ PARTES: dict[str, list[Parte]] = {
             "diferencas",
             "Sexo, cor, escola e idade",
             "A renda do trabalho por sexo, cor, escolaridade e idade, e quem não sabe ler.",
-            cartoes=[
-                "mulheres-homens",
-                "pretos-brancos",
-                "pardos-brancos",
-                "superior-medio",
-                "analfabetismo",
-                "anos-de-estudo",
-            ],
-            graficos=[
-                "diferencas",
-                "renda-trabalho-grupos",
-                "renda-escolaridade",
-                "analfabetismo",
-            ],
+            cartoes=["mulheres-homens", "pretos-brancos", "anos-de-estudo", "analfabetismo"],
+            graficos=["diferencas", "renda-escolaridade", "analfabetismo"],
             tabelas=["pobreza-escola-idade"],
+        ),
+        Parte(
+            "saneamento",
+            "A casa: água, esgoto, aluguel",
+            "Água, esgoto e lixo contra a meta de 2033, o esgoto tratado em cada estado, luz,"
+            " internet, fogão a lenha e quem mora de aluguel.",
+            cartoes=["agua", "esgoto", "lixo", "internet"],
+            graficos=["saneamento", "moradia"],
+            tabelas=["pobreza-saneamento", "pobreza-sinisa"],
         ),
     ],
     "inflacao": [
@@ -267,10 +212,10 @@ PARTES: dict[str, list[Parte]] = {
             graficos=["ipca-12m", "ipca-mensal"],
             veja=[
                 Elo(
-                    endereco=EFEITO_DA_SELIC,
+                    endereco="#juros/efeito",
                     titulo="Efeito da Selic",
                     resumo="Quanto a inflação muda com 1 ponto de Selic, nas contas do BC.",
-                )
+                ),
             ],
         ),
         Parte(
@@ -301,10 +246,10 @@ PARTES: dict[str, list[Parte]] = {
     "juros": [
         Parte(
             "selic",
-            "Selic e Copom",
-            "A taxa básica, a efetiva e o caminho que o mercado espera.",
-            cartoes=["selic-meta", "selic-efetiva", "focus-selic"],
-            graficos=["selic-trajetoria", "selic-ipca"],
+            "Selic e juro real",
+            "A taxa básica, o que se espera dela e quanto sobra depois da inflação.",
+            cartoes=["selic-meta", "juro-real-ex-ante", "focus-selic", "juro-real-ex-post"],
+            graficos=["selic-trajetoria", "juro-real", "selic-ipca"],
         ),
         Parte(
             "efeito",
@@ -316,23 +261,11 @@ PARTES: dict[str, list[Parte]] = {
             extras=["simulador-selic"],
         ),
         Parte(
-            "juro-real",
-            "Juro real",
-            "A Selic descontada da inflação: a que passou e a esperada.",
-            cartoes=["juro-real-ex-ante", "juro-real-ex-post"],
-            graficos=["juro-real"],
-        ),
-        Parte(
             "curva",
             "Juros dos títulos",
             "A curva prefixada e a de juro real do Tesouro, prazo a prazo, contra o Focus.",
             cartoes=["prefixado", "inclinacao", "juro-real-longo", "premio-curva"],
-            graficos=[
-                "curva-prefixada",
-                "curva-real",
-                "juro-titulos-focus",
-                "prefixado-decomposto",
-            ],
+            graficos=["curva-prefixada", "curva-real", "prefixado-decomposto"],
             tabelas=["titulos-por-prazo"],
         ),
         Parte(
@@ -349,14 +282,8 @@ PARTES: dict[str, list[Parte]] = {
             "Volume e custo",
             "Quanto crédito há, quanto custa, o spread, a inadimplência e o juro de cada "
             "modalidade, do cartão ao consignado.",
-            cartoes=[
-                "credito-pib",
-                "credito-taxa",
-                "credito-spread",
-                "inadimplencia",
-                "juro-cartao",
-            ],
-            graficos=["credito-pib", "credito-custo", "inadimplencia", "juros-modalidades"],
+            cartoes=["credito-pib", "credito-taxa", "inadimplencia", "juro-cartao"],
+            graficos=["credito-custo", "inadimplencia", "juros-modalidades"],
         ),
         Parte(
             "familias",
@@ -404,34 +331,25 @@ PARTES: dict[str, list[Parte]] = {
     "externo": [
         Parte(
             "conta-corrente",
-            "Conta corrente",
-            "O que entra e sai do país, em partes, os serviços e o investimento estrangeiro.",
-            cartoes=["transacoes-correntes"],
-            graficos=["conta-corrente", "conta-corrente-partes", "servicos-partes"],
+            "Contas externas e câmbio",
+            "O que entra e sai de dólares, as reservas e o câmbio real.",
+            cartoes=["transacoes-correntes", "reservas", "cambio-real"],
+            graficos=["conta-corrente", "reservas", "cambio-real"],
             tabelas=["balanco-pagamentos", "servicos-partes"],
         ),
         Parte(
             "comercio",
-            "Comércio exterior",
-            "O saldo da balança e o preço do que o Brasil vende.",
-            cartoes=["balanca"],
-            graficos=["balanca", "commodities"],
-        ),
-        Parte(
-            "setores",
-            "O que vende e compra",
-            "Commodities nas exportações, os setores de cada lado do comércio e o uso do que "
-            "se importa.",
-            cartoes=["commodities-exportacoes"],
-            graficos=["exportacoes-composicao", "importacoes-uso"],
-            tabelas=["exportacoes-setores", "importacoes-setores", "importacoes-uso"],
-        ),
-        Parte(
-            "produtos",
-            "Principais produtos",
-            "Petróleo, soja, minério: os produtos que mais pesam na venda e na compra.",
-            cartoes=["maior-exportacao"],
-            tabelas=["exportacoes-produtos", "importacoes-produtos"],
+            "Comércio: o que se vende e se compra",
+            "O saldo da balança, o preço das commodities e os produtos e setores.",
+            cartoes=["balanca", "commodities-exportacoes", "maior-exportacao"],
+            graficos=["balanca", "commodities", "exportacoes-composicao"],
+            tabelas=[
+                "exportacoes-setores",
+                "importacoes-setores",
+                "importacoes-uso",
+                "exportacoes-produtos",
+                "importacoes-produtos",
+            ],
         ),
         Parte(
             "parceiros",
@@ -441,13 +359,6 @@ PARTES: dict[str, list[Parte]] = {
             graficos=["exportacoes-destinos"],
             tabelas=["parceiros"],
         ),
-        Parte(
-            "reservas-cambio",
-            "Reservas e câmbio real",
-            "As reservas internacionais e se o real está caro ou barato.",
-            cartoes=["reservas", "cambio-real"],
-            graficos=["reservas", "cambio-real"],
-        ),
     ],
     "fiscal": [
         Parte(
@@ -456,13 +367,13 @@ PARTES: dict[str, list[Parte]] = {
             "Dívida bruta e líquida, o que o mercado projeta, de que ela é feita, quanto "
             "custa e quando vence.",
             cartoes=["dbgg", "dlsp", "divida-selic", "juro-implicito"],
-            graficos=["divida", "divida-fatores", "divida-indexador", "divida-vencimento"],
+            graficos=["divida", "divida-fatores", "divida-indexador"],
             veja=[
                 Elo(
-                    endereco=EFEITO_DA_SELIC,
+                    endereco="#juros/efeito",
                     titulo="Efeito da Selic",
                     resumo="Quanto a dívida muda com 1 ponto de Selic, nas contas do BC.",
-                )
+                ),
             ],
         ),
         Parte(
@@ -492,19 +403,31 @@ PARTES: dict[str, list[Parte]] = {
     "impostos": [
         Parte(
             "arrecadacao",
-            "Arrecadação federal",
-            "Quanto a Receita arrecada mês a mês, de quais tributos, e contra o previsto.",
-            cartoes=["arrecadacao-12m", "arrecadacao-real", "arrecadacao-pib"],
+            "Arrecadação",
+            "Quanto a Receita arrecada, de que tributos, por estado e por setor.",
+            cartoes=["arrecadacao-12m", "arrecadacao-real", "arrecadacao-pib", "fpe-fpm-12m"],
             graficos=["arrecadacao-12m", "arrecadacao-tributos"],
-            tabelas=["arrecadacao-tributos", "arrecadacao-previsto"],
+            tabelas=[
+                "arrecadacao-tributos",
+                "arrecadacao-previsto",
+                "arrecadacao-estados",
+                "fpe-fpm-estados",
+                "arrecadacao-setores",
+            ],
         ),
         Parte(
-            "por-estado",
-            "Por estado e por setor",
-            "De onde vem a arrecadação federal, cada estado e cada setor, e o que volta aos "
-            "estados no FPE e no FPM.",
-            cartoes=["fpe-fpm-12m"],
-            tabelas=["arrecadacao-estados", "fpe-fpm-estados", "arrecadacao-setores"],
+            "carga",
+            "Carga tributária e quem paga",
+            "Quanto se cobra, sobre o quê, e o Brasil contra os outros países.",
+            cartoes=["carga-tributaria", "carga-consumo", "ir-pessoas", "imposto-lucro"],
+            graficos=["carga-tributaria", "carga-composicao", "imposto-lucro"],
+            tabelas=[
+                "carga-paises",
+                "carga-bases-paises",
+                "quem-paga-irpf",
+                "quem-paga-retido",
+                "imposto-lucro-paises",
+            ],
         ),
         Parte(
             "reforma",
@@ -522,24 +445,6 @@ PARTES: dict[str, list[Parte]] = {
                 "reforma-regimes",
             ],
             extras=["simulador-reforma"],
-        ),
-        Parte(
-            "carga",
-            "Carga tributária",
-            "Quanto do PIB vai para impostos, quem arrecada, sobre o que se cobra (renda, "
-            "consumo, salário) e como o Brasil se compara, também no crescimento.",
-            cartoes=["carga-tributaria", "carga-consumo", "ir-pessoas"],
-            graficos=["carga-tributaria", "carga-composicao", "carga-esferas", "carga-crescimento"],
-            tabelas=["carga-paises", "carga-bases-paises"],
-        ),
-        Parte(
-            "quem-paga",
-            "Quem paga",
-            "O Imposto de Renda por faixa de quem declara, o retido na fonte e o imposto das "
-            "empresas.",
-            cartoes=["imposto-lucro"],
-            graficos=["imposto-lucro"],
-            tabelas=["quem-paga-irpf", "quem-paga-retido", "imposto-lucro-paises"],
         ),
         Parte(
             "gasto-tributario",
@@ -564,7 +469,7 @@ PARTES: dict[str, list[Parte]] = {
             "Inflação, Selic e dólar",
             "O que o mercado espera e como a aposta mudou.",
             cartoes=["focus-ipca-2026", "focus-selic-2027", "focus-câmbio-2026"],
-            graficos=["ipca-focus-fmi", "focus-ipca", "focus-selic", "focus-câmbio"],
+            graficos=["ipca-focus-fmi", "focus-selic", "focus-câmbio"],
         ),
         Parte(
             "focus",
@@ -590,83 +495,67 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "divida",
             "A dívida se sustenta?",
-            "O primário que estabiliza a dívida, o juro contra o crescimento, o leque e a dívida "
-            "se cada crise do passado se repetisse agora.",
+            "O primário que estabiliza a dívida, o juro contra o crescimento e o leque de "
+            "trajetórias.",
             cartoes=[
                 "primario-estabiliza",
                 "divida-sobe-em-5-anos",
                 "juro-menos-crescimento",
                 "juro-da-divida",
             ],
-            graficos=["divida-leque", "primario-necessario", "juro-crescimento", "estresse-divida"],
-            tabelas=["primario-conforme-o-juro", "elasticidades-da-divida", "estresse-episodios"],
+            graficos=["divida-leque", "primario-necessario", "juro-crescimento"],
+            tabelas=["primario-conforme-o-juro", "elasticidades-da-divida"],
         ),
         Parte(
             "custo",
-            "Custo e rolagem da dívida",
-            "Quanto se paga de juros, quanto da receita eles levam e quanto vence logo.",
+            "Custo, rolagem e crises",
+            "Quanto se paga de juros, quanto vence logo e a dívida se cada crise se repetisse.",
             cartoes=[
-                "juros-em-reais",
                 "juros-sobre-receita",
                 "vence-em-12-meses",
+                "juros-em-reais",
                 "prazo-da-divida",
             ],
-            graficos=["juros-sobre-receita", "vence-em-12-meses"],
+            graficos=["juros-sobre-receita", "vence-em-12-meses", "estresse-divida"],
+            tabelas=["estresse-episodios"],
         ),
         Parte(
             "juridico",
-            "Riscos fiscais: Justiça, Previdência e estados",
-            "Ações na Justiça, precatórios, governança, o INSS até 2100, o envelhecimento e os "
-            "estados perto dos limites da lei.",
+            "Justiça, Previdência e estados",
+            "Ações na Justiça, precatórios, o INSS até 2100 e os estados perto dos limites da lei.",
             cartoes=[
                 "acoes-perda-provavel",
                 "sentencas-pagas",
                 "inss-deficit-2060",
-                "idosos-por-100",
                 "estados-no-limite",
             ],
             graficos=["acoes-judiciais", "sentencas-judiciais", "inss-ate-2100"],
-            tabelas=["riscos-fiscais-uniao", "estados-no-limite", "governanca"],
+            tabelas=["riscos-fiscais-uniao", "estados-no-limite"],
             veja=[
                 Elo(
                     endereco="#estados/limites",
                     titulo="Estados › Perto dos limites",
                     resumo="Os 27 estados contra os limites da lei, com a nota CAPAG.",
-                )
+                ),
             ],
         ),
         Parte(
             "mercado-externo",
-            "Mercado e contas externas",
-            "Volatilidade, juro real contra os EUA, nota de crédito, reservas e dívida externa.",
-            cartoes=[
-                "juro-real-brasil-eua",
-                "vol-dolar",
-                "queda-ibovespa",
-                "nota-de-credito",
-                "reservas-cobertura",
-                "divida-externa-liquida",
-                "swaps-cambiais",
-            ],
-            graficos=[
-                "juro-real-brasil-eua",
-                "vol-dolar",
-                "queda-ibovespa",
-                "cambio-real",
-                "nota-de-credito",
-                "reservas-cobertura",
-            ],
-        ),
-        Parte(
-            "bancos",
-            "Bancos e energia",
-            "Atrasos no crédito, o capital dos bancos e os reservatórios das hidrelétricas.",
-            cartoes=["credito-atrasos", "basileia", "reservatorios"],
-            graficos=["credito-atrasos", "basileia", "reservatorios"],
+            "Mercado, contas externas e bancos",
+            "O juro real contra o dos EUA, a nota de crédito, as reservas e o capital dos bancos.",
+            cartoes=["juro-real-brasil-eua", "nota-de-credito", "reservas-cobertura", "basileia"],
+            graficos=["juro-real-brasil-eua", "nota-de-credito", "basileia"],
         ),
     ],
 }
 
+
+MAXIMO_DE_PARTES = 5
+MAXIMO_DE_CARTOES = 4
+MAXIMO_DE_GRAFICOS = 3
+"""O orçamento de atenção (Caio, 16/11/2026): por assunto, até cinco partes; por parte, até
+quatro números e três gráficos à vista. Tabela não tem teto: fica guardada atrás do clique.
+Peça que a seção calcula e não está em `PARTES` sai da tela (o builder avisa)."""
 
 # Estados tem peças próprias (mapa, ranking, ficha, duas métricas), montadas no navegador:
 # as partes dizem só o nome e o resumo, e o site sabe o que vai em cada uma (Caio,
@@ -708,7 +597,7 @@ def esperados(secao_id: str) -> dict[str, set[str]]:
 
 
 def aplicar(secao: Secao) -> list[str]:
-    """Põe as subcategorias na seção; devolve o que ficou sem lugar (foi para "Outros").
+    """Põe as subcategorias na seção e tira dela o que não tem parte; devolve o que saiu.
 
     Id listado que a seção não trouxe nesta rodada é ignorado, e parte que fica vazia some."""
     partes = PARTES.get(secao.id)
@@ -752,16 +641,18 @@ def aplicar(secao: Secao) -> list[str]:
             )
     sobra = {k: [i for i in tem[k] if i not in usados[k]] for k in tem}
     extras_sobrando = [e for e in extras_da_secao if not any(e in s.extras for s in subcategorias)]
-    if any(sobra.values()) or extras_sobrando:
+    # O que não tem parte sai da tela (orçamento de atenção, 16/11/2026): a seção continua
+    # calculando, o builder avisa, e a peça volta quando ganhar lugar numa parte.
+    secao.cartoes = [c for c in secao.cartoes if c.id in usados["cartoes"]]
+    secao.graficos = [g for g in secao.graficos if g.id in usados["graficos"]]
+    secao.tabelas = [t for t in secao.tabelas if t.id in usados["tabelas"]]
+    if extras_sobrando:
         subcategorias.append(
             Subcategoria(
                 id="outros",
                 titulo="Outros",
                 resumo="O que ainda não ganhou lugar nas outras partes.",
                 extras=extras_sobrando,
-                cartoes=sobra["cartoes"],
-                graficos=sobra["graficos"],
-                tabelas=sobra["tabelas"],
             )
         )
     secao.subcategorias = subcategorias

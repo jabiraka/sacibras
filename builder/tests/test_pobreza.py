@@ -251,18 +251,19 @@ def ctx(monkeypatch: pytest.MonkeyPatch) -> Contexto:
 
 def test_montar_poe_tudo_numa_parte(ctx: Contexto) -> None:
     secao = pobreza.montar(ctx)
-    assert organizacao.aplicar(secao) == []
+    cartoes = {c.id: c for c in secao.cartoes}  # antes do corte: a conta de todos
+    graficos = list(secao.graficos)
+    fora = organizacao.aplicar(secao)  # o orçamento de atenção tira da tela o que não tem parte
+    assert "c-lenha" in fora and "c-pobreza" not in fora
     assert [s.id for s in secao.subcategorias] == [
         "linha-de-pobreza",
-        "fome",
-        "saneamento",
         "desigualdade",
         "quem-ganha-mais",
         "diferencas",
+        "saneamento",
     ]
-    assert [c.id for c in secao.cartoes[:4]] == ["pobreza", "fome", "esgoto", "gini"]
+    assert {"pobreza", "fome", "esgoto", "gini"} <= {c.id for c in secao.cartoes}
     assert secao.graficos[0].id == "pobreza"
-    cartoes = {c.id: c for c in secao.cartoes}
     assert cartoes["gini"].valor == pytest.approx(0.511)
     assert cartoes["fatia-40-pobres"].valor == pytest.approx(40.0)
     assert cartoes["razao-10-40"].valor == pytest.approx(40.3 / 40.0, abs=1e-3)
@@ -288,7 +289,7 @@ def test_montar_poe_tudo_numa_parte(ctx: Contexto) -> None:
     san = next(g for g in secao.graficos if g.id == "saneamento")
     assert [li.valor for li in san.linhas] == [99.0, 90.0]
     assert all(len(c.detalhe) <= 60 for c in secao.cartoes)
-    gini = next(g for g in secao.graficos if g.id == "gini")
+    gini = next(g for g in graficos if g.id == "gini")
     antiga = next(s for s in gini.series if s.id == "pnad")
     assert antiga.pontos[-1][0] == date(2011, 1, 1)  # a PNAD antiga para onde a Contínua começa
     estados = next(t for t in secao.tabelas if t.id == "pobreza-estados")

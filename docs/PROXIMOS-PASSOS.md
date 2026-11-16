@@ -37,20 +37,37 @@ sustenta?, e na pergunta da dívida); o investimento e a poupança do Brasil con
 Latina, os emergentes e os avançados (FMI; Atividade › Investimento e poupança, e nas
 perguntas do juro e do crescimento); e "o método do Jabs" saiu das fontes e notas.
 
+Por último, o corte dos Dados pelo orçamento de atenção: as partes foram de 64 para 49
+(nenhum assunto com mais de 5; nenhuma parte com mais de 4 números e 3 gráficos), os
+cartões de 158 para 141 e os gráficos de 144 para 114. O que saiu da tela continua sendo
+calculado (volta pondo o id numa parte): em Atividade, a confiança do consumidor, o PIB em
+linhas pela oferta e pela demanda e a demanda privada em gráfico; em Trabalho, desalento e
+procura longa; em Demografia, a projeção da ONU, a mortalidade infantil e os idosos em
+gráfico; em Pobreza, a parte da fome virou "Pobreza e fome" e saíram lenha, aluguel, a
+razão 10/40 e seis outros; em Juros, o juro real entrou em "Selic e juro real"; em Setor
+externo, seis partes viraram três; em Impostos, seis viraram quatro; em Riscos, seis
+viraram cinco e saíram a bolsa, os swaps, a dívida externa líquida, os atrasos do crédito,
+os reservatórios e a tabela de governança.
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:
 
-1. **Enxugar os Dados**: juntar assuntos (13 para 9), Riscos de 6 partes para 3 e o corte
-   de cartões e gráficos pelo orçamento de atenção (156 e 142 hoje). Pobreza, Riscos,
-   Impostos e Juros primeiro.
+1. **Juntar assuntos (13 para 9)**: Trabalho + Pobreza, Crédito dentro de Juros, Mercados +
+   Setor externo, Demografia + Produtividade + educação em "Longo prazo", Previsões para o
+   Laboratório. Não é só o menu: cada assunto é um arquivo e um endereço (`#pobreza`), e a
+   busca, as perguntas, a agenda e o "novo desde a última visita" apontam para eles. O
+   caminho: um passo final no `construir.py` que monta os assuntos juntando os arquivos das
+   seções, e os endereços antigos redirecionando. É o que derruba de verdade o total de
+   cartões (hoje 141; a meta de 70 só sai com a junção).
 2. **O título do gráfico dizendo o que ele mostra hoje**, escrito pelo builder.
 3. **Laboratório, leva 1**: juro neutro e hiato por vários métodos, regra de Taylor, estudo
    de evento do Copom (a surpresa já sai do `saiu.py`), reação fiscal, de onde veio o PIB por
    habitante e a convergência contra os EUA. Cada peça com o Caio olhando.
-4. **A árvore do diagnóstico de crescimento** na pergunta "Por que o Brasil cresce pouco?".
-5. **Contador de acesso** por pergunta, parte e termo de busca, sem cookie: falta o Caio
-   escolher o serviço (ver "Espera o Caio").
+4. **A árvore do diagnóstico de crescimento** na pergunta "Por que o Brasil cresce pouco?",
+   e o crédito direcionado na do juro alto.
+5. **Contador de acesso nosso**: espera o projeto Supabase do sacibras (ver "Espera o Caio").
+6. **Estados e Brasil no mundo** com 6 métricas na lista e o resto em "mais métricas".
 
 ## Releituras com prazo
 

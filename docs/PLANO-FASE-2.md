@@ -45,7 +45,8 @@ tema claro; formato brasileiro; bases separadas do finance_agent.
 **Uma regra nova, a do orçamento de atenção:**
 
 - Por tela, à vista: uma frase, até 4 números e um gráfico. O resto abre no clique.
-- Por assunto: até 4 partes; por parte, até 4 cartões e 3 gráficos.
+- Por assunto: até 5 partes (eram até 4 no plano; Riscos e Pobreza pediram cinco); por
+  parte, até 4 cartões e 3 gráficos.
 - Nos Dados, **entra um, sai um**: peça nova diz qual peça velha sai.
 - Todo gráfico tem no título o que ele mostra hoje, escrito pelo builder a partir do dado
   ("Inflação acima do teto da meta há 5 meses"), e não só o nome da série.

@@ -50,7 +50,7 @@ def _grafico(id: str) -> Grafico:
     )
 
 
-def test_aplicar_poe_cada_peca_numa_parte_e_o_resto_em_outros() -> None:
+def test_aplicar_poe_cada_peca_numa_parte_e_tira_o_resto_da_tela() -> None:
     secao = Secao(
         id="inflacao",
         titulo="Inflação",
@@ -61,11 +61,12 @@ def test_aplicar_poe_cada_peca_numa_parte_e_o_resto_em_outros() -> None:
     )
     sem_lugar = organizacao.aplicar(secao)
     partes = {s.id: s for s in secao.subcategorias}
-    assert list(partes) == ["ipca", "nucleos", "grupos", "outros"]  # "outros-indices" vazia some
+    assert list(partes) == ["ipca", "nucleos", "grupos"]  # "outros-indices" vazia some
     assert partes["ipca"].cartoes == ["ipca-12m"] and partes["ipca"].graficos == ["ipca-12m"]
     assert partes["grupos"].tabelas == ["ipca-grupos"] and partes["grupos"].cartoes == []
-    assert partes["outros"].cartoes == ["novo"]
+    # O que não tem parte sai da tela, e o builder avisa.
     assert sem_lugar == ["c-novo"]
+    assert [c.id for c in secao.cartoes] == ["ipca-12m", "nucleos-12m"]
 
 
 def test_aplicar_leva_o_simulador_para_a_parte_dele() -> None:
@@ -154,3 +155,11 @@ def test_a_pagina_inicial_so_aponta_para_pecas_que_existem() -> None:
     """Os números e gráficos da entrada moram numa parte do assunto (senão somem calados)."""
     cartoes = {c for s in organizacao.PARTES for c in organizacao.esperados(s)["cartoes"]}
     assert set(construir.RESUMO) <= cartoes
+
+
+def test_o_orcamento_de_atencao_das_partes() -> None:
+    for assunto, partes in organizacao.PARTES.items():
+        assert len(partes) <= organizacao.MAXIMO_DE_PARTES, assunto
+        for p in partes:
+            assert len(p.cartoes) <= organizacao.MAXIMO_DE_CARTOES, (assunto, p.id)
+            assert len(p.graficos) <= organizacao.MAXIMO_DE_GRAFICOS, (assunto, p.id)

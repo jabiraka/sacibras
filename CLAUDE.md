@@ -116,7 +116,10 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   ninguém sabe oq é isso"*): o método se descreve ("curva zero por bootstrap"), sem "Jabs".
 - **Orçamento de atenção** (Caio, 16/11/2026: *"os humanos não conseguem absorver muitas
   informações"*): à vista, uma frase, até 4 números e um gráfico por tela; o resto abre no
-  clique. Nos Dados, entra um, sai um.
+  clique. Nos Dados, o teto está em `organizacao.py` e em teste: **até 5 partes por assunto
+  e, por parte, até 4 números e 3 gráficos** (tabela não tem teto: fica atrás do clique).
+  Entra um, sai um. **Peça que a seção calcula e não está em `PARTES` sai da tela** (não há
+  mais "Outros" para cartão, gráfico ou tabela); o builder avisa quantas ficaram de fora.
 - **Página inicial enxuta, o resto abre no clique** (Caio, 14/11/2026: *"muitas métricas na
   página inicial… deixar só as informações essenciais no início e deixar o usuário ir clicando
   pra abrir"*). Na entrada: quatro números (`RESUMO` em `construir.py`), o "Saiu por último",
@@ -140,11 +143,11 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
   muitas informações em uma página [...] classifique melhor em categorias, crie
   subcategorias"*). Tudo mora em `builder/src/sacibras/organizacao.py`: `CATEGORIAS` agrupa os
-  assuntos (menu e entrada) e `PARTES` divide cada assunto em 3 a 6 partes. O assunto abre
+  assuntos (menu e entrada) e `PARTES` divide cada assunto em 3 a 5 partes. O assunto abre
   numa visão geral (quatro números, a lista das partes e o gráfico principal); cada parte abre
   numa tela só dela (`#inflacao/nucleos`), com a trilha em cima e as outras partes embaixo.
   **Cartão, gráfico ou tabela novo ganha lugar numa parte** em `PARTES`: o que não estiver lá
-  cai em "Outros" e o builder avisa ("sem parte em organizacao.py"). Estados tem partes
+  não aparece, e o builder avisa ("peças fora da tela"). Estados tem partes
   próprias (`PARTES_ESTADOS`: mapa e ranking, um estado por dentro, duas métricas, tabela;
   Caio, 14/11/2026: *"diminua a tela ao abrir por estado"*), e a ficha do estado mostra um
   bloco de cada vez, em abas. Brasil no mundo tem tela própria, sem partes.

@@ -264,7 +264,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
             if isinstance(secao, Secao):
                 sem_lugar = organizacao.aplicar(secao)
                 if sem_lugar:
-                    print(f"  aviso: {id}: sem parte em organizacao.py: {', '.join(sem_lugar)}")
+                    print(f"  aviso: {id}: {len(sem_lugar)} peças fora da tela (sem parte)")
                 for c in secao.cartoes:
                     if len(c.detalhe) > DETALHE_MAXIMO:
                         print(f"  aviso: {id}: detalhe longo em {c.id} ({len(c.detalhe)} letras)")
