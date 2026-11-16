@@ -126,6 +126,8 @@ class Grafico(Modelo):
     """No eixo "meses", o nome do mês zero ("mês do primeiro corte")."""
     janela_anos: float | None = None
     """Quanto de história abre na tela (o resto fica atrás do botão "máx")."""
+    manchete: str = ""
+    """O que o gráfico mostra hoje, em uma frase (`manchetes.py`); a tela a põe sob o título."""
     fonte: str
     nota: str = ""
     """O método em uma frase, quando há conta nossa ou previsão."""
@@ -774,6 +776,8 @@ class Painel(Modelo):
     secoes: list[ItemSecao]
     categorias: list[Categoria] = Field(default_factory=list)
     perguntas: list[ItemPergunta] = Field(default_factory=list)
+    antigos: dict[str, str] = Field(default_factory=dict)
+    """Endereço de assunto que deixou de existir → o assunto em que ele entrou."""
     fontes: list[EstadoFonte] = Field(default_factory=list)
 
 

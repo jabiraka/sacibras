@@ -4156,3 +4156,13 @@ table.dados.limites-tabela td {
   color: var(--tinta);
   text-wrap: pretty;
 }
+
+/* O que o gráfico mostra hoje, sob o título (manchetes.py). */
+.grafico-manchete {
+  margin: 4px 0 2px;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--tinta);
+  font-weight: 500;
+  text-wrap: pretty;
+}

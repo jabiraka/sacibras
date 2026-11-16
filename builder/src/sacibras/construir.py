@@ -19,7 +19,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras import licencas, organizacao, perguntas, rede, saiu
+from sacibras import licencas, manchetes, organizacao, perguntas, rede, saiu
 from sacibras.catalogo import SGS
 from sacibras.schema import (
     AoVivo,
@@ -36,41 +36,35 @@ from sacibras.schema import (
 )
 from sacibras.secoes import (
     atividade,
-    credito,
-    demografia,
     estados,
-    externo,
     fiscal,
     impostos,
     inflacao,
-    juros,
-    mercados,
+    juntos,
     mundo,
-    pobreza,
     previsoes,
     riscos,
-    trabalho,
 )
 from sacibras.secoes.base import Contexto
 
 # A ordem em que as seções aparecem na página.
 ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("atividade", "Atividade", atividade.montar),
-    ("trabalho", "Trabalho", trabalho.montar),
+    ("trabalho", "Trabalho e renda", juntos.trabalho),
     ("inflacao", "Inflação", inflacao.montar),
-    ("juros", "Juros e Copom", juros.montar),
-    ("credito", "Crédito", credito.montar),
-    ("mercados", "Mercados", mercados.montar),
-    ("externo", "Setor externo", externo.montar),
+    ("juros", "Juros e crédito", juntos.juros_e_credito),
+    ("externo", "Exterior e mercados", juntos.exterior),
     ("fiscal", "Contas públicas e dívida", fiscal.montar),
     ("impostos", "Impostos", impostos.montar),
+    ("longo-prazo", "Longo prazo", juntos.longo_prazo),
     ("estados", "Estados", estados.montar),
-    ("demografia", "Demografia", demografia.montar),
-    ("pobreza", "Pobreza e condições de vida", pobreza.montar),
     ("mundo", "Brasil no mundo", mundo.montar),
     ("previsoes", "Previsões", previsoes.montar),
     ("riscos", "Riscos", riscos.montar),
 ]
+"""Nove assuntos (eram 13 até 16/11/2026: Pobreza entrou em Trabalho, Crédito em Juros,
+Mercados em Exterior, e Demografia virou Longo prazo, com a produtividade e a escola), os
+dois comparadores (Estados e Brasil no mundo) e as Previsões, que são do Laboratório."""
 
 # Os números da página inicial, na ordem; cada um nasce no assunto que o explica.
 # Decisão do Caio (14/11/2026): só o essencial na entrada, o resto abre no clique. Em
@@ -98,14 +92,16 @@ def manchete(texto: str) -> str:
 
 FONTES = {
     "atividade": "IBGE (SIDRA)",
-    "trabalho": "IBGE (PNAD Contínua)",
+    "trabalho": "IBGE (PNAD Contínua e anual), Ipea, Receita Federal (IRPF), FAO e Banco Mundial",
     "inflacao": "Banco Central (SGS)",
-    "juros": "Banco Central (Copom e Focus)",
-    "credito": "Banco Central (crédito)",
-    "mercados": "IPEADATA, Banco Central, Tesouro Nacional e FMI (bolsa, câmbio, títulos e ouro)",
-    "externo": "Banco Central (setor externo)",
+    "juros": "Banco Central (Copom, Focus e crédito) e Tesouro Nacional",
+    "externo": "Banco Central (setor externo), Comex Stat, IPEADATA e FMI",
     "fiscal": "Banco Central (estatísticas fiscais) e Tesouro Nacional (RTN)",
     "impostos": "Receita Federal (arrecadação e gastos tributários), OCDE e FMI (impostos)",
+    "longo-prazo": (
+        "IBGE (Projeções da População, PNAD e Contas Nacionais), Penn World Table e Tesouro "
+        "Nacional (RTN)"
+    ),
     "estados": (
         "Tesouro Nacional (SICONFI e CAPAG), IBGE (Contas Regionais, PNAD Contínua e IPCA), "
         "Banco Central (IBC-R e crédito por UF) e Comex Stat"
@@ -113,8 +109,6 @@ FONTES = {
     "mundo": "FMI (WEO), BIS, OCDE e Tesouro Nacional",
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",
-    "demografia": "IBGE (Projeções da População e PNAD) e Tesouro Nacional (RTN)",
-    "pobreza": "IBGE (PNAD Contínua anual), Ipea, Receita Federal (IRPF), FAO e Banco Mundial",
 }
 
 
@@ -263,6 +257,9 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     print(f"  aviso: {id}: contas não gravadas ({erro})")
             if isinstance(secao, Secao):
                 sem_lugar = organizacao.aplicar(secao)
+                for g in secao.graficos:
+                    if not g.manchete:
+                        g.manchete = manchetes.do_grafico(g)
                 if sem_lugar:
                     print(f"  aviso: {id}: {len(sem_lugar)} peças fora da tela (sem parte)")
                 for c in secao.cartoes:
@@ -347,6 +344,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
         secoes=[ItemSecao(id="resumo", titulo="Resumo", arquivo="resumo.json", ok=True), *itens],
         fontes=fontes,
         categorias=organizacao.CATEGORIAS,
+        antigos=juntos.ANTIGOS,
     )
     _gravar(saida, "painel.json", painel)
     return painel

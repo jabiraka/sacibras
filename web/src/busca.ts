@@ -387,7 +387,7 @@ export function sugestoes(
 }
 
 /** Os assuntos a oferecer quando nada foi achado: os mais procurados que existirem. */
-const ASSUNTOS_SUGERIDOS = ["#inflacao", "#juros", "#trabalho", "#atividade", "#mercados", "#fiscal"];
+const ASSUNTOS_SUGERIDOS = ["#inflacao", "#juros", "#trabalho", "#atividade", "#externo", "#fiscal"];
 
 function assuntosSugeridos(itens: Indexado[]): Indexado[] {
   const assuntos = itens.filter((i) => i.o === "Assunto");

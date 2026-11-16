@@ -178,21 +178,21 @@ PERGUNTAS: tuple[Definicao, ...] = (
         "Porque cada trabalhador produz quase o mesmo que há décadas. O país cresceu pondo "
         "mais gente para trabalhar, e isso está acabando; investe menos que os países "
         "parecidos, e a eficiência parou. Tudo isso os dados mostram com clareza.",
-        (("atividade", "pib-4t"), ("atividade", "produtividade"), ("atividade", "ptf-eua")),
+        (("atividade", "pib-4t"), ("longo-prazo", "produtividade"), ("longo-prazo", "ptf-eua")),
         (
             Bloco(
                 "A eficiência parou",
                 "A eficiência (PTF) é o quanto se produz com o mesmo trabalho e as mesmas "
                 "máquinas. É ela que separa os países ricos dos outros.",
-                ("atividade", "ptf-brasil"),
-                (("atividade", "ptf-eua"), ("atividade", "ptf-desde-o-pico")),
+                ("longo-prazo", "ptf-brasil"),
+                (("longo-prazo", "ptf-eua"), ("longo-prazo", "ptf-desde-o-pico")),
             ),
             Bloco(
                 "Mais gente, não mais produto por pessoa",
                 "O crescimento pode vir de mais gente ocupada ou de cada um produzir mais. "
                 "Só o segundo aumenta a renda de cada pessoa.",
-                ("atividade", "crescimento-decomposto"),
-                (("atividade", "produtividade"),),
+                ("longo-prazo", "crescimento-decomposto"),
+                (("longo-prazo", "produtividade"),),
             ),
             Bloco(
                 "Investe-se pouco",
@@ -205,15 +205,15 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 "A população que trabalha para de crescer",
                 "Com menos filhos por mulher, a população de 15 a 64 anos cresce cada vez "
                 "menos: daqui para a frente, crescer depende de produtividade.",
-                ("demografia", "crescimento-15-64"),
-                (("demografia", "populacao-15-64"), ("demografia", "fecundidade")),
+                ("longo-prazo", "crescimento-15-64"),
+                (("longo-prazo", "populacao-15-64"), ("longo-prazo", "fecundidade")),
             ),
             Bloco(
                 "A escola",
                 "Mais anos de estudo, e estudo melhor, aumentam o que cada trabalhador "
                 "produz e ganha.",
-                ("pobreza", "renda-escolaridade"),
-                (("pobreza", "anos-de-estudo"),),
+                ("longo-prazo", "renda-escolaridade"),
+                (("longo-prazo", "anos-de-estudo"),),
             ),
         ),
         ("pib baixo", "crescimento econômico", "produtividade", "renda média"),
@@ -324,8 +324,8 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 "O topo da renda",
                 "Quanto da renda e dos dividendos declarados à Receita fica com a faixa "
                 "mais alta de quem declara.",
-                ("pobreza", "irpf-topo-tempo"),
-                (("pobreza", "irpf-topo-renda"), ("pobreza", "irpf-topo-dividendos")),
+                ("trabalho", "irpf-topo-tempo"),
+                (("trabalho", "irpf-topo-renda"), ("trabalho", "irpf-topo-dividendos")),
             ),
             Bloco(
                 "O que muda com a reforma",
@@ -403,43 +403,43 @@ PERGUNTAS: tuple[Definicao, ...] = (
         "Os mais pobres, pelas pesquisas do IBGE: desde 2012 a renda deles cresceu mais que a"
         " dos mais ricos. Mas o topo aparece mal nas pesquisas, e pelos dados da Receita a "
         "concentração lá em cima segue muito alta.",
-        (("pobreza", "fatia-10-ricos"), ("pobreza", "fatia-40-pobres"), ("pobreza", "pobreza")),
+        (("trabalho", "fatia-10-ricos"), ("trabalho", "fatia-40-pobres"), ("trabalho", "pobreza")),
         (
             Bloco(
                 "Quanto cresceu a renda de cada grupo",
                 "A renda dos 40 % de menor renda, do meio e dos 10 % de maior renda, desde 2012.",
-                ("pobreza", "renda-por-grupo"),
+                ("trabalho", "renda-por-grupo"),
             ),
             Bloco(
                 "Quem fica com quanto",
                 "A parte da renda total que vai para cada grupo.",
-                ("pobreza", "fatias"),
-                (("pobreza", "fatia-10-ricos"), ("pobreza", "fatia-40-pobres")),
+                ("trabalho", "fatias"),
+                (("trabalho", "fatia-10-ricos"), ("trabalho", "fatia-40-pobres")),
             ),
             Bloco(
                 "O topo que a pesquisa não vê",
                 "Pesquisa de domicílio capta mal as rendas mais altas; a declaração do "
                 "imposto de renda mostra esse pedaço.",
-                ("pobreza", "irpf-topo-tempo"),
-                (("pobreza", "irpf-topo-renda"), ("pobreza", "fatia-1-rico")),
+                ("trabalho", "irpf-topo-tempo"),
+                (("trabalho", "irpf-topo-renda"), ("trabalho", "fatia-1-rico")),
             ),
             Bloco(
                 "A pobreza",
                 "Quantos vivem abaixo da linha de pobreza e da de extrema pobreza do "
                 "Banco Mundial.",
-                ("pobreza", "pobreza"),
-                (("pobreza", "pobreza"), ("pobreza", "extrema-pobreza")),
+                ("trabalho", "pobreza"),
+                (("trabalho", "pobreza"), ("trabalho", "extrema-pobreza")),
             ),
             Bloco(
                 "Entre homens e mulheres, brancos e negros",
                 "Quanto cada grupo ganha para cada R$ 100 do grupo que ganha mais.",
-                ("pobreza", "diferencas"),
+                ("trabalho", "diferencas"),
             ),
             Bloco(
                 "O Brasil e os outros países",
                 "O Gini vai de 0 (todos com a mesma renda) a 1 (tudo com um só).",
-                ("pobreza", "gini-paises"),
-                (("pobreza", "gini"),),
+                ("trabalho", "gini-paises"),
+                (("trabalho", "gini"),),
             ),
         ),
         ("desigualdade", "distribuição de renda", "pobreza", "ricos e pobres"),
@@ -492,7 +492,7 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 "O dólar",
                 "Como a aposta dos analistas para o dólar no fim do ano mudou com o tempo.",
                 ("previsoes", "focus-câmbio"),
-                (("previsoes", "focus-câmbio-*"), ("mercados", "dolar")),
+                (("previsoes", "focus-câmbio-*"), ("externo", "dolar")),
             ),
             Bloco(
                 "A dívida",

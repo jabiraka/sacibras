@@ -216,6 +216,7 @@ export function montarGrafico(g: Grafico): HTMLElement {
   const cabeca = el("header", "grafico-cabeca");
   const titulos = el("div");
   titulos.append(el("h3", "", g.titulo));
+  if (g.manchete) titulos.append(el("p", "grafico-manchete", g.manchete));
   const sub = [g.subtitulo, g.unidade].filter(Boolean).join(" · ");
   titulos.append(el("p", "sub", sub));
   cabeca.append(titulos);

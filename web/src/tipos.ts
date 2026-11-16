@@ -18,6 +18,8 @@ export interface Grafico {
   id: string;
   titulo: string;
   subtitulo: string;
+  /** O que o gráfico mostra hoje, em uma frase, escrita pelo builder. */
+  manchete?: string;
   tipo: "linha" | "area" | "barras" | "empilhado" | "degrau" | "curva";
   /** No empilhado: o id da série que é a soma das barras, desenhada como linha por cima. */
   total?: string;
@@ -517,5 +519,7 @@ export interface Painel {
   secoes: ItemSecao[];
   categorias?: Categoria[];
   perguntas?: ItemPergunta[];
+  /** Assunto que deixou de existir → o assunto em que ele entrou. */
+  antigos?: Record<string, string>;
   fontes: { fonte: string; ok: boolean; detalhe: string }[];
 }

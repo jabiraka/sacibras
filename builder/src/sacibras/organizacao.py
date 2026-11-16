@@ -21,25 +21,20 @@ Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", 
 
 CATEGORIAS: list[Categoria] = [
     Categoria(
-        id="atividade-emprego",
-        titulo="Atividade e emprego",
-        secoes=["atividade", "trabalho", "pobreza", "demografia"],
+        id="atividade-emprego", titulo="Atividade e emprego", secoes=["atividade", "trabalho"]
     ),
+    Categoria(id="precos-juros", titulo="Preços e juros", secoes=["inflacao", "juros"]),
+    Categoria(id="contas-publicas", titulo="Contas públicas", secoes=["fiscal", "impostos"]),
     Categoria(
-        id="precos-juros",
-        titulo="Preços, juros e crédito",
-        secoes=["inflacao", "juros", "credito"],
+        id="exterior-longo-prazo",
+        titulo="Exterior, longo prazo e riscos",
+        secoes=["externo", "longo-prazo", "riscos"],
     ),
-    Categoria(
-        id="mercados-exterior",
-        titulo="Mercados e exterior",
-        secoes=["mercados", "externo", "mundo"],
-    ),
-    Categoria(
-        id="contas-publicas", titulo="Contas públicas", secoes=["fiscal", "impostos", "estados"]
-    ),
-    Categoria(id="adiante", titulo="O que vem pela frente", secoes=["previsoes", "riscos"]),
+    Categoria(id="comparar", titulo="Comparar", secoes=["estados", "mundo"]),
+    Categoria(id="laboratorio", titulo="Laboratório", secoes=["previsoes"]),
 ]
+"""Nove assuntos em quatro grupos, os dois comparadores e o Laboratório (16/11/2026), que
+por enquanto só tem as Previsões: o consenso do Focus, a estimativa do PIB e o simulador."""
 
 
 @dataclass(frozen=True)
@@ -86,32 +81,22 @@ PARTES: dict[str, list[Parte]] = {
             ],
             graficos=["investimento-paises", "poupanca-paises", "investimento-poupanca"],
         ),
-        Parte(
-            "produtividade",
-            "Produtividade e eficiência",
-            "Quanto cada trabalhador produz, a eficiência (PTF) e de onde veio o crescimento.",
-            cartoes=["produtividade", "produtividade-hora", "ptf-eua", "ptf-desde-o-pico"],
-            graficos=["crescimento-decomposto", "ptf-brasil", "ptf-paises"],
-            tabelas=["pwt-contabilidade"],
-            veja=[
-                Elo(
-                    endereco="#mundo/m-ptf",
-                    titulo="PTF no mundo",
-                    resumo=(
-                        "O Brasil ao lado de 120 países, e o produto por hora, o capital e o "
-                        "estudo de cada um."
-                    ),
-                ),
-            ],
-        ),
     ],
     "trabalho": [
         Parte(
             "desemprego",
             "Desemprego",
             "Desocupação, subutilização, desalento e quem procura há muito tempo.",
-            cartoes=["desocupacao", "subutilizacao"],
+            cartoes=["desocupacao", "subutilizacao", "participacao", "nivel-ocupacao"],
             graficos=["desocupacao", "desocupacao-fatores", "subutilizacao"],
+        ),
+        Parte(
+            "quem-trabalha",
+            "Carteira e informalidade",
+            "O emprego com carteira, quem trabalha sem ela e quanta gente está no mercado.",
+            cartoes=["emprego-formal", "informalidade"],
+            graficos=["emprego-formal", "informalidade", "participacao"],
+            tabelas=["emprego-setores", "trabalho-detalhe"],
         ),
         Parte(
             "renda",
@@ -123,84 +108,21 @@ PARTES: dict[str, list[Parte]] = {
             extras=["salario-minimo"],
         ),
         Parte(
-            "quem-trabalha",
-            "Quem trabalha",
-            "Emprego com carteira, setor a setor, informalidade e participação na força de "
-            "trabalho.",
-            cartoes=["emprego-formal", "informalidade", "participacao", "nivel-ocupacao"],
-            graficos=["emprego-formal", "informalidade", "participacao"],
-            tabelas=["emprego-setores", "trabalho-detalhe"],
-        ),
-    ],
-    "demografia": [
-        Parte(
-            "populacao",
-            "População",
-            "Quantos somos, a pirâmide etária, quem está em idade de trabalhar e a projeção "
-            "da ONU, com a faixa.",
-            cartoes=["populacao", "populacao-15-64", "idade-mediana"],
-            graficos=["piramide", "populacao", "crescimento-15-64"],
-            tabelas=["demografia-marcos"],
-        ),
-        Parte(
-            "nascimentos",
-            "Nascimentos e vida",
-            "Filhos por mulher, nascimentos, óbitos, esperança de vida e mortalidade infantil.",
-            cartoes=["fecundidade", "esperanca-de-vida", "mortalidade-infantil"],
-            graficos=["nascimentos-obitos", "fecundidade", "esperanca-de-vida"],
-        ),
-        Parte(
-            "envelhecimento",
-            "Envelhecimento e Previdência",
-            "Idosos para cada pessoa em idade de trabalhar, por estado e contra o mundo, e o "
-            "déficit do INSS, dos servidores e dos militares da União.",
-            cartoes=["idosos-por-100", "deficit-inss", "deficit-servidores-militares"],
-            graficos=["dependencia", "idosos-paises", "inss"],
-            tabelas=["demografia-estados", "previdencia-uniao"],
-        ),
-    ],
-    "pobreza": [
-        Parte(
             "linha-de-pobreza",
-            "Pobreza e fome",
-            "Quantos vivem abaixo da linha de pobreza, quantos passam fome e os programas sociais.",
-            cartoes=["pobreza", "extrema-pobreza", "fome", "bolsa-familia"],
-            graficos=["pobreza", "fome-pesquisas", "programas-sociais"],
-            tabelas=["pobreza-estados", "pobreza-fome"],
-        ),
-        Parte(
-            "desigualdade",
-            "Desigualdade",
-            "O Gini e quem fica com quanto da renda: os mais pobres, o meio e os mais ricos; "
-            "e o Gini do Brasil no mundo.",
-            cartoes=["gini", "fatia-10-ricos", "fatia-1-rico", "fatia-40-pobres"],
-            graficos=["renda-por-grupo", "fatias", "gini-paises"],
-            tabelas=["pobreza-decimos"],
+            "Pobreza e desigualdade",
+            "Quantos vivem abaixo da linha de pobreza e quem fica com quanto da renda.",
+            cartoes=["pobreza", "extrema-pobreza", "fatia-10-ricos", "fatia-40-pobres"],
+            graficos=["pobreza", "renda-por-grupo", "fatias"],
+            tabelas=["pobreza-estados", "pobreza-decimos", "pobreza-fome"],
         ),
         Parte(
             "quem-ganha-mais",
-            "O topo pelo Imposto de Renda",
-            "Renda, patrimônio e dividendos de quem declara, do pé ao topo, e o topo ano a ano.",
-            cartoes=["irpf-topo-renda", "irpf-topo-dividendos", "irpf-1-patrimonio"],
-            graficos=["irpf-topo-tempo"],
+            "O topo e as diferenças",
+            "A renda do topo pela Receita, o Brasil contra os outros países e as diferenças "
+            "entre grupos.",
+            cartoes=["irpf-topo-renda", "irpf-topo-dividendos", "fatia-1-rico", "gini"],
+            graficos=["irpf-topo-tempo", "diferencas", "gini-paises"],
             tabelas=["pobreza-irpf", "pobreza-centis"],
-        ),
-        Parte(
-            "diferencas",
-            "Sexo, cor, escola e idade",
-            "A renda do trabalho por sexo, cor, escolaridade e idade, e quem não sabe ler.",
-            cartoes=["mulheres-homens", "pretos-brancos", "anos-de-estudo", "analfabetismo"],
-            graficos=["diferencas", "renda-escolaridade", "analfabetismo"],
-            tabelas=["pobreza-escola-idade"],
-        ),
-        Parte(
-            "saneamento",
-            "A casa: água, esgoto, aluguel",
-            "Água, esgoto e lixo contra a meta de 2033, o esgoto tratado em cada estado, luz,"
-            " internet, fogão a lenha e quem mora de aluguel.",
-            cartoes=["agua", "esgoto", "lixo", "internet"],
-            graficos=["saneamento", "moradia"],
-            tabelas=["pobreza-saneamento", "pobreza-sinisa"],
         ),
     ],
     "inflacao": [
@@ -262,70 +184,30 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "curva",
-            "Juros dos títulos",
-            "A curva prefixada e a de juro real do Tesouro, prazo a prazo, contra o Focus.",
-            cartoes=["prefixado", "inclinacao", "juro-real-longo", "premio-curva"],
-            graficos=["curva-prefixada", "curva-real", "prefixado-decomposto"],
+            "Curva e inflação implícita",
+            "O juro travado para cada prazo e a inflação que os títulos embutem.",
+            cartoes=[
+                "prefixado",
+                "juro-real-longo",
+                "inflacao-implicita",
+                "inflacao-implicita-focus",
+            ],
+            graficos=["curva-prefixada", "prefixado-decomposto", "inflacao-titulos-focus"],
             tabelas=["titulos-por-prazo"],
         ),
         Parte(
-            "implicita",
-            "Inflação implícita",
-            "A inflação que os títulos embutem, contra o Focus e daqui a 5 anos.",
-            cartoes=["inflacao-implicita", "inflacao-implicita-focus", "implicita-a-termo"],
-            graficos=["inflacao-implicita", "inflacao-titulos-focus"],
-        ),
-    ],
-    "credito": [
-        Parte(
             "volume-custo",
-            "Volume e custo",
-            "Quanto crédito há, quanto custa, o spread, a inadimplência e o juro de cada "
-            "modalidade, do cartão ao consignado.",
+            "Crédito: quanto custa",
+            "O juro de quem toma emprestado, por modalidade, e quanto atrasa.",
             cartoes=["credito-pib", "credito-taxa", "inadimplencia", "juro-cartao"],
             graficos=["credito-custo", "inadimplencia", "juros-modalidades"],
         ),
         Parte(
             "familias",
-            "Dívida das famílias",
-            "Endividamento e quanto da renda vai para pagar dívida e juros.",
-            cartoes=[
-                "endividamento",
-                "comprometimento",
-                "comprometimento-juros",
-                "endividamento-sem-casa",
-            ],
-            graficos=["familias", "familias-juros", "familias-sem-casa"],
-        ),
-        Parte(
-            "imoveis",
-            "Imóveis",
-            "Juro e volume do financiamento imobiliário e o preço dos imóveis.",
-            cartoes=["imobiliario-taxa", "imobiliario-concessoes", "ivgr"],
-            graficos=["imobiliario-taxa", "imobiliario-concessoes", "ivgr"],
-        ),
-    ],
-    "mercados": [
-        Parte(
-            "bolsa",
-            "Bolsa",
-            "O Ibovespa em reais e em dólares.",
-            cartoes=["ibovespa", "ibovespa-dolar"],
-            graficos=["ibovespa", "ibovespa-dolar"],
-        ),
-        Parte(
-            "cambio",
-            "Câmbio",
-            "Dólar e euro.",
-            cartoes=["dolar", "euro"],
-            graficos=["dolar"],
-        ),
-        Parte(
-            "retornos",
-            "Quanto rendeu",
-            "R$ 100 aplicados em bolsa, dólar, CDI, poupança, Tesouro ou ouro, contra a inflação.",
-            graficos=["retornos-em-reais"],
-            tabelas=["variacoes"],
+            "Dívida das famílias e imóveis",
+            "Quanto as famílias devem, quanto da renda vai para parcelas e o crédito da casa.",
+            cartoes=["endividamento", "comprometimento", "imobiliario-taxa", "ivgr"],
+            graficos=["familias", "familias-juros", "ivgr"],
         ),
     ],
     "externo": [
@@ -358,6 +240,14 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["china-exportacoes"],
             graficos=["exportacoes-destinos"],
             tabelas=["parceiros"],
+        ),
+        Parte(
+            "cambio",
+            "Dólar e bolsa",
+            "O dólar, o euro, o Ibovespa e quanto cada aplicação rendeu.",
+            cartoes=["dolar", "euro", "ibovespa", "ibovespa-dolar"],
+            graficos=["dolar", "ibovespa", "retornos-em-reais"],
+            tabelas=["variacoes"],
         ),
     ],
     "fiscal": [
@@ -454,6 +344,56 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["gasto-tributario", "divida-ativa"],
             graficos=["gasto-tributario", "divida-ativa"],
             tabelas=["gasto-tributario", "gasto-tributario-regioes", "divida-ativa"],
+        ),
+    ],
+    "longo-prazo": [
+        Parte(
+            "populacao",
+            "População",
+            "Quantos somos, a pirâmide etária e quando a população em idade de trabalhar para"
+            " de crescer.",
+            cartoes=["populacao", "populacao-15-64", "fecundidade", "idade-mediana"],
+            graficos=["piramide", "crescimento-15-64", "fecundidade"],
+            tabelas=["demografia-marcos"],
+        ),
+        Parte(
+            "envelhecimento",
+            "Envelhecimento e previdência",
+            "Quantos idosos para cada pessoa em idade de trabalhar, e a conta da previdência.",
+            cartoes=[
+                "idosos-por-100",
+                "deficit-inss",
+                "deficit-servidores-militares",
+                "esperanca-de-vida",
+            ],
+            graficos=["dependencia", "idosos-paises", "inss"],
+            tabelas=["demografia-estados", "previdencia-uniao"],
+        ),
+        Parte(
+            "produtividade",
+            "Produtividade e eficiência",
+            "Quanto cada trabalhador produz, a eficiência (PTF) e de onde veio o crescimento.",
+            cartoes=["produtividade", "produtividade-hora", "ptf-eua", "ptf-desde-o-pico"],
+            graficos=["crescimento-decomposto", "ptf-brasil", "ptf-paises"],
+            tabelas=["pwt-contabilidade"],
+            veja=[
+                Elo(
+                    endereco="#mundo/m-ptf",
+                    titulo="PTF no mundo",
+                    resumo=(
+                        "O Brasil ao lado de 120 países, e o produto por hora, o capital e o "
+                        "estudo de cada um."
+                    ),
+                ),
+            ],
+        ),
+        Parte(
+            "escola",
+            "Escola",
+            "Os anos de estudo, o analfabetismo e quanto a escola pesa na renda.",
+            cartoes=["anos-de-estudo", "analfabetismo"],
+            graficos=["renda-escolaridade", "analfabetismo"],
+            tabelas=["pobreza-escola-idade"],
         ),
     ],
     "previsoes": [

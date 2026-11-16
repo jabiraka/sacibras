@@ -5,6 +5,8 @@ import re
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
+
 from sacibras import busca, construir, leis, organizacao
 from sacibras.schema import Cartao, Grafico, Secao, Serie, SimuladorDivida, Tabela
 from sacibras.secoes import fiscal
@@ -163,3 +165,50 @@ def test_o_orcamento_de_atencao_das_partes() -> None:
         for p in partes:
             assert len(p.cartoes) <= organizacao.MAXIMO_DE_CARTOES, (assunto, p.id)
             assert len(p.graficos) <= organizacao.MAXIMO_DE_GRAFICOS, (assunto, p.id)
+
+
+def test_os_assuntos_juntos_levam_as_pecas_das_secoes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Trabalho e renda = trabalho + pobreza; se uma falha, a outra sai e a falha é anotada."""
+    from sacibras import rede
+    from sacibras.secoes import juntos
+    from sacibras.secoes.base import Contexto
+
+    def secao(id: str, cartao: str) -> Secao:
+        return Secao(
+            id=id, titulo=id, resumo=f"Resumo de {id}.", cartoes=[_cartao(cartao)], gerado_em=AGORA
+        )
+
+    monkeypatch.setattr(
+        juntos.secao_trabalho, "montar", lambda ctx: secao("trabalho", "desocupacao")
+    )
+    monkeypatch.setattr(juntos.pobreza, "montar", lambda ctx: secao("pobreza", "gini"))
+    ctx = Contexto()
+    junta = juntos.trabalho(ctx)
+    assert (junta.id, junta.titulo) == ("trabalho", "Trabalho e renda")
+    assert [(c.id, c.secao) for c in junta.cartoes] == [
+        ("desocupacao", "trabalho"),
+        ("gini", "trabalho"),
+    ]
+    assert junta.resumo == "Resumo de trabalho. Resumo de pobreza."
+    assert organizacao.aplicar(junta) == []
+
+    def falha(ctx: Contexto) -> Secao:
+        raise OSError("fora do ar")
+
+    monkeypatch.setattr(juntos.pobreza, "montar", falha)
+    antes = len(rede.FALHAS)
+    so_trabalho = juntos.trabalho(Contexto())
+    assert [c.id for c in so_trabalho.cartoes] == ["desocupacao"] and len(rede.FALHAS) == antes + 1
+    del rede.FALHAS[antes:]
+    monkeypatch.setattr(juntos.secao_trabalho, "montar", falha)
+    with pytest.raises(RuntimeError):
+        juntos.trabalho(Contexto())
+    del rede.FALHAS[antes:]
+
+
+def test_endereco_antigo_aponta_para_assunto_que_existe() -> None:
+    from sacibras.secoes import juntos
+
+    assuntos = {id for id, _, _ in construir.ORDEM}
+    assert set(juntos.ANTIGOS.values()) <= assuntos and not set(juntos.ANTIGOS) & assuntos
+    assert {s for c in organizacao.CATEGORIAS for s in c.secoes} == assuntos

@@ -8,7 +8,6 @@ from sacibras import contas
 from sacibras.fontes import bcb_focus, fmi, ibge_sidra
 from sacibras.modelos import decomposicoes
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela, VisaoTabela
-from sacibras.secoes import produtividade
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -707,13 +706,6 @@ def montar(ctx: Contexto) -> Secao:
     except Exception as erro:  # as contas a mais não derrubam a seção
         print(f"  aviso: atividade sem as contribuições ou o carrego: {str(erro)[:120]}")
     tabelas = [tabela_componentes(pib_tt, pib_aa, pib_4t_todos, tri, ano)]
-    try:  # produtividade e eficiência (PTF): vieram da Demografia (Caio, 15/11/2026)
-        c_prod, g_prod, t_prod = produtividade.pecas()
-        cartoes += c_prod
-        graficos += g_prod
-        tabelas += t_prod
-    except Exception as erro:
-        print(f"  aviso: atividade sem a produtividade: {str(erro)[:120]}")
     try:
         c_fmi, g_fmi = investimento_contra_paises(ctx)
         cartoes += c_fmi

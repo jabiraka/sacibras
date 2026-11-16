@@ -253,16 +253,11 @@ def test_montar_poe_tudo_numa_parte(ctx: Contexto) -> None:
     secao = pobreza.montar(ctx)
     cartoes = {c.id: c for c in secao.cartoes}  # antes do corte: a conta de todos
     graficos = list(secao.graficos)
-    fora = organizacao.aplicar(secao)  # o orçamento de atenção tira da tela o que não tem parte
-    assert "c-lenha" in fora and "c-pobreza" not in fora
-    assert [s.id for s in secao.subcategorias] == [
-        "linha-de-pobreza",
-        "desigualdade",
-        "quem-ganha-mais",
-        "diferencas",
-        "saneamento",
-    ]
-    assert {"pobreza", "fome", "esgoto", "gini"} <= {c.id for c in secao.cartoes}
+    # A pobreza é parte do assunto "Trabalho e renda" (16/11/2026): o que fica na tela está
+    # nas partes dele, e a escola vai para o Longo prazo.
+    na_tela = organizacao.esperados("trabalho")["cartoes"]
+    assert {"pobreza", "gini", "fatia-10-ricos"} <= na_tela and "lenha" not in na_tela
+    assert "anos-de-estudo" in organizacao.esperados("longo-prazo")["cartoes"]
     assert secao.graficos[0].id == "pobreza"
     assert cartoes["gini"].valor == pytest.approx(0.511)
     assert cartoes["fatia-40-pobres"].valor == pytest.approx(40.0)

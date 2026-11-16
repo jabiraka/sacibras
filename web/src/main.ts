@@ -437,7 +437,9 @@ function montarMenu(painel: Painel): void {
   }
   for (const c of categorias(painel)) {
     const grupo = el("div", "menu-grupo");
-    grupo.append(el("p", "menu-categoria", c.titulo));
+    // O Laboratório é um andar, não uma categoria dos Dados.
+    const andar = c.titulo === "Laboratório";
+    grupo.append(el("p", andar ? "menu-andar menu-andar-dados" : "menu-categoria", c.titulo));
     const ul = el("ul");
     for (const s of c.secoes) {
       const li = el("li");
@@ -1034,7 +1036,13 @@ async function iniciar(): Promise<void> {
   const desenhar = (): void => {
     // "#juros" abre a visão geral do assunto; "#juros/curva", uma parte; "#juros/g-curva-
     // prefixada" abre a parte em que o gráfico mora e vai até ele (a busca).
-    const [alvo = "", bruto = ""] = location.hash.slice(1).split("/");
+    const [pedido = "", bruto = ""] = location.hash.slice(1).split("/");
+    // Assunto que entrou em outro (16/11/2026): "#pobreza/desigualdade" abre em Trabalho.
+    const novo = painel.antigos?.[pedido];
+    if (novo) {
+      history.replaceState(null, "", `#${novo}${bruto ? `/${bruto}` : ""}`);
+    }
+    const alvo = novo ?? pedido;
     const peca = decodeURIComponent(bruto);
     const item = painel.secoes.find((s) => s.id === alvo && s.id !== "resumo");
     const assunto = item ? alvo : "";
