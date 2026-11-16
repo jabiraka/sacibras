@@ -87,21 +87,40 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 
 ## Tela
 
+- **O gancho é a pergunta, não o dado** (Caio, 16/11/2026: *"o gancho vai ser problemas e
+  perguntas que as pessoas buscam algum tipo de resposta, vamos evitar mostrar só o dado pelo
+  dado, ela pode pegar de outros lugares, vamos procurar mostrar o dado que responde uma
+  pergunta ou problema"*). O site tem três andares ([docs/PLANO-FASE-2.md](docs/PLANO-FASE-2.md)):
+  **Perguntas** (a entrada), **Dados** (os assuntos) e **Laboratório** (estimativas nossas,
+  ainda por fazer). As perguntas moram em `builder/src/sacibras/perguntas.py`: resposta curta,
+  até 3 números, de 3 a 6 explicações, cada uma com uma frase do que os economistas dizem (sem
+  escolher qual está certa), até 2 números e 1 gráfico **copiados dos assuntos**, com a data e
+  a fonte deles. A tela (`#pergunta/<id>`) abre a primeira explicação e guarda as outras atrás
+  do clique. **Peça nova nos Dados diz a que pergunta responde**; se não responde a nenhuma,
+  pense duas vezes antes de pôr. Pergunta nova ganha as palavras de busca em `palavras`.
+- **Orçamento de atenção** (Caio, 16/11/2026: *"os humanos não conseguem absorver muitas
+  informações"*): à vista, uma frase, até 4 números e um gráfico por tela; o resto abre no
+  clique. Nos Dados, entra um, sai um.
 - **Página inicial enxuta, o resto abre no clique** (Caio, 14/11/2026: *"muitas métricas na
   página inicial… deixar só as informações essenciais no início e deixar o usuário ir clicando
-  pra abrir"*). Na entrada: quatro números (`RESUMO` em `construir.py`), quatro gráficos
-  (`RESUMO_GRAFICOS`: inflação contra a meta, PIB, juro real e dívida, cada um com o elo para
-  o assunto; Caio, 15/11/2026: *"coloque também alguns gráficos que achar mais importante pra
-  entender o Brasil. Pode eliminar alguns cartões"*) e os assuntos com a manchete de cada um,
-  agrupados por categoria.
+  pra abrir"*). Na entrada: quatro números (`RESUMO` em `construir.py`), o "Saiu por último",
+  as perguntas (só o título de cada uma) e, no fim, os assuntos só pelo nome, uma linha por
+  categoria. Os quatro gráficos de 15/11 saíram em 16/11: cada um mora agora na pergunta a
+  que responde.
 - **"Saiu por último", na entrada** (Caio, 16/11/2026: *"pode incluir"*): logo abaixo dos
   quatro números, o IPCA do mês, a Selic, a desocupação e o PIB contra a última mediana do
   Focus antes de sair (`builder/src/sacibras/saiu.py`, `web/src/saiu.ts`), com o quanto o
   Focus costuma errar ali. Acima ou abaixo do esperado vai em tinta neutra, sem "bom" nem
   "ruim". Divulgação nova só entra se o Focus coletar a mediana dela (mensal, trimestral ou
-  por reunião); sem previsão nossa. No mesmo dia: *"os simuladores tem mto erro né, melhor
-  focarmos no que podemos pegar e fazer"*: simulador novo e modelo nosso de efeito de
-  política não entram.
+  por reunião); sem previsão nossa.
+- **Regras afrouxadas, só no Laboratório** (Caio, 16/11/2026: *"pode afrouxar minhas
+  regras"* e *"pode seguir"*, sobre o [PLANO-FASE-2](docs/PLANO-FASE-2.md)): lá entram
+  previsão nossa com o placar contra o Focus na tela, parâmetro da literatura como faixa
+  entre pelo menos três estudos citados (nunca um ponto só), simulador cujo resultado sai
+  como faixa, e avaliação de política que já aconteceu, com teste de placebo. Nos Dados e
+  nas Perguntas nada muda: fonte oficial ou conta nossa que fecha com ela. Continua fora o
+  efeito de política futura sobre PIB e emprego. O Laboratório ainda não existe; cada peça
+  dele vai ao ar com o Caio olhando.
 - **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
   muitas informações em uma página [...] classifique melhor em categorias, crie
   subcategorias"*). Tudo mora em `builder/src/sacibras/organizacao.py`: `CATEGORIAS` agrupa os
@@ -183,7 +202,9 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
   Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de
   alerta põe cada indicador na régua da própria história (`web/src/alertas.ts`, o lado ruim
-  sempre à direita, ▲ e frase junto da cor) e conta quantos estão no quinto pior. Outras
+  sempre à direita, ▲ e frase junto da cor) e conta quantos estão no quinto pior. **São 17
+  indicadores, um por pergunta** (`alertas.NO_PAINEL`; eram 39 até 16/11/2026: saiu o que
+  repetia outro); indicador novo no painel tira um. Outras
   formas de ver, na lista "Ver os alertas" (Caio, 14/11/2026): contra outros países, com os
   parecidos (emergentes, América Latina) primeiro e o mesmo número e fonte para todos
   (`alertas-paises.ts`, só onde há par em fonte oficial); o que mudou em um ano; e o

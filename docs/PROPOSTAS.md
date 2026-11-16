@@ -99,46 +99,24 @@ oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de f
 Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e fazer."* O
 "Saiu por último" (o número contra o Focus, na entrada) entrou no mesmo dia. Fica:
 
-- **Fora, por decisão do Caio**: modelo nosso do efeito de política pública (aumentar
-  imposto e ver PIB, emprego, inflação) e o simulador contábil de imposto com a base parada
-  (*"a base parada não sei se fica factível, as pessoas se ajustam"*). Simulador novo não
-  entra; os três que existem ficam.
+- **Fora**: o efeito de política futura sobre PIB e emprego, e o simulador de imposto com
+  a base parada (*"a base parada não sei se fica factível, as pessoas se ajustam"*). Com as
+  regras afrouxadas no mesmo dia, o de imposto volta no Laboratório, com o comportamento
+  na conta e o resultado como faixa ([PLANO-FASE-2](PLANO-FASE-2.md), leva 4).
 - **"Minha inflação" é do finjabs**, não daqui (*"eu queria que o finjabs fizesse essa
   conta"*): está no PROPOSTAS de lá, M174. Quando existir, Inflação › Por tipo de preço
   aponta para ela; corrigir um valor pela inflação já existe lá
   (`finjabs.com.br/calculadora/corrigir-valor-pela-inflacao`) e pode ganhar o mesmo elo.
-- **Páginas de pergunta** (Caio: *"é uma boa, mas parte de teoria também, não?"*): "por que
-  o juro é tão alto?", "a dívida se sustenta?", "para onde vai o imposto?", "por que o
-  Brasil cresce pouco?". A teoria entra como lista de explicações que os economistas dão,
-  uma frase cada, e ao lado de cada uma o número daqui que a mede, sem dizer qual está
-  certa. Para o juro: dívida e risco fiscal (juro menos crescimento, primário que falta),
-  poupança baixa (taxa de poupança contra os pares), crédito que não responde à Selic
-  (parcela do crédito direcionado, SGS), inflação que demora a ceder (serviços, difusão,
-  expectativa acima da meta) e o juro dos outros (juro real contra os EUA e os emergentes).
-  Usa gráfico que já existe; o que faltar é a série do crédito direcionado.
+- **Páginas de pergunta**: feitas em 16/11/2026 (oito, em `perguntas.py`). Falta a série do
+  crédito direcionado (SGS) na do juro alto e a árvore do diagnóstico de crescimento.
 - **Onde estou na renda** (PNAD e centis do IRPF) e **quanto do meu salário é imposto**
   (IRPF e INSS pela lei lida): a segunda é conta do finjabs; a primeira pode ser daqui
   (Pobreza › distribuição), com um campo só. Pede o "sim" do Caio, por ser entrada da pessoa.
 - **Contar acesso por parte e por termo de busca**, sem cookie, para cortar com dado e não
   com palpite. Pede escolher o serviço (ou um contador próprio) e dizer na tela.
-- **Riscos, enxugar o painel de alerta** (Caio: *"a parte de riscos tem muitos alertas e
-  outras coisas, se pudesse escolher, quais tiraria?"*). São 39 alertas; a proposta é ficar
-  com 17, um por pergunta, e tirar o que repete outro (o número continua no assunto dele,
-  só sai do painel). **Ficam**: dívida bruta, primário que falta para estabilizar, juro
-  menos crescimento, juros sobre a receita, dívida que vence em 12 meses; reservas sobre a
-  dívida externa de curto prazo, transações correntes, investimento direto menos déficit
-  externo; IPCA em 12 meses, média dos núcleos, expectativa de 12 meses acima da meta;
-  inadimplência total, renda comprometida com dívidas, Basileia, hiato de crédito;
-  volatilidade do dólar; déficit do INSS. **Saem do painel**: primário, juros e nominal em
-  12 meses (estão dentro do "primário que falta" e dos juros sobre a receita), dívida
-  atrelada à Selic e prazo médio (a rolagem já está no "vence em 12 meses"); reservas em
-  meses de importação (repete a outra), dívida externa líquida (o setor público é credor:
-  não acende), dívida atrelada ao câmbio e swaps; difusão e implícita de 8 anos;
-  inadimplência de pessoas e de empresas, atraso de 15 a 90 dias, spread, endividamento,
-  Índice de Liquidez e LCR; volatilidade e queda do Ibovespa (bolsa não é risco macro);
-  benefícios do INSS (repete o déficit) e os reservatórios (vão para Atividade). Nas
-  partes: "Bancos e energia" some (os bancos vão para "Mercado e contas externas" ou para
-  Crédito) e a tabela de governança sai. Espera o "sim" do Caio na lista.
+- **Riscos**: o painel de alerta foi de 39 para 17 em 16/11/2026 (`alertas.NO_PAINEL`).
+  Falta: as partes de 6 para 3, os reservatórios irem para Atividade e a tabela de
+  governança sair.
 - **Crescimento e longo prazo, o que dá para pegar** (Caio: *"há muitas teorias de
   crescimento e longo prazo, não sei oq dá pra encaixar"*). Só dado publicado ou conta
   nossa sobre ele, sem previsão:

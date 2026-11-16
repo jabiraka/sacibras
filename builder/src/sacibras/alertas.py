@@ -22,6 +22,40 @@ class Explicacao:
     pode_levar: str
 
 
+NO_PAINEL: tuple[str, ...] = (
+    # Contas públicas
+    "dbgg",
+    "primario-que-falta",
+    "juro-menos-crescimento",
+    "juros-sobre-receita",
+    "vence-em-12-meses",
+    # Câmbio e contas externas
+    "reservas-cobertura",
+    "conta-corrente",
+    "cobertura-idp",
+    # Inflação
+    "ipca",
+    "nucleos",
+    "expectativa-12m",
+    # Crédito e bancos
+    "inadimplencia",
+    "comprometimento",
+    "basileia",
+    "hiato-credito",
+    # Mercado e longo prazo
+    "vol-dolar",
+    "deficit-inss",
+)
+"""Os indicadores que vão ao painel de alerta: um por pergunta (Caio, 16/11/2026: *"a parte
+de riscos tem muitos alertas e outras coisas"*; eram 39). Saiu o que repetia outro: o
+primário, os juros e o nominal em 12 meses (estão no "primário que falta" e nos juros sobre
+a receita), a dívida atrelada à Selic e o prazo médio (a rolagem está no que vence em 12
+meses), as reservas em meses de importação, a dívida externa líquida (o setor público é
+credor), a dívida cambial e os swaps, a difusão e a implícita longa, a inadimplência de
+pessoas e de empresas, os atrasos, o spread, o endividamento, os dois índices de liquidez,
+a bolsa (volatilidade e queda), os benefícios do INSS e os reservatórios. O número de cada
+um continua no assunto dele; a explicação fica em `EXPLICACOES`, para voltar sem reescrever."""
+
 EXPLICACOES: dict[str, Explicacao] = {
     # ---------------------------------------------------------------- contas públicas
     "dbgg": Explicacao(

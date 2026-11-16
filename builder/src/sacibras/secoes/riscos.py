@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from sacibras import alertas, contas, curvas, leis, relatorios
+from sacibras.alertas import NO_PAINEL
 from sacibras.fontes import (
     banco_mundial,
     bcb_fiscal,
@@ -2286,7 +2287,7 @@ def montar(ctx: Contexto) -> Secao:
     cartoes = [c for b in blocos for c in b.cartoes]
     graficos = [g for b in blocos for g in b.graficos]
     tabelas = [t for b in blocos for t in b.tabelas]
-    alertas = [a for b in blocos for a in b.alertas]
+    alertas = [a for b in blocos for a in b.alertas if a.id in NO_PAINEL]
     # O painel na ordem dos grupos, não na dos blocos.
     ordem = [FISCAL, EXTERNO, INFLACAO, CREDITO, MERCADO, LONGO]
     alertas.sort(key=lambda a: ordem.index(a.grupo))

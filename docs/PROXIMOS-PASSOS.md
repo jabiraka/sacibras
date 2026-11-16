@@ -21,18 +21,29 @@ a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibov
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
 
-**16/11/2026**: entrou o "Saiu por último" na entrada (o IPCA do mês, a Selic, a
-desocupação e o PIB contra a última mediana do Focus antes de sair, com o quanto o Focus
-costuma errar; `saiu.py`, `web/src/saiu.ts`), na branch `ccr-82cf6245-ymtsy0` (**não está no
-`main`**: falta o Caio olhar e mandar juntar). A conversa do dia sobre o que incluir e tirar
-está no [PROPOSTAS](PROPOSTAS.md), "O que incluir e tirar"; a "Minha inflação" foi para o
-finjabs (M174 de lá).
+**16/11/2026**, no `main`: a entrada virou perguntas (Caio: *"o gancho vai ser problemas e
+perguntas [...] mostrar o dado que responde uma pergunta ou problema"*). Feito: o "Saiu por
+último" (o número contra o Focus, `saiu.py`); as oito perguntas (`perguntas.py`,
+`#pergunta/<id>`), cada uma com resposta, números e explicações com o gráfico dos Dados; a
+entrada sem os quatro gráficos e com os assuntos só pelo nome; o menu em Perguntas e Dados;
+as perguntas na busca; o painel de alerta de 39 para 17 (`alertas.NO_PAINEL`). A "Minha
+inflação" foi para o finjabs (M174 de lá). O plano inteiro está no
+[PLANO-FASE-2](PLANO-FASE-2.md).
 
-**Plano da fase 2** ([PLANO-FASE-2](PLANO-FASE-2.md); Caio, 16/11/2026: *"pode afrouxar minhas
-regras, e me dê um plano estruturado"*): três andares (Perguntas, Dados, Laboratório), o
-site enxuto (13 assuntos para 9, 156 cartões para uns 70) e as estimativas nossas num lugar
-só delas. **Nada feito; cada etapa espera o "sim" do Caio**, e as regras do CLAUDE.md só
-mudam quando a etapa for aprovada.
+## O que vem agora (fase 2)
+
+Na ordem do plano; o que está aqui ainda não foi feito:
+
+1. **Enxugar os Dados**: juntar assuntos (13 para 9), Riscos de 6 partes para 3 e o corte
+   de cartões e gráficos pelo orçamento de atenção (156 e 142 hoje). Pobreza, Riscos,
+   Impostos e Juros primeiro.
+2. **O título do gráfico dizendo o que ele mostra hoje**, escrito pelo builder.
+3. **Laboratório, leva 1**: juro neutro e hiato por vários métodos, regra de Taylor, estudo
+   de evento do Copom (a surpresa já sai do `saiu.py`), reação fiscal, de onde veio o PIB por
+   habitante e a convergência contra os EUA. Cada peça com o Caio olhando.
+4. **A árvore do diagnóstico de crescimento** na pergunta "Por que o Brasil cresce pouco?".
+5. **Contador de acesso** por pergunta, parte e termo de busca, sem cookie: falta o Caio
+   escolher o serviço (ver "Espera o Caio").
 
 ## Releituras com prazo
 
@@ -77,13 +88,15 @@ As próximas:
 
 ## Espera o Caio
 
-- **Juntar o "Saiu por último" no `main`** depois de olhar (a 390 e 1280 px, na entrada, logo
-  abaixo dos quatro números). Para olhar: a Selic diz "acertou as 8 anteriores" e 0,25 pp
-  acima do esperado na reunião de 04/11 (o Focus esperava corte para 13,50 %; é o que a API
-  do Focus e a do Copom dizem).
-- **Riscos: a lista do que sai do painel de alerta** (de 39 para 17) e as ideias de
-  crescimento e longo prazo, no [PROPOSTAS](PROPOSTAS.md), "O que incluir e tirar": dizer o
-  que entra.
+- **Olhar as oito perguntas** (a 390 e 1280 px, cada uma com todas as explicações
+  abertas): o texto de cada resposta e de cada explicação é meu, escrito para não tomar
+  partido; diga o que soar errado, torto ou com cara de opinião. Para olhar também: a Selic
+  no "Saiu por último" (0,25 pp acima do esperado em 04/11; é o que as APIs do Focus e do
+  Copom dizem).
+- **Contador de acesso**: qual serviço (um de terceiros sem cookie, ou nenhum por enquanto).
+  Manda dado de quem visita para fora, então não liguei sem perguntar.
+- **Os 22 alertas que saíram do painel**: a lista está em `alertas.NO_PAINEL`; se algum
+  fizer falta, volta trocando por outro.
 - **Trecho da B3 sobre gráficos informativos**: o Ibovespa fica na tela por decisão do
   Caio (15/11/2026, *"Os termos da B3 permitem gráficos informativos"*), mas a cláusula não
   apareceu nos termos de uso nem na Política Comercial de Market Data 2027. Com o elo,

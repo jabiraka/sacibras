@@ -2,7 +2,10 @@
 
 Caio, 16/11/2026: *"pode afrouxar minhas regras, e me dê um plano estruturado do que vc
 colocaria e também oq simplificaria no site hoje, lembrando que os humanos não conseguem
-absorver muitas informações"*. Nada aqui está feito; cada etapa espera o "sim" dele.
+absorver muitas informações"*. Aprovado em 16/11/2026 (*"pode seguir, o gancho vai ser problemas e perguntas que as pessoas
+buscam algum tipo de resposta"*). **Feito no mesmo dia**: o "Saiu por último", as oito
+perguntas, a entrada e o menu por perguntas e o painel de alerta com 17 indicadores. O que
+falta está no [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md), "O que vem agora".
 
 ## O ponto de partida
 

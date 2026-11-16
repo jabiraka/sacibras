@@ -16,6 +16,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from sacibras import perguntas
+
 # termo que aparece no título → palavras que alguém usaria para procurá-lo
 SINONIMOS: dict[str, list[str]] = {
     "ipca": ["inflacao", "precos", "custo de vida", "carestia", "inflação oficial"],
@@ -1128,6 +1130,11 @@ def _linhas_da_tabela(t: dict[str, Any]) -> str:
 def montar(saida: Path) -> list[Item]:
     painel = json.loads((saida / "painel.json").read_text(encoding="utf-8"))
     itens: list[Item] = []
+    # As perguntas primeiro: são a entrada do site (16/11/2026).
+    palavras = {d.id: " ".join(d.palavras) for d in perguntas.PERGUNTAS}
+    for q in painel.get("perguntas", []):
+        extra = f"{q['resposta']} {palavras.get(q['id'], '')}"
+        itens.append(_item(q["titulo"], "Pergunta", f"#pergunta/{q['id']}", extra))
     for s in painel["secoes"]:
         if s["id"] == "resumo" or not (saida / s["arquivo"]).exists():
             continue

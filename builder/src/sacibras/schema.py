@@ -708,6 +708,42 @@ class ItemSubcategoria(Modelo):
     titulo: str
 
 
+class BlocoPergunta(Modelo):
+    """Uma explicação dentro de uma pergunta: a frase, os números e o gráfico que a medem."""
+
+    titulo: str
+    texto: str
+    numeros: list[Cartao] = Field(default_factory=list)
+    grafico: Grafico | None = None
+    assunto: str
+    assunto_titulo: str = ""
+    elo: str
+    """Onde a peça mora nos Dados: "#juros/g-selic-trajetoria"."""
+
+
+class Pergunta(Modelo):
+    id: str
+    titulo: str
+    resposta: str
+    numeros: list[Cartao] = Field(default_factory=list)
+    blocos: list[BlocoPergunta]
+
+
+class Perguntas(Modelo):
+    """O arquivo `perguntas.json` (`perguntas.py`)."""
+
+    perguntas: list[Pergunta]
+    gerado_em: datetime
+
+
+class ItemPergunta(Modelo):
+    """A pergunta no `painel.json`, para a entrada e o menu, que não baixam as peças."""
+
+    id: str
+    titulo: str
+    resposta: str
+
+
 class ItemSecao(Modelo):
     id: str
     titulo: str
@@ -734,6 +770,7 @@ class Painel(Modelo):
     gerado_em: datetime
     secoes: list[ItemSecao]
     categorias: list[Categoria] = Field(default_factory=list)
+    perguntas: list[ItemPergunta] = Field(default_factory=list)
     fontes: list[EstadoFonte] = Field(default_factory=list)
 
 

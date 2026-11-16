@@ -19,7 +19,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras import licencas, organizacao, rede, saiu
+from sacibras import licencas, organizacao, perguntas, rede, saiu
 from sacibras.catalogo import SGS
 from sacibras.schema import (
     AoVivo,
@@ -30,6 +30,7 @@ from sacibras.schema import (
     ItemSecao,
     ItemSubcategoria,
     Painel,
+    Perguntas,
     Secao,
 )
 from sacibras.secoes import (
@@ -76,15 +77,6 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
 # importante pra entender o Brasil. Pode eliminar alguns cartões"*): saíram o dólar e a
 # dívida bruta, que agora está no gráfico.
 RESUMO = ["pib-4t", "ipca-12m", "selic-meta", "desocupacao"]
-
-# Os gráficos da página inicial, na ordem: (assunto, id do gráfico). Crescimento, inflação
-# contra a meta, o juro real e a dívida: o que mais explica o Brasil de hoje.
-RESUMO_GRAFICOS = [
-    ("inflacao", "ipca-12m"),
-    ("atividade", "pib-trimestral"),
-    ("juros", "juro-real"),
-    ("fiscal", "divida"),
-]
 
 # Onde o navegador busca o ponto mais novo de cada número da entrada (SGS e SIDRA têm CORS
 # aberto, conferido em 14/11/2026). A Selic meta fica de fora: o SGS a preenche dia a dia até
@@ -214,14 +206,21 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
     itens: list[ItemSecao] = []
     fontes: list[EstadoFonte] = []
     cartoes: dict[str, Cartao] = {}
-    graficos: dict[tuple[str, str], Grafico] = {}
+
+    todos_cartoes: dict[tuple[str, str], Cartao] = {}
+    todos_graficos: dict[tuple[str, str], Grafico] = {}
+    """Tudo o que os assuntos têm, para as perguntas (`perguntas.py`)."""
+
+    def guardar_cartoes(id: str, lista: Sequence[Cartao | dict[str, object]]) -> None:
+        for c in lista:
+            modelo = c if isinstance(c, Cartao) else Cartao.model_validate(c)
+            cartoes[modelo.id] = modelo
+            todos_cartoes[(id, modelo.id)] = modelo
 
     def guardar_graficos(id: str, lista: Sequence[Grafico | dict[str, object]]) -> None:
-        """Os gráficos do assunto que a página inicial mostra, marcados com o assunto."""
         for g in lista:
             modelo = g if isinstance(g, Grafico) else Grafico.model_validate(g)
-            if (id, modelo.id) in RESUMO_GRAFICOS:
-                graficos[(id, modelo.id)] = modelo.model_copy(update={"secao": id})
+            todos_graficos[(id, modelo.id)] = modelo
 
     for id, titulo, montar in ORDEM:
         arquivo = f"{id}.json"
@@ -239,8 +238,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     )
                 )
                 fontes.append(EstadoFonte(fonte=FONTES[id], ok=True))
-                for c in antigo.get("cartoes", []):
-                    cartoes[c["id"]] = Cartao.model_validate(c)
+                guardar_cartoes(id, antigo.get("cartoes", []))
                 guardar_graficos(id, antigo.get("graficos", []))
             continue
         try:
@@ -271,7 +269,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
             if extra is not None:
                 _gravar(saida, getattr(secao, "arquivo_paises", ""), extra)
             if isinstance(secao, Secao):
-                cartoes.update({c.id: c for c in secao.cartoes})
+                guardar_cartoes(id, secao.cartoes)
                 guardar_graficos(id, secao.graficos)
             itens.append(
                 ItemSecao(
@@ -295,8 +293,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 # entram na página inicial.
                 try:
                     antigo = json.loads((saida / arquivo).read_text(encoding="utf-8"))
-                    for c in antigo.get("cartoes", []):
-                        cartoes[c["id"]] = Cartao.model_validate(c)
+                    guardar_cartoes(id, antigo.get("cartoes", []))
                     guardar_graficos(id, antigo.get("graficos", []))
                     partes = _partes(antigo)
                 except (OSError, ValueError):
@@ -324,19 +321,22 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
     resumo = Secao(
         id="resumo",
         titulo="Resumo",
-        resumo="Os números e os gráficos da página inicial.",
+        resumo="Os números da página inicial e o que saiu por último.",
         cartoes=[
             cartoes[c].model_copy(update={"ao_vivo": AO_VIVO.get(c)})
             for c in RESUMO
             if c in cartoes
         ],
-        graficos=[graficos[g] for g in RESUMO_GRAFICOS if g in graficos],
         saiu=saiu.montar(ctx, saiu_antes),
         gerado_em=agora,
     )
     _gravar(saida, "resumo.json", resumo)
+    titulos = {id: titulo for id, titulo, _ in ORDEM}
+    as_perguntas = perguntas.montar(todos_cartoes, todos_graficos, titulos)
+    _gravar(saida, "perguntas.json", Perguntas(perguntas=as_perguntas, gerado_em=agora))
     painel = Painel(
         gerado_em=agora,
+        perguntas=perguntas.itens(as_perguntas),
         secoes=[ItemSecao(id="resumo", titulo="Resumo", arquivo="resumo.json", ok=True), *itens],
         fontes=fontes,
         categorias=organizacao.CATEGORIAS,

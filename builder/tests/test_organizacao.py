@@ -154,5 +154,3 @@ def test_a_pagina_inicial_so_aponta_para_pecas_que_existem() -> None:
     """Os números e gráficos da entrada moram numa parte do assunto (senão somem calados)."""
     cartoes = {c for s in organizacao.PARTES for c in organizacao.esperados(s)["cartoes"]}
     assert set(construir.RESUMO) <= cartoes
-    for secao, grafico in construir.RESUMO_GRAFICOS:
-        assert grafico in organizacao.esperados(secao)["graficos"], (secao, grafico)

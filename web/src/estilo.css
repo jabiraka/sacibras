@@ -864,11 +864,6 @@ main {
   padding-top: 76px;
 }
 
-/* Os gráficos da página inicial: o elo para o assunto fica no pé de cada um. */
-.panorama .graficos {
-  margin-top: 24px;
-}
-
 .grafico-elo {
   display: inline-flex;
   align-items: center;
@@ -3915,4 +3910,219 @@ table.dados.limites-tabela td {
   .saiu-nota {
     margin-inline: 4px;
   }
+}
+
+/* ------------------------------------------------------------------ perguntas (16/11/2026) */
+
+.menu-andar {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta);
+}
+
+.menu-andar-dados {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda);
+}
+
+.menu-pergunta {
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.perguntas {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .perguntas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
+
+.pergunta {
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  text-decoration: none;
+  font-size: 1.0625rem;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  transition:
+    border-color 0.3s,
+    transform 0.5s var(--suave);
+}
+
+.pergunta:hover {
+  border-color: var(--borda-forte);
+  transform: translateY(-2px);
+}
+
+.pergunta:hover .seta {
+  transform: translateX(4px);
+}
+
+/* Os dados, na entrada: só os nomes dos assuntos, uma linha por categoria. */
+.dados {
+  padding-top: 56px;
+}
+
+.dados-titulo {
+  margin: 10px 0 14px;
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.dados-linha {
+  margin: 0;
+  padding: 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 18px;
+  border-top: 1px solid var(--borda);
+  font-size: 0.9375rem;
+}
+
+.dados-categoria {
+  flex: 0 0 13rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tinta-3);
+}
+
+.dados-linha a {
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.dados-linha a:hover {
+  color: var(--verde);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .dados-categoria {
+    flex-basis: 100%;
+  }
+}
+
+/* Uma pergunta aberta. */
+.pergunta-numeros {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 860px) {
+  .pergunta-numeros {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  /* No celular, três números empilhados: sem a miniatura, para a resposta caber na tela. */
+  .pergunta-numeros .cartao > svg {
+    display: none;
+  }
+}
+
+.explicacoes-titulo {
+  margin: 44px 0 14px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta-3);
+}
+
+.explicacao {
+  margin-top: 10px;
+  border-radius: 16px;
+}
+
+.explicacao > summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+}
+
+.explicacao > summary::-webkit-details-marker {
+  display: none;
+}
+
+.explicacao-cabeca {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.explicacao-cabeca::after {
+  content: "+";
+  margin-left: auto;
+  color: var(--verde);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.explicacao[open] .explicacao-cabeca::after {
+  content: "−";
+}
+
+.explicacao-numero {
+  flex: none;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-3);
+}
+
+.explicacao-texto {
+  max-width: 44rem;
+  padding-left: 1.45rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--tinta-2);
+}
+
+.explicacao-corpo {
+  padding: 0 18px 16px;
+}
+
+.explicacao-numeros {
+  margin-top: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 34rem;
+}
+
+@media (max-width: 480px) {
+  .explicacao-numeros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.outras-perguntas {
+  margin-top: 64px;
+}
+
+.outras-perguntas .perguntas {
+  margin-top: 14px;
 }

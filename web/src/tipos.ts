@@ -480,9 +480,40 @@ export interface Categoria {
   secoes: string[];
 }
 
+/** Uma explicação dentro de uma pergunta: a frase, os números e o gráfico que a medem. */
+export interface BlocoPergunta {
+  titulo: string;
+  texto: string;
+  numeros: Cartao[];
+  grafico: Grafico | null;
+  assunto: string;
+  assunto_titulo: string;
+  elo: string;
+}
+
+export interface Pergunta {
+  id: string;
+  titulo: string;
+  resposta: string;
+  numeros: Cartao[];
+  blocos: BlocoPergunta[];
+}
+
+export interface Perguntas {
+  perguntas: Pergunta[];
+  gerado_em: string;
+}
+
+export interface ItemPergunta {
+  id: string;
+  titulo: string;
+  resposta: string;
+}
+
 export interface Painel {
   gerado_em: string;
   secoes: ItemSecao[];
   categorias?: Categoria[];
+  perguntas?: ItemPergunta[];
   fontes: { fonte: string; ok: boolean; detalhe: string }[];
 }

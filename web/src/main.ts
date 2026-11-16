@@ -37,6 +37,8 @@ import type {
   ItemSecao,
   Mundo,
   Painel,
+  Pergunta,
+  Perguntas,
   Secao,
   SimuladorReforma,
   ComparadorSalario,
@@ -417,6 +419,22 @@ function montarMenu(painel: Painel): void {
   inicio.href = "#";
   inicio.dataset.assunto = "";
   menu.replaceChildren(inicio);
+  // Os andares: as perguntas primeiro, os dados depois (16/11/2026).
+  if (painel.perguntas?.length) {
+    const grupo = el("div", "menu-grupo");
+    grupo.append(el("p", "menu-andar", "Perguntas"));
+    const ul = el("ul");
+    for (const q of painel.perguntas) {
+      const li = el("li");
+      const a = el("a", "menu-assunto menu-pergunta", q.titulo);
+      a.href = `#pergunta/${q.id}`;
+      a.dataset.assunto = `pergunta/${q.id}`;
+      li.append(a);
+      ul.append(li);
+    }
+    grupo.append(ul);
+    menu.append(grupo, el("p", "menu-andar menu-andar-dados", "Dados"));
+  }
   for (const c of categorias(painel)) {
     const grupo = el("div", "menu-grupo");
     grupo.append(el("p", "menu-categoria", c.titulo));
@@ -523,7 +541,7 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
   const lema = el(
     "p",
     "lema entra",
-    "Cada número com a data e a fonte oficial. Escolha um assunto ou busque pelo nome.",
+    "As perguntas que mais se fazem sobre a economia, respondidas com o dado oficial, a data e a fonte.",
   );
   lema.style.setProperty("--i", "2");
   heroi.append(selo, titulo, lema);
@@ -532,32 +550,8 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
   essenciais.style.setProperty("--i", "3");
   essenciais.setAttribute("aria-label", "Os números essenciais");
 
-  // Os gráficos que mais explicam o Brasil de hoje (Caio, 15/11/2026), cada um com o elo
-  // para o assunto em que mora.
-  const panorama = el("section", "bloco panorama");
-  panorama.append(el("p", "sobretitulo", "Panorama"));
-  const h2Panorama = el("h2");
-  h2Panorama.append(
-    document.createTextNode("O Brasil em quatro gráficos. "),
-    el("span", "apagado", "Toque para abrir o assunto."),
-  );
-  const grade = el("div", "graficos");
-  panorama.append(h2Panorama, grade);
-
   void ler<Secao>("resumo.json")
     .then((resumo) => {
-      for (const g of resumo.graficos) {
-        const peca = montarPeca(g);
-        const assunto = painel.secoes.find((s) => s.id === g.secao);
-        if (assunto) {
-          const elo = el("a", "grafico-elo", `Mais em ${assunto.titulo}`);
-          elo.append(el("span", "seta", "→"));
-          elo.href = `#${assunto.id}/g-${g.id}`;
-          peca.append(elo);
-        }
-        grade.append(peca);
-      }
-      if (!resumo.graficos.length) panorama.remove();
       if (resumo.saiu?.length) essenciais.after(saiuPorUltimo(resumo.saiu));
       for (const c of resumo.cartoes) {
         const item = el("a", "essencial");
@@ -573,43 +567,50 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
     })
     .catch(() => {
       essenciais.remove();
-      panorama.remove();
     });
 
+  // As perguntas são a entrada (Caio, 16/11/2026: "o gancho vai ser problemas e perguntas
+  // que as pessoas buscam algum tipo de resposta"). Só a pergunta: a resposta abre no clique.
   const bloco = el("section", "bloco");
-  bloco.id = "assuntos";
-  bloco.append(el("p", "sobretitulo", "Assuntos"));
+  bloco.id = "perguntas";
+  bloco.append(el("p", "sobretitulo", "Perguntas"));
   const h2 = el("h2");
-  h2.append(document.createTextNode("Abra o que interessa. "), el("span", "apagado", "Toque num."));
-  bloco.append(h2);
+  h2.append(
+    document.createTextNode("O que você quer entender? "),
+    el("span", "apagado", "Toque numa pergunta."),
+  );
+  const lista = el("ul", "perguntas");
+  for (const q of painel.perguntas ?? []) {
+    const li = el("li");
+    const a = el("a", "vidro pergunta");
+    a.href = `#pergunta/${q.id}`;
+    a.append(el("span", "pergunta-titulo", q.titulo), el("span", "seta", "→"));
+    li.append(a);
+    lista.append(li);
+  }
+  bloco.append(h2, lista);
+  if (!painel.perguntas?.length) bloco.remove();
+
+  // Os dados, por assunto, só com o nome: quem quer o número vai direto.
+  const dados = el("section", "bloco dados");
+  dados.id = "assuntos";
+  dados.append(el("p", "sobretitulo", "Dados"), el("h3", "dados-titulo", "Todos os números, por assunto"));
   for (const c of categorias(painel)) {
-    const grupo = el("div", "categoria");
-    grupo.append(el("h3", "categoria-titulo", c.titulo));
-    const lista = el("ul", "assuntos");
+    const linha = el("p", "dados-linha");
+    linha.append(el("span", "dados-categoria", c.titulo));
     for (const s of c.secoes) {
-      const li = el("li");
-      const a = el("a", "vidro assunto");
+      const a = el("a", "", s.titulo);
       a.href = `#${s.id}`;
-      const nome = el("span", "assunto-titulo", s.titulo);
-      nome.append(el("span", "seta", "→"));
-      a.append(
-        nome,
-        el("span", "assunto-resumo", s.ok ? s.resumo : "Não pôde ser atualizado nesta rodada."),
-      );
-      if (s.subcategorias?.length) {
-        a.append(el("span", "assunto-partes", s.subcategorias.map((p) => p.titulo).join(" · ")));
-      }
-      li.append(a);
-      lista.append(li);
+      if (!s.ok) a.title = "Não pôde ser atualizado nesta rodada.";
+      linha.append(a);
     }
-    grupo.append(lista);
-    bloco.append(grupo);
+    dados.append(linha);
   }
   // A agenda da semana, atrás de um clique: o calendário do IBGE só é lido quando abre.
   const agenda = agendaDaSemana(painel.secoes);
   agenda.classList.add("entra");
   agenda.style.setProperty("--i", "4");
-  conteudo.replaceChildren(heroi, essenciais, agenda, panorama, bloco);
+  conteudo.replaceChildren(heroi, essenciais, bloco, agenda, dados);
 }
 
 // ------------------------------------------------------------------ assunto e parte
@@ -875,6 +876,107 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
 
 // ------------------------------------------------------------------ partida
 
+// ------------------------------------------------------------------ uma pergunta
+
+/** O número de um cartão dos Dados, sem o id (a mesma peça pode aparecer duas vezes aqui). */
+function numeroDaPergunta(c: Cartao): HTMLElement {
+  const no = montarCartao(c);
+  no.removeAttribute("id");
+  return no;
+}
+
+/** Uma pergunta aberta: a resposta, até três números e as explicações. A primeira explicação
+ *  já vem aberta; as outras mostram a frase e abrem o número e o gráfico no clique. */
+function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void {
+  const item = painel.perguntas?.find((q) => q.id === id);
+  if (!item) {
+    location.hash = "";
+    return;
+  }
+  const secao = el("section", "secao pergunta-aberta");
+  const topo = el("header", "secao-topo");
+  const trilha = el("nav", "trilha");
+  trilha.setAttribute("aria-label", "Onde você está");
+  const volta = el("a", "", "Perguntas");
+  volta.href = "#perguntas";
+  trilha.append(volta);
+  topo.append(trilha, el("h2", "", item.titulo));
+  const corpo = el("div", "secao-corpo");
+  corpo.append(el("p", "secao-resumo", item.resposta));
+  secao.append(topo, corpo);
+  conteudo.replaceChildren(secao);
+  marcarMenu(`pergunta/${id}`, "");
+
+  void ler<Perguntas>("perguntas.json")
+    .then((arquivo) => {
+      const q: Pergunta | undefined = arquivo.perguntas.find((x) => x.id === id);
+      if (!q) return;
+      if (q.numeros.length) {
+        const numeros = el("div", "cartoes pergunta-numeros");
+        for (const c of q.numeros) numeros.append(numeroDaPergunta(c));
+        corpo.append(numeros);
+      }
+      corpo.append(el("h3", "explicacoes-titulo", "As explicações, e o dado de cada uma"));
+      q.blocos.forEach((b, i) => {
+        const caixa = el("details", "vidro explicacao");
+        const resumo = el("summary");
+        const cabeca = el("span", "explicacao-cabeca");
+        cabeca.append(
+          el("span", "explicacao-numero", String(i + 1)),
+          el("span", "explicacao-titulo", b.titulo),
+        );
+        resumo.append(cabeca, el("span", "explicacao-texto", b.texto));
+        const dentro = el("div", "explicacao-corpo");
+        caixa.append(resumo, dentro);
+        let montada = false;
+        const montar = (): void => {
+          if (montada) return;
+          montada = true;
+          if (b.numeros.length) {
+            const numeros = el("div", "cartoes explicacao-numeros");
+            for (const c of b.numeros) numeros.append(numeroDaPergunta(c));
+            dentro.append(numeros);
+          }
+          if (b.grafico) {
+            const grade = el("div", "graficos");
+            grade.append(montarPeca(b.grafico));
+            dentro.append(grade);
+          }
+          const elo = el("a", "grafico-elo", `Mais em ${b.assunto_titulo || "Dados"}`);
+          elo.append(el("span", "seta", "→"));
+          elo.href = b.elo;
+          dentro.append(elo);
+        };
+        caixa.addEventListener("toggle", () => {
+          if (caixa.open) montar();
+        });
+        if (i === 0) {
+          caixa.open = true;
+          montar();
+        }
+        corpo.append(caixa);
+      });
+      const outras = el("nav", "outras-perguntas");
+      outras.setAttribute("aria-label", "Outras perguntas");
+      outras.append(el("p", "sobretitulo", "Outras perguntas"));
+      const ul = el("ul", "perguntas");
+      for (const o of painel.perguntas ?? []) {
+        if (o.id === id) continue;
+        const li = el("li");
+        const a = el("a", "vidro pergunta");
+        a.href = `#pergunta/${o.id}`;
+        a.append(el("span", "pergunta-titulo", o.titulo), el("span", "seta", "→"));
+        li.append(a);
+        ul.append(li);
+      }
+      outras.append(ul);
+      corpo.append(outras);
+    })
+    .catch((erro: unknown) => {
+      corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`));
+    });
+}
+
 async function iniciar(): Promise<void> {
   const conteudo = document.getElementById("conteudo") as HTMLElement;
   ligarTraducao();
@@ -932,6 +1034,14 @@ async function iniciar(): Promise<void> {
         marcarMenu("glossario", "");
         window.scrollTo(0, 0);
       } else if (peca) document.getElementById(`termo-${peca}`)?.scrollIntoView();
+      return;
+    }
+    if (alvo === "pergunta" && peca) {
+      if (vistaAtual !== `pergunta/${peca}` || !conteudo.firstChild) {
+        vistaAtual = `pergunta/${peca}`;
+        vistaPergunta(painel, peca, conteudo);
+        window.scrollTo(0, 0);
+      }
       return;
     }
     if (chave !== vistaAtual || !conteudo.firstChild) {
