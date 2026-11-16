@@ -28,6 +28,12 @@ costuma errar; `saiu.py`, `web/src/saiu.ts`), na branch `ccr-82cf6245-ymtsy0` (*
 está no [PROPOSTAS](PROPOSTAS.md), "O que incluir e tirar"; a "Minha inflação" foi para o
 finjabs (M174 de lá).
 
+**Plano da fase 2** ([PLANO-FASE-2](PLANO-FASE-2.md); Caio, 16/11/2026: *"pode afrouxar minhas
+regras, e me dê um plano estruturado"*): três andares (Perguntas, Dados, Laboratório), o
+site enxuto (13 assuntos para 9, 156 cartões para uns 70) e as estimativas nossas num lugar
+só delas. **Nada feito; cada etapa espera o "sim" do Caio**, e as regras do CLAUDE.md só
+mudam quando a etapa for aprovada.
+
 ## Releituras com prazo
 
 A lista inteira sai de `sacibras leituras --todas` (`leituras.py`); a issue `releitura` avisa.
