@@ -8,7 +8,7 @@
 //   4. a tabela com tudo, guardada.
 
 import { numero } from "./formato";
-import { montarGrafico } from "./grafico";
+import { botoesDaImagem, montarGrafico, textoSemBotoes } from "./grafico";
 import { el, guardar } from "./pecas";
 import {
   desenharDispersao,
@@ -547,10 +547,32 @@ export function montarMundo(m: Mundo): HTMLElement {
       }
     }
     ultimaDispersao = desenhar;
-    peDispersao.replaceChildren(
-      el("span", "fonte", eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`),
-    );
+    const fonte = eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`;
+    acoes.hidden = pontos.length === 0;
+    peDispersao.replaceChildren(el("span", "fonte", fonte), acoes);
   }
+  // A imagem das duas métricas, para baixar ou copiar (Caio, 16/11/2026). Os botões nascem
+  // uma vez só: o redesenho não pode apagar o "Copiada ✓".
+  const acoes = el("span", "acoes");
+  acoes.append(
+    ...botoesDaImagem(() => {
+      const verde = getComputedStyle(document.documentElement).getPropertyValue("--verde").trim();
+      const itens = [...legendaDispersao.querySelectorAll<HTMLElement>(".legenda-item")];
+      return {
+        id: `mundo-${eixoY.id}-${eixoX.id}-${ano}`,
+        titulo: `${eixoY.nome} contra ${eixoX.nome}`,
+        sub: `Um ponto por país, em ${ano}. Na horizontal: ${eixoX.nome} (${eixoX.unidade}); na vertical: ${eixoY.nome} (${eixoY.unidade})`,
+        fonte: eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`,
+        nota: textoSemBotoes(notaDispersao),
+        legenda: itens.map((item) => ({
+          nome: item.textContent ?? "",
+          chave: "ponto" as const,
+          cor: item.querySelector("i")?.style.getPropertyValue("--cor").replace("var(--verde)", verde) || verde,
+        })),
+        svg: telaDispersao.querySelector("svg"),
+      };
+    }),
+  );
   let ultimaDispersao: (() => void) | null = null;
   let pendente = 0;
   new ResizeObserver(() => {

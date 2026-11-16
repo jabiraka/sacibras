@@ -63,6 +63,13 @@ Em Brasil no mundo, "Duas métricas" desenha com qualquer número de países e, 
 nenhum, diz por quê (a carga tributária da OCDE vai até 2024; em 2025 não há país) e leva
 ao ano mais novo com as duas. Falta fazer o mesmo em Estados › Duas métricas.
 
+O gráfico de duas métricas (Brasil no mundo, Estados e o de Impostos) agora sai como
+imagem, em "PNG" ou "Copiar" (Caio, 16/11/2026: *"deixe exportar como imagem as duas
+métricas ao mesmo tempo também"*), com o título, os eixos, quem ficou fora do desenho e a
+fonte escritos nela (`botoesDaImagem` em `grafico.ts`). O "Copiar" vale para todos os
+gráficos e só aparece onde o navegador copia imagem; dado privado continua sem nenhum dos
+dois.
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:

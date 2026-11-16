@@ -23,6 +23,7 @@ import {
   type PontoDisperso,
 } from "./pontos";
 import { montarFicha, type Regiao } from "./ficha";
+import { botoesDaImagem, textoSemBotoes } from "./grafico";
 import { remarcar } from "./glossario";
 import type { Estados, EstadosContas, MetricaEstados, PeriodoDaMetrica } from "./tipos";
 import { protegerNomeDeEstado } from "./traducao";
@@ -541,6 +542,22 @@ function montarDispersao(
     nota,
     pe,
   );
+  const fonte = (): string =>
+    `${eixoX.nome}: ${eixoX.referencia}. ${eixoY.nome}: ${eixoY.referencia}. Fontes: ${eixoX.fonte}${eixoX.fonte === eixoY.fonte ? "" : `; ${eixoY.fonte}`}.`;
+  // A imagem das duas métricas, para baixar ou copiar (Caio, 16/11/2026). Os botões nascem
+  // uma vez só: o redesenho não pode apagar o "Copiada ✓".
+  const acoes = el("span", "acoes");
+  acoes.append(
+    ...botoesDaImagem(() => ({
+      id: `estados-${eixoY.id}-${eixoX.id}`,
+      titulo: `${eixoY.nome} contra ${eixoX.nome}`,
+      sub: `Um ponto por estado. Na horizontal: ${eixoX.nome} (${eixoX.unidade}); na vertical: ${eixoY.nome} (${eixoY.unidade})`,
+      fonte: fonte(),
+      nota: textoSemBotoes(nota),
+      legenda: destaque ? [{ nome: nomes.get(destaque) ?? destaque, chave: "ponto" as const, cor: corDestaque() }] : [],
+      svg: tela.querySelector("svg"),
+    })),
+  );
   let pendente = 0;
   new ResizeObserver(() => {
     cancelAnimationFrame(pendente);
@@ -598,13 +615,7 @@ function montarDispersao(
       pintar();
     });
     nota.append(botao);
-    pe.replaceChildren(
-      el(
-        "span",
-        "fonte",
-        `${eixoX.nome}: ${eixoX.referencia}. ${eixoY.nome}: ${eixoY.referencia}. Fontes: ${eixoX.fonte}${eixoX.fonte === eixoY.fonte ? "" : `; ${eixoY.fonte}`}.`,
-      ),
-    );
+    pe.replaceChildren(el("span", "fonte", fonte()), acoes);
   }
   return painel;
 }
