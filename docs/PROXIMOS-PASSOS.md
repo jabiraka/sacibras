@@ -39,7 +39,7 @@ perguntas do juro e do crescimento); e "o método do Jabs" saiu das fontes e not
 
 Por último, o corte dos Dados pelo orçamento de atenção: as partes foram de 64 para 49
 (nenhum assunto com mais de 5; nenhuma parte com mais de 4 números e 3 gráficos), os
-cartões de 158 para 141 e os gráficos de 144 para 114. O que saiu da tela continua sendo
+cartões de 158 para 141 e os gráficos de 144 para 113. O que saiu da tela continua sendo
 calculado (volta pondo o id numa parte): em Atividade, a confiança do consumidor, o PIB em
 linhas pela oferta e pela demanda e a demanda privada em gráfico; em Trabalho, desalento e
 procura longa; em Demografia, a projeção da ONU, a mortalidade infantil e os idosos em
