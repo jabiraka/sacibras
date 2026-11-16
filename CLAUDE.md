@@ -94,6 +94,14 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   o assunto; Caio, 15/11/2026: *"coloque também alguns gráficos que achar mais importante pra
   entender o Brasil. Pode eliminar alguns cartões"*) e os assuntos com a manchete de cada um,
   agrupados por categoria.
+- **"Saiu por último", na entrada** (Caio, 16/11/2026: *"pode incluir"*): logo abaixo dos
+  quatro números, o IPCA do mês, a Selic, a desocupação e o PIB contra a última mediana do
+  Focus antes de sair (`builder/src/sacibras/saiu.py`, `web/src/saiu.ts`), com o quanto o
+  Focus costuma errar ali. Acima ou abaixo do esperado vai em tinta neutra, sem "bom" nem
+  "ruim". Divulgação nova só entra se o Focus coletar a mediana dela (mensal, trimestral ou
+  por reunião); sem previsão nossa. No mesmo dia: *"os simuladores tem mto erro né, melhor
+  focarmos no que podemos pegar e fazer"*: simulador novo e modelo nosso de efeito de
+  política não entram.
 - **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
   muitas informações em uma página [...] classifique melhor em categorias, crie
   subcategorias"*). Tudo mora em `builder/src/sacibras/organizacao.py`: `CATEGORIAS` agrupa os

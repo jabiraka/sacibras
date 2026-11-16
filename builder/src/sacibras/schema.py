@@ -432,6 +432,34 @@ class Subcategoria(Modelo):
     """Atalhos para partes de outros assuntos que tratam do mesmo ("Veja também")."""
 
 
+class Divulgado(Modelo):
+    """Um número que saiu, contra a última mediana do Focus antes dele (`saiu.py`)."""
+
+    id: str
+    nome: str
+    secao: str
+    referencia: date
+    periodo: str
+    """O período em palavras: "out/2026", "3º tri/2026", "reunião de 04/11/2026"."""
+    nota: str = ""
+    """O que o número é, em duas ou três palavras: "no mês", "contra um ano antes"."""
+    valor: float
+    unidade: str
+    casas: int = 1
+    esperado: float | None = None
+    esperado_em: date | None = None
+    """O dia da coleta do Focus."""
+    surpresa: float | None = None
+    """O que saiu menos o esperado, em pontos, já nas casas em que o número é publicado."""
+    erro_de_costume: float | None = None
+    """A média do erro absoluto do Focus nas `divulgacoes` anteriores, em pontos."""
+    divulgacoes: int = 0
+    saiu_em: date | None = None
+    """O dia da divulgação quando se sabe (o Copom); senão a coleta do Focus, da véspera.
+    Serve à ordem, não vai à tela como data de divulgação."""
+    fonte: str
+
+
 class Secao(Modelo):
     id: str
     titulo: str
@@ -446,6 +474,8 @@ class Secao(Modelo):
     simulador_reforma: SimuladorReforma | None = None
     salario_minimo: ComparadorSalario | None = None
     alertas: list[Alerta] = Field(default_factory=list)
+    saiu: list[Divulgado] = Field(default_factory=list)
+    """Só no resumo: o que saiu por último, contra o Focus."""
     gerado_em: datetime
 
 

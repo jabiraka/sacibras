@@ -3800,3 +3800,119 @@ table.dados.limites-tabela td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* "Saiu por último", na entrada: o número contra o Focus (saiu.ts). */
+.saiu {
+  max-width: 62rem;
+  margin: 28px auto 0;
+  padding: 16px 18px 14px;
+  border-radius: 16px;
+}
+
+.saiu-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 8px;
+}
+
+.saiu-titulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.saiu-sub {
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+}
+
+.saiu-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.saiu-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) 8.5em minmax(0, 1.6fr);
+  align-items: baseline;
+  gap: 0 14px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--tinta-2);
+  font-size: 0.9375rem;
+}
+
+.saiu-item:hover,
+.saiu-item:focus-visible {
+  background: var(--verde-claro);
+}
+
+.saiu-nome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  min-width: 0;
+}
+
+.saiu-nome strong {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.saiu-periodo,
+.saiu-contexto {
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+}
+
+.saiu-valor {
+  color: var(--tinta);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.saiu-leitura {
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.saiu-contexto {
+  grid-column: 3;
+}
+
+.saiu-nota {
+  margin: 10px 10px 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--tinta-3);
+}
+
+/* No celular: o nome e o número em cima, a leitura e o Focus embaixo, na largura toda. */
+@media (max-width: 640px) {
+  .saiu-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .saiu-leitura,
+  .saiu-contexto {
+    grid-column: 1 / -1;
+  }
+
+  .saiu-item {
+    padding: 7px 4px;
+  }
+
+  .saiu-nota {
+    margin-inline: 4px;
+  }
+}

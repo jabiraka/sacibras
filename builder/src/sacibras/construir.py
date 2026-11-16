@@ -19,11 +19,12 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras import licencas, organizacao, rede
+from sacibras import licencas, organizacao, rede, saiu
 from sacibras.catalogo import SGS
 from sacibras.schema import (
     AoVivo,
     Cartao,
+    Divulgado,
     EstadoFonte,
     Grafico,
     ItemSecao,
@@ -313,6 +314,12 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
             fontes.append(EstadoFonte(fonte=FONTES[id], ok=False, detalhe=str(erro)[:300]))
             print(f"  FALHA {id}: {str(erro)[:160]}")
 
+    saiu_antes: list[Divulgado] = []
+    try:
+        antigo = json.loads((saida / "resumo.json").read_text(encoding="utf-8"))
+        saiu_antes = [Divulgado.model_validate(d) for d in antigo.get("saiu", [])]
+    except (OSError, ValueError):
+        pass
     agora = datetime.now(UTC)
     resumo = Secao(
         id="resumo",
@@ -324,6 +331,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
             if c in cartoes
         ],
         graficos=[graficos[g] for g in RESUMO_GRAFICOS if g in graficos],
+        saiu=saiu.montar(ctx, saiu_antes),
         gerado_em=agora,
     )
     _gravar(saida, "resumo.json", resumo)

@@ -244,7 +244,28 @@ export interface Secao {
   simulador_reforma?: SimuladorReforma | null;
   salario_minimo?: ComparadorSalario | null;
   alertas?: Alerta[];
+  /** Só no resumo: o que saiu por último, contra o Focus (saiu.ts). */
+  saiu?: Divulgado[];
   gerado_em: string;
+}
+
+/** Um número que saiu, contra a última mediana do Focus antes dele. */
+export interface Divulgado {
+  id: string;
+  nome: string;
+  secao: string;
+  referencia: string;
+  periodo: string;
+  nota: string;
+  valor: number;
+  unidade: string;
+  casas: number;
+  esperado: number | null;
+  esperado_em: string | null;
+  surpresa: number | null;
+  erro_de_costume: number | null;
+  divulgacoes: number;
+  fonte: string;
 }
 
 /** O salário mínimo contra a inflação no período escolhido (salario-minimo.ts). */

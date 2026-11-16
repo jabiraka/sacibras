@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 15/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 16/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,13 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibovespa e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**16/11/2026**: entrou o "Saiu por último" na entrada (o IPCA do mês, a Selic, a
+desocupação e o PIB contra a última mediana do Focus antes de sair, com o quanto o Focus
+costuma errar; `saiu.py`, `web/src/saiu.ts`), na branch `ccr-82cf6245-ymtsy0` (**não está no
+`main`**: falta o Caio olhar e mandar juntar). A conversa do dia sobre o que incluir e tirar
+está no [PROPOSTAS](PROPOSTAS.md), "O que incluir e tirar"; a "Minha inflação" foi para o
+finjabs (M174 de lá).
 
 ## Releituras com prazo
 
@@ -64,6 +71,13 @@ As próximas:
 
 ## Espera o Caio
 
+- **Juntar o "Saiu por último" no `main`** depois de olhar (a 390 e 1280 px, na entrada, logo
+  abaixo dos quatro números). Para olhar: a Selic diz "acertou as 8 anteriores" e 0,25 pp
+  acima do esperado na reunião de 04/11 (o Focus esperava corte para 13,50 %; é o que a API
+  do Focus e a do Copom dizem).
+- **Riscos: a lista do que sai do painel de alerta** (de 39 para 17) e as ideias de
+  crescimento e longo prazo, no [PROPOSTAS](PROPOSTAS.md), "O que incluir e tirar": dizer o
+  que entra.
 - **Trecho da B3 sobre gráficos informativos**: o Ibovespa fica na tela por decisão do
   Caio (15/11/2026, *"Os termos da B3 permitem gráficos informativos"*), mas a cláusula não
   apareceu nos termos de uso nem na Política Comercial de Market Data 2027. Com o elo,

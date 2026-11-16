@@ -13,6 +13,7 @@ import { montarAlertas } from "./alertas";
 import { pontoMaisNovo } from "./aovivo";
 import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDaSemana, agendaDoAssunto } from "./calendario";
+import { saiuPorUltimo } from "./saiu";
 import { ligarGlossario } from "./glossario";
 import { vistaGlossario } from "./glossario-pagina";
 import { ligarNomesProprios, ligarTraducao, protegerNomeDeEstado } from "./traducao";
@@ -557,6 +558,7 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
         grade.append(peca);
       }
       if (!resumo.graficos.length) panorama.remove();
+      if (resumo.saiu?.length) essenciais.after(saiuPorUltimo(resumo.saiu));
       for (const c of resumo.cartoes) {
         const item = el("a", "essencial");
         item.href = `#${c.secao}`;

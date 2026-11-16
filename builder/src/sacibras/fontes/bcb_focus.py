@@ -182,3 +182,22 @@ def mediana_em(
         if linha["Mediana"] is not None:
             return float(linha["Mediana"])
     return None
+
+
+def medianas_no_tempo(
+    recurso: str, indicador: str, desde: date, *, campo: str = "DataReferencia"
+) -> list[tuple[str, date, float]]:
+    """[(referência, dia da coleta, mediana)], da coleta mais nova à mais antiga.
+
+    `recurso`: `ExpectativaMercadoMensais` (referência "10/2026"),
+    `ExpectativasMercadoTrimestrais` ("3/2026") ou `ExpectativasMercadoSelic` (com
+    `campo="Reuniao"`, "R7/2026"). O Focus para de coletar a referência quando o número sai:
+    a coleta mais nova de um mês já divulgado é a da véspera (conferido em 16/11/2026: a do
+    IPCA de out/2026 é de 06/11 e a de set/2026 é de 08/10)."""
+    filtro = f"Indicador eq '{indicador}' and baseCalculo eq 0 and Data ge '{desde.isoformat()}'"
+    linhas = _consulta(recurso, filtro, topo=10000)
+    return [
+        (str(linha[campo]), date.fromisoformat(linha["Data"]), float(linha["Mediana"]))
+        for linha in linhas
+        if linha["Mediana"] is not None and linha.get(campo)
+    ]

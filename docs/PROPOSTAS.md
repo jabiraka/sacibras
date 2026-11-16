@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 15/11/2026 (por último, o PIB trimestral por estado e as decomposições).
+Última atualização: 16/11/2026 (por último, o "Saiu por último" da entrada e a conversa sobre o que incluir e tirar).
 Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -93,6 +93,79 @@ oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de f
 - Domínio (com ele, trocar `ENDERECO` em `web/vite.config.ts` e `anterior.SITE`).
 - Agenda: as reuniões do Copom na caixa "O que sai esta semana" (não há API de datas
   futuras; só lendo o calendário publicado pelo BC).
+
+## O que incluir e tirar (conversa de 16/11/2026)
+
+Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e fazer."* O
+"Saiu por último" (o número contra o Focus, na entrada) entrou no mesmo dia. Fica:
+
+- **Fora, por decisão do Caio**: modelo nosso do efeito de política pública (aumentar
+  imposto e ver PIB, emprego, inflação) e o simulador contábil de imposto com a base parada
+  (*"a base parada não sei se fica factível, as pessoas se ajustam"*). Simulador novo não
+  entra; os três que existem ficam.
+- **"Minha inflação" é do finjabs**, não daqui (*"eu queria que o finjabs fizesse essa
+  conta"*): está no PROPOSTAS de lá, M174. Quando existir, Inflação › Por tipo de preço
+  aponta para ela; corrigir um valor pela inflação já existe lá
+  (`finjabs.com.br/calculadora/corrigir-valor-pela-inflacao`) e pode ganhar o mesmo elo.
+- **Páginas de pergunta** (Caio: *"é uma boa, mas parte de teoria também, não?"*): "por que
+  o juro é tão alto?", "a dívida se sustenta?", "para onde vai o imposto?", "por que o
+  Brasil cresce pouco?". A teoria entra como lista de explicações que os economistas dão,
+  uma frase cada, e ao lado de cada uma o número daqui que a mede, sem dizer qual está
+  certa. Para o juro: dívida e risco fiscal (juro menos crescimento, primário que falta),
+  poupança baixa (taxa de poupança contra os pares), crédito que não responde à Selic
+  (parcela do crédito direcionado, SGS), inflação que demora a ceder (serviços, difusão,
+  expectativa acima da meta) e o juro dos outros (juro real contra os EUA e os emergentes).
+  Usa gráfico que já existe; o que faltar é a série do crédito direcionado.
+- **Onde estou na renda** (PNAD e centis do IRPF) e **quanto do meu salário é imposto**
+  (IRPF e INSS pela lei lida): a segunda é conta do finjabs; a primeira pode ser daqui
+  (Pobreza › distribuição), com um campo só. Pede o "sim" do Caio, por ser entrada da pessoa.
+- **Contar acesso por parte e por termo de busca**, sem cookie, para cortar com dado e não
+  com palpite. Pede escolher o serviço (ou um contador próprio) e dizer na tela.
+- **Riscos, enxugar o painel de alerta** (Caio: *"a parte de riscos tem muitos alertas e
+  outras coisas, se pudesse escolher, quais tiraria?"*). São 39 alertas; a proposta é ficar
+  com 17, um por pergunta, e tirar o que repete outro (o número continua no assunto dele,
+  só sai do painel). **Ficam**: dívida bruta, primário que falta para estabilizar, juro
+  menos crescimento, juros sobre a receita, dívida que vence em 12 meses; reservas sobre a
+  dívida externa de curto prazo, transações correntes, investimento direto menos déficit
+  externo; IPCA em 12 meses, média dos núcleos, expectativa de 12 meses acima da meta;
+  inadimplência total, renda comprometida com dívidas, Basileia, hiato de crédito;
+  volatilidade do dólar; déficit do INSS. **Saem do painel**: primário, juros e nominal em
+  12 meses (estão dentro do "primário que falta" e dos juros sobre a receita), dívida
+  atrelada à Selic e prazo médio (a rolagem já está no "vence em 12 meses"); reservas em
+  meses de importação (repete a outra), dívida externa líquida (o setor público é credor:
+  não acende), dívida atrelada ao câmbio e swaps; difusão e implícita de 8 anos;
+  inadimplência de pessoas e de empresas, atraso de 15 a 90 dias, spread, endividamento,
+  Índice de Liquidez e LCR; volatilidade e queda do Ibovespa (bolsa não é risco macro);
+  benefícios do INSS (repete o déficit) e os reservatórios (vão para Atividade). Nas
+  partes: "Bancos e energia" some (os bancos vão para "Mercado e contas externas" ou para
+  Crédito) e a tabela de governança sai. Espera o "sim" do Caio na lista.
+- **Crescimento e longo prazo, o que dá para pegar** (Caio: *"há muitas teorias de
+  crescimento e longo prazo, não sei oq dá pra encaixar"*). Só dado publicado ou conta
+  nossa sobre ele, sem previsão:
+  - **De onde veio o PIB por habitante**: crescimento = produtividade por ocupado × parcela
+    da população que trabalha × parcela em idade de trabalhar (IBGE; conta nossa, fecha com
+    o número oficial). Mostra o fim do bônus demográfico: quanto do crescimento desde 1990
+    veio de ter mais gente trabalhando, que acabou, e quanto de produtividade.
+  - **Convergência**: o PIB por habitante do Brasil em % do dos EUA desde 1950, com Coreia,
+    Chile, México, China e Turquia (Penn World Table, já lida). É o gráfico da "armadilha
+    da renda média".
+  - **Hiato do produto e juro neutro**: o BC publica os dois no Relatório de Política
+    Monetária (trimestral; o neutro, uma vez por ano) e a IFI publica o hiato. Leitura à
+    mão com prazo (`relatorios.py`, `leituras.py`). Com eles, o juro real ao lado do
+    neutro diz o quanto a Selic aperta, sem modelo nosso.
+  - **Duas métricas no tempo** (o gráfico de pontos que já existe, com um ponto por ano):
+    desocupação × inflação de serviços (a curva de Phillips), crescimento do PIB × variação
+    da desocupação (a lei de Okun), termos de troca × câmbio. A teoria em uma frase e o
+    dado dizendo se ela aparece ou não no Brasil; não é previsão.
+  - **Termos de troca** (Funcex pelo Ipeadata ou os índices do MDIC, **do PC**) e o peso
+    das commodities na exportação (Comex Stat): o quanto o crescimento acompanha o preço do
+    que se exporta.
+  - **Indústria de transformação em % do PIB** desde 1947 (IBGE, contas nacionais), contra
+    países de renda parecida: a desindustrialização em um gráfico.
+  - **Educação**, que hoje não tem lugar próprio: Ideb (Inep, a cada dois anos), PISA
+    (OCDE, a cada três) e anos de estudo (PNAD), por estado onde houver. É o capital
+    humano da conta do crescimento.
+  - **Crédito direcionado** em % do crédito total (SGS): serve à página do juro alto.
 
 ## Achados da revisão das telas (15/11/2026)
 
