@@ -214,6 +214,85 @@ def juro_que_a_divida_paga(
     return [(d, j / estoque[d] * 100) for d, j in juros_pib if estoque.get(d)], False
 
 
+QUEDAS_DO_JURO = (0.0, 1.0, 2.0, 3.0, 4.0)
+"""Quanto o juro da dívida cai em cada linha da tabela, em pontos percentuais."""
+PASSO_DO_CRESCIMENTO = 2.0
+"""A tabela mostra o crescimento em reais de hoje e dois pontos para menos e para mais."""
+
+
+def _media_de_dez_anos(necessario: list[Ponto]) -> float | None:
+    ultimos = [v for _, v in necessario[-120:]]
+    return sum(ultimos) / len(ultimos) if len(ultimos) == 120 else None
+
+
+def primario_conforme_o_juro(
+    divida_pib: float,
+    juro: float,
+    crescimento: float,
+    quando: str,
+    fonte: str,
+    atrelada_a_selic: float | None,
+    *,
+    dez_anos: float | None = None,
+) -> Tabela:
+    """O primário que estabiliza a dívida com outros juros e outros crescimentos (Caio,
+    16/11/2026: *"com alguma sinalização maior de ajuste fiscal, os juros podem cair e o
+    primário que estabiliza a dívida diminuir [...] é um jogo dinâmico, e com inflação maior
+    talvez tbm precisaria de menos"*). A mesma conta do cartão, repetida: não é previsão."""
+    crescimentos = [
+        crescimento - PASSO_DO_CRESCIMENTO,
+        crescimento,
+        crescimento + PASSO_DO_CRESCIMENTO,
+    ]
+    linhas = [
+        LinhaTabela(
+            rotulo=(
+                f"Juro de hoje ({br(juro)} % a.a.)"
+                if queda == 0
+                else f"Juro {br(queda, 0)} pp menor ({br(juro - queda)} %)"
+            ),
+            valores=[
+                round(risco.primario_que_estabiliza(divida_pib, juro - queda, g), 2)
+                for g in crescimentos
+            ],
+            unidade="% do PIB",
+            casas=1,
+        )
+        for queda in QUEDAS_DO_JURO
+    ]
+    nota = (
+        "A conta do primário que estabiliza a dívida é uma foto: usa o juro e o crescimento "
+        "do momento. Se o juro cair, por exemplo porque um ajuste das contas convenceu quem "
+        "empresta, o esforço necessário cai junto: são as linhas de baixo. Inflação mais alta "
+        "aumenta o crescimento em reais (as colunas da direita) e também diminui o primário, "
+        "mas só enquanto o juro não sobe com ela"
+    )
+    if atrelada_a_selic is not None:
+        nota += (
+            f": {br(atrelada_a_selic, 0)} % da dívida em títulos segue a Selic, e essa parte "
+            "encarece logo"
+        )
+    nota += "."
+    if dez_anos is not None:
+        nota += (
+            f" Na média dos últimos dez anos, o primário que estabilizava a dívida foi de "
+            f"{br(dez_anos)} % do PIB."
+        )
+    return Tabela(
+        id="primario-conforme-o-juro",
+        titulo="O primário que estabiliza a dívida, com outros juros e outros crescimentos",
+        subtitulo=f"% do PIB; dívida bruta de {br(divida_pib)} % do PIB ({quando})",
+        colunas=[
+            f"PIB em reais a {br(crescimentos[0])} %",
+            f"a {br(crescimentos[1])} % (hoje)",
+            f"a {br(crescimentos[2])} %",
+        ],
+        linhas=linhas,
+        fonte=fonte,
+        nota=nota,
+    )
+
+
 def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, Anos]:
     dbgg = ctx.sgs("DBGG", HIST)
     juros = ctx.sgs("NFSP_JUROS_12M", HIST)
@@ -367,6 +446,18 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             ),
         ),
     ]
+    bloco.tabelas.append(
+        primario_conforme_o_juro(
+            # Os três do mesmo mês do cartão (as séries não acabam todas no mesmo mês).
+            dict(dbgg)[necessario[-1][0]],
+            dict(juro_divida)[necessario[-1][0]],
+            dict(crescimento)[necessario[-1][0]],
+            quando,
+            fonte_conta,
+            atrelada[-1][1] if atrelada else None,
+            dez_anos=_media_de_dez_anos(necessario),
+        )
+    )
     bloco.alertas += [
         alerta(
             "dbgg",
@@ -1198,7 +1289,7 @@ Direto às vezes vence antes); 8 anos é o prazo mais longo que as duas pernas c
 todo mês desde 2007 (conferido em 15/11/2026: 223 meses)."""
 FONTE_CURVA = (
     "Tesouro Direto (taxa média entre compra e venda; curva zero com os títulos com cupom por "
-    "bootstrap, o método do Jabs)"
+    "bootstrap)"
 )
 
 

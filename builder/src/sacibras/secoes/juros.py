@@ -399,7 +399,7 @@ def _mercado_x_focus(
                 fonte=fonte,
                 nota=(
                     "Implícita: (1 + juro nominal) / (1 + juro real) − 1, as duas da curva zero "
-                    "no mesmo vencimento (o método da curva de inflação do Jabs). Focus: o IPCA "
+                    "no mesmo vencimento. Focus: o IPCA "
                     "de cada ano acumulado de hoje até o vencimento. A implícita inclui o "
                     "prêmio pelo risco de inflação." + nota_alem
                 ),
@@ -492,7 +492,7 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
         _, nominal_ano, real_ano = _curvas_no_dia(td, _anos_depois(ctx.hoje, -1))
     fonte = (
         "Tesouro Direto (taxa média entre compra e venda; curva zero com os títulos com cupom "
-        "por bootstrap, o método do Jabs)"
+        "por bootstrap)"
     )
     # O maior prazo, até 10 anos, que as duas pernas cobrem hoje.
     longo = max(k for k in range(3, 11) if None not in _no_prazo(dia, nominal, real, k))

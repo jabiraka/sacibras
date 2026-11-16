@@ -4126,3 +4126,33 @@ table.dados.limites-tabela td {
 .outras-perguntas .perguntas {
   margin-top: 14px;
 }
+
+.explicacao-corpo > .guardado {
+  margin-top: 12px;
+}
+
+/* A conclusão da pergunta: o que o dado sustenta e o que fica em aberto. */
+.conclusao {
+  margin-top: 22px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  border-color: var(--borda-forte);
+}
+
+.conclusao-titulo {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--verde);
+}
+
+.conclusao-texto {
+  margin: 10px 0 0;
+  max-width: 46rem;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--tinta);
+  text-wrap: pretty;
+}

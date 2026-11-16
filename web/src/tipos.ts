@@ -486,6 +486,7 @@ export interface BlocoPergunta {
   texto: string;
   numeros: Cartao[];
   grafico: Grafico | null;
+  tabela?: Tabela | null;
   assunto: string;
   assunto_titulo: string;
   elo: string;
@@ -497,6 +498,7 @@ export interface Pergunta {
   resposta: string;
   numeros: Cartao[];
   blocos: BlocoPergunta[];
+  conclusao?: string;
 }
 
 export interface Perguntas {

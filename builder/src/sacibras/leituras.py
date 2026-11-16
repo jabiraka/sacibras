@@ -68,6 +68,17 @@ LEITURAS: list[Leitura] = [
         "Planalto, do PC. Conferir se lei nova mudou a meta ou o prazo. Uma vez por ano.",
     ),
     Leitura(
+        "As respostas e conclusões das perguntas (falam do momento: 'ainda não', 'do jeito "
+        "que está, não')",
+        "perguntas.LIDAS_EM",
+        date(2026, 11, 16),
+        date(2027, 2, 16),
+        "Abrir as oito perguntas no site e conferir cada frase contra o número ao lado: a "
+        "inflação contra o teto, o ritmo dos núcleos, a desocupação contra o mínimo da série, "
+        "o primário que estabiliza contra o maior já feito, a implícita contra o Focus. A "
+        "cada três meses, e antes disso se o IPCA voltar à meta ou a Selic mudar de direção.",
+    ),
+    Leitura(
         "Meta de inflação (CMN)",
         "leis.META_CONTINUA",
         date(2026, 11, 14),

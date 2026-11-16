@@ -715,6 +715,7 @@ class BlocoPergunta(Modelo):
     texto: str
     numeros: list[Cartao] = Field(default_factory=list)
     grafico: Grafico | None = None
+    tabela: Tabela | None = None
     assunto: str
     assunto_titulo: str = ""
     elo: str
@@ -727,6 +728,8 @@ class Pergunta(Modelo):
     resposta: str
     numeros: list[Cartao] = Field(default_factory=list)
     blocos: list[BlocoPergunta]
+    conclusao: str = ""
+    """Juntando as peças: o que a história contada torna mais provável."""
 
 
 class Perguntas(Modelo):

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 
 from sacibras import contas
-from sacibras.fontes import bcb_focus, ibge_sidra
+from sacibras.fontes import bcb_focus, fmi, ibge_sidra
 from sacibras.modelos import decomposicoes
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela, VisaoTabela
 from sacibras.secoes import produtividade
@@ -368,6 +368,77 @@ def _investimento_e_poupanca(investimento: list[Ponto], poupanca: list[Ponto]) -
     return saida
 
 
+GRUPOS_FMI = {
+    "BRA": "Brasil",
+    "G205": "América Latina e Caribe",
+    "G200": "Emergentes",
+    "G110": "Avançados",
+}
+"""O Brasil e os três grupos do FMI com que ele se compara (códigos do WEO, conferidos em
+16/11/2026 contra os nomes de Brasil no mundo)."""
+
+
+def investimento_contra_paises(ctx: Contexto) -> tuple[list[Cartao], list[Grafico]]:
+    """Investimento e poupança em % do PIB, o Brasil contra os grupos de países (Caio,
+    16/11/2026: *"talvez seja melhor comparar com outros países ao invés de mostrar só o
+    quanto investimos"*). FMI, WEO: NID_NGDP (investimento total) e NGSD_NGDP (poupança
+    nacional bruta), até o ano passado (o último ano pode ser estimativa do FMI)."""
+    fim = ctx.hoje.year - 1
+    weo = fmi.weo(list(GRUPOS_FMI), ["NID_NGDP", "NGSD_NGDP"], fim - 25, fim)
+    fonte = f"FMI, World Economic Outlook de {periodo(weo.publicado_em, 'M')}"
+    cartoes: list[Cartao] = []
+    graficos: list[Grafico] = []
+    for id, codigo, nome, o_que in (
+        ("investimento", "NID_NGDP", "Investimento", "investe"),
+        ("poupanca", "NGSD_NGDP", "Poupança", "poupa"),
+    ):
+        linhas = {
+            pais: [
+                (date(a, 1, 1), v) for a, v in sorted(weo.valores.get((pais, codigo), {}).items())
+            ]
+            for pais in GRUPOS_FMI
+        }
+        brasil, emergentes = linhas["BRA"], dict(linhas["G200"])
+        if not brasil or brasil[-1][0] not in emergentes:
+            continue
+        ano = brasil[-1][0]
+        partes = [
+            f"{curto} {br(dict(linhas[g])[ano])} %"
+            for g, curto in (("G205", "Am. Latina"), ("G200", "emergentes"), ("G110", "ricos"))
+            if ano in dict(linhas[g])
+        ]
+        cartoes.append(
+            cartao(
+                f"{id}-brasil-fmi",
+                f"{nome} do Brasil, pela conta do FMI",
+                brasil,
+                unidade="% do PIB",
+                periodicidade="A",
+                casas=1,
+                detalhe="; ".join(partes),
+                fonte=fonte,
+                secao="atividade",
+            )
+        )
+        graficos.append(
+            grafico(
+                f"{id}-paises",
+                f"Quanto o Brasil {o_que}, contra outros países",
+                [serie(g.lower(), GRUPOS_FMI[g], linhas[g], casas=1) for g in GRUPOS_FMI],
+                unidade="% do PIB",
+                casas=1,
+                periodicidade="A",
+                fonte=fonte,
+                nota=(
+                    f"{nome} em % do PIB, na mesma conta para todos (FMI). Os grupos são a "
+                    "média dos países de cada um, pesada pelo tamanho da economia; a China "
+                    "puxa a dos emergentes para cima. O último ano pode ser estimativa do FMI."
+                ),
+            )
+        )
+    return cartoes, graficos
+
+
 def montar(ctx: Contexto) -> Secao:
     cats = ",".join(COMPONENTES)
     pib_tt = ibge_sidra.series(
@@ -643,6 +714,12 @@ def montar(ctx: Contexto) -> Secao:
         tabelas += t_prod
     except Exception as erro:
         print(f"  aviso: atividade sem a produtividade: {str(erro)[:120]}")
+    try:
+        c_fmi, g_fmi = investimento_contra_paises(ctx)
+        cartoes += c_fmi
+        graficos += g_fmi
+    except Exception as erro:
+        print(f"  aviso: atividade sem o investimento contra outros países: {str(erro)[:120]}")
     resumo = (
         f"O PIB cresceu {br(tt[-1][1])} % no {trimestre} contra o trimestre anterior e "
         f"{br(aa[-1][1])} % contra um ano antes; em quatro trimestres acumula "

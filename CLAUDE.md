@@ -93,10 +93,25 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   pergunta ou problema"*). O site tem três andares ([docs/PLANO-FASE-2.md](docs/PLANO-FASE-2.md)):
   **Perguntas** (a entrada), **Dados** (os assuntos) e **Laboratório** (estimativas nossas,
   ainda por fazer). As perguntas moram em `builder/src/sacibras/perguntas.py`: resposta curta,
-  até 3 números, de 3 a 6 explicações, cada uma com uma frase do que os economistas dizem (sem
-  escolher qual está certa), até 2 números e 1 gráfico **copiados dos assuntos**, com a data e
-  a fonte deles. A tela (`#pergunta/<id>`) abre a primeira explicação e guarda as outras atrás
-  do clique. **Peça nova nos Dados diz a que pergunta responde**; se não responde a nenhuma,
+  até 3 números, de 3 a 6 explicações na ordem em que contam a história, cada uma com até 2
+  números, 1 gráfico e, se couber, 1 tabela **copiados dos assuntos**, com a data e a fonte
+  deles, e a conclusão ("Juntando as peças"). A tela (`#pergunta/<id>`) abre a primeira
+  explicação e guarda as outras atrás do clique.
+- **Claro onde a evidência é clara, em aberto onde ela é fraca** (Caio, 16/11/2026: *"não
+  precisa ser completamente neutro, não existe isso, fale oq for mais provável com base na
+  história contada [...] é melhor ser mais claro do que deixar implícito pra interpretação"*;
+  e logo depois: *"também não podemos afirmar oq não se sustenta, se a evidência for fraca,
+  melhor deixar mais em aberto mesmo"*). Nas perguntas, três degraus, e o texto diz em qual
+  está: o que o dado do painel mostra e o que é conta ou regra se afirmam; causa, peso de
+  cada causa e efeito de política se dizem plausíveis, disputados ou "os dados daqui não
+  decidem". Sem número que o painel não tem. As respostas falam do momento ("ainda não"):
+  têm prazo de releitura em `leituras.py` (`perguntas.LIDAS_EM`), e relê-se antes se o dado
+  virar.
+- **Comparar antes de dizer "pouco" ou "muito"** (Caio, 16/11/2026: *"talvez seja melhor
+  comparar com outros países ao invés de mostrar só o quanto investimos"*): quem afirma que
+  um número é alto ou baixo mostra contra o quê (outros países, a própria história, a meta).
+- **Nome de dentro não vai à tela** (Caio, 16/11/2026: *"elimine 'cálculo do Jabs' [...]
+  ninguém sabe oq é isso"*): o método se descreve ("curva zero por bootstrap"), sem "Jabs". **Peça nova nos Dados diz a que pergunta responde**; se não responde a nenhuma,
   pense duas vezes antes de pôr. Pergunta nova ganha as palavras de busca em `palavras`.
 - **Orçamento de atenção** (Caio, 16/11/2026: *"os humanos não conseguem absorver muitas
   informações"*): à vista, uma frase, até 4 números e um gráfico por tela; o resto abre no

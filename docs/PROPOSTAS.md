@@ -112,8 +112,10 @@ Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e 
 - **Onde estou na renda** (PNAD e centis do IRPF) e **quanto do meu salário é imposto**
   (IRPF e INSS pela lei lida): a segunda é conta do finjabs; a primeira pode ser daqui
   (Pobreza › distribuição), com um campo só. Pede o "sim" do Caio, por ser entrada da pessoa.
-- **Contar acesso por parte e por termo de busca**, sem cookie, para cortar com dado e não
-  com palpite. Pede escolher o serviço (ou um contador próprio) e dizer na tela.
+- **Contar acesso por pergunta, parte e termo de busca**, nós mesmos (Caio, 16/11/2026):
+  um projeto Supabase só do sacibras, uma tabela de contagem por dia (página, termo,
+  idioma, de onde veio), gravada por uma função que só soma; sem cookie, sem IP, sem
+  identificar pessoa. Dizer no rodapé o que se conta. Espera o projeto.
 - **Riscos**: o painel de alerta foi de 39 para 17 em 16/11/2026 (`alertas.NO_PAINEL`).
   Falta: as partes de 6 para 3, os reservatórios irem para Atividade e a tabela de
   governança sair.

@@ -30,6 +30,13 @@ as perguntas na busca; o painel de alerta de 39 para 17 (`alertas.NO_PAINEL`). A
 inflação" foi para o finjabs (M174 de lá). O plano inteiro está no
 [PLANO-FASE-2](PLANO-FASE-2.md).
 
+Depois, no mesmo dia, a pedido do Caio: as respostas tomam posição onde o dado sustenta e
+dizem o que fica em aberto, e cada pergunta fecha com "Juntando as peças"; a tabela do
+primário que estabiliza a dívida com outros juros e crescimentos (Riscos › A dívida se
+sustenta?, e na pergunta da dívida); o investimento e a poupança do Brasil contra a América
+Latina, os emergentes e os avançados (FMI; Atividade › Investimento e poupança, e nas
+perguntas do juro e do crescimento); e "o método do Jabs" saiu das fontes e notas.
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:
@@ -88,13 +95,14 @@ As próximas:
 
 ## Espera o Caio
 
-- **Olhar as oito perguntas** (a 390 e 1280 px, cada uma com todas as explicações
-  abertas): o texto de cada resposta e de cada explicação é meu, escrito para não tomar
-  partido; diga o que soar errado, torto ou com cara de opinião. Para olhar também: a Selic
-  no "Saiu por último" (0,25 pp acima do esperado em 04/11; é o que as APIs do Focus e do
-  Copom dizem).
-- **Contador de acesso**: qual serviço (um de terceiros sem cookie, ou nenhum por enquanto).
-  Manda dado de quem visita para fora, então não liguei sem perguntar.
+- **Olhar as oito perguntas de novo**, agora com posição: cada resposta e cada "Juntando
+  as peças" afirma o que o dado mostra e marca o que é disputado. Diga onde afirmei demais
+  ou de menos. Prazo de releitura: 16/02/2027 (`perguntas.LIDAS_EM`).
+- **Contador de acesso nosso** (Caio, 16/11/2026: *"a gente mesmo não pode saber quem
+  acessou?"*): o site é estático, então a contagem precisa de um lugar para gravar. A
+  proposta: um projeto Supabase só do sacibras (separado do finance_agent), com uma tabela
+  que soma visitas por dia, página e termo de busca, sem cookie, sem IP e sem identificar
+  ninguém. Falta o Caio criar o projeto (ou dizer para usar outro serviço).
 - **Os 22 alertas que saíram do painel**: a lista está em `alertas.NO_PAINEL`; se algum
   fizer falta, volta trocando por outro.
 - **Trecho da B3 sobre gráficos informativos**: o Ibovespa fica na tela por decisão do

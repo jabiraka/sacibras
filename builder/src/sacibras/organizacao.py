@@ -87,9 +87,14 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "investimento",
             "Investimento e poupança",
-            "Quanto do PIB vira máquinas e obras, e quanto o país poupa.",
-            cartoes=["taxa-investimento", "taxa-poupanca"],
-            graficos=["investimento-poupanca"],
+            "Quanto do PIB vira máquinas e obras, quanto o país poupa, e os outros países.",
+            cartoes=[
+                "taxa-investimento",
+                "taxa-poupanca",
+                "investimento-brasil-fmi",
+                "poupanca-brasil-fmi",
+            ],
+            graficos=["investimento-paises", "poupanca-paises", "investimento-poupanca"],
         ),
         Parte(
             "produtividade",
@@ -594,7 +599,7 @@ PARTES: dict[str, list[Parte]] = {
                 "juro-da-divida",
             ],
             graficos=["divida-leque", "primario-necessario", "juro-crescimento", "estresse-divida"],
-            tabelas=["elasticidades-da-divida", "estresse-episodios"],
+            tabelas=["primario-conforme-o-juro", "elasticidades-da-divida", "estresse-episodios"],
         ),
         Parte(
             "custo",

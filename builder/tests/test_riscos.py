@@ -220,3 +220,23 @@ def test_toda_nota_da_historia_tem_nome_no_eixo() -> None:
     usados = {relatorios.DEGRAU[n] for h in relatorios.NOTAS.values() for _, n in h}
     assert usados <= set(NOMES_DOS_DEGRAUS)
     assert NOMES_DOS_DEGRAUS[0] == "BBB−/Baa3"
+
+
+def test_primario_que_estabiliza_com_outros_juros_e_crescimentos() -> None:
+    """A conta do cartão, repetida: juro menor e crescimento maior pedem menos primário."""
+    from sacibras.modelos import risco as modelo
+    from sacibras.secoes import riscos
+
+    t = riscos.primario_conforme_o_juro(83.0, 13.0, 6.9, "set/2026", "teste", 53.6, dez_anos=2.1)
+    hoje = t.linhas[0].valores[1]
+    assert hoje == round(modelo.primario_que_estabiliza(83.0, 13.0, 6.9), 2)
+    assert [linha.rotulo for linha in t.linhas][:2] == [
+        "Juro de hoje (13,0 % a.a.)",
+        "Juro 1 pp menor (12,0 %)",
+    ]
+    # Para baixo (juro menor) e para a direita (mais crescimento), o primário cai.
+    for linha in t.linhas:
+        assert linha.valores[0] > linha.valores[1] > linha.valores[2]  # type: ignore[operator]
+    coluna = [linha.valores[1] for linha in t.linhas]
+    assert coluna == sorted(coluna, reverse=True)  # type: ignore[type-var]
+    assert "54 % da dívida em títulos segue a Selic" in t.nota and "2,1 % do PIB" in t.nota

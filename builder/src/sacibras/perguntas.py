@@ -3,10 +3,22 @@ perguntas que as pessoas buscam algum tipo de resposta, vamos evitar mostrar só
 dado [...] mostrar o dado que responde uma pergunta ou problema"*).
 
 Cada pergunta tem uma resposta curta, os números de hoje que a sustentam e de três a seis
-explicações. A explicação é uma frase com o que os economistas dizem, sem escolher qual
-está certa, e ao lado vai o número e o gráfico do painel que a mede. Nada aqui é dado novo:
-os cartões e gráficos são os dos assuntos, copiados com a data e a fonte deles; o que
-faltar numa rodada simplesmente não aparece.
+explicações, na ordem em que contam a história, e fecha com a conclusão. **Claro onde a
+evidência é clara, em aberto onde ela é fraca** (Caio, 16/11/2026: *"não precisa ser
+completamente neutro [...] é melhor ser mais claro do que deixar implícito pra
+interpretação"*; e, no mesmo dia: *"também não podemos afirmar oq não se sustenta, se a
+evidência for fraca, melhor deixar mais em aberto mesmo [...] vamos ser claros quando a
+evidência é clara"*). Três degraus, e o texto diz em qual está: o que o dado do painel
+mostra (afirma-se); o que é conta ou regra (afirma-se); e o que é causa, peso de cada causa
+ou efeito de política (diz-se que é plausível, disputado ou que os dados daqui não decidem).
+Sem adjetivo de torcida e sem número que o painel não tem. Ao lado de cada explicação vai o
+número e o gráfico do painel que a sustenta.
+
+**As respostas falam do momento** ("ainda não", "do jeito que está, não"): valem enquanto o
+dado disser o mesmo. `LIDAS_EM` e a linha em `leituras.py` marcam quando reler.
+
+Nada aqui é dado novo: os cartões e gráficos são os dos assuntos, copiados com a data e a
+fonte deles; o que faltar numa rodada simplesmente não aparece.
 
 Regra do orçamento de atenção: até 3 números na resposta, até 6 explicações, até 2 números
 e 1 gráfico por explicação.
@@ -16,7 +28,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from sacibras.schema import BlocoPergunta, Cartao, Grafico, ItemPergunta, Pergunta
+from sacibras.schema import BlocoPergunta, Cartao, Grafico, ItemPergunta, Pergunta, Tabela
+
+LIDAS_EM = "16/11/2026"
+"""Quando as respostas e conclusões foram escritas contra o dado (ver `leituras.py`)."""
 
 MAXIMO_DE_NUMEROS = 3
 MAXIMO_DE_BLOCOS = 6
@@ -32,6 +47,7 @@ class Bloco:
     texto: str
     grafico: Ref | None = None
     numeros: tuple[Ref, ...] = ()
+    tabela: Ref | None = None
 
 
 @dataclass(frozen=True)
@@ -43,14 +59,17 @@ class Definicao:
     blocos: tuple[Bloco, ...]
     palavras: tuple[str, ...] = field(default=())
     """Como alguém procuraria a pergunta na busca."""
+    conclusao: str = ""
+    """Juntando as peças: o que a história contada torna mais provável."""
 
 
 PERGUNTAS: tuple[Definicao, ...] = (
     Definicao(
         "juro-alto",
         "Por que o juro é tão alto?",
-        "Não há uma causa só. Os economistas apontam a inflação acima da meta, a dívida "
-        "pública, a pouca poupança e o juro dos outros países; abaixo, o número de cada uma.",
+        "Duas causas têm apoio claro nos dados: a inflação acima da meta, que segura a Selic,"
+        " e a dívida pública alta e crescente, que encarece o juro de prazo longo. A pouca "
+        "poupança e o juro de fora também contam, com evidência menos direta.",
         (("juros", "selic-meta"), ("juros", "juro-real-ex-ante"), ("inflacao", "ipca-12m")),
         (
             Bloco(
@@ -69,10 +88,10 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
             Bloco(
                 "O país poupa pouco",
-                "Com pouca poupança para financiar o investimento, o dinheiro disponível "
-                "fica mais caro.",
-                ("atividade", "investimento-poupanca"),
-                (("atividade", "taxa-poupanca"), ("atividade", "taxa-investimento")),
+                "O Brasil poupa menos que a América Latina, os emergentes e os países "
+                "ricos. Com pouco dinheiro para emprestar, ele fica mais caro.",
+                ("atividade", "poupanca-paises"),
+                (("atividade", "poupanca-brasil-fmi"),),
             ),
             Bloco(
                 "O prazo longo cobra a incerteza",
@@ -90,21 +109,27 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("selic alta", "juros altos", "taxa de juros", "por que a selic"),
+        conclusao=(
+            "Enquanto a dívida subir e a inflação esperada ficar acima da meta, o mais provável é"
+            " o juro seguir alto. Quanto cada causa pesa, ninguém mede com precisão: o que os "
+            "dados mostram é que as duas primeiras estão presentes hoje."
+        ),
     ),
     Definicao(
         "divida",
         "A dívida pública se sustenta?",
-        "A dívida em relação ao PIB para de subir quando o resultado do governo, antes dos "
-        "juros, cobre a diferença entre o juro que ele paga e o crescimento da economia. "
-        "Hoje ele não cobre.",
+        "Do jeito que está, não: com o juro e o crescimento de hoje, a dívida sobe todo ano. "
+        "Mas a conta não é fixa: se o juro cair, o esforço necessário para estabilizá-la é "
+        "bem menor do que o número de hoje sugere.",
         (("fiscal", "dbgg"), ("riscos", "primario-estabiliza"), ("fiscal", "primario")),
         (
             Bloco(
                 "Quanto falta para ela parar de subir",
-                "O primário que estabiliza a dívida sai do juro e do crescimento de hoje; a "
-                "distância até o resultado de fato é o ajuste que falta.",
+                "Com o juro de hoje, pediria um superávit acima de qualquer um desde 2006. "
+                "É uma foto: a tabela refaz a conta com juro menor e com mais crescimento.",
                 ("riscos", "primario-necessario"),
                 (("riscos", "primario-estabiliza"), ("fiscal", "primario")),
+                ("riscos", "primario-conforme-o-juro"),
             ),
             Bloco(
                 "O juro corre mais que a economia",
@@ -140,13 +165,19 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("calote", "dívida do governo", "o brasil vai quebrar", "sustentabilidade da dívida"),
+        conclusao=(
+            "A dívida é em reais, e o governo deixar de pagá-la é o desfecho menos provável. O "
+            "que a conta diz com certeza é que ela segue subindo até haver ajuste. Se um ajuste "
+            "faria o juro cair, e quanto, a história brasileira sugere que sim, mas isso não se "
+            "mede de antemão."
+        ),
     ),
     Definicao(
         "crescimento",
         "Por que o Brasil cresce pouco?",
-        "No longo prazo a economia cresce com mais gente trabalhando, mais máquinas e mais "
-        "eficiência. No Brasil a eficiência parou há décadas e a população em idade de "
-        "trabalhar está perto de parar de crescer.",
+        "Porque cada trabalhador produz quase o mesmo que há décadas. O país cresceu pondo "
+        "mais gente para trabalhar, e isso está acabando; investe menos que os países "
+        "parecidos, e a eficiência parou. Tudo isso os dados mostram com clareza.",
         (("atividade", "pib-4t"), ("atividade", "produtividade"), ("atividade", "ptf-eua")),
         (
             Bloco(
@@ -165,10 +196,10 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
             Bloco(
                 "Investe-se pouco",
-                "Máquinas, estradas e fábricas novas vêm do investimento, que depende de "
-                "poupança daqui ou de fora.",
-                ("atividade", "investimento-poupanca"),
-                (("atividade", "taxa-investimento"), ("atividade", "taxa-poupanca")),
+                "O Brasil investe menos que a América Latina, os emergentes e os países "
+                "ricos. Sem máquinas, estradas e fábricas novas, ninguém produz mais.",
+                ("atividade", "investimento-paises"),
+                (("atividade", "investimento-brasil-fmi"),),
             ),
             Bloco(
                 "A população que trabalha para de crescer",
@@ -186,12 +217,19 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("pib baixo", "crescimento econômico", "produtividade", "renda média"),
+        conclusao=(
+            "Com a população em idade de trabalhar parando de crescer, o Brasil só cresce mais se"
+            " cada trabalhador produzir mais. Isso é conta. Já o que faz a produtividade subir "
+            "(escola, investimento, concorrência, impostos mais simples) é onde os economistas "
+            "discordam, e os dados daqui não decidem."
+        ),
     ),
     Definicao(
         "inflacao",
         "A inflação está sob controle?",
-        "Vale olhar além do número cheio: o que resta quando se tiram os preços que mais "
-        "oscilam, quanto dos itens está subindo e o que se espera para a frente.",
+        "Ainda não. O número cheio está acima do teto da meta, os serviços correm mais que o "
+        "resto e analistas e títulos esperam inflação acima da meta para a frente. O sinal "
+        "bom é o ritmo recente dos núcleos, mais baixo que o de 12 meses.",
         (("inflacao", "ipca-12m"), ("inflacao", "nucleos-12m"), ("inflacao", "focus-ipca")),
         (
             Bloco(
@@ -236,12 +274,18 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("preços subindo", "custo de vida", "ipca", "carestia"),
+        conclusao=(
+            "Com a inflação e as expectativas acima da meta, o mais provável é o Banco Central "
+            "manter o juro alto: é o que ele diz e o que fez no passado. Se o ritmo mais baixo "
+            "dos núcleos vai durar, três meses de dado não bastam para dizer."
+        ),
     ),
     Definicao(
         "imposto",
         "Para onde vai o imposto, e quem paga?",
-        "O Brasil arrecada perto da média dos países ricos, mas cobra mais sobre o consumo "
-        "e menos sobre a renda. No gasto federal, a maior conta é a previdência.",
+        "O Brasil arrecada como país rico, mas cobra sobretudo no consumo, e imposto sobre "
+        "consumo pesa mais em quem ganha menos. O dinheiro vai principalmente para a "
+        "previdência e, fora do orçamento do dia a dia, para os juros da dívida.",
         (
             ("impostos", "carga-tributaria"),
             ("impostos", "carga-consumo"),
@@ -292,13 +336,18 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("carga tributária", "quem paga imposto", "gasto público", "reforma tributária"),
+        conclusao=(
+            "A reforma do consumo simplifica a cobrança, mas não muda o peso entre consumo e "
+            "renda: isso está na lei. Cobrar mais da renda ou rever isenções mudaria quem paga; o"
+            " efeito disso sobre investimento e emprego é disputado, e o painel não tem número "
+            "para decidir."
+        ),
     ),
     Definicao(
         "emprego",
         "O emprego está bom mesmo?",
-        "A taxa de desocupação só conta quem procura trabalho e não acha. Para saber como "
-        "vai o emprego, entram também quem desistiu de procurar, quem trabalha menos do "
-        "que queria, quem não tem carteira e quanto se ganha.",
+        "Está, pelos números: a desocupação está entre as menores da série e a renda sobe. O "
+        "ponto fraco é a qualidade, com quase quatro em cada dez trabalhando sem carteira.",
         (("trabalho", "desocupacao"), ("trabalho", "subutilizacao"), ("trabalho", "rendimento")),
         (
             Bloco(
@@ -342,13 +391,18 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("desemprego", "mercado de trabalho", "salário", "carteira assinada"),
+        conclusao=(
+            "O emprego vai bem em quantidade e em renda, e segue fraco em proteção: isso os dados"
+            " mostram. Se o desemprego baixo está segurando a inflação dos serviços, como o Banco"
+            " Central costuma dizer, é plausível, mas a ligação entre os dois é incerta."
+        ),
     ),
     Definicao(
         "desigualdade",
         "Quem ficou com o crescimento?",
-        "O Brasil segue entre os países mais desiguais do mundo, mas a renda dos mais "
-        "pobres cresceu mais que a dos mais ricos nas pesquisas do IBGE. No topo, os dados "
-        "da Receita mostram concentração maior do que as pesquisas captam.",
+        "Os mais pobres, pelas pesquisas do IBGE: desde 2012 a renda deles cresceu mais que a"
+        " dos mais ricos. Mas o topo aparece mal nas pesquisas, e pelos dados da Receita a "
+        "concentração lá em cima segue muito alta.",
         (("pobreza", "fatia-10-ricos"), ("pobreza", "fatia-40-pobres"), ("pobreza", "pobreza")),
         (
             Bloco(
@@ -389,13 +443,18 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("desigualdade", "distribuição de renda", "pobreza", "ricos e pobres"),
+        conclusao=(
+            "A desigualdade caiu na base e pouco mudou no topo, e o Brasil segue entre os países "
+            "mais desiguais do mundo: isso é claro. Quanto da melhora veio do emprego, do salário"
+            " mínimo ou das transferências, os dados daqui não separam."
+        ),
     ),
     Definicao(
         "mercado",
         "O que o mercado espera do Brasil?",
-        "Há duas formas de saber: o que os analistas respondem ao Banco Central toda semana "
-        "(o Focus) e o que os preços dos títulos públicos embutem. Nenhuma das duas é "
-        "promessa: as duas erram, e dá para ver quanto.",
+        "Juro alto por bastante tempo, inflação acima da meta e crescimento baixo. Os títulos"
+        " públicos embutem ainda mais inflação que os analistas; parte dessa diferença é "
+        "prêmio de risco, e não previsão.",
         (
             ("previsoes", "focus-pib-*"),
             ("previsoes", "focus-ipca-*"),
@@ -443,6 +502,12 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
         ),
         ("expectativas", "focus", "previsão", "curva de juros", "o dólar vai subir"),
+        conclusao=(
+            "Analistas e títulos apontam para o mesmo lado, e isso vale levar a sério. Mas as "
+            "duas medidas erram: o quanto o Focus costuma errar está na entrada do site, e o "
+            "quanto do juro dos títulos é risco, e não expectativa, não dá para separar com "
+            "precisão."
+        ),
     ),
 )
 
@@ -459,7 +524,10 @@ def _achar[T: (Cartao, Grafico)](pecas: dict[Ref, T], ref: Ref) -> T | None:
 
 
 def montar(
-    cartoes: dict[Ref, Cartao], graficos: dict[Ref, Grafico], titulos: dict[str, str]
+    cartoes: dict[Ref, Cartao],
+    graficos: dict[Ref, Grafico],
+    titulos: dict[str, str],
+    tabelas: dict[Ref, Tabela] | None = None,
 ) -> list[Pergunta]:
     """As perguntas com as peças de hoje. `titulos`: o nome de cada assunto, para o elo."""
     saida: list[Pergunta] = []
@@ -481,6 +549,7 @@ def montar(
                     texto=b.texto,
                     numeros=numeros,
                     grafico=grafico.model_copy(update={"secao": assunto}) if grafico else None,
+                    tabela=(tabelas or {}).get(b.tabela) if b.tabela else None,
                     assunto=assunto,
                     assunto_titulo=titulos.get(assunto, ""),
                     elo=f"#{assunto}/g-{grafico.id}" if grafico else f"#{assunto}",
@@ -495,6 +564,7 @@ def montar(
                 resposta=d.resposta,
                 numeros=no_topo,
                 blocos=blocos,
+                conclusao=d.conclusao,
             )
         )
     return saida

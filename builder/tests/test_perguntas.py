@@ -30,6 +30,8 @@ def test_cada_peca_citada_mora_numa_parte_do_assunto() -> None:
             refs += [(r, "cartoes") for r in b.numeros]
             if b.grafico:
                 refs.append((b.grafico, "graficos"))
+            if b.tabela:
+                refs.append((b.tabela, "tabelas"))
         for (assunto, id), tipo in refs:
             if not id.endswith("*"):
                 assert id in organizacao.esperados(assunto)[tipo], (d.id, assunto, id)
@@ -43,6 +45,7 @@ def test_o_orcamento_de_atencao() -> None:
         assert len(d.numeros) <= perguntas.MAXIMO_DE_NUMEROS, d.id
         assert 3 <= len(d.blocos) <= perguntas.MAXIMO_DE_BLOCOS, d.id
         assert len(d.resposta) <= 260, (d.id, len(d.resposta))
+        assert 0 < len(d.conclusao) <= 300, (d.id, len(d.conclusao))
         for b in d.blocos:
             assert len(b.numeros) <= 2 and len(b.texto) <= 170, (d.id, b.titulo)
             assert b.grafico or b.numeros, (d.id, b.titulo)
@@ -72,3 +75,18 @@ def test_o_asterisco_pega_o_cartao_do_ano() -> None:
     cartoes = {("previsoes", "focus-pib-2027"): _cartao("focus-pib-2027")}
     achado = perguntas._achar(cartoes, ("previsoes", "focus-pib-*"))
     assert achado is not None and achado.id == "focus-pib-2027"
+
+
+def test_a_tabela_da_explicacao_vem_dos_dados() -> None:
+    from sacibras.schema import Tabela
+
+    tabela = Tabela(id="primario-conforme-o-juro", titulo="t", colunas=[], linhas=[], fonte="f")
+    prontas = perguntas.montar(
+        {("riscos", "primario-estabiliza"): _cartao("primario-estabiliza")},
+        {},
+        {},
+        {("riscos", "primario-conforme-o-juro"): tabela},
+    )
+    divida = next(p for p in prontas if p.id == "divida")
+    assert divida.blocos[0].tabela == tabela
+    assert divida.conclusao.startswith("A dívida é em reais")

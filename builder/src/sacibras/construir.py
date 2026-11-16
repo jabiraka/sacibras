@@ -32,6 +32,7 @@ from sacibras.schema import (
     Painel,
     Perguntas,
     Secao,
+    Tabela,
 )
 from sacibras.secoes import (
     atividade,
@@ -209,6 +210,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
 
     todos_cartoes: dict[tuple[str, str], Cartao] = {}
     todos_graficos: dict[tuple[str, str], Grafico] = {}
+    todas_tabelas: dict[tuple[str, str], Tabela] = {}
     """Tudo o que os assuntos têm, para as perguntas (`perguntas.py`)."""
 
     def guardar_cartoes(id: str, lista: Sequence[Cartao | dict[str, object]]) -> None:
@@ -239,6 +241,8 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 )
                 fontes.append(EstadoFonte(fonte=FONTES[id], ok=True))
                 guardar_cartoes(id, antigo.get("cartoes", []))
+                for t in antigo.get("tabelas", []):
+                    todas_tabelas[(id, t["id"])] = Tabela.model_validate(t)
                 guardar_graficos(id, antigo.get("graficos", []))
             continue
         try:
@@ -270,6 +274,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 _gravar(saida, getattr(secao, "arquivo_paises", ""), extra)
             if isinstance(secao, Secao):
                 guardar_cartoes(id, secao.cartoes)
+                todas_tabelas.update({(id, t.id): t for t in secao.tabelas})
                 guardar_graficos(id, secao.graficos)
             itens.append(
                 ItemSecao(
@@ -294,6 +299,8 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 try:
                     antigo = json.loads((saida / arquivo).read_text(encoding="utf-8"))
                     guardar_cartoes(id, antigo.get("cartoes", []))
+                    for t in antigo.get("tabelas", []):
+                        todas_tabelas[(id, t["id"])] = Tabela.model_validate(t)
                     guardar_graficos(id, antigo.get("graficos", []))
                     partes = _partes(antigo)
                 except (OSError, ValueError):
@@ -332,7 +339,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
     )
     _gravar(saida, "resumo.json", resumo)
     titulos = {id: titulo for id, titulo, _ in ORDEM}
-    as_perguntas = perguntas.montar(todos_cartoes, todos_graficos, titulos)
+    as_perguntas = perguntas.montar(todos_cartoes, todos_graficos, titulos, todas_tabelas)
     _gravar(saida, "perguntas.json", Perguntas(perguntas=as_perguntas, gerado_em=agora))
     painel = Painel(
         gerado_em=agora,

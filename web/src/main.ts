@@ -942,6 +942,11 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
             grade.append(montarPeca(b.grafico));
             dentro.append(grade);
           }
+          if (b.tabela) {
+            const tabela = montarTabela(b.tabela);
+            tabela.removeAttribute("id");
+            dentro.append(tabela);
+          }
           const elo = el("a", "grafico-elo", `Mais em ${b.assunto_titulo || "Dados"}`);
           elo.append(el("span", "seta", "→"));
           elo.href = b.elo;
@@ -956,6 +961,14 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
         }
         corpo.append(caixa);
       });
+      if (q.conclusao) {
+        const fecho = el("section", "vidro conclusao");
+        fecho.append(
+          el("h3", "conclusao-titulo", "Juntando as peças"),
+          el("p", "conclusao-texto", q.conclusao),
+        );
+        corpo.append(fecho);
+      }
       const outras = el("nav", "outras-perguntas");
       outras.setAttribute("aria-label", "Outras perguntas");
       outras.append(el("p", "sobretitulo", "Outras perguntas"));
