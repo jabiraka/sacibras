@@ -450,7 +450,7 @@ export function montarMundo(m: Mundo): HTMLElement {
     for (const x of membros()) incluir(x.iso, conjunto === MEDIAS ? "grupo" : grupo ? "membro" : "comum");
     // Nas médias dos grupos, os principais países ficam também (o juro do BIS não tem grupo).
     if (conjunto === MEDIAS) for (const p of m.paises) if (p.grupo !== "agregado") incluir(p.iso3, "comum");
-    telaDispersao.dataset.vazio = String(pontos.length < 3);
+    telaDispersao.dataset.vazio = String(pontos.length === 0);
     const ex = { nome: eixoX.nome, unidade: eixoX.unidade, casas: eixoX.casas };
     const ey = { nome: eixoY.nome, unidade: eixoY.unidade, casas: eixoY.casas };
     const aoTocar = (iso: string): void => {
@@ -504,11 +504,47 @@ export function montarMundo(m: Mundo): HTMLElement {
         notaDispersao.append(botao);
       }
     };
-    if (pontos.length < 3) {
-      telaDispersao.replaceChildren(el("p", "vazio", `Poucos países com as duas métricas em ${ano}.`));
+    // Com poucos países o gráfico sai do mesmo jeito (Caio, 16/11/2026: "mostre os gráfico
+    // mesmo se tiver poucos países pra comparar"). Sem nenhum, a tela diz qual das métricas
+    // ainda não tem dado no ano e oferece o ano mais novo em que as duas têm.
+    if (pontos.length === 0) {
+      const tem = (mt: MetricaMundo, a: number): boolean =>
+        mt.anos.includes(a) && Object.keys(mt.valores).some((iso) => valor(mt, iso, a) !== null);
+      const semDado = [eixoX, eixoY].filter((mt) => !tem(mt, ano)).map((mt) => mt.nome);
+      const ultimo = (mt: MetricaMundo): number | undefined =>
+        [...mt.anos].reverse().find((a) => tem(mt, a));
+      const comAsDuas = [...eixoX.anos].reverse().find((a) => a < ano && tem(eixoX, a) && tem(eixoY, a));
+      const motivo = semDado.length
+        ? semDado
+            .map((nome, i) => {
+              const mt = [eixoX, eixoY].filter((x) => !tem(x, ano))[i];
+              const ate = mt ? ultimo(mt) : undefined;
+              return `${nome} ainda não tem dado de ${ano}${ate ? ` (a fonte vai até ${ate})` : ""}`;
+            })
+            .join("; ")
+        : `Nenhum país desta lista tem as duas métricas em ${ano}`;
+      const aviso = el("p", "vazio", `${motivo}.`);
+      if (comAsDuas) {
+        const botao = el("button", "botao-texto", `Ver ${comAsDuas}`);
+        botao.type = "button";
+        botao.addEventListener("click", () => {
+          ano = comAsDuas;
+          if (metrica.anos.includes(ano)) escolhaAno.trocar(anosDe(metrica), String(ano));
+          pintar();
+        });
+        aviso.append(document.createTextNode(` O ano mais novo com as duas é ${comAsDuas}. `), botao);
+      }
+      telaDispersao.replaceChildren(aviso);
       notaDispersao.textContent = "";
     } else if (telaDispersao.clientWidth) {
       desenhar();
+      if (pontos.length < 3) {
+        notaDispersao.prepend(
+          document.createTextNode(
+            `Só ${pontos.length === 1 ? "um país tem" : "dois países têm"} as duas métricas em ${ano}. `,
+          ),
+        );
+      }
     }
     ultimaDispersao = desenhar;
     peDispersao.replaceChildren(

@@ -59,6 +59,10 @@ numa parte: o saneamento e a moradia, a fome em cartões, o Bolsa Família, a re
 e cor em cartões, os imóveis (concessões e taxa em gráfico), a curva de juro real e a
 implícita a termo, a mortalidade infantil e os nascimentos.
 
+Em Brasil no mundo, "Duas métricas" desenha com qualquer número de países e, quando não há
+nenhum, diz por quê (a carga tributária da OCDE vai até 2024; em 2025 não há país) e leva
+ao ano mais novo com as duas. Falta fazer o mesmo em Estados › Duas métricas.
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:

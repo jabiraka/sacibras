@@ -245,6 +245,10 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - **Comparações** (Caio, 14/11/2026): escolha de ano e de métrica em lista suspensa, não em
   botões; ranking em pontos (`web/src/pontos.ts`), não em barras; e o gráfico de duas
   métricas, um ponto por país ou estado. Grupo de países abre por país (hierarquia do FMI).
+  O gráfico de duas métricas sai mesmo com um ou dois países (Caio, 16/11/2026: *"mostre os
+  gráfico mesmo se tiver poucos países pra comparar"*); sem nenhum, a tela diz qual métrica
+  ainda não tem dado naquele ano, até que ano a fonte vai, e oferece o ano mais novo com as
+  duas.
   Barra de erro de previsão é traço vertical em tinta neutra, com as pontas marcadas e a
   parte de 50 % mais grossa quando há (`intervalos` no gráfico; Caio, 14/11/2026: *"não
   gostei da barra azul"*), não faixa sombreada nem cápsula colorida. Projeção vem com o
