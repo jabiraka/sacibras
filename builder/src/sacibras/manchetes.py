@@ -15,32 +15,39 @@ from sacibras.schema import Grafico
 from sacibras.secoes.base import br, periodo
 
 MINIMO_DE_PONTOS = 8
+ESCALAS = ("mil", "milhões", "bilhões", "trilhões", "mi", "bi", "tri")
 ANOS_PARA_SER_RECORDE = 3
 """O maior (ou menor) nível só é dito se o anterior ficou a pelo menos tantos anos."""
 
 
-def _com_unidade(valor: float, unidade: str, casas: int) -> str:
-    """ "83,0 % do PIB", "R$ 5,65", "171.324 pontos"; a unidade sem o que vem entre parênteses."""
-    curta = unidade.split("(")[0].split(",")[0].split(";")[0].strip()
-    n = br(valor, casas)
-    if curta.startswith("%"):
-        return f"{n} {curta}"
-    if curta in ("R$", "R$/US$"):
+def _numero(valor: float, casas: int) -> str:
+    return br(valor, casas).replace("-", "−")
+
+
+def _com_unidade(valor: float, unidade: str, casas: int, *, curta: bool = False) -> str:
+    """ "83,0 % do PIB", "R$ 5,65", "US$ 74,3 bilhões", "171.324 pontos". A unidade vai sem o
+    que vem depois de parêntese, vírgula ou " e "; com `curta`, o percentual fica só "%"."""
+    u = unidade.split("(")[0].split(",")[0].split(";")[0].split(" e ")[0].strip()
+    n = _numero(valor, casas)
+    if u.startswith("%"):
+        return f"{n} %" if curta else f"{n} {u}"
+    if u in ("R$", "R$/US$"):
         return f"R$ {n}"
-    if curta.startswith(("R$ ", "US$ ")):
-        moeda, resto = curta.split(" ", 1)
-        return f"{moeda} {n} {resto}"
-    if curta.lower().startswith(("índice", "indice")) or not curta:
+    if u.startswith(("R$ ", "US$ ")):
+        moeda, resto = u.split(" ", 1)
+        escala = resto.split()[0]
+        return f"{moeda} {n} {escala}" if escala in ESCALAS else f"{moeda} {n}"
+    if u.lower().startswith(("índice", "indice")) or "= 100" in u or not u:
         return n
-    return f"{n} {curta}"
+    return n if curta else f"{n} {u}"
 
 
 def _contra_a_faixa(
     g: Grafico, quando: date, valor: float, pontos: list[tuple[date, float]]
 ) -> str:
     """Com a faixa da meta no gráfico: há quantos pontos seguidos a série está fora dela."""
-    if not g.faixa:
-        return ""
+    if not g.faixa or not g.unidade.startswith("%"):
+        return ""  # só taxa contra a meta; o acumulado do ano em reais não se lê assim
     faixa = {d: (lo, hi) for d, lo, hi in g.faixa.pontos}
     if quando not in faixa:
         return ""
@@ -92,11 +99,12 @@ def _um_ano_antes(g: Grafico, pontos: list[tuple[date, float]]) -> str:
         return ""
     antes = round(passados[-1][1], g.casas)
     agora = round(valor, g.casas)
-    quando_foi = "do ano anterior" if g.periodicidade == "A" else "de um ano antes"
+    anual = g.periodicidade == "A"
     if agora == antes:
-        return f"o mesmo {quando_foi}"
+        return "o mesmo do ano anterior" if anual else "o mesmo de um ano antes"
     lado = "acima" if agora > antes else "abaixo"
-    return f"{lado} de {_com_unidade(antes, g.unidade, g.casas)}, o {quando_foi}"
+    era = _com_unidade(antes, g.unidade, g.casas, curta=True)
+    return f"{lado} de {era} {'no ano anterior' if anual else 'um ano antes'}"
 
 
 def do_grafico(g: Grafico) -> str:
@@ -108,12 +116,11 @@ def do_grafico(g: Grafico) -> str:
     principal = next((s for s in g.series if s.papel == "realizado"), None)
     if principal is None:
         return ""
-    limite = principal.tracejado_desde
-    pontos = [
-        (d, v) for d, v in principal.pontos if v is not None and (limite is None or d < limite)
-    ]
-    if len(pontos) < MINIMO_DE_PONTOS:
-        return ""
+    if principal.tracejado_desde:
+        return ""  # a série segue em projeção: o "hoje" dela não é o último ponto
+    pontos = [(d, v) for d, v in principal.pontos if v is not None]
+    if len(pontos) < MINIMO_DE_PONTOS or pontos[-1][0] > date.today():
+        return ""  # curta demais, ou um calendário que vai além de hoje (a transição da reforma)
     quando, valor = pontos[-1]
     leitura = (
         _contra_a_faixa(g, quando, valor, pontos) or _recorde(g, pontos) or _um_ano_antes(g, pontos)
@@ -122,4 +129,5 @@ def do_grafico(g: Grafico) -> str:
     nome = f"{principal.nome}, " if len(realizadas) > 1 and len(principal.nome) <= 42 else ""
     frase = f"{nome}{periodo(quando, g.periodicidade)}: {_com_unidade(valor, g.unidade, g.casas)}"
     frase = frase[0].upper() + frase[1:]
-    return f"{frase}, {leitura}." if leitura else f"{frase}."
+    frase = f"{frase}, {leitura}" if leitura else frase
+    return frase if frase.endswith(".") else f"{frase}."

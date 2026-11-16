@@ -49,25 +49,35 @@ externo, seis partes viraram três; em Impostos, seis viraram quatro; em Riscos,
 viraram cinco e saíram a bolsa, os swaps, a dívida externa líquida, os atrasos do crédito,
 os reservatórios e a tabela de governança.
 
+E, a pedido do Caio (*"faça 1 e 2 já"*): **nove assuntos no lugar de treze**
+(`secoes/juntos.py`: Trabalho e renda com a pobreza, Juros e crédito, Exterior e mercados,
+Longo prazo com a demografia, a produtividade e a escola; as Previsões no Laboratório; os
+endereços antigos redirecionam) e **a frase do que cada gráfico mostra hoje**
+(`manchetes.py`, em 68 dos 100 gráficos). Os totais nos Dados: 42 partes, 125 cartões e
+100 gráficos (eram 64, 158 e 144 de manhã). Saiu da tela na junção, e volta pondo o id
+numa parte: o saneamento e a moradia, a fome em cartões, o Bolsa Família, a renda por sexo
+e cor em cartões, os imóveis (concessões e taxa em gráfico), a curva de juro real e a
+implícita a termo, a mortalidade infantil e os nascimentos.
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:
 
-1. **Juntar assuntos (13 para 9)**: Trabalho + Pobreza, Crédito dentro de Juros, Mercados +
-   Setor externo, Demografia + Produtividade + educação em "Longo prazo", Previsões para o
-   Laboratório. Não é só o menu: cada assunto é um arquivo e um endereço (`#pobreza`), e a
-   busca, as perguntas, a agenda e o "novo desde a última visita" apontam para eles. O
-   caminho: um passo final no `construir.py` que monta os assuntos juntando os arquivos das
-   seções, e os endereços antigos redirecionando. É o que derruba de verdade o total de
-   cartões (hoje 141; a meta de 70 só sai com a junção).
-2. **O título do gráfico dizendo o que ele mostra hoje**, escrito pelo builder.
-3. **Laboratório, leva 1**: juro neutro e hiato por vários métodos, regra de Taylor, estudo
+1. **Laboratório, leva 1**: juro neutro e hiato por vários métodos, regra de Taylor, estudo
    de evento do Copom (a surpresa já sai do `saiu.py`), reação fiscal, de onde veio o PIB por
-   habitante e a convergência contra os EUA. Cada peça com o Caio olhando.
-4. **A árvore do diagnóstico de crescimento** na pergunta "Por que o Brasil cresce pouco?",
+   habitante e a convergência contra os EUA. Cada peça com o Caio olhando. Hoje o andar
+   "Laboratório" do menu só tem as Previsões.
+2. **A árvore do diagnóstico de crescimento** na pergunta "Por que o Brasil cresce pouco?",
    e o crédito direcionado na do juro alto.
-5. **Contador de acesso nosso**: espera o projeto Supabase do sacibras (ver "Espera o Caio").
-6. **Estados e Brasil no mundo** com 6 métricas na lista e o resto em "mais métricas".
+3. **Contador de acesso nosso**: espera o projeto Supabase do sacibras (ver "Espera o Caio").
+4. **Estados e Brasil no mundo** com 6 métricas na lista e o resto em "mais métricas".
+5. **A frase do gráfico, o que falta**: 32 gráficos ficam sem frase (barras, curvas, um
+   ponto por país, séries que seguem em projeção); o de subutilização repete a frase da
+   desocupação (a primeira série dele). Quem precisar escreve a `manchete` à mão na seção.
+6. **O glossário ainda aponta endereços antigos** (`#pobreza/fome`, `#credito/imoveis`):
+   redirecionam para o assunto novo, mas a parte pode não existir mais; trocar pelos novos.
+7. **Um perguntas a mais?** Saneamento e moradia saíram da tela por não responderem a
+   nenhuma pergunta; se fizerem falta, a porta é uma pergunta ("Como o brasileiro mora?").
 
 ## Releituras com prazo
 

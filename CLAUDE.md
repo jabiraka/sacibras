@@ -120,6 +120,18 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   e, por parte, até 4 números e 3 gráficos** (tabela não tem teto: fica atrás do clique).
   Entra um, sai um. **Peça que a seção calcula e não está em `PARTES` sai da tela** (não há
   mais "Outros" para cartão, gráfico ou tabela); o builder avisa quantas ficaram de fora.
+- **Nove assuntos nos Dados** (Caio, 16/11/2026: *"faça 1 e 2 já"*, sobre juntar os
+  assuntos e a frase do gráfico): Atividade, Trabalho e renda (com a pobreza), Inflação,
+  Juros e crédito, Contas públicas, Impostos, Exterior e mercados, Longo prazo (demografia,
+  produtividade e escola) e Riscos; mais os comparadores (Estados, Brasil no mundo) e o
+  Laboratório, que por enquanto só tem as Previsões. Cada seção antiga segue no módulo
+  dela; `builder/src/sacibras/secoes/juntos.py` as une num assunto, com um arquivo e um
+  endereço. Endereço antigo (`#pobreza`, `#credito`, `#mercados`, `#demografia`) redireciona
+  (`juntos.ANTIGOS`). Assunto novo só entra tirando ou juntando outro.
+- **A frase do gráfico** (mesmo dia): todo gráfico de série no tempo leva, sob o título, o
+  que ele mostra hoje, escrito pelo builder (`manchetes.py`): o último valor contra a meta
+  (se o gráfico tem a faixa), o maior ou o menor nível em pelo menos três anos, ou um ano
+  antes. Sem causa e sem adjetivo. Quem quiser outra frase preenche `manchete` no gráfico.
 - **Página inicial enxuta, o resto abre no clique** (Caio, 14/11/2026: *"muitas métricas na
   página inicial… deixar só as informações essenciais no início e deixar o usuário ir clicando
   pra abrir"*). Na entrada: quatro números (`RESUMO` em `construir.py`), o "Saiu por último",

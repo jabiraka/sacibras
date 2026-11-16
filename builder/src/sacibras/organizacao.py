@@ -86,7 +86,7 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "desemprego",
             "Desemprego",
-            "Desocupação, subutilização, desalento e quem procura há muito tempo.",
+            "A desocupação, a subutilização, quanta gente está no mercado e por que a taxa mudou.",
             cartoes=["desocupacao", "subutilizacao", "participacao", "nivel-ocupacao"],
             graficos=["desocupacao", "desocupacao-fatores", "subutilizacao"],
         ),
