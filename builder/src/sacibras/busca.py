@@ -279,6 +279,10 @@ SINONIMOS: dict[str, list[str]] = {
     "investimento direto": ["idp", "ied", "investimento estrangeiro", "capital estrangeiro"],
     "focus": ["previsao", "projecao", "expectativa", "mercado espera", "consenso", "boletim focus"],
     "previs": ["projecao", "expectativa", "futuro", "focus", "o que vem"],
+    "laboratorio": ["estimativa", "modelo", "conta nossa", "juro neutro", "taylor", "bohn"],
+    "juro neutro": ["taxa neutra", "juro de equilibrio", "r estrela", "juro natural"],
+    "discricionaria": ["cortar gasto", "corte de gastos", "margem do orcamento", "despesa livre"],
+    "obrigatoria": ["gasto engessado", "rigidez do orcamento", "despesa obrigatoria"],
     "simul": ["simulador", "cenario", "e se"],
     "efeito da selic": [
         "impacto da selic",
@@ -939,6 +943,9 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
         "mercados emergentes",
         "pays emergents",
     ],
+    "laboratorio": ["laboratory", "estimates", "laboratorio", "estimaciones", "estimations"],
+    "juro neutro": ["neutral rate", "natural rate", "r star", "tasa neutral", "taux neutre"],
+    "corta": ["spending cuts", "cut spending", "recorte del gasto", "baisse des depenses"],
     "previs": [
         "forecast",
         "forecasts",

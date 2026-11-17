@@ -19,6 +19,11 @@ LINHAS = [
     ("4. DESPESA TOTAL", [190.0, None, 215.0]),  # junho vazio
     ("4.1  Benefícios Previdenciários ", [80.0, 81.0, 82.0]),
     ("4.2  Pessoal e Encargos Sociais", [40.0, 41.0, 42.0]),
+    ("4.3  Outras Despesas Obrigatórias", [30.0, 30.0, 30.0]),
+    ("4.3.01 Abono e Seguro Desemprego", [8.0, 8.0, 8.0]),
+    ("4.3.05  Benefícios de Prestação Continuada da LOAS/RMV", [9.0, 9.0, 9.0]),
+    ("4.4.1 Obrigatórias com Controle de Fluxo", [25.0, 25.0, 25.0]),
+    ("4.4.2 Despesas Discricionárias", [15.0, 15.0, 16.0]),
     ("5. RESULTADO PRIMÁRIO GOVERNO CENTRAL - ACIMA DA LINHA (3 - 4)", [10.0, 0.0, 5.0]),
 ]
 
@@ -58,6 +63,11 @@ def test_le_as_linhas_pelo_rotulo_e_pula_mes_vazio() -> None:
         "arrecadacao_rgps",
         "rgps",
         "pessoal",
+        "outras_obrigatorias",
+        "abono_seguro",
+        "bpc",
+        "obrigatorias_fluxo",
+        "discricionarias",
         "primario",
     }
     assert dados["arrecadacao_rgps"][-1] == (date(2026, 7, 1), 62.0)

@@ -344,6 +344,71 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ),
     ),
     Definicao(
+        "cortar-gasto",
+        "Onde dá para cortar gasto?",
+        "Sem mudar lei, em pouco: só cerca de um real em cada dez da despesa federal é "
+        "discricionário. O resto a Constituição ou a lei mandam pagar. Contra os outros "
+        "países, o Brasil gasta muito mais em proteção social e em juros, e menos em "
+        "infraestrutura.",
+        (
+            ("fiscal", "discricionaria-parte"),
+            ("fiscal", "obrigatoria-pib"),
+            ("fiscal", "gasto-acima-pares"),
+        ),
+        (
+            Bloco(
+                "Quase tudo já tem destino",
+                "A despesa obrigatória sobe há anos e espreme a discricionária, que é a única "
+                "que o governo corta no orçamento.",
+                ("fiscal", "despesa-rigidez"),
+                (("fiscal", "discricionaria-parte"),),
+                ("fiscal", "despesa-obrigatoria"),
+            ),
+            Bloco(
+                "A previdência é a maior conta",
+                "Os benefícios do INSS levam mais de quatro em cada dez reais da despesa "
+                "federal, e crescem com o número de idosos.",
+                ("fiscal", "despesa-composicao"),
+                (("fiscal", "previdencia-rgps"), ("longo-prazo", "idosos-por-100")),
+            ),
+            Bloco(
+                "Contra os outros países",
+                "No governo todo (União, estados e municípios), o Brasil gasta em proteção "
+                "social como país rico, e em pensão por morte e juros bem acima de todos.",
+                None,
+                (("fiscal", "gasto-acima-pares"),),
+                ("fiscal", "gasto-por-funcao"),
+            ),
+            Bloco(
+                "O que se deixa de arrecadar também é gasto",
+                "Isenções e regimes especiais custam como despesa, mas não passam pelo "
+                "orçamento de cada ano.",
+                ("impostos", "gasto-tributario"),
+                (("impostos", "gasto-tributario"),),
+            ),
+            Bloco(
+                "Os juros",
+                "Os juros não são despesa primária e não se cortam por decisão: caem com a "
+                "Selic e com a confiança de quem empresta.",
+                ("riscos", "juros-sobre-receita"),
+                (("riscos", "juros-sobre-receita"), ("fiscal", "juros-divida")),
+            ),
+        ),
+        (
+            "cortar gastos",
+            "corte de gastos",
+            "gasto público",
+            "despesa obrigatória",
+            "ajuste fiscal",
+        ),
+        conclusao=(
+            "Os dados mostram com clareza duas coisas: a margem do orçamento é estreita, e o "
+            "gasto do Brasil acima dos outros países está na proteção social e nos juros. "
+            "Onde cortar é escolha política, e se cada real é bem gasto pede avaliar programa "
+            "por programa, o que estes números não fazem."
+        ),
+    ),
+    Definicao(
         "emprego",
         "O emprego está bom mesmo?",
         "Está, pelos números: a desocupação está entre as menores da série e a renda sobe. O "

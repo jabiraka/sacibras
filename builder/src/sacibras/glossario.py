@@ -1823,6 +1823,96 @@ TERMOS: list[Termo] = [
         ("pirâmide etária",),
         "#demografia",
     ),
+    # O Laboratório e o gasto (17/11/2026).
+    Termo(
+        "juro-neutro",
+        "Juro neutro",
+        "O juro acima da inflação que nem acelera nem freia a economia. Ninguém o observa: "
+        "só se estima, e cada método dá um número diferente.",
+        ("juro neutro", "juro real neutro", "taxa neutra"),
+        "#laboratorio/juro-neutro",
+    ),
+    Termo(
+        "hiato-do-produto",
+        "Hiato do produto",
+        "A distância entre o que a economia produz e o que ela conseguiria produzir sem "
+        "pressionar os preços (o PIB potencial). Positivo, a economia está aquecida; "
+        "negativo, sobra capacidade.",
+        ("hiato do produto", "PIB potencial"),
+        "#laboratorio/juro-neutro",
+    ),
+    Termo(
+        "regra-de-taylor",
+        "Regra de Taylor",
+        "Uma conta de John Taylor (1993) para a taxa de juros: o juro neutro mais a inflação, "
+        "somados a um pedaço da distância da inflação para a meta e do hiato do produto. "
+        "Serve de régua, não de receita.",
+        ("regra de Taylor",),
+        "#laboratorio/juro-neutro",
+    ),
+    Termo(
+        "filtro-hp",
+        "Filtro HP",
+        "O filtro de Hodrick e Prescott: separa uma série numa tendência suave e no vaivém em "
+        "volta dela. Erra mais no fim da série, que muda quando chega o dado novo.",
+        ("filtro HP", "Hodrick-Prescott"),
+    ),
+    Termo(
+        "filtro-de-hamilton",
+        "Filtro de Hamilton",
+        "Outra forma de achar o ciclo: o quanto o número de hoje se afasta do que se previa "
+        "dois anos antes com os dados da época (James Hamilton, 2018).",
+        ("filtro de Hamilton",),
+    ),
+    Termo(
+        "estudo-de-evento",
+        "Estudo de evento",
+        "Medir o que um preço fez logo depois de um anúncio, comparando com o que se esperava "
+        "antes dele. Quanto mais curta a janela, menos outras notícias se misturam.",
+        ("estudo de evento",),
+    ),
+    Termo(
+        "teste-de-bohn",
+        "Teste de Bohn",
+        "Teste de Henning Bohn (1998): se o resultado primário sobe quando a dívida sobe, o "
+        "governo reage e a dívida não explode. Mede-se por regressão nos dados de cada ano.",
+        ("teste de Bohn", "reação fiscal"),
+        "#laboratorio/reacao-fiscal",
+    ),
+    Termo(
+        "despesa-obrigatoria",
+        "Despesa obrigatória",
+        "A que a Constituição ou uma lei manda pagar: aposentadorias, salários, BPC, seguro-"
+        "desemprego. Para cortar, é preciso mudar a regra que a criou.",
+        ("despesa obrigatória", "despesas obrigatórias", "obrigatória", "obrigatórias"),
+        "#fiscal/gasto",
+    ),
+    Termo(
+        "despesa-discricionaria",
+        "Despesa discricionária",
+        "A que o governo decide no orçamento de cada ano, como investimento e o custeio da "
+        "máquina. É a única que se corta sem mudar lei, mas parte dela conta para os mínimos "
+        "de saúde e educação.",
+        ("despesa discricionária", "despesas discricionárias", "discricionária", "discricionárias"),
+        "#fiscal/gasto",
+    ),
+    Termo(
+        "cofog",
+        "COFOG",
+        "A classificação da ONU da despesa do governo por função (saúde, educação, proteção "
+        "social…), a mesma em todos os países. É ela que permite comparar onde cada governo "
+        "gasta.",
+        ("COFOG",),
+        "#fiscal/gasto",
+    ),
+    Termo(
+        "pib-por-habitante",
+        "PIB por habitante",
+        "Tudo o que o país produz num ano dividido pela população. Para comparar países, "
+        "mede-se a paridade de poder de compra, que corrige pelo preço das coisas em cada um.",
+        ("PIB por habitante", "PIB per capita"),
+        "#laboratorio/crescimento",
+    ),
 ]
 
 

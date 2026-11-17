@@ -201,3 +201,42 @@ def medianas_no_tempo(
         for linha in linhas
         if linha["Mediana"] is not None and linha.get(campo)
     ]
+
+
+def selic_antes_das_reunioes(
+    reunioes: list[tuple[str, date]], *, lote: int = 50
+) -> dict[str, tuple[date, float]]:
+    """{reunião "R7/2026": (dia da coleta, mediana da Selic)}: a última coleta do Focus nos
+    sete dias antes de cada reunião. Uma consulta por lote de reuniões (a Olinda aceita o
+    filtro com dezenas de cláusulas; conferido em 17/11/2026), para não fazer uma por ano."""
+    saida: dict[str, tuple[date, float]] = {}
+    for i in range(0, len(reunioes), lote):
+        partes = [
+            f"(Reuniao eq '{rotulo}' and Data ge '{(dia - timedelta(days=7)).isoformat()}' "
+            f"and Data lt '{dia.isoformat()}')"
+            for rotulo, dia in reunioes[i : i + lote]
+        ]
+        filtro = f"Indicador eq 'Selic' and baseCalculo eq 0 and ({' or '.join(partes)})"
+        for linha in _consulta("ExpectativasMercadoSelic", filtro, topo=10000, validade=7 * 86400):
+            if linha["Mediana"] is None:
+                continue
+            coleta = date.fromisoformat(linha["Data"])
+            if linha["Reuniao"] not in saida or coleta > saida[linha["Reuniao"]][0]:
+                saida[linha["Reuniao"]] = (coleta, float(linha["Mediana"]))
+    return saida
+
+
+def anuais_nas_datas(indicador: str, datas: list[date]) -> dict[date, dict[int, float]]:
+    """{dia da coleta: {ano: mediana}} só nos dias pedidos (uma consulta só, com as datas no
+    filtro). Dia sem coleta (feriado) fica de fora: peça dois dias vizinhos."""
+    if not datas:
+        return {}
+    clausulas = " or ".join(f"Data eq '{d.isoformat()}'" for d in sorted(set(datas)))
+    filtro = f"Indicador eq '{indicador}' and baseCalculo eq 0 and ({clausulas})"
+    saida: dict[date, dict[int, float]] = {}
+    for linha in _consulta("ExpectativasMercadoAnuais", filtro, topo=10000, validade=7 * 86400):
+        if linha["Mediana"] is None:
+            continue
+        dia = date.fromisoformat(linha["Data"])
+        saida.setdefault(dia, {})[int(linha["DataReferencia"])] = float(linha["Mediana"])
+    return saida

@@ -63,25 +63,39 @@ Em Brasil no mundo, "Duas métricas" desenha com qualquer número de países e, 
 nenhum, diz por quê (a carga tributária da OCDE vai até 2024; em 2025 não há país) e leva
 ao ano mais novo com as duas. Falta fazer o mesmo em Estados › Duas métricas.
 
+**17/11/2026** (Caio: *"Faça 1) laboratório que faltou e tem como separar as despesas das
+obrigatórias? [...] comparar com outros países"*):
+- **O Laboratório, leva 1** (`secoes/laboratorio.py`, `modelos/estatistica.py`): juro
+  neutro por três métodos (Focus de três anos, juro real a termo de 5 a 10 anos dos títulos
+  IPCA+, média de dez anos do juro real esperado), hiato por HP e Hamilton, regra de Taylor
+  com a faixa das seis combinações, estudo de evento do Copom (167 reuniões desde 2006),
+  teste de Bohn (até 2013 o primário reagia à dívida; depois, não se distingue de zero) e
+  o PIB por habitante desde 1950 contra os EUA, com a decomposição por década.
+- **Onde está o gasto** (Contas públicas, `secoes/gasto.py`): obrigatória e discricionária
+  (RTN; ~10 % da despesa federal é discricionária) e a despesa por função do governo geral
+  contra a mediana dos emergentes, da América Latina e dos avançados (COFOG do FMI).
+- **Pergunta nova**: "Onde dá para cortar gasto?" (nove perguntas agora).
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:
 
-1. **Laboratório, leva 1**: juro neutro e hiato por vários métodos, regra de Taylor, estudo
-   de evento do Copom (a surpresa já sai do `saiu.py`), reação fiscal, de onde veio o PIB por
-   habitante e a convergência contra os EUA. Cada peça com o Caio olhando. Hoje o andar
-   "Laboratório" do menu só tem as Previsões.
-2. **A árvore do diagnóstico de crescimento** na pergunta "Por que o Brasil cresce pouco?",
-   e o crédito direcionado na do juro alto.
-3. **Contador de acesso nosso**: espera o projeto Supabase do sacibras (ver "Espera o Caio").
-4. **Estados e Brasil no mundo** com 6 métricas na lista e o resto em "mais métricas".
-5. **A frase do gráfico, o que falta**: 32 gráficos ficam sem frase (barras, curvas, um
-   ponto por país, séries que seguem em projeção); o de subutilização repete a frase da
-   desocupação (a primeira série dele). Quem precisar escreve a `manchete` à mão na seção.
-6. **O glossário ainda aponta endereços antigos** (`#pobreza/fome`, `#credito/imoveis`):
-   redirecionam para o assunto novo, mas a parte pode não existir mais; trocar pelos novos.
-7. **Um perguntas a mais?** Saneamento e moradia saíram da tela por não responderem a
-   nenhuma pergunta; se fizerem falta, a porta é uma pergunta ("Como o brasileiro mora?").
+1. **Laboratório, o que ficou da leva 1**: o juro neutro e o hiato do Banco Central (lidos
+   no Relatório de Política Monetária, com prazo em `leituras.py`) ao lado dos nossos; o
+   estudo de evento com uma medida melhor de surpresa (sem a B3, só a curva do Tesouro do
+   dia anterior); a decomposição do PIB por habitante com a população em idade de trabalhar
+   (ONU), separando demografia de participação.
+2. **Laboratório, leva 2** (do plano): controle sintético de episódios, quem ficou com o
+   crescimento por faixa de renda, o viés das previsões do orçamento, o tom das atas.
+3. **O gasto, o que falta**: a série do gasto por função no tempo (o COFOG do Brasil desde
+   2010) e a despesa por função só da União (o Tesouro publica o COFOG do Governo Central).
+   América Latina tem só cinco países com COFOG do governo geral no FMI; Chile, México e
+   Colômbia publicam só o governo central.
+4. **A árvore do diagnóstico de crescimento** e o crédito direcionado nas perguntas.
+5. **Contador de acesso nosso**: espera o projeto Supabase do sacibras.
+6. **Estados e Brasil no mundo** com 6 métricas na lista; Estados › Duas métricas com poucos
+   estados (como já é em Brasil no mundo).
+7. **O glossário ainda aponta endereços antigos** (`#pobreza/fome`, `#credito/imoveis`).
 
 ## Releituras com prazo
 
@@ -126,7 +140,11 @@ As próximas:
 
 ## Espera o Caio
 
-- **Olhar as oito perguntas de novo**, agora com posição: cada resposta e cada "Juntando
+- **Olhar o Laboratório e a pergunta do gasto**: os textos dizem o que a conta acha e onde
+  ela é fraca. Pontos a conferir: a regra de Taylor dá 11,7 % contra a Selic de 13,75 %; o
+  juro neutro vai de 5,1 % a 7,2 % conforme o método; o estudo de evento acha 4,5 pb no juro
+  de 2 anos por 0,25 pp de surpresa (fora 2020).
+- **Olhar as nove perguntas de novo**, agora com posição: cada resposta e cada "Juntando
   as peças" afirma o que o dado mostra e marca o que é disputado. Diga onde afirmei demais
   ou de menos. Prazo de releitura: 16/02/2027 (`perguntas.LIDAS_EM`).
 - **Contador de acesso nosso** (Caio, 16/11/2026: *"a gente mesmo não pode saber quem

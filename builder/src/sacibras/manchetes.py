@@ -45,16 +45,22 @@ def _com_unidade(valor: float, unidade: str, casas: int, *, curta: bool = False)
 def _contra_a_faixa(
     g: Grafico, quando: date, valor: float, pontos: list[tuple[date, float]]
 ) -> str:
-    """Com a faixa da meta no gráfico: há quantos pontos seguidos a série está fora dela."""
+    """Com a faixa no gráfico (a da meta, ou outra): há quantos pontos seguidos a série está
+    fora dela."""
     if not g.faixa or not g.unidade.startswith("%"):
         return ""  # só taxa contra a meta; o acumulado do ano em reais não se lê assim
     faixa = {d: (lo, hi) for d, lo, hi in g.faixa.pontos}
     if quando not in faixa:
         return ""
     lo, hi = faixa[quando]
-    lado = "acima do teto" if valor > hi else "abaixo do piso" if valor < lo else ""
-    if not lado:
-        return f"dentro do {g.faixa.nome.split('(')[0].strip().lower()}"
+    nome = g.faixa.nome.split("(")[0].strip().lower()
+    e_meta = "meta" in nome
+    if lo <= valor <= hi:
+        return f"dentro do {nome}" if e_meta else f"dentro da {nome}"
+    if e_meta:
+        lado = "acima do teto da meta" if valor > hi else "abaixo do piso da meta"
+    else:  # a faixa de outra coisa (a da regra de Taylor): diz-se o nome dela
+        lado = f"{'acima' if valor > hi else 'abaixo'} da {nome}"
     seguidos = 0
     for d, v in reversed(pontos):
         if d not in faixa or not (v > faixa[d][1] if valor > hi else v < faixa[d][0]):
@@ -62,7 +68,7 @@ def _contra_a_faixa(
         seguidos += 1
     unidade = {"M": "meses", "T": "trimestres", "A": "anos"}.get(g.periodicidade, "")
     ha = f" há {seguidos} {unidade}" if unidade and seguidos > 1 else ""
-    return f"{lado} da meta{ha}"
+    return f"{lado}{ha}"
 
 
 def _recorde(g: Grafico, pontos: list[tuple[date, float]]) -> str:

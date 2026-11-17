@@ -21,6 +21,7 @@ from sacibras.schema import (
     Secao,
     Tabela,
 )
+from sacibras.secoes import gasto
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -556,8 +557,18 @@ def montar(ctx: Contexto) -> Secao:
                 nota="Demais despesas = despesa total menos benefícios previdenciários e pessoal.",
             ),
         ]
+        c_rig, g_rig, t_rig = gasto.rigidez(rtn, pib, fonte_rtn, inicio)
+        cartoes += c_rig
+        graficos += g_rig
+        tabelas += t_rig
     except Exception as erro:
         print(f"    RTN ficou de fora: {str(erro)[:120]}")
+    try:  # o gasto por função contra os outros países (FMI, COFOG)
+        c_pais, t_pais = gasto.pecas_dos_paises()
+        cartoes += c_pais
+        tabelas += t_pais
+    except Exception as erro:
+        print(f"    o gasto por função (FMI) ficou de fora: {str(erro)[:120]}")
 
     # --- Dívida por indexador (SGS 4173 a 4180: dívida mobiliária federal, posição em carteira) ---
     chaves_divida = [

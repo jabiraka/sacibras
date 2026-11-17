@@ -87,3 +87,12 @@ def test_serie_que_segue_em_projecao_ou_passa_de_hoje_fica_sem_frase() -> None:
     futuro = _grafico([1.0] * 20)
     futuro.series[0].pontos = [(date(2099, 1, 1), 1.0)] * 20
     assert manchetes.do_grafico(futuro) == ""
+
+
+def test_faixa_que_nao_e_a_meta_diz_o_nome_dela() -> None:
+    valores = [10.0] * 20 + [14.0, 14.0]
+    faixa = Faixa(
+        nome="faixa entre os métodos", pontos=[(d, 11.0, 12.0) for d, _ in _meses(valores)]
+    )
+    frase = manchetes.do_grafico(_grafico(valores, "% a.a.", faixa=faixa))
+    assert frase == "Out/2026: 14,00 % a.a., acima da faixa entre os métodos há 2 meses."

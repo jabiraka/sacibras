@@ -150,8 +150,21 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   entre pelo menos três estudos citados (nunca um ponto só), simulador cujo resultado sai
   como faixa, e avaliação de política que já aconteceu, com teste de placebo. Nos Dados e
   nas Perguntas nada muda: fonte oficial ou conta nossa que fecha com ela. Continua fora o
-  efeito de política futura sobre PIB e emprego. O Laboratório ainda não existe; cada peça
-  dele vai ao ar com o Caio olhando.
+  efeito de política futura sobre PIB e emprego. **O Laboratório** (Caio, 17/11/2026: *"Faça
+  1) laboratório"*) é a seção `builder/src/sacibras/secoes/laboratorio.py`, ao lado das
+  Previsões: juro neutro por três métodos, hiato por dois filtros, regra de Taylor com a
+  faixa entre eles, estudo de evento do Copom, teste de Bohn e o PIB por habitante desde
+  1950 (Penn World Table). As contas de estatística moram em `modelos/estatistica.py`, sem
+  biblioteca de fora (MQO com erro de Newey-West, HP, Hamilton). Cada peça diz o método e
+  mostra a faixa; resultado fraco se diz fraco (o estudo de evento, por exemplo, mede mal a
+  surpresa sem os juros futuros da B3). Peça nova dele vai ao ar com o Caio olhando.
+- **O gasto: obrigatório, discricionário e por função** (Caio, 16/11/2026: *"tem como
+  separar as despesas das obrigatórias? Talvez fazer uma análise de onde dá pra cortar
+  gastos [...] comparar com outros países"*): Contas públicas › Onde está o gasto
+  (`secoes/gasto.py`). Obrigatória e discricionária vêm do RTN (Governo Central); a
+  comparação por função, do COFOG do FMI (governo geral, `fontes/fmi_cofog.py`), contra a
+  mediana dos grupos do FMI. A tela não diz onde cortar: mostra onde o Brasil gasta acima dos
+  outros e o que a lei amarra, e diz que eficiência de cada programa estes dados não medem.
 - **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
   muitas informações em uma página [...] classifique melhor em categorias, crie
   subcategorias"*). Tudo mora em `builder/src/sacibras/organizacao.py`: `CATEGORIAS` agrupa os

@@ -46,12 +46,16 @@ CAMPOS = (
     "irr",
     "pl_i",
     "delta",
+    "pop",
+    "rgdpe",
 )
 """PIB e capital a preços nacionais constantes, ocupados (milhões), horas por ano, índice de
 capital humano, parte do trabalho na renda, PTF (2021 = 1), PTF contra a dos EUA (EUA = 1), e
 para comparar países: PIB pela produção a PPC encadeada e capital a PPC corrente, os dois em
 milhões de dólares de 2021; o retorno real do capital, o nível de preço do investimento e a
-taxa média de depreciação do capital (para estender o capital pelo inventário perpétuo)."""
+taxa média de depreciação do capital (para estender o capital pelo inventário perpétuo); e a
+população (milhões) e o PIB pela despesa a PPC encadeada (o de comparar padrão de vida entre
+países, segundo a própria PWT), para o PIB por habitante (Laboratório, 16/11/2026)."""
 MARCA_DO_RETORNO = "i_irr"
 """A marca da PWT para cada `irr`: "Regular", "Lower bound", "Outlier"… O que a própria PWT
 marca como "Outlier" não entra."""

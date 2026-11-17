@@ -34,6 +34,16 @@ LINHAS = {
     "beneficios previdenciarios": "rgps",
     "pessoal e encargos sociais": "pessoal",
     "resultado primario governo central - acima da linha (3 - 4)": "primario",
+    # A despesa obrigatória e a discricionária (Caio, 16/11/2026: "tem como separar as
+    # despesas das obrigatórias?"). Lidas na aba 1.1 do arquivo de set/2026, em 17/11/2026:
+    # 4.1 benefícios, 4.2 pessoal, 4.3 outras obrigatórias e 4.4 "sujeitas à programação
+    # financeira", que se abre em 4.4.1 obrigatórias com controle de fluxo e 4.4.2
+    # discricionárias.
+    "outras despesas obrigatorias": "outras_obrigatorias",
+    "abono e seguro desemprego": "abono_seguro",
+    "beneficios de prestacao continuada da loas/rmv": "bpc",
+    "obrigatorias com controle de fluxo": "obrigatorias_fluxo",
+    "despesas discricionarias": "discricionarias",
 }
 
 

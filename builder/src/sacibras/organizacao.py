@@ -31,7 +31,7 @@ CATEGORIAS: list[Categoria] = [
         secoes=["externo", "longo-prazo", "riscos"],
     ),
     Categoria(id="comparar", titulo="Comparar", secoes=["estados", "mundo"]),
-    Categoria(id="laboratorio", titulo="Laboratório", secoes=["previsoes"]),
+    Categoria(id="laboratorio", titulo="Laboratório", secoes=["laboratorio", "previsoes"]),
 ]
 """Nove assuntos em quatro grupos, os dois comparadores e o Laboratório (16/11/2026), que
 por enquanto só tem as Previsões: o consenso do Focus, a estimativa do PIB e o simulador."""
@@ -289,6 +289,14 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["despesa-gc", "previdencia-rgps"],
             graficos=["receita-despesa", "despesa-composicao"],
         ),
+        Parte(
+            "gasto",
+            "Onde está o gasto",
+            "O que é obrigatório e o que não é, e o Brasil contra os outros países por função.",
+            cartoes=["discricionaria-parte", "obrigatoria-pib", "gasto-acima-pares"],
+            graficos=["despesa-rigidez"],
+            tabelas=["despesa-obrigatoria", "gasto-por-funcao"],
+        ),
     ],
     "impostos": [
         Parte(
@@ -394,6 +402,39 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["anos-de-estudo", "analfabetismo"],
             graficos=["renda-escolaridade", "analfabetismo"],
             tabelas=["pobreza-escola-idade"],
+        ),
+    ],
+    "laboratorio": [
+        Parte(
+            "juro-neutro",
+            "Juro neutro, hiato e regra de Taylor",
+            "Onde estaria o juro que nem acelera nem freia, e onde a regra de Taylor põe a Selic.",
+            cartoes=["juro-neutro", "hiato", "taylor"],
+            graficos=["regra-de-taylor", "juro-neutro", "hiato"],
+            tabelas=["juro-neutro-metodos"],
+        ),
+        Parte(
+            "copom",
+            "O mercado e as surpresas do Copom",
+            "Quando o Copom surpreende o Focus, quanto o juro de 2 anos e o dólar se mexem.",
+            cartoes=["copom-efeito", "copom-dias"],
+            tabelas=["copom-surpresas"],
+        ),
+        Parte(
+            "reacao-fiscal",
+            "O governo reage à dívida?",
+            "O teste de Bohn: quando a dívida sobe, o primário melhora no ano seguinte?",
+            cartoes=["reacao-fiscal"],
+            graficos=["reacao-fiscal"],
+            tabelas=["reacao-fiscal-amostras"],
+        ),
+        Parte(
+            "crescimento",
+            "O PIB por habitante desde 1950",
+            "De onde veio o crescimento, década a década, e a distância para os EUA.",
+            cartoes=["pib-hab-eua"],
+            graficos=["convergencia"],
+            tabelas=["pib-hab-decadas"],
         ),
     ],
     "previsoes": [

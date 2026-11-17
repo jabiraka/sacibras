@@ -41,6 +41,7 @@ from sacibras.secoes import (
     impostos,
     inflacao,
     juntos,
+    laboratorio,
     mundo,
     previsoes,
     riscos,
@@ -59,6 +60,7 @@ ORDEM: list[tuple[str, str, Callable[[Contexto], BaseModel]]] = [
     ("longo-prazo", "Longo prazo", juntos.longo_prazo),
     ("estados", "Estados", estados.montar),
     ("mundo", "Brasil no mundo", mundo.montar),
+    ("laboratorio", "Laboratório", laboratorio.montar),
     ("previsoes", "Previsões", previsoes.montar),
     ("riscos", "Riscos", riscos.montar),
 ]
@@ -107,6 +109,10 @@ FONTES = {
         "Banco Central (IBC-R e crédito por UF) e Comex Stat"
     ),
     "mundo": "FMI (WEO), BIS, OCDE e Tesouro Nacional",
+    "laboratorio": (
+        "Laboratório: Banco Central (Focus, Copom, SGS), Tesouro Direto, IBGE (SIDRA) e Penn "
+        "World Table, com conta nossa"
+    ),
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",
 }

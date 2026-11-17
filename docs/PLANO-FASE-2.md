@@ -6,8 +6,9 @@ absorver muitas informações"*. Aprovado em 16/11/2026 (*"pode seguir, o gancho
 buscam algum tipo de resposta"*). **Feito no mesmo dia**: o "Saiu por último", as oito
 perguntas, a entrada e o menu por perguntas e o painel de alerta com 17 indicadores. O que
 falta está no [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md), "O que vem agora". Também feitos em
-16/11: o corte dos Dados, os nove assuntos e a frase do gráfico. Do plano, falta o
-Laboratório inteiro, o contador de acesso e os comparadores com menos métricas.
+16/11: o corte dos Dados, os nove assuntos e a frase do gráfico. Em 17/11, a leva 1 do
+Laboratório (sem o juro neutro do BC) e o gasto obrigatório contra o discricionário. Do
+plano, falta o resto do Laboratório, o contador de acesso e os comparadores com menos métricas.
 
 ## O ponto de partida
 
