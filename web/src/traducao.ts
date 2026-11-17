@@ -60,8 +60,14 @@ function guardar(codigo: string): void {
   }
 }
 
-/** O idioma em que a página deve abrir: a escolha guardada ou o primeiro do navegador. */
-export function idiomaDesejado(navegador: readonly string[] = navigator.languages): string {
+/** O idioma em que a página deve abrir: a escolha guardada ou o primeiro do navegador. O
+ * buscador (Googlebot, Bingbot) lê sempre o original: ele abre em inglês, e traduzido o Google
+ * guardaria o texto do tradutor para as páginas de pergunta, que são em português. */
+export function idiomaDesejado(
+  navegador: readonly string[] = navigator.languages,
+  agente: string = navigator.userAgent,
+): string {
+  if (/bot\b|crawler|spider|crawling/i.test(agente)) return ORIGINAL;
   const guardado = lerGuardado();
   if (guardado) return guardado;
   const primeiro = navegador[0] ?? navigator.language ?? ORIGINAL;

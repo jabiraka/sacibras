@@ -94,6 +94,17 @@ oferta, fatores da dívida e da desocupação, carrego do PIB). O que ficou de f
 - Agenda: as reuniões do Copom na caixa "O que sai esta semana" (não há API de datas
   futuras; só lendo o calendário publicado pelo BC).
 
+## Páginas que o buscador acha (17/11/2026, espera o Caio)
+
+Aprendido no finjabs (M131): o site abre tudo por `#pergunta/...`, e o Google não indexa o que
+vem depois do `#`. Começado e parado no meio (Caio, 17/11/2026: a sessão foi para o finjabs), no
+ramo `ccr-d2985ffa-rhyhoh`, **não no `main`**: `web/scripts/paginas.mjs` gera, depois do `vite
+build`, uma página por pergunta (`pergunta/<id>/`) e por assunto, com título, descrição,
+canônico e prévia do link, mais `sitemap.xml` e `robots.txt`; e o tradutor não traduz para o
+buscador (`traducao.ts`). Testado no Chromium (a pergunta abre, os elos de dentro não
+recarregam). Falta: o "sim" do Caio, olhar a 390 px, e mandar o sitemap no Search Console (o
+`robots.txt` só vale com domínio próprio).
+
 ## O que incluir e tirar (conversa de 16/11/2026)
 
 Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e fazer."* O
