@@ -4,6 +4,7 @@
 
 import * as Plot from "@observablehq/plot";
 import { numero } from "./formato";
+import type { Desenho } from "./grafico";
 import { el } from "./pecas";
 
 // ------------------------------------------------------------------ lista suspensa
@@ -153,6 +154,126 @@ export function linhaDoRanking(
       (l.faixa ? ` (de ${numero(l.faixa[0], casas)} a ${numero(l.faixa[1], casas)})` : "") +
       (l.estimado ? ", estimado pela região" : "");
   return linha;
+}
+
+/** O ranking em pontos desenhado no canvas, para a imagem (PNG e Copiar): as mesmas
+ *  linhas, a mesma régua e as mesmas cores da tela. */
+export function desenhoDoRanking(itens: LinhaDoRanking[], r: Regua, casas: number, largura = 640): Desenho {
+  const css = getComputedStyle(document.documentElement);
+  const v = (nome: string): string => css.getPropertyValue(nome).trim();
+  const familia = getComputedStyle(document.body).fontFamily;
+  const alturaDe = (l: LinhaDoRanking): number => (l.marca === "membro" ? 18 : 22);
+  const h = itens.reduce((a, l) => a + alturaDe(l), 0);
+  const colPos = 22;
+  const colNome = Math.min(190, Math.round(largura * 0.3));
+  const colValor = 64;
+  const gap = 8;
+  return {
+    w: largura,
+    h,
+    pintar: (ctx, x0, y0) => {
+      const xNome = x0 + colPos + gap;
+      const xTrilho = xNome + colNome + gap;
+      const wTrilho = largura - colPos - colNome - colValor - 3 * gap;
+      const xValor = x0 + largura;
+      const xDe = (valor: number): { x: number; fora: boolean } => {
+        const p = posicaoNaRegua(valor, r);
+        return { x: xTrilho + (p.pct / 100) * wTrilho, fora: p.fora !== "" };
+      };
+      ctx.textBaseline = "middle";
+      let y = y0;
+      for (const l of itens) {
+        const alt = alturaDe(l);
+        const meio = y + alt / 2;
+        if (l.marca === "brasil") {
+          ctx.fillStyle = v("--verde-claro");
+          ctx.fillRect(x0, y, largura, alt);
+        }
+        const px = l.marca === "membro" ? 11 : 12;
+        const peso = l.marca === "brasil" || l.cor ? 500 : 400;
+        ctx.font = `400 11px ${familia}`;
+        ctx.fillStyle = v("--tinta-3");
+        ctx.textAlign = "right";
+        if (l.posicao !== null) ctx.fillText(String(l.posicao), x0 + colPos, meio);
+        ctx.textAlign = "left";
+        ctx.font = `${l.marca === "grupo" ? "italic " : ""}${peso} ${px}px ${familia}`;
+        ctx.fillStyle = l.marca === "grupo" ? v("--tinta-2") : v("--tinta");
+        let nome = l.nome;
+        while (nome.length > 3 && ctx.measureText(nome).width > colNome) nome = `${nome.slice(0, -2)}…`;
+        ctx.fillText(nome, xNome, meio);
+        // A guia pontilhada, o zero e os marcos (os limites da lei).
+        ctx.strokeStyle = v("--fio");
+        ctx.lineWidth = 1;
+        ctx.setLineDash([1, 2]);
+        ctx.beginPath();
+        ctx.moveTo(xTrilho, meio);
+        ctx.lineTo(xTrilho + wTrilho, meio);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = v("--eixo");
+        const zero = xDe(0).x;
+        ctx.beginPath();
+        ctx.moveTo(zero, meio - 9);
+        ctx.lineTo(zero, meio + 9);
+        ctx.stroke();
+        for (const m of r.marcos ?? []) {
+          const xm = xDe(m.valor).x;
+          ctx.strokeStyle = v("--amarelo");
+          ctx.setLineDash([3, 2]);
+          ctx.beginPath();
+          ctx.moveTo(xm, meio - 10);
+          ctx.lineTo(xm, meio + 10);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        if (l.faixa) {
+          const a = xDe(l.faixa[0]).x;
+          const b = xDe(l.faixa[1]).x;
+          ctx.strokeStyle = v("--tinta-3");
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(a, meio - 4);
+          ctx.lineTo(a, meio + 4);
+          ctx.moveTo(b, meio - 4);
+          ctx.lineTo(b, meio + 4);
+          ctx.moveTo(a, meio);
+          ctx.lineTo(b, meio);
+          ctx.stroke();
+          ctx.lineWidth = 1;
+        }
+        // O ponto: verde no Brasil, losango azul nos grupos, a cor da série no escolhido;
+        // vazado quando é estimado ou passa da régua.
+        const lugar = xDe(l.valor);
+        const raio = l.marca === "brasil" ? 6.5 : l.cor ? 6 : l.marca === "membro" ? 4 : 5;
+        const cor = l.cor ?? (l.marca === "brasil" ? v("--verde") : l.marca === "grupo" ? v("--azul") : l.marca === "membro" ? v("--neutro-barra") : v("--tinta-3"));
+        ctx.beginPath();
+        if (l.marca === "grupo") {
+          ctx.moveTo(lugar.x, meio - raio);
+          ctx.lineTo(lugar.x + raio, meio);
+          ctx.lineTo(lugar.x, meio + raio);
+          ctx.lineTo(lugar.x - raio, meio);
+          ctx.closePath();
+        } else ctx.arc(lugar.x, meio, raio, 0, Math.PI * 2);
+        if (l.estimado || lugar.fora) {
+          ctx.fillStyle = v("--superficie");
+          ctx.fill();
+          ctx.strokeStyle = l.cor ?? v("--tinta-3");
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.lineWidth = 1;
+        } else {
+          ctx.fillStyle = cor;
+          ctx.fill();
+        }
+        ctx.font = `${peso} ${px}px ${familia}`;
+        ctx.fillStyle = v("--tinta");
+        ctx.textAlign = "right";
+        ctx.fillText(l.texto ?? numero(l.valor, casas), xValor, meio);
+        ctx.textAlign = "left";
+        y += alt;
+      }
+    },
+  };
 }
 
 // ------------------------------------------------------------------ duas métricas

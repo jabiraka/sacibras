@@ -8,15 +8,18 @@
 //   4. a tabela com tudo, guardada.
 
 import { numero } from "./formato";
-import { montarGrafico } from "./grafico";
+import { botoesDaImagem, montarGrafico, textoSemBotoes } from "./grafico";
 import { el, guardar } from "./pecas";
 import {
   desenharDispersao,
+  desenhoDoRanking,
   linhaDoRanking,
   listaSuspensa,
   reguaDe,
+  type LinhaDoRanking,
   type Opcao,
   type PontoDisperso,
+  type Regua,
 } from "./pontos";
 import type { Grafico, GrupoMundo, MetricaMundo, Mundo, MundoPaises, Pais } from "./tipos";
 import type { Marca } from "./pontos";
@@ -175,6 +178,25 @@ export function montarMundo(m: Mundo): HTMLElement {
   const posicao = el("p", "posicao");
   const fonteRanking = el("footer", "grafico-pe");
   painelRanking.append(tituloRanking, subRanking, ranking, posicao, fonteRanking);
+  // O ranking como imagem, para baixar ou copiar (Caio, 17/11/2026). Os botões nascem uma
+  // vez só; o desenho sai das linhas da última pintura.
+  let desenhado: { itens: LinhaDoRanking[]; regua: Regua } | null = null;
+  const acoesRanking = el("span", "acoes");
+  acoesRanking.append(
+    ...botoesDaImagem(() =>
+      desenhado
+        ? {
+            id: `mundo-ranking-${metrica.id}-${ano}`,
+            titulo: textoSemBotoes(tituloRanking) || metrica.nome,
+            sub: subRanking.textContent?.split(" · ")[0] ?? metrica.unidade,
+            fonte: `Fonte: ${metrica.fonte}`,
+            nota: textoSemBotoes(posicao),
+            legenda: [],
+            desenho: desenhoDoRanking(desenhado.itens, desenhado.regua, metrica.casas),
+          }
+        : null,
+    ),
+  );
 
   const ladoLinha = el("div", "lado-trajetoria");
   const escolhidos = el("div", "escolhidos");
@@ -285,21 +307,24 @@ export function montarMundo(m: Mundo): HTMLElement {
     const ordenados = comValor.map((x) => x.v).sort((a, b) => a - b);
     const corte = (q: number): number => ordenados[Math.round(q * (ordenados.length - 1))] ?? 0;
     const regua = reguaDe(ordenados.length > LISTA_CURTA ? [corte(0.05), corte(0.95)] : ordenados);
+    const itens: LinhaDoRanking[] = [];
     const linhas = comValor.map(({ iso, marca, v }, i) => {
       const casa = casas.get(iso);
       const ehGrupo = marca === "grupo";
       const grupo = grupoDe.get(iso);
+      const item: LinhaDoRanking = {
+        chave: iso,
+        nome: nomeDe(iso),
+        valor: v,
+        marca,
+        posicao: ehGrupo ? null : i + 1,
+        cor: casa !== undefined && iso !== "BRA" ? cor(casa) : undefined,
+        abre: ehGrupo && grupo && m.arquivo_paises ? { aberto: false, quantos: grupo.membros.length } : undefined,
+        dica: `${nomeDe(iso)}: ${numero(v, metrica.casas)} ${metrica.unidade}`,
+      };
+      itens.push(item);
       return linhaDoRanking(
-        {
-          chave: iso,
-          nome: nomeDe(iso),
-          valor: v,
-          marca,
-          posicao: ehGrupo ? null : i + 1,
-          cor: casa !== undefined && iso !== "BRA" ? cor(casa) : undefined,
-          abre: ehGrupo && grupo && m.arquivo_paises ? { aberto: false, quantos: grupo.membros.length } : undefined,
-          dica: `${nomeDe(iso)}: ${numero(v, metrica.casas)} ${metrica.unidade}`,
-        },
+        item,
         regua,
         metrica.casas,
         ehGrupo
@@ -346,7 +371,9 @@ export function montarMundo(m: Mundo): HTMLElement {
         posicao.append(document.createTextNode(` ${quem}: ${numero(media, metrica.casas)}.`));
       }
     }
-    fonteRanking.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}`));
+    desenhado = itens.length ? { itens, regua } : null;
+    acoesRanking.hidden = !desenhado;
+    fonteRanking.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}`), acoesRanking);
   }
 
   // ---------------------------------------------------------------- trajetória
@@ -547,10 +574,32 @@ export function montarMundo(m: Mundo): HTMLElement {
       }
     }
     ultimaDispersao = desenhar;
-    peDispersao.replaceChildren(
-      el("span", "fonte", eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`),
-    );
+    const fonte = eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`;
+    acoes.hidden = pontos.length === 0;
+    peDispersao.replaceChildren(el("span", "fonte", fonte), acoes);
   }
+  // A imagem das duas métricas, para baixar ou copiar (Caio, 16/11/2026). Os botões nascem
+  // uma vez só: o redesenho não pode apagar o "Copiada ✓".
+  const acoes = el("span", "acoes");
+  acoes.append(
+    ...botoesDaImagem(() => {
+      const verde = getComputedStyle(document.documentElement).getPropertyValue("--verde").trim();
+      const itens = [...legendaDispersao.querySelectorAll<HTMLElement>(".legenda-item")];
+      return {
+        id: `mundo-${eixoY.id}-${eixoX.id}-${ano}`,
+        titulo: `${eixoY.nome} contra ${eixoX.nome}`,
+        sub: `Um ponto por país, em ${ano}. Na horizontal: ${eixoX.nome} (${eixoX.unidade}); na vertical: ${eixoY.nome} (${eixoY.unidade})`,
+        fonte: eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`,
+        nota: textoSemBotoes(notaDispersao),
+        legenda: itens.map((item) => ({
+          nome: item.textContent ?? "",
+          chave: "ponto" as const,
+          cor: item.querySelector("i")?.style.getPropertyValue("--cor").replace("var(--verde)", verde) || verde,
+        })),
+        svg: telaDispersao.querySelector("svg"),
+      };
+    }),
+  );
   let ultimaDispersao: (() => void) | null = null;
   let pendente = 0;
   new ResizeObserver(() => {

@@ -263,13 +263,23 @@ export function montarGrafico(g: Grafico): HTMLElement {
   verTabela.setAttribute("aria-expanded", "false");
   const csv = el("button", "", "CSV");
   csv.type = "button";
-  // A imagem do gráfico, com título, unidade, legenda e fonte escritos nela (15/11/2026).
-  const png = el("button", "", "PNG");
-  png.type = "button";
-  png.title = "Baixar a imagem do gráfico, com o título e a fonte";
+  // A imagem do gráfico, com título, unidade, legenda e fonte escritos nela (15/11/2026),
+  // para baixar em PNG ou copiar e colar (16/11/2026).
+  const imagem = botoesDaImagem(() => {
+    const t = tema();
+    const cor = (i: number) => t.series[(g.series[i]?.cor ?? i) % t.series.length] ?? t.tinta;
+    return {
+      id: g.id,
+      titulo: g.titulo,
+      sub: [g.subtitulo, g.unidade].filter(Boolean).join(" · "),
+      fonte: `Fonte: ${g.fonte}`,
+      legenda: itensDaLegenda(g, cor),
+      svg: tela.querySelector("svg"),
+    };
+  });
   // Dado privado cujos termos vedam reproduzir (licencas.py): fica na tela, sem download.
   if (g.sem_download) acoes.append(verTabela);
-  else acoes.append(verTabela, csv, png);
+  else acoes.append(verTabela, csv, ...imagem);
   pe.append(acoes);
   artigo.append(pe);
   if (g.nota) artigo.append(el("p", "nota", g.nota));
@@ -284,11 +294,6 @@ export function montarGrafico(g: Grafico): HTMLElement {
     verTabela.setAttribute("aria-expanded", String(!caixaTabela.hidden));
   });
   csv.addEventListener("click", () => baixarCsv(g));
-  png.addEventListener("click", () => {
-    const t = tema();
-    const cor = (i: number) => t.series[(g.series[i]?.cor ?? i) % t.series.length] ?? t.tinta;
-    void baixarPng(g, tela.querySelector("svg"), itensDaLegenda(g, cor), t);
-  });
 
   let jaEntrou = false;
 
@@ -594,9 +599,9 @@ function dominioDasMarcas(todas: Linha[]): [number, number] {
   return [Math.min(...vs) - 0.5, Math.max(...vs) + 0.5];
 }
 
-type Chave = "linha" | "tracejada" | "banda" | "intervalo" | "intervalo-meio" | "referencia";
+type Chave = "linha" | "tracejada" | "banda" | "intervalo" | "intervalo-meio" | "referencia" | "ponto" | "barra" | "contorno";
 
-interface ItemDaLegenda {
+export interface ItemDaLegenda {
   nome: string;
   chave: Chave;
   cor?: string;
@@ -631,6 +636,9 @@ function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => str
     intervalo: "chave intervalo",
     "intervalo-meio": "chave intervalo-meio",
     referencia: "chave referencia",
+    ponto: "chave redonda",
+    barra: "chave",
+    contorno: "chave chave-contorno",
   };
   const itens = itensDaLegenda(g, cor).map((x) => {
     const item = el("span", "legenda-item");
@@ -859,7 +867,7 @@ function imagemDoSvg(svg: SVGSVGElement): Promise<{ img: HTMLImageElement; w: nu
   const w = Math.round(svg.width.baseVal.value || svg.getBoundingClientRect().width);
   const h = Math.round(svg.height.baseVal.value || svg.getBoundingClientRect().height);
   const copia = svg.cloneNode(true) as SVGSVGElement;
-  copia.querySelectorAll('g[pointer-events="none"]').forEach((n) => n.remove());
+  copia.querySelectorAll('g[pointer-events="none"], g[aria-label="tip"]').forEach((n) => n.remove());
   copia.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   copia.setAttribute("width", String(w));
   copia.setAttribute("height", String(h));
@@ -876,16 +884,91 @@ function imagemDoSvg(svg: SVGSVGElement): Promise<{ img: HTMLImageElement; w: nu
   });
 }
 
-/** Baixa o gráfico em PNG, em fundo claro, com o título, a unidade, a legenda e a fonte
- *  escritos na imagem: quem recebe a figura sabe o que é e de onde veio. */
-async function baixarPng(
-  g: Grafico,
-  svg: SVGSVGElement | null,
-  legenda: ItemDaLegenda[],
-  t: Tema,
-): Promise<void> {
-  if (!svg || g.sem_download) return;
-  const { img, w, h } = await imagemDoSvg(svg);
+/** O que vai escrito na imagem em volta do desenho. `nota` (quem ficou fora do desenho,
+ *  o ano) sai antes da fonte. */
+export interface Figura {
+  id: string;
+  titulo: string;
+  sub: string;
+  fonte: string;
+  nota?: string;
+  legenda: ItemDaLegenda[];
+  /** O desenho: o SVG da tela ou, para o que a tela monta em HTML (ranking, pirâmide), um
+   *  desenho próprio no canvas, com a largura e a altura dele. */
+  svg?: SVGSVGElement | null;
+  desenho?: Desenho | null;
+}
+
+export interface Desenho {
+  w: number;
+  h: number;
+  pintar: (ctx: CanvasRenderingContext2D, x: number, y: number) => void;
+}
+
+/** O texto de uma nota da tela sem os botões e os links dela ("Mostrar todos", "Ver as
+ *  contas de…"), para ir na imagem. */
+export function textoSemBotoes(no: HTMLElement): string {
+  const copia = no.cloneNode(true) as HTMLElement;
+  copia.querySelectorAll("button, a, br").forEach((n) => n.remove());
+  return (copia.textContent ?? "").replace(/\s+/g, " ").trim();
+}
+
+/** Os botões "PNG" e "Copiar" de um gráfico: a mesma imagem, baixada ou posta na área de
+ *  transferência. O "Copiar" só aparece onde o navegador sabe copiar imagem. Quem chama
+ *  decide se pode exportar (dado privado não pode: licencas.py). */
+export function botoesDaImagem(figura: () => Figura | null): HTMLButtonElement[] {
+  const png = el("button", "", "PNG");
+  png.type = "button";
+  png.title = "Baixar a imagem do gráfico, com o título e a fonte";
+  png.addEventListener("click", () => {
+    const f = figura();
+    if (!f?.svg && !f?.desenho) return;
+    void pngDaFigura(f, tema()).then((blob) => {
+      if (!blob) return;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${f.id}.png`;
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+  });
+  if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) return [png];
+  const copiar = el("button", "", "Copiar");
+  copiar.type = "button";
+  copiar.title = "Copiar a imagem do gráfico, com o título e a fonte, para colar em outro lugar";
+  let volta = 0;
+  const avisar = (texto: string): void => {
+    copiar.textContent = texto;
+    window.clearTimeout(volta);
+    volta = window.setTimeout(() => (copiar.textContent = "Copiar"), 1800);
+  };
+  copiar.addEventListener("click", () => {
+    const f = figura();
+    if (!f?.svg && !f?.desenho) return;
+    // A promessa vai direto ao ClipboardItem, ainda dentro do toque (o Safari exige).
+    const blob = pngDaFigura(f, tema()).then((b) => {
+      if (!b) throw new Error("a imagem não saiu");
+      return b;
+    });
+    navigator.clipboard
+      .write([new ClipboardItem({ "image/png": blob })])
+      .then(() => avisar("Copiada ✓"))
+      .catch(() => avisar("Não copiou: use o PNG"));
+  });
+  return [png, copiar];
+}
+
+/** O gráfico em PNG, em fundo claro, com o título, a unidade, a legenda e a fonte escritos
+ *  na imagem: quem recebe a figura sabe o que é e de onde veio. */
+async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
+  let desenho = f.desenho ?? null;
+  if (f.svg) {
+    const { img, w, h } = await imagemDoSvg(f.svg);
+    desenho = { w, h, pintar: (c, x, y) => c.drawImage(img, x, y, w, h) };
+  }
+  if (!desenho) return null;
+  const { w, h } = desenho;
+  const legenda = f.legenda;
   const escala = 2;
   const margem = 28;
   const largura = Math.max(w + 2 * margem, 560);
@@ -895,13 +978,14 @@ async function baixarPng(
 
   // Primeiro mede (a altura depende das quebras de linha), depois desenha.
   const medidor = document.createElement("canvas").getContext("2d");
-  if (!medidor) return;
+  if (!medidor) return null;
   medidor.font = fonte(600, 20);
-  const titulo = linhasDoTexto(medidor, g.titulo, util);
+  const titulo = linhasDoTexto(medidor, f.titulo, util);
   medidor.font = fonte(400, 13);
-  const sub = linhasDoTexto(medidor, [g.subtitulo, g.unidade].filter(Boolean).join(" · "), util);
+  const sub = linhasDoTexto(medidor, f.sub, util);
   medidor.font = fonte(400, 12);
-  const pe = linhasDoTexto(medidor, `Fonte: ${g.fonte}`, util - 90);
+  const nota = f.nota ? linhasDoTexto(medidor, f.nota, util) : [];
+  const pe = linhasDoTexto(medidor, f.fonte, util - 90);
   // A legenda em fileiras: cada item é a chave (22 px) e o nome.
   const fileiras: { item: ItemDaLegenda; x: number }[][] = [];
   let fileira: { item: ItemDaLegenda; x: number }[] = [];
@@ -920,13 +1004,14 @@ async function baixarPng(
 
   const alturaTitulo = titulo.length * 26 + (sub.length ? 4 + sub.length * 18 : 0);
   const alturaLegenda = fileiras.length ? 10 + fileiras.length * 20 : 0;
-  const altura = margem + alturaTitulo + alturaLegenda + 12 + h + 14 + pe.length * 17 + margem;
+  const alturaNota = nota.length ? nota.length * 17 + 6 : 0;
+  const altura = margem + alturaTitulo + alturaLegenda + 12 + h + 14 + alturaNota + pe.length * 17 + margem;
 
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(largura * escala);
   canvas.height = Math.round(altura * escala);
   const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  if (!ctx) return null;
   ctx.scale(escala, escala);
   ctx.fillStyle = t.superficie || "#fdfcf7";
   ctx.fillRect(0, 0, largura, altura);
@@ -971,6 +1056,16 @@ async function baixarPng(
           ctx.moveTo(x0, meio);
           ctx.lineTo(x0 + 16, meio);
           ctx.stroke();
+        } else if (item.chave === "barra") {
+          ctx.fillRect(x0 + 2, meio - 5, 12, 10);
+        } else if (item.chave === "contorno") {
+          ctx.strokeStyle = t.tinta2;
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(x0 + 2, meio - 5, 12, 10);
+        } else if (item.chave === "ponto") {
+          ctx.beginPath();
+          ctx.arc(x0 + 8, meio, 5, 0, Math.PI * 2);
+          ctx.fill();
         } else if (item.chave === "banda") {
           ctx.globalAlpha = 0.3;
           ctx.fillStyle = t.faixa;
@@ -999,11 +1094,21 @@ async function baixarPng(
   }
 
   y += 12;
-  ctx.drawImage(img, margem + Math.max(0, (util - w) / 2), y, w, h);
+  ctx.save();
+  desenho.pintar(ctx, margem + Math.max(0, (util - w) / 2), y);
+  ctx.restore();
   y += h + 14;
 
-  ctx.fillStyle = t.tinta3;
   ctx.font = fonte(400, 12);
+  if (nota.length) {
+    ctx.fillStyle = t.tinta2;
+    for (const l of nota) {
+      ctx.fillText(l, margem, y);
+      y += 17;
+    }
+    y += 6;
+  }
+  ctx.fillStyle = t.tinta3;
   for (const l of pe) {
     ctx.fillText(l, margem, y);
     y += 17;
@@ -1027,11 +1132,5 @@ async function baixarPng(
   ctx.font = fonte(600, 12);
   ctx.fillText("sacibras", xMarca + 20, yMarca + 1);
 
-  const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/png"));
-  if (!blob) return;
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${g.id}.png`;
-  a.click();
-  window.setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  return new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/png"));
 }

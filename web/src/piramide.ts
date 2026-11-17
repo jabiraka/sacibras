@@ -4,7 +4,7 @@
 // todos os anos, então a forma muda e a régua não.
 
 import { numero } from "./formato";
-import { tema } from "./grafico";
+import { botoesDaImagem, tema, type Desenho } from "./grafico";
 import { el } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import type { Grafico, Piramide } from "./tipos";
@@ -84,6 +84,30 @@ export function montarPiramide(g: Grafico, p: Piramide): HTMLElement {
 
   const pe = el("footer", "grafico-pe");
   pe.append(el("span", "fonte", `Fonte: ${g.fonte}`));
+  // A pirâmide como imagem, para baixar ou copiar (Caio, 17/11/2026), no ano escolhido.
+  if (!g.sem_download) {
+    const acoes = el("span", "acoes");
+    acoes.append(
+      ...botoesDaImagem(() => {
+        const ano = p.anos[indice] ?? 0;
+        const comContorno = contorno !== indice;
+        return {
+          id: `${g.id}-${ano}`,
+          titulo: g.titulo,
+          sub: `% da população · ${rotuloDoAno(ano)}`,
+          fonte: `Fonte: ${g.fonte}`,
+          nota: frase.textContent ?? "",
+          legenda: [
+            { nome: "Homens", chave: "barra" as const, cor: cores[1] },
+            { nome: "Mulheres", chave: "barra" as const, cor: cores[2] },
+            ...(comContorno ? [{ nome: String(p.ano_contorno), chave: "contorno" as const }] : []),
+          ],
+          desenho: desenhoDaPiramide(p, pct, maximo, indice, comContorno ? contorno : null, cores),
+        };
+      }),
+    );
+    pe.append(acoes);
+  }
   artigo.append(cabeca, barra, legenda, corpo, dica, frase, pe);
   if (g.nota) artigo.append(el("p", "nota", g.nota));
 
@@ -197,4 +221,70 @@ export function montarPiramide(g: Grafico, p: Piramide): HTMLElement {
 
   pintar();
   return artigo;
+}
+
+/** A pirâmide no canvas, para a imagem: homens à esquerda, mulheres à direita, o grupo no
+ *  meio, o ano de comparação em contorno e a régua de % embaixo. */
+function desenhoDaPiramide(
+  p: Piramide,
+  pct: Record<Lado, number[][]>,
+  maximo: number,
+  indice: number,
+  contorno: number | null,
+  cores: string[],
+): Desenho {
+  const w = 600;
+  const meio = 84;
+  const lado = (w - meio) / 2;
+  const alt = 16;
+  const ordem = p.grupos.map((_, k) => k).reverse();
+  const h = ordem.length * alt + 22;
+  const css = getComputedStyle(document.documentElement);
+  const v = (nome: string): string => css.getPropertyValue(nome).trim();
+  const familia = getComputedStyle(document.body).fontFamily;
+  return {
+    w,
+    h,
+    pintar: (ctx, x0, y0) => {
+      const xEsq = x0 + lado; // onde as barras dos homens começam (crescem para a esquerda)
+      const xDir = x0 + lado + meio;
+      const comp = (valor: number): number => (valor / maximo) * (lado - 4);
+      ctx.textBaseline = "middle";
+      ordem.forEach((k, i) => {
+        const y = y0 + i * alt;
+        const hm = comp(pct.homens[indice]?.[k] ?? 0);
+        const mu = comp(pct.mulheres[indice]?.[k] ?? 0);
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = cores[1] ?? v("--tinta-2");
+        ctx.fillRect(xEsq - hm, y + 1, hm, alt - 2);
+        ctx.fillStyle = cores[2] ?? v("--tinta-2");
+        ctx.fillRect(xDir, y + 1, mu, alt - 2);
+        ctx.globalAlpha = 1;
+        if (contorno !== null) {
+          ctx.strokeStyle = v("--tinta-2");
+          ctx.lineWidth = 1.5;
+          const hc = comp(pct.homens[contorno]?.[k] ?? 0);
+          const mc = comp(pct.mulheres[contorno]?.[k] ?? 0);
+          ctx.strokeRect(xEsq - hc, y + 1, hc, alt - 2);
+          ctx.strokeRect(xDir, y + 1, mc, alt - 2);
+        }
+        ctx.fillStyle = v("--tinta-2");
+        ctx.font = `400 11px ${familia}`;
+        ctx.textAlign = "center";
+        ctx.fillText(p.grupos[k] ?? "", x0 + lado + meio / 2, y + alt / 2);
+      });
+      // A régua: as marcas de % dos dois lados.
+      const yRegua = y0 + ordem.length * alt + 12;
+      const passo = maximo > 6 ? 2 : 1;
+      ctx.fillStyle = v("--tinta-3");
+      ctx.font = `400 10px ${familia}`;
+      ctx.fillText("idade", x0 + lado + meio / 2, yRegua);
+      for (let m = passo; m <= maximo; m += passo) {
+        const rotulo = `${numero(m, 0)} %`;
+        ctx.fillText(rotulo, xEsq - comp(m), yRegua);
+        ctx.fillText(rotulo, xDir + comp(m), yRegua);
+      }
+      ctx.textAlign = "left";
+    },
+  };
 }

@@ -5,6 +5,7 @@
 // guardada embaixo, como a dos outros gráficos.
 
 import { numero } from "./formato";
+import { botoesDaImagem, textoSemBotoes } from "./grafico";
 import { el } from "./pecas";
 import { desenharDispersao, type PontoDisperso } from "./pontos";
 import type { Dispersao, Grafico } from "./tipos";
@@ -41,6 +42,32 @@ export function montarDispersao(g: Grafico, d: Dispersao): HTMLElement {
   verTabela.type = "button";
   verTabela.setAttribute("aria-expanded", "false");
   acoes.append(verTabela);
+  // A imagem das duas métricas, para baixar ou copiar (Caio, 16/11/2026); dado privado não.
+  if (!g.sem_download) {
+    const css = getComputedStyle(document.documentElement);
+    acoes.append(
+      ...botoesDaImagem(() => ({
+        id: g.id,
+        titulo: g.titulo,
+        sub: g.subtitulo,
+        fonte: `Fonte: ${g.fonte}`,
+        nota: textoSemBotoes(aviso),
+        legenda: [
+          {
+            nome: "Brasil",
+            chave: "ponto",
+            cor: css.getPropertyValue("--verde").trim(),
+          },
+          {
+            nome: "Outros países",
+            chave: "ponto",
+            cor: css.getPropertyValue("--eixo").trim(),
+          },
+        ],
+        svg: tela.querySelector("svg"),
+      })),
+    );
+  }
   pe.append(acoes);
   artigo.append(pe);
   if (g.nota) artigo.append(el("p", "nota", g.nota));
