@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 16/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 17/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -68,7 +68,11 @@ imagem, em "PNG" ou "Copiar" (Caio, 16/11/2026: *"deixe exportar como imagem as 
 métricas ao mesmo tempo também"*), com o título, os eixos, quem ficou fora do desenho e a
 fonte escritos nela (`botoesDaImagem` em `grafico.ts`). O "Copiar" vale para todos os
 gráficos e só aparece onde o navegador copia imagem; dado privado continua sem nenhum dos
-dois.
+dois. Em 17/11 (*"veja se os outros gráficos podem/tem essa facilidade"*) ganharam os dois
+botões também o mapa e o ranking de Estados, o ranking de Brasil no mundo e a pirâmide
+etária (o ranking e a pirâmide são HTML na tela; para a imagem, são redesenhados no canvas:
+`desenhoDoRanking` em `pontos.ts`, `desenhoDaPiramide` em `piramide.ts`). Ficam sem imagem,
+por não serem gráfico: o painel de alerta, o "Saiu por último" e as tabelas (estas têm o CSV).
 
 ## O que vem agora (fase 2)
 

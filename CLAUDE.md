@@ -128,7 +128,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   dela; `builder/src/sacibras/secoes/juntos.py` as une num assunto, com um arquivo e um
   endereço. Endereço antigo (`#pobreza`, `#credito`, `#mercados`, `#demografia`) redireciona
   (`juntos.ANTIGOS`). Assunto novo só entra tirando ou juntando outro.
-- **A frase do gráfico** (mesmo dia): todo gráfico de série no tempo leva, sob o título, o
+- **Todo gráfico sai como imagem** (Caio, 16 e 17/11/2026: *"deixe exportar como imagem
+  [...] como PNG ou copiar a imagem"* e *"veja se os outros gráficos podem/tem essa
+  facilidade"*): "PNG" e "Copiar" no rodapé, com título, legenda, nota e fonte escritos na
+  imagem (`botoesDaImagem` em `grafico.ts`). Gráfico novo fora do `montarGrafico` ganha os
+  dois; se a tela é HTML, um `Desenho` no canvas. Dado privado sem exportação não tem nenhum.
+- **A frase do gráfico** (Caio, 16/11/2026, junto com os nove assuntos): todo gráfico de série no tempo leva, sob o título, o
   que ele mostra hoje, escrito pelo builder (`manchetes.py`): o último valor contra a meta
   (se o gráfico tem a faixa), o maior ou o menor nível em pelo menos três anos, ou um ano
   antes. Sem causa e sem adjetivo. Quem quiser outra frase preenche `manchete` no gráfico.

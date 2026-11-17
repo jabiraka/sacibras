@@ -16,11 +16,13 @@ import malha from "./mapa/ufs.json";
 import { el } from "./pecas";
 import {
   desenharDispersao,
+  desenhoDoRanking,
   linhaDoRanking,
   listaSuspensa,
   reguaDe,
   type LinhaDoRanking,
   type PontoDisperso,
+  type Regua,
 } from "./pontos";
 import { montarFicha, type Regiao } from "./ficha";
 import { botoesDaImagem, textoSemBotoes } from "./grafico";
@@ -371,6 +373,28 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
   const tela = el("div", "mapa");
   const escala = el("div", "mapa-escala");
   const peMapa = el("footer", "grafico-pe");
+  // O mapa e o ranking como imagem, para baixar ou copiar (Caio, 17/11/2026: "veja se os
+  // outros gráficos podem/tem essa facilidade"). Os botões nascem uma vez só.
+  const acoesMapa = el("span", "acoes");
+  acoesMapa.append(
+    ...botoesDaImagem(() => {
+      const c = cores();
+      const valores = Object.values(metrica.valores).filter((v): v is number => v !== null);
+      const semDado = Object.values(metrica.valores).some((v) => v === null);
+      return {
+        id: `estados-mapa-${metrica.id}`,
+        titulo: metrica.nome,
+        sub: `${metrica.unidade} · ${metrica.referencia}`,
+        fonte: `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`,
+        legenda: [
+          { nome: `Menor: ${escrito(metrica, Math.min(...valores))}`, chave: "ponto" as const, cor: c.claro },
+          { nome: `Maior: ${escrito(metrica, Math.max(...valores))}`, chave: "ponto" as const, cor: c.escuro },
+          ...(semDado ? [{ nome: "Sem dado", chave: "ponto" as const, cor: c.semDado }] : []),
+        ],
+        svg: tela.querySelector("svg"),
+      };
+    }),
+  );
   // Tela cheia (Caio, 14/11/2026: "o mapa também pode aumentar, se ela quiser ver só o mapa,
   // pode deixar cobrindo a tela"): o painel cobre a tela; Esc ou o botão fecham.
   const ampliar = el("button", "mapa-ampliar", "Tela cheia");
@@ -401,9 +425,28 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
 
   const ranking = el("div", "ranking-pontos");
   const posicao = el("p", "posicao");
+  let desenhado: { itens: LinhaDoRanking[]; regua: Regua } | null = null;
   if (comRanking) {
     const painelRanking = el("div", "painel-mundo");
-    painelRanking.append(el("h3", "", "Do maior ao menor"), ranking, posicao);
+    const peRanking = el("footer", "grafico-pe");
+    const acoesRanking = el("span", "acoes");
+    acoesRanking.append(
+      ...botoesDaImagem(() =>
+        desenhado
+          ? {
+              id: `estados-ranking-${metrica.id}`,
+              titulo: `${metrica.nome}: do maior ao menor`,
+              sub: `${metrica.unidade} · ${metrica.referencia}`,
+              fonte: `Fonte: ${metrica.fonte}`,
+              nota: textoSemBotoes(posicao),
+              legenda: [],
+              desenho: desenhoDoRanking(desenhado.itens, desenhado.regua, metrica.casas),
+            }
+          : null,
+      ),
+    );
+    peRanking.append(el("span"), acoesRanking);
+    painelRanking.append(el("h3", "", "Do maior ao menor"), ranking, posicao, peRanking);
     grade.append(painelRanking);
   }
   raiz.append(barra, sobre, grade);
@@ -450,6 +493,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
       itens.push({ chave: "BR", nome: "Brasil", valor: metrica.brasil, marca: "brasil", posicao: null });
       itens.sort((a, b) => b.valor - a.valor);
     }
+    desenhado = { itens, regua };
     ranking.replaceChildren(
       ...itens.map((item) =>
         linhaDoRanking(item, regua, metrica.casas, item.marca === "brasil" ? undefined : () => destacar(item.chave)),
@@ -499,7 +543,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
       el("i"),
       el("span", "", escrito(metrica, Math.max(...valores))),
     );
-    peMapa.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`));
+    peMapa.replaceChildren(el("span", "fonte", `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`), acoesMapa);
     pintarRanking();
   }
 

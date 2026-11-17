@@ -599,7 +599,7 @@ function dominioDasMarcas(todas: Linha[]): [number, number] {
   return [Math.min(...vs) - 0.5, Math.max(...vs) + 0.5];
 }
 
-type Chave = "linha" | "tracejada" | "banda" | "intervalo" | "intervalo-meio" | "referencia" | "ponto";
+type Chave = "linha" | "tracejada" | "banda" | "intervalo" | "intervalo-meio" | "referencia" | "ponto" | "barra" | "contorno";
 
 export interface ItemDaLegenda {
   nome: string;
@@ -637,6 +637,8 @@ function pintarLegenda(g: Grafico, legenda: HTMLElement, cor: (i: number) => str
     "intervalo-meio": "chave intervalo-meio",
     referencia: "chave referencia",
     ponto: "chave redonda",
+    barra: "chave",
+    contorno: "chave chave-contorno",
   };
   const itens = itensDaLegenda(g, cor).map((x) => {
     const item = el("span", "legenda-item");
@@ -891,16 +893,24 @@ export interface Figura {
   fonte: string;
   nota?: string;
   legenda: ItemDaLegenda[];
-  svg: SVGSVGElement | null;
+  /** O desenho: o SVG da tela ou, para o que a tela monta em HTML (ranking, pirâmide), um
+   *  desenho próprio no canvas, com a largura e a altura dele. */
+  svg?: SVGSVGElement | null;
+  desenho?: Desenho | null;
 }
 
-/** O texto de uma nota da tela sem os botões dela ("Mostrar todos"), para ir na imagem. */
+export interface Desenho {
+  w: number;
+  h: number;
+  pintar: (ctx: CanvasRenderingContext2D, x: number, y: number) => void;
+}
+
+/** O texto de uma nota da tela sem os botões e os links dela ("Mostrar todos", "Ver as
+ *  contas de…"), para ir na imagem. */
 export function textoSemBotoes(no: HTMLElement): string {
-  return [...no.childNodes]
-    .filter((n) => n.nodeType === Node.TEXT_NODE)
-    .map((n) => n.textContent ?? "")
-    .join("")
-    .trim();
+  const copia = no.cloneNode(true) as HTMLElement;
+  copia.querySelectorAll("button, a, br").forEach((n) => n.remove());
+  return (copia.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
 /** Os botões "PNG" e "Copiar" de um gráfico: a mesma imagem, baixada ou posta na área de
@@ -912,7 +922,7 @@ export function botoesDaImagem(figura: () => Figura | null): HTMLButtonElement[]
   png.title = "Baixar a imagem do gráfico, com o título e a fonte";
   png.addEventListener("click", () => {
     const f = figura();
-    if (!f?.svg) return;
+    if (!f?.svg && !f?.desenho) return;
     void pngDaFigura(f, tema()).then((blob) => {
       if (!blob) return;
       const a = document.createElement("a");
@@ -934,7 +944,7 @@ export function botoesDaImagem(figura: () => Figura | null): HTMLButtonElement[]
   };
   copiar.addEventListener("click", () => {
     const f = figura();
-    if (!f?.svg) return;
+    if (!f?.svg && !f?.desenho) return;
     // A promessa vai direto ao ClipboardItem, ainda dentro do toque (o Safari exige).
     const blob = pngDaFigura(f, tema()).then((b) => {
       if (!b) throw new Error("a imagem não saiu");
@@ -951,8 +961,13 @@ export function botoesDaImagem(figura: () => Figura | null): HTMLButtonElement[]
 /** O gráfico em PNG, em fundo claro, com o título, a unidade, a legenda e a fonte escritos
  *  na imagem: quem recebe a figura sabe o que é e de onde veio. */
 async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
-  if (!f.svg) return null;
-  const { img, w, h } = await imagemDoSvg(f.svg);
+  let desenho = f.desenho ?? null;
+  if (f.svg) {
+    const { img, w, h } = await imagemDoSvg(f.svg);
+    desenho = { w, h, pintar: (c, x, y) => c.drawImage(img, x, y, w, h) };
+  }
+  if (!desenho) return null;
+  const { w, h } = desenho;
   const legenda = f.legenda;
   const escala = 2;
   const margem = 28;
@@ -1041,6 +1056,12 @@ async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
           ctx.moveTo(x0, meio);
           ctx.lineTo(x0 + 16, meio);
           ctx.stroke();
+        } else if (item.chave === "barra") {
+          ctx.fillRect(x0 + 2, meio - 5, 12, 10);
+        } else if (item.chave === "contorno") {
+          ctx.strokeStyle = t.tinta2;
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(x0 + 2, meio - 5, 12, 10);
         } else if (item.chave === "ponto") {
           ctx.beginPath();
           ctx.arc(x0 + 8, meio, 5, 0, Math.PI * 2);
@@ -1073,7 +1094,9 @@ async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
   }
 
   y += 12;
-  ctx.drawImage(img, margem + Math.max(0, (util - w) / 2), y, w, h);
+  ctx.save();
+  desenho.pintar(ctx, margem + Math.max(0, (util - w) / 2), y);
+  ctx.restore();
   y += h + 14;
 
   ctx.font = fonte(400, 12);
