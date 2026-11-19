@@ -421,8 +421,16 @@ function montarMenu(painel: Painel): void {
   menu.replaceChildren(inicio);
   // Os andares: as perguntas primeiro, os dados depois (16/11/2026).
   if (painel.perguntas?.length) {
-    const grupo = el("div", "menu-grupo");
-    grupo.append(el("p", "menu-andar", "Perguntas"));
+    // Recolhido: oito títulos longos ocupavam o menu inteiro (Caio, 19/11/2026: "recolha as
+    // perguntas pra não ocupar tanto espaço e a pessoa poder escolher outras perguntas").
+    // Abre sozinho quando a pessoa está numa pergunta e no toque de "Perguntas".
+    const grupo = el("details", "menu-grupo menu-perguntas");
+    const resumo = el("summary", "menu-andar");
+    resumo.append(
+      el("span", "", "Perguntas"),
+      el("small", "", `${painel.perguntas.length}`),
+    );
+    grupo.append(resumo);
     const ul = el("ul");
     for (const q of painel.perguntas) {
       const li = el("li");
@@ -488,6 +496,8 @@ function marcarMenu(assunto: string, parte: string): void {
   for (const ul of menu.querySelectorAll<HTMLElement>(".menu-partes")) {
     ul.classList.toggle("aberto", ul.dataset.assunto === assunto);
   }
+  const perguntas = menu.querySelector<HTMLDetailsElement>("details.menu-perguntas");
+  if (perguntas && assunto.startsWith("pergunta/")) perguntas.open = true;
   for (const a of menu.querySelectorAll<HTMLAnchorElement>("a[data-parte]")) {
     const aqui = a.dataset.parte === `${assunto}/${parte}`;
     a.classList.toggle("ativo", aqui);
@@ -971,9 +981,12 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
         );
         corpo.append(fecho);
       }
-      const outras = el("nav", "outras-perguntas");
-      outras.setAttribute("aria-label", "Outras perguntas");
-      outras.append(el("p", "sobretitulo", "Outras perguntas"));
+      // Recolhidas: a pessoa abre quando quiser trocar de pergunta.
+      const outras = el("details", "outras-perguntas");
+      const quantas = (painel.perguntas ?? []).filter((o) => o.id !== id).length;
+      const chamada = el("summary", "sobretitulo");
+      chamada.append(el("span", "", "Outras perguntas"), el("small", "", `${quantas}`));
+      outras.append(chamada);
       const ul = el("ul", "perguntas");
       for (const o of painel.perguntas ?? []) {
         if (o.id === id) continue;

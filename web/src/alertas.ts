@@ -20,6 +20,7 @@ import {
   type Dados,
   type Par,
 } from "./alertas-paises";
+import { botoesDaImagem, tema, type Desenho, type Figura, type ItemDaLegenda } from "./grafico";
 import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import type { Alerta } from "./tipos";
@@ -543,6 +544,321 @@ const VISTAS: { valor: Vista; rotulo: string; explica: string }[] = [
   },
 ];
 
+// ------------------------------------------------------------------ o painel como imagem
+// Caio, 19/11/2026: "dê um jeito de exportar as fotos da página de alertas". A tela é HTML,
+// então a imagem é um desenho no canvas da vista aberta: os grupos, cada indicador com o
+// nome, a régua, o valor e a situação (▲ e a frase, nunca só a cor).
+
+interface ReguaImg {
+  /** Onde cai o ponto de hoje (0 = melhor, 1 = pior). */
+  ponto: number;
+  mediana?: number;
+  limite?: number;
+  antes?: number;
+  pares?: number[];
+  pontas: [string, string];
+}
+
+interface LinhaImg {
+  nome: string;
+  sub: string;
+  valor: string;
+  selo: string;
+  aceso: boolean;
+  regua?: ReguaImg;
+  colunas?: { texto: string; ruim: boolean }[];
+}
+
+interface GrupoImg {
+  titulo: string;
+  conta: string;
+  linhas: LinhaImg[];
+}
+
+const limitar = (f: number): number => Math.min(1, Math.max(0, f));
+
+function fracaoDoAlerta(a: Alerta, v: number): number {
+  const amplitude = a.maximo - a.minimo || 1;
+  return limitar(a.pior_quando === "alto" ? (v - a.minimo) / amplitude : (a.maximo - v) / amplitude);
+}
+
+function linhaDoAlerta(a: Alerta, modo: "historia" | "tendencia"): LinhaImg {
+  const aceso = a.pior_que >= ACESO;
+  const alto = a.pior_quando === "alto";
+  const [melhor, pior] = alto ? [a.minimo, a.maximo] : [a.maximo, a.minimo];
+  const r = modo === "tendencia" ? rumo(a) : null;
+  const comAntes = r && a.ha_um_ano !== null && a.ha_um_ano !== undefined;
+  const quando = a.ha_um_ano_em ? ` em ${periodo(a.ha_um_ano_em, a.periodicidade)}` : "";
+  return {
+    nome: a.nome,
+    sub:
+      `${periodo(a.referencia, a.periodicidade)} · ${a.fonte}` +
+      (a.limite ? ` · ${a.limite.rotulo}: ${numero(a.limite.valor, a.casas)}` : ""),
+    valor: comUnidade(a.valor, a.unidade, a.casas),
+    selo: comAntes
+      ? `${RUMOS[r].simbolo} ${RUMOS[r].selo} (era ${numero(a.ha_um_ano as number, a.casas)}${quando})`
+      : `${aceso ? "▲ " : ""}pior que ${numero(a.pior_que, 0)} % da história`,
+    aceso: comAntes ? r === "piorou" : aceso,
+    regua: {
+      ponto: fracaoDoAlerta(a, a.valor),
+      mediana: fracaoDoAlerta(a, a.mediana),
+      limite: a.limite ? fracaoDoAlerta(a, a.limite.valor) : undefined,
+      antes: comAntes ? fracaoDoAlerta(a, a.ha_um_ano as number) : undefined,
+      pontas: [numero(melhor, a.casas), numero(pior, a.casas)],
+    },
+  };
+}
+
+function gruposDaHistoria(alertas: Alerta[]): GrupoImg[] {
+  return porGrupo(alertas).map(([titulo, itens]) => {
+    const n = acesos(itens);
+    return {
+      titulo,
+      conta: `${n} de ${itens.length} ${n === 1 ? "aceso" : "acesos"}`,
+      linhas: itens.map((a) => linhaDoAlerta(a, "historia")),
+    };
+  });
+}
+
+function gruposDaTendencia(alertas: Alerta[]): GrupoImg[] {
+  const grupos: GrupoImg[] = [];
+  for (const r of ["piorou", "igual", "melhorou"] as Rumo[]) {
+    const itens = alertas
+      .filter((a) => rumo(a) === r)
+      .sort((a, b) => b.pior_que - (b.pior_que_ha_um_ano ?? 0) - (a.pior_que - (a.pior_que_ha_um_ano ?? 0)));
+    if (!itens.length) continue;
+    grupos.push({
+      titulo: RUMOS[r].titulo,
+      conta: `${itens.length} ${itens.length === 1 ? "indicador" : "indicadores"}`,
+      linhas: itens.map((a) => linhaDoAlerta(a, "tendencia")),
+    });
+  }
+  return grupos;
+}
+
+function gruposDosPaises(alertas: Alerta[], d: Dados, grupo: string): GrupoImg[] {
+  const linhaDe = (nome: string, par: Par, c: Comparacao): LinhaImg => {
+    const aceso = c.pior_que >= ACESO;
+    const ordenados = [...c.valores].sort((a, b) => a - b);
+    const q = (f: number): number => ordenados[Math.round(f * (ordenados.length - 1))] ?? 0;
+    const lo = Math.min(q(0.05), c.brasil);
+    const hi = Math.max(q(0.95), c.brasil);
+    const alto = par.pior_quando === "alto";
+    const amplitude = hi - lo || 1;
+    const pos = (v: number): number => limitar(alto ? (v - lo) / amplitude : (hi - v) / amplitude);
+    const unidade = par.unidade ?? d.m.metricas.find((x) => x.id === par.metrica)?.unidade ?? "";
+    return {
+      nome,
+      sub: `${c.ano} · ${c.fonte}`,
+      valor: `${numero(c.brasil, 1)}${unidade ? ` ${unidade}` : ""}`,
+      selo: `${aceso ? "▲ " : ""}pior que ${numero(c.pior_que, 0)} %`,
+      aceso,
+      regua: {
+        ponto: pos(c.brasil),
+        mediana: pos(c.mediana),
+        pares: c.valores.map(pos),
+        pontas: [numero(alto ? lo : hi, 1), numero(alto ? hi : lo, 1)],
+      },
+    };
+  };
+  const principais: { pior: number; linha: LinhaImg }[] = [];
+  for (const a of alertas) {
+    const par = PARES[a.id];
+    const c = par ? comparar(d, par, grupo) : null;
+    if (par && c) principais.push({ pior: c.pior_que, linha: linhaDe(a.nome, par, c) });
+  }
+  principais.sort((x, y) => y.pior - x.pior);
+  const grupos: GrupoImg[] = [
+    {
+      titulo: `O Brasil entre ${quem(grupo)}`,
+      conta: `${acesos2(principais.map((p) => p.pior))} de ${principais.length} acesos`,
+      linhas: principais.map((p) => p.linha),
+    },
+  ];
+  const extras: LinhaImg[] = [];
+  for (const x of EXTRAS) {
+    const c = comparar(d, x, grupo);
+    if (c) extras.push(linhaDe(x.nome, x, c));
+  }
+  if (extras.length) grupos.push({ titulo: "Fora do painel, para completar o quadro", conta: "", linhas: extras });
+  return grupos;
+}
+
+const acesos2 = (piores: number[]): number => piores.filter((p) => p >= ACESO).length;
+
+function gruposDoResumo(alertas: Alerta[], d: Dados | null, grupo: string): GrupoImg[] {
+  return porGrupo(alertas).map(([titulo, itens]) => ({
+    titulo,
+    conta: "",
+    linhas: itens.map((a) => {
+      const par = PARES[a.id];
+      const c = d && par ? comparar(d, par, grupo) : null;
+      const r = rumo(a);
+      return {
+        nome: a.nome,
+        sub: "",
+        valor: "",
+        selo: "",
+        aceso: false,
+        colunas: [
+          { texto: `${a.pior_que >= ACESO ? "▲ " : ""}${numero(a.pior_que, 0)} %`, ruim: a.pior_que >= ACESO },
+          c
+            ? { texto: `${c.pior_que >= ACESO ? "▲ " : ""}${numero(c.pior_que, 0)} %`, ruim: c.pior_que >= ACESO }
+            : { texto: "–", ruim: false },
+          r ? { texto: `${RUMOS[r].simbolo} ${RUMOS[r].selo}`, ruim: r === "piorou" } : { texto: "–", ruim: false },
+        ],
+      };
+    }),
+  }));
+}
+
+/** Corta o texto com reticências para caber na largura. */
+function caber(ctx: CanvasRenderingContext2D, texto: string, largura: number): string {
+  if (ctx.measureText(texto).width <= largura) return texto;
+  let t = texto;
+  while (t.length > 1 && ctx.measureText(`${t}…`).width > largura) t = t.slice(0, -1);
+  return `${t.trimEnd()}…`;
+}
+
+function desenhoDosAlertas(grupos: GrupoImg[], cabecalho: string[] | null): Desenho {
+  const t = tema();
+  const css = getComputedStyle(document.documentElement);
+  const verde = css.getPropertyValue("--verde").trim() || "#00853a";
+  const laranja = css.getPropertyValue("--alerta").trim() || "#b54708";
+  const barra = css.getPropertyValue("--neutro-barra").trim() || t.fio;
+  const familia = getComputedStyle(document.body).fontFamily;
+  const w = 760;
+  const alturaLinha = 50;
+  const alturaGrupo = 34;
+  const h = grupos.reduce((s, g) => s + alturaGrupo + g.linhas.length * alturaLinha, 0) + (cabecalho ? 26 : 0);
+  const fonte = (peso: number, px: number): string => `${peso} ${px}px ${familia}`;
+  return {
+    w,
+    h,
+    pintar: (ctx, x0, y0) => {
+      ctx.save();
+      ctx.textBaseline = "alphabetic";
+      let y = y0;
+      const colX = [x0 + 380, x0 + 500, x0 + 620];
+      if (cabecalho) {
+        ctx.font = fonte(600, 11);
+        ctx.fillStyle = t.tinta3;
+        ctx.textAlign = "left";
+        cabecalho.forEach((c, i) => ctx.fillText(c, colX[i] ?? x0, y + 14));
+        y += 26;
+      }
+      for (const g of grupos) {
+        ctx.textAlign = "left";
+        ctx.font = fonte(600, 14);
+        ctx.fillStyle = t.tinta;
+        ctx.fillText(g.titulo, x0, y + 22);
+        if (g.conta) {
+          ctx.font = fonte(400, 12);
+          ctx.fillStyle = t.tinta2;
+          ctx.textAlign = "right";
+          ctx.fillText(g.conta, x0 + w, y + 22);
+        }
+        y += alturaGrupo;
+        for (const l of g.linhas) {
+          ctx.strokeStyle = t.fio;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x0, y + 0.5);
+          ctx.lineTo(x0 + w, y + 0.5);
+          ctx.stroke();
+          const larguraNome = l.regua ? 250 : 360;
+          ctx.textAlign = "left";
+          ctx.font = fonte(500, 13);
+          ctx.fillStyle = t.tinta;
+          ctx.fillText(caber(ctx, l.nome, larguraNome), x0, y + 22);
+          if (l.sub) {
+            ctx.font = fonte(400, 10.5);
+            ctx.fillStyle = t.tinta3;
+            ctx.fillText(caber(ctx, l.sub, larguraNome), x0, y + 38);
+          }
+          if (l.colunas) {
+            l.colunas.forEach((c, i) => {
+              ctx.font = fonte(c.ruim ? 600 : 400, 13);
+              ctx.fillStyle = c.ruim ? laranja : t.tinta;
+              ctx.fillText(c.texto, colX[i] ?? x0, y + 30);
+            });
+          }
+          const r = l.regua;
+          if (r) {
+            const rx = x0 + 268;
+            const rw = 250;
+            const ry = y + 22;
+            const px = (f: number): number => rx + f * rw;
+            ctx.fillStyle = barra;
+            ctx.fillRect(rx, ry - 1, rw, 2);
+            for (const f of r.pares ?? []) {
+              ctx.fillStyle = t.tinta3;
+              ctx.globalAlpha = 0.45;
+              ctx.beginPath();
+              ctx.arc(px(f), ry, 2.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+            }
+            if (r.mediana !== undefined) {
+              ctx.strokeStyle = t.tinta3;
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(px(r.mediana), ry - 6);
+              ctx.lineTo(px(r.mediana), ry + 6);
+              ctx.stroke();
+            }
+            if (r.limite !== undefined) {
+              ctx.strokeStyle = t.faixa;
+              ctx.lineWidth = 2;
+              ctx.setLineDash([3, 2]);
+              ctx.beginPath();
+              ctx.moveTo(px(r.limite), ry - 8);
+              ctx.lineTo(px(r.limite), ry + 8);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            if (r.antes !== undefined) {
+              ctx.strokeStyle = t.tinta3;
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(px(r.antes), ry);
+              ctx.lineTo(px(r.ponto), ry);
+              ctx.stroke();
+              ctx.fillStyle = t.superficie;
+              ctx.beginPath();
+              ctx.arc(px(r.antes), ry, 5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
+            ctx.fillStyle = l.aceso ? laranja : verde;
+            ctx.strokeStyle = t.superficie;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(px(r.ponto), ry, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.font = fonte(400, 10);
+            ctx.fillStyle = t.tinta3;
+            ctx.textAlign = "left";
+            ctx.fillText(r.pontas[0], rx, y + 42);
+            ctx.textAlign = "right";
+            ctx.fillText(r.pontas[1], rx + rw, y + 42);
+            ctx.textAlign = "right";
+            ctx.font = fonte(600, 13);
+            ctx.fillStyle = t.tinta;
+            ctx.fillText(l.valor, x0 + w, y + 22);
+            ctx.font = fonte(l.aceso ? 600 : 400, 10.5);
+            ctx.fillStyle = l.aceso ? laranja : t.tinta2;
+            ctx.fillText(caber(ctx, l.selo, 220), x0 + w, y + 38);
+          }
+          y += alturaLinha;
+        }
+      }
+      ctx.restore();
+    },
+  };
+}
+
 export function montarAlertas(alertas: Alerta[]): HTMLElement {
   const total = alertas.length;
   const ligados = acesos(alertas);
@@ -580,6 +896,7 @@ export function montarAlertas(alertas: Alerta[]): HTMLElement {
           corpo.replaceChildren(el("p", "alerta-intro", "Lendo os números dos outros países…"));
           const pedida = vista;
           void carregarPaises().then((d) => {
+            dadosDaVista.paises = d;
             if (vista !== pedida) return;
             if (d && !escolhaGrupo.firstChild) {
               escolhaGrupo.append(
@@ -595,8 +912,57 @@ export function montarAlertas(alertas: Alerta[]): HTMLElement {
           });
         }
       };
+      // A vista aberta como imagem (19/11/2026): "PNG" e "Copiar" no pé, como nos gráficos.
+      const pe = el("footer", "grafico-pe");
+      const fonteTexto = el("span", "fonte");
+      const acoes = el("span", "acoes");
+      pe.append(fonteTexto, acoes);
+      const figura = (): Figura | null => {
+        const v = VISTAS.find((x) => x.valor === vista);
+        if (!v || !dadosDaVista) return null;
+        const grupos =
+          vista === "historia"
+            ? gruposDaHistoria(alertas)
+            : vista === "tendencia"
+              ? gruposDaTendencia(alertas)
+              : vista === "paises"
+                ? dadosDaVista.paises
+                  ? gruposDosPaises(alertas, dadosDaVista.paises, grupo)
+                  : []
+                : gruposDoResumo(alertas, dadosDaVista.paises, grupo);
+        if (!grupos.length) return null;
+        const fontes = new Set<string>();
+        if (vista === "paises" || vista === "resumo") {
+          if (dadosDaVista.paises) {
+            for (const a of alertas) {
+              const par = PARES[a.id];
+              const c = par ? comparar(dadosDaVista.paises, par, grupo) : null;
+              if (c) fontes.add(c.fonte);
+            }
+          }
+        }
+        if (vista !== "paises") for (const a of alertas) fontes.add(a.fonte);
+        const legenda: ItemDaLegenda[] =
+          vista === "resumo"
+            ? []
+            : [
+                { nome: vista === "tendencia" ? "Hoje (cheio) e um ano antes (vazado)" : "Hoje", chave: "ponto" },
+                { nome: vista === "paises" ? "Mediana (cada ponto cinza é um país)" : "Mediana", chave: "referencia" },
+              ];
+        return {
+          id: `alertas-${vista}`,
+          titulo: `Painel de alerta: ${v.rotulo.toLowerCase()}`,
+          sub: `${acesos(alertas)} de ${alertas.length} indicadores no quinto pior da própria história · ▲ = pior que 80 %`,
+          fonte: `Fonte: ${[...fontes].join("; ")}. Conta do painel.`,
+          nota: `${v.explica} Não é previsão de crise nem nota de risco.`,
+          legenda,
+          desenho: desenhoDosAlertas(grupos, vista === "resumo" ? ["História", "Países", "Um ano"] : null),
+        };
+      };
+      const dadosDaVista: { paises: Dados | null } = { paises: null };
+      acoes.append(...botoesDaImagem(figura));
       pintar();
-      return [barra, explica, corpo];
+      return [barra, explica, corpo, pe];
     },
   );
   caixa.id = "t-alertas";

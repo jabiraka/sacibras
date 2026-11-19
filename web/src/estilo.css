@@ -3930,6 +3930,55 @@ table.dados.limites-tabela td {
   color: var(--tinta);
 }
 
+summary.menu-andar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+summary.menu-andar::-webkit-details-marker {
+  display: none;
+}
+
+summary.menu-andar::after,
+.outras-perguntas > summary::after {
+  content: "+";
+  margin-left: auto;
+  font-weight: 400;
+  color: var(--tinta-3);
+}
+
+.menu-perguntas[open] > summary.menu-andar::after,
+.outras-perguntas[open] > summary::after {
+  content: "−";
+}
+
+summary.menu-andar small,
+.outras-perguntas > summary small {
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--tinta-3);
+}
+
+.menu-perguntas > ul {
+  margin-top: 6px;
+}
+
+.outras-perguntas > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.outras-perguntas > summary::-webkit-details-marker {
+  display: none;
+}
+
 .menu-andar-dados {
   margin-top: 22px;
   padding-top: 16px;
