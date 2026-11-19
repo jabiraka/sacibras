@@ -25,6 +25,8 @@ export interface VarianteGrafico {
   series: Serie[];
   linhas: { valor: number; rotulo: string }[];
   nota: string;
+  /** Quando a métrica vem de outra fonte (o PIB, o IPCA); vazio, vale a do gráfico. */
+  fonte?: string;
 }
 
 export interface Grafico {
@@ -67,6 +69,8 @@ export interface Grafico {
   sem_download?: string;
   /** Outras métricas do gráfico, na lista "Métrica"; a primeira é a que abre. */
   variantes?: VarianteGrafico[];
+  /** O nome da lista das variantes ("Métrica", ou "Ver em" quando só troca a unidade). */
+  rotulo_variantes?: string;
   /** A pessoa liga e desliga cada série que não é de consenso (fichas em cima do gráfico). */
   escolher_series?: boolean;
 }

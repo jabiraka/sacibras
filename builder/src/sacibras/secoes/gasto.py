@@ -19,7 +19,16 @@ from statistics import median
 from sacibras import contas
 from sacibras.fontes import fmi, fmi_cofog
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Tabela
-from sacibras.secoes.base import br, cartao, grafico, periodo, serie
+from sacibras.secoes.base import (
+    br,
+    cartao,
+    com_variantes,
+    em_reais_de_hoje,
+    grafico,
+    periodo,
+    serie,
+    variante,
+)
 from sacibras.tipos import Ponto
 
 GRUPOS = {"G200": "Emergentes", "G205": "América Latina", "G110": "Avançados"}
@@ -41,7 +50,12 @@ def _em_12_meses(mensal: list[Ponto]) -> list[Ponto]:
 
 
 def rigidez(
-    rtn: dict[str, list[Ponto]], pib: list[Ponto], fonte: str, inicio: date
+    rtn: dict[str, list[Ponto]],
+    pib: list[Ponto],
+    fonte: str,
+    inicio: date,
+    ipca: list[Ponto] | None = None,
+    fonte_reais: str = "",
 ) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
     """A despesa do Governo Central em obrigatória e discricionária (RTN, aba 1.1)."""
     obrigatoria = _somar(
@@ -108,6 +122,29 @@ def rigidez(
             ),
         )
     ]
+    if ipca:
+        obrig_r, mes = em_reais_de_hoje(obrigatoria, ipca)
+        discr_r, _ = em_reais_de_hoje(discricionaria, ipca)
+        graficos[0] = com_variantes(
+            graficos[0],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ de hoje",
+                "Despesa obrigatória e discricionária, em reais de hoje",
+                [
+                    serie("obrigatoria", "Obrigatória", [p for p in obrig_r if p[0] >= desde]),
+                    serie(
+                        "discricionaria", "Discricionária", [p for p in discr_r if p[0] >= desde]
+                    ),
+                ],
+                unidade=f"R$ bilhões de {periodo(mes, 'M')}, em 12 meses",
+                casas=0,
+                periodicidade="M",
+                nota="Soma de 12 meses, cada mês levado a preços de hoje pelo IPCA.",
+                fonte=fonte_reais,
+            ),
+        )
 
     # A tabela dos últimos 12 meses, por tipo de despesa.
     def ultimo(mensal: list[Ponto]) -> float:

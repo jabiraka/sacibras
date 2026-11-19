@@ -116,3 +116,17 @@ def em_pct_do_pib(mensal: list[Ponto], pib_12m: list[Ponto]) -> list[Ponto]:
         if d in por_mes and denominador and all(m in por_mes for m in meses):
             saida.append((d, sum(por_mes[m] for m in meses) / denominador * 100))
     return saida
+
+
+def indice_de_precos(variacao_mensal: list[Ponto]) -> dict[date, float]:
+    """O número-índice (primeiro mês = 1) de uma variação mensal em %."""
+    nivel, saida = 1.0, {}
+    for d, v in variacao_mensal:
+        nivel *= 1 + v / 100
+        saida[d] = nivel
+    return saida
+
+
+def a_precos_de(mensal: list[Ponto], indice: dict[date, float], base: date) -> list[Ponto]:
+    """Valores correntes em reais de `base` (o mês sem índice fica de fora)."""
+    return [(d, v * indice[base] / indice[d]) for d, v in mensal if d in indice]

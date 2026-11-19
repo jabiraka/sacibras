@@ -105,6 +105,14 @@ e outros? E ver onde cada Estado e outros está gastando com a receita?"*):
   desvios que já moviam a dívida; o mercado repete os 24 meses desde o começo da janela,
   no nível de hoje. O mecanismo é geral (`variantes` e `escolher_series` no `Grafico`,
   `web/src/variantes.ts`): outro gráfico pode usar.
+- **"Ver em" nos gráficos de fluxo** (Caio, mesmo dia: *"No gráfico da arrecadação
+  Federal, coloque um parâmetro pra mudar o gráfico em % do PIB, veja outras métricas
+  parecidas [...] e aplique"*): a lista troca entre reais de hoje (pelo IPCA), % do PIB e,
+  na arrecadação, o crescimento real. Em seis gráficos: arrecadação federal, os maiores
+  tributos, receita e despesa, para onde vai a despesa, obrigatória × discricionária e o
+  INSS (`com_variantes` e `em_reais_de_hoje` em `secoes/base.py`). Ficaram de fora, por
+  pedirem série nova do SGS conferida no catálogo: o primário, a dívida e a conta corrente
+  em reais (ou dólares).
 - Falta: os municípios um por um (são 5.570; hoje só as capitais têm conta no SICONFI aqui)
   e a receita de cada esfera *depois* dos repasses (o FMI separa o repasse geral, mas não
   quanto vai a estados e quanto a municípios).

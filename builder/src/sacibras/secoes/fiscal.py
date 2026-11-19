@@ -22,7 +22,17 @@ from sacibras.schema import (
     Tabela,
 )
 from sacibras.secoes import gasto
-from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.secoes.base import (
+    Contexto,
+    br,
+    cartao,
+    com_variantes,
+    em_reais_de_hoje,
+    grafico,
+    periodo,
+    serie,
+    variante,
+)
 from sacibras.tipos import Ponto
 
 
@@ -557,7 +567,66 @@ def montar(ctx: Contexto) -> Secao:
                 nota="Demais despesas = despesa total menos benefícios previdenciários e pessoal.",
             ),
         ]
-        c_rig, g_rig, t_rig = gasto.rigidez(rtn, pib, fonte_rtn, inicio)
+        ipca = ctx.sgs("IPCA", anos + 2)
+
+        def reais(chave: str) -> list[Ponto]:
+            return [p for p in em_reais_de_hoje(rtn[chave], ipca)[0] if p[0] >= inicio]
+
+        mes_base = periodo(em_reais_de_hoje(rtn["despesa_total"], ipca)[1], "M")
+        unidade_reais = f"R$ bilhões de {mes_base}, em 12 meses"
+        nota_reais = "Soma de 12 meses, cada mês levado a preços de hoje pelo IPCA."
+        fonte_reais = (
+            "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, tabela 1.1); "
+            f"IPCA: {ctx.fonte_sgs('IPCA')}"
+        )
+        graficos[-2] = com_variantes(
+            graficos[-2],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ de hoje",
+                "Receita e despesa do Governo Central, em reais de hoje",
+                [
+                    serie("receita", "Receita líquida", reais("receita_liquida"), casas=1),
+                    serie("despesa", "Despesa total", reais("despesa_total"), casas=1),
+                ],
+                unidade=unidade_reais,
+                casas=0,
+                periodicidade="M",
+                nota=f"{nota_reais} Receita líquida de transferências a estados e municípios.",
+                fonte=fonte_reais,
+            ),
+        )
+        despesa_r, rgps_r, pessoal_r = (
+            reais("despesa_total"),
+            reais("rgps"),
+            reais("pessoal"),
+        )
+        graficos[-1] = com_variantes(
+            graficos[-1],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ de hoje",
+                "Para onde vai a despesa, em reais de hoje",
+                [
+                    serie("rgps", "Benefícios previdenciários", rgps_r, casas=1),
+                    serie("pessoal", "Pessoal e encargos sociais", pessoal_r, casas=1),
+                    serie(
+                        "demais",
+                        "Demais despesas",
+                        contas.subtrair(contas.subtrair(despesa_r, rgps_r), pessoal_r),
+                        casas=1,
+                    ),
+                ],
+                unidade=unidade_reais,
+                casas=0,
+                periodicidade="M",
+                nota=nota_reais,
+                fonte=fonte_reais,
+            ),
+        )
+        c_rig, g_rig, t_rig = gasto.rigidez(rtn, pib, fonte_rtn, inicio, ipca, fonte_reais)
         cartoes += c_rig
         graficos += g_rig
         tabelas += t_rig

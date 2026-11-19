@@ -29,6 +29,7 @@ from datetime import date
 import pycountry
 
 from sacibras import contas, leis, relatorios
+from sacibras.contas import a_precos_de, indice_de_precos
 from sacibras.fontes import (
     fmi,
     fmi_cofog,
@@ -56,7 +57,16 @@ from sacibras.schema import (
     Tabela,
     TipoDeCompra,
 )
-from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.secoes.base import (
+    Contexto,
+    br,
+    cartao,
+    com_variantes,
+    grafico,
+    periodo,
+    serie,
+    variante,
+)
 from sacibras.secoes.estados import UFS
 from sacibras.secoes.mundo import nome_do_pais
 from sacibras.tipos import Ponto
@@ -77,20 +87,6 @@ MINIMO_DE_ANOS = 8
 Pecas = tuple[list[Cartao], list[Grafico], list[Tabela], str]
 
 # ------------------------------------------------------------------ contas
-
-
-def indice_de_precos(variacao_mensal: list[Ponto]) -> dict[date, float]:
-    """O número-índice (primeiro mês = 1) de uma variação mensal em %."""
-    nivel, saida = 1.0, {}
-    for d, v in variacao_mensal:
-        nivel *= 1 + v / 100
-        saida[d] = nivel
-    return saida
-
-
-def a_precos_de(mensal: list[Ponto], indice: dict[date, float], base: date) -> list[Ponto]:
-    """Valores correntes em reais de `base` (o mês sem índice fica de fora)."""
-    return [(d, v * indice[base] / indice[d]) for d, v in mensal if d in indice]
 
 
 def variacao_em_12m(soma_12m: list[Ponto]) -> list[Ponto]:
@@ -235,7 +231,44 @@ def _arrecadacao(
                 "e a previdência do INSS), cada mês levado a preços de hoje pelo IPCA. A série "
                 "começa em 2013: antes, o arquivo da Receita não traz a previdência por estado."
             ),
+        )
+    ]
+    graficos[0] = com_variantes(
+        graficos[0],
+        "R$ de hoje",
+        *(
+            [
+                variante(
+                    "pib",
+                    "% do PIB",
+                    "Arrecadação federal em 12 meses, em % do PIB",
+                    [serie("total", "Arrecadação federal", total_pib, casas=2)],
+                    unidade="% do PIB",
+                    periodicidade="M",
+                    nota=(
+                        "Soma dos 12 meses de tudo o que a Receita arrecada sobre o PIB dos "
+                        "mesmos 12 meses."
+                    ),
+                    fonte=fonte_pib,
+                )
+            ]
+            if total_pib
+            else []
         ),
+        variante(
+            "crescimento",
+            "Crescimento real",
+            "Arrecadação federal: crescimento real em 12 meses",
+            [serie("total", "Arrecadação federal", cresc, casas=2)],
+            unidade="% em 12 meses",
+            periodicidade="M",
+            nota=(
+                "Os 12 meses contra os 12 anteriores, os dois a preços de hoje pelo IPCA. "
+                "Negativo é queda real."
+            ),
+        ),
+    )
+    graficos += [
         grafico(
             "arrecadacao-tributos",
             "Os maiores tributos federais",
@@ -262,6 +295,36 @@ def _arrecadacao(
             ),
         ),
     ]
+    graficos[-1] = com_variantes(
+        graficos[-1],
+        "% do PIB",
+        variante(
+            "reais",
+            "R$ de hoje",
+            "Os maiores tributos federais, em reais de hoje",
+            [
+                *[
+                    serie(g, NOMES[g], real_12m(br_[g]), casas=1)
+                    for g in GRUPOS_DO_GRAFICO
+                    if g in br_
+                ],
+                serie(
+                    "outros",
+                    "IOF, comércio exterior e outros",
+                    real_12m(sorted(juntos_mensal.items())),
+                    casas=1,
+                ),
+            ],
+            unidade=f"R$ bilhões de {quando}, em 12 meses",
+            casas=0,
+            periodicidade="M",
+            nota=(
+                "Soma de 12 meses, cada mês levado a preços de hoje pelo IPCA. Imposto de "
+                "Renda junta pessoa física, empresas e o retido na fonte."
+            ),
+            fonte=fonte,
+        ),
+    )
 
     # Tabela: cada grupo, em R$ bi de 12 meses, % do PIB e crescimento real.
     linhas: list[LinhaTabela] = []

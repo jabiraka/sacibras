@@ -56,3 +56,26 @@ def test_manchete_e_a_primeira_frase_do_resumo() -> None:
         "O PIB cresceu 0,5 %."
     )
     assert manchete("") == ""
+
+
+def test_em_reais_de_hoje_e_com_variantes() -> None:
+    from datetime import date
+
+    from sacibras.secoes.base import com_variantes, em_reais_de_hoje, grafico, serie, variante
+
+    meses = [date(2025, m, 1) for m in range(1, 13)] + [date(2026, 1, 1)]
+    mensal = [(d, 1000.0) for d in meses]  # R$ 1 bi por mês
+    ipca = [(d, 1.0) for d in [*meses, date(2026, 2, 1)]]  # 1 % ao mês; o IPCA vai além
+    reais, base = em_reais_de_hoje(mensal, ipca)
+    assert base == date(2026, 1, 1)  # o último mês do dado, não o do IPCA
+    assert reais[-1][0] == base and len(reais) == 2
+    # Jan/2026 vale 1 bi; fev/2025 vale 1,01^11 bi a preços de jan/2026.
+    assert round(reais[-1][1], 6) == round(sum(1.01**k for k in range(12)), 6)
+
+    g = grafico(
+        "x", "X", [serie("a", "A", mensal)], unidade="% do PIB", periodicidade="M", fonte="f"
+    )
+    v = variante("reais", "R$ de hoje", "X em reais", [], unidade="R$", periodicidade="M")
+    com = com_variantes(g, "% do PIB", v)
+    assert [x.rotulo for x in com.variantes] == ["% do PIB", "R$ de hoje"]
+    assert com.variantes[0].series == g.series and com.rotulo_variantes == "Ver em"

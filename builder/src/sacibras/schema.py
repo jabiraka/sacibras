@@ -116,6 +116,8 @@ class VarianteGrafico(Modelo):
     series: list[Serie]
     linhas: list[LinhaRef] = Field(default_factory=list)
     nota: str = ""
+    fonte: str = ""
+    """Quando a métrica vem de outra fonte (o PIB, o IPCA); vazio, vale a do gráfico."""
 
 
 class Grafico(Modelo):
@@ -157,6 +159,8 @@ class Grafico(Modelo):
     """O assunto de onde o gráfico veio: só na página inicial, para o elo "abrir"."""
     variantes: list[VarianteGrafico] = Field(default_factory=list)
     """Outras métricas do gráfico, na lista "Métrica"; a primeira opção é o próprio gráfico."""
+    rotulo_variantes: str = "Métrica"
+    """O nome da lista das variantes ("Ver em", quando a troca é só de unidade)."""
     escolher_series: bool = False
     """A pessoa liga e desliga cada série que não é de consenso (Caio, 19/11/2026: *"deixe
     tbm escolher qual teste mostrar, se todos ou só alguns"*)."""

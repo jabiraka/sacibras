@@ -55,7 +55,7 @@ export function montarComEscolha(g: Grafico): HTMLElement {
     if (variantes.length > 1) {
       const lista = listaSuspensa(
         idLista,
-        "Métrica",
+        g.rotulo_variantes || "Métrica",
         variantes.map((v) => ({ valor: v.id, rotulo: v.rotulo })),
         atual.id,
         (id) => {
@@ -98,7 +98,8 @@ export function montarComEscolha(g: Grafico): HTMLElement {
   function pintar(): void {
     const series = atual.series
       .filter((s) => !escolhivel(s) || ligadas.has(s.id))
-      .map((s) => ({ ...s, cor: casas.get(s.id) ?? 0 }));
+      // Sem fichas, a cor segue a ordem da série, como em qualquer gráfico.
+      .map((s) => ({ ...s, cor: g.escolher_series ? (casas.get(s.id) ?? 0) : undefined }));
     const vazio = series.length === 0;
     const grafico = montarGrafico({
       ...g,
@@ -108,6 +109,7 @@ export function montarComEscolha(g: Grafico): HTMLElement {
       periodicidade: atual.periodicidade,
       linhas: atual.linhas,
       nota: atual.nota,
+      fonte: atual.fonte || g.fonte,
       // A frase do builder fala da primeira métrica; nas outras, nada.
       manchete: atual.id === variantes[0]?.id ? g.manchete : "",
       series: vazio ? atual.series.slice(0, 0) : series,
