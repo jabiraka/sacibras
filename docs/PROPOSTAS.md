@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 16/11/2026 (por último, o "Saiu por último" da entrada e a conversa sobre o que incluir e tirar).
+Última atualização: 19/11/2026 (a revisão para atrair visitantes; antes, por último, o "Saiu por último" da entrada e a conversa sobre o que incluir e tirar).
 Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -146,6 +146,40 @@ Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e 
     (OCDE, a cada três) e anos de estudo (PNAD), por estado onde houver. É o capital
     humano da conta do crescimento.
   - **Crédito direcionado** em % do crédito total (SGS): serve à página do juro alto.
+
+## Atrair quem se interessa e os curiosos (revisão de 19/11/2026)
+
+Caio: *"Veja oq podemos melhorar no sacibras pra atrair pessoas interessadas e curiosos"*.
+Olhado no site no ar, a 390 e 1280 px. Nada feito ainda; a ordem é a do efeito esperado.
+
+- **Ser achado**: o site é um HTML só, com rotas em `#`. O Google e o cartão do WhatsApp veem
+  a mesma página em todo endereço: o título não muda (`document.title` é sempre "sacibras ·
+  status da economia brasileira"), não há `robots.txt` nem `sitemap.xml`, e o texto das
+  respostas só existe depois do JavaScript. Proposta: o builder grava uma página HTML de
+  verdade por pergunta (`/pergunta/juro-alto/`, com título, descrição, a resposta e os
+  números no HTML, e o app assumindo por cima), mais o sitemap; depois, por assunto.
+- **Cartão de compartilhamento por pergunta**: hoje a `og.png` é uma só, sem número. Uma
+  imagem por pergunta, feita no build, com a pergunta, o número de hoje e a data.
+- **Botão "Compartilhar"** na pergunta e na explicação (o `navigator.share` do celular; no
+  PC, copiar o elo). A imagem exportada leva a marca, mas não o endereço do site: pôr.
+- **Perguntas do dia a dia**: as nove são de quem já acompanha economia. Faltam as de quem
+  chega pela curiosidade, com dado que o painel já tem: "Por que a comida ficou cara?"
+  (subitens do IPCA), "Por que o dólar sobe e desce?", "O salário mínimo compra mais ou
+  menos que antes?" (o comparador já existe), "Como está o meu estado?" (a ficha), "O
+  brasileiro está muito endividado?" (crédito).
+- **A resposta à vista na entrada**: a pergunta aparece só pelo título (decisão de
+  14/11). Uma linha da resposta embaixo de cada uma daria motivo para o clique e texto para
+  o buscador. Muda a regra; pede o "sim" do Caio.
+- **Motivo para voltar**: um feed RSS feito pelo builder (o "Saiu por último" e as
+  respostas que mudaram), sem servidor; e "o que mudou desde a semana passada" na entrada.
+  Boletim por e-mail pede serviço de fora.
+- **Medir**: sem contagem não se sabe o que atrai. O contador nosso espera o Supabase;
+  enquanto isso, o Google Search Console (grátis, sem script na página) já diz por que
+  busca as pessoas chegam.
+- **Endereço**: `jabiraka.github.io/sacibras` não se guarda nem se dita. Domínio próprio.
+- **README**: diz "ainda sem deploy" e não tem o elo do site; é a porta de quem vem do GitHub.
+- **"Onde estou na renda"** (já acima, espera o "sim"): é a peça com mais cara de ser
+  repassada, por ser sobre a própria pessoa.
 
 ## Achados da revisão das telas (15/11/2026)
 

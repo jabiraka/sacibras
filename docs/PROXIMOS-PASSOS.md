@@ -153,6 +153,12 @@ As próximas:
 
 ## Espera o Caio
 
+- **Atrair visitantes** (revisão de 19/11/2026, no [PROPOSTAS](PROPOSTAS.md), "Atrair quem
+  se interessa e os curiosos"): dizer por onde começar. A recomendação: página HTML própria
+  por pergunta com sitemap e título, o cartão de compartilhamento por pergunta e o botão
+  "Compartilhar"; depois, as perguntas do dia a dia. A resposta à vista na entrada muda a
+  regra de 14/11 e só entra com o "sim".
+
 - **Olhar o Laboratório e a pergunta do gasto**: os textos dizem o que a conta acha e onde
   ela é fraca. Pontos a conferir: a regra de Taylor dá 11,7 % contra a Selic de 13,75 %; o
   juro neutro vai de 5,1 % a 7,2 % conforme o método; o estudo de evento acha 4,5 pb no juro
