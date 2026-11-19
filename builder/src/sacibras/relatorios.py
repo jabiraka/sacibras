@@ -625,3 +625,186 @@ FONTE_CONFERENCIA_PIB_ESTADOS = (
     "PIB trimestral estadual: DEE/SPGG (RS), IPARDES (PR), Fundação João Pinheiro (MG), "
     "SEI (BA) e IJSN (ES)"
 )
+
+
+# ------------------------------------------------------------------ anúncios fiscais
+
+
+@dataclass(frozen=True)
+class AnuncioFiscal:
+    """Um dia em que o governo federal anunciou regra fiscal nova, mudança de meta de
+    primário ou pacote de ajuste (o estudo de evento do Laboratório)."""
+
+    dia: date
+    o_que: str
+    sentido: str
+    """"mais" (mais aperto do que o que valia), "menos" ou "ambiguo": leitura nossa."""
+    fonte: str
+    depois_do_fechamento: bool = False
+
+
+# FORA DA TELA desde 19/11/2026 (Caio: *"Se o resultado for fraco, acho que não precisa
+# colocar não"*): nos anúncios de menos aperto o juro de 5 anos subiu em 8 de 12 e nos de mais
+# aperto em 5 de 9, o que não se distingue do acaso. A lista e a conta
+# (`laboratorio_ajuste.anuncios`) ficam para quando houver medida melhor (hora do anúncio,
+# juro do dia); `laboratorio.montar` não a chama.
+# Lista lida em 19/11/2026, cada data conferida numa página oficial (Agência Brasil/EBC,
+# Agência Senado, Agência Câmara, Ministério da Fazenda, Secom; os endereços estão em
+# docs/FONTES.md, "Anúncios fiscais"). Critério, fixado antes de olhar o mercado: o dia em que
+# o governo federal anunciou (a) regra fiscal nova ou espaço fora dela, (b) mudança de meta de
+# primário já fixada ou prometida, (c) pacote de ajuste apresentado como tal. Ficam de fora o
+# contingenciamento dos relatórios bimestrais e fala sem medida. Do teto de 2016 entra o
+# anúncio (24/05), não o texto da PEC (15/06). `depois_do_fechamento` só onde a página
+# confirma que foi à noite. O sentido é leitura nossa: "ambiguo" onde o anúncio juntou aperto
+# e afrouxamento (o arcabouço de 2023; o pacote com a isenção de IR, em 2024).
+ANUNCIOS_FISCAIS: list[AnuncioFiscal] = [
+    AnuncioFiscal(
+        date(2011, 8, 29),
+        "Meta de primário de 2011 sobe uns R$ 10 bi, para R$ 91 bi",
+        "mais",
+        "Agência Brasil (EBC), 30/08/2011",
+    ),
+    AnuncioFiscal(
+        date(2014, 11, 11),
+        "Projeto tira o teto do abatimento da meta de 2014 (PLN 36/2014)",
+        "menos",
+        "Congresso Nacional, matéria 118860",
+    ),
+    AnuncioFiscal(
+        date(2014, 11, 27),
+        "Levy, ministro indicado: meta de 1,2 % do PIB em 2015 e 2 % depois",
+        "ambiguo",
+        "Agência Brasil, 27/11/2014",
+    ),
+    AnuncioFiscal(
+        date(2014, 12, 29),
+        "Regras mais duras de seguro-desemprego, abono e pensão (MPs 664 e 665)",
+        "mais",
+        "Agência Brasil, 30/12/2014",
+    ),
+    AnuncioFiscal(
+        date(2015, 1, 19),
+        "Aumento de impostos de R$ 20,6 bi (combustíveis, IOF, importados)",
+        "mais",
+        "Agência Brasil, 19/01/2015",
+    ),
+    AnuncioFiscal(
+        date(2015, 7, 22),
+        "Meta de 2015 cai de 1,1 % para 0,15 % do PIB",
+        "menos",
+        "Agência Brasil, 22/07/2015",
+    ),
+    AnuncioFiscal(
+        date(2015, 8, 31),
+        "Orçamento de 2016 vai ao Congresso com déficit de R$ 30,5 bi",
+        "menos",
+        "Agência Senado, 31/08/2015",
+    ),
+    AnuncioFiscal(
+        date(2015, 9, 14),
+        "Pacote de R$ 64,9 bi: corte de R$ 26 bi e volta da CPMF",
+        "mais",
+        "Agência Brasil, 14/09/2015",
+    ),
+    AnuncioFiscal(
+        date(2015, 10, 27),
+        "Meta de 2015 passa de superávit de R$ 8,7 bi a déficit de R$ 51,8 bi",
+        "menos",
+        "Agência Brasil, 27/10/2015",
+    ),
+    AnuncioFiscal(
+        date(2016, 3, 23),
+        "Projeto para fechar 2016 com déficit de R$ 96,7 bi",
+        "menos",
+        "Agência Brasil, 23/03/2016",
+    ),
+    AnuncioFiscal(
+        date(2016, 5, 20),
+        "Meta de 2016: déficit de até R$ 170,5 bi",
+        "menos",
+        "Agência Câmara, notícia 488630",
+        depois_do_fechamento=True,
+    ),
+    AnuncioFiscal(
+        date(2016, 5, 24),
+        "Anúncio do teto de gastos e da devolução de R$ 100 bi do BNDES",
+        "mais",
+        "Agência Brasil, 24/05/2016",
+    ),
+    AnuncioFiscal(
+        date(2016, 7, 7),
+        "Meta de 2017: déficit de R$ 139 bi",
+        "menos",
+        "Agência Brasil, 07/07/2016",
+    ),
+    AnuncioFiscal(
+        date(2017, 4, 7),
+        "Meta de déficit de 2018 sobe de R$ 79 bi para R$ 129 bi",
+        "menos",
+        "Agência Brasil, 07/04/2017",
+    ),
+    AnuncioFiscal(
+        date(2017, 8, 15),
+        "Metas de déficit de 2017 e 2018 sobem para R$ 159 bi",
+        "menos",
+        "Agência Brasil, 15/08/2017",
+        depois_do_fechamento=True,
+    ),
+    AnuncioFiscal(
+        date(2019, 11, 5),
+        "Plano Mais Brasil: PECs Emergencial, do Pacto Federativo e dos Fundos",
+        "mais",
+        "Agência Senado, 05/11/2019",
+    ),
+    AnuncioFiscal(
+        date(2021, 8, 9),
+        "PEC dos Precatórios entregue à Câmara, com o Auxílio Brasil",
+        "menos",
+        "Agência Câmara, notícia 791275",
+    ),
+    AnuncioFiscal(
+        date(2022, 11, 16),
+        "Minuta da PEC da Transição: R$ 175 bi fora do teto",
+        "menos",
+        "Agência Senado, 16/11/2022",
+        depois_do_fechamento=True,
+    ),
+    AnuncioFiscal(
+        date(2023, 1, 12),
+        "Medidas de recuperação fiscal de R$ 242,7 bi",
+        "mais",
+        "Ministério da Fazenda, 12/01/2023",
+    ),
+    AnuncioFiscal(
+        date(2023, 3, 30),
+        "Novo arcabouço fiscal apresentado",
+        "ambiguo",
+        "Ministério da Fazenda, 30/03/2023",
+    ),
+    AnuncioFiscal(
+        date(2024, 4, 15),
+        "Meta de 2025 cai de 0,5 % do PIB para zero; a de 2026, de 1 % para 0,25 %",
+        "menos",
+        "Agência Brasil, 15/04/2024",
+    ),
+    AnuncioFiscal(
+        date(2024, 7, 3),
+        "Corte de R$ 25,9 bi em despesas obrigatórias de 2025",
+        "mais",
+        "Agência Gov (EBC), 03/07/2024",
+        depois_do_fechamento=True,
+    ),
+    AnuncioFiscal(
+        date(2024, 11, 27),
+        "Pacote de R$ 70 bi em dois anos, com isenção de IR até R$ 5 mil",
+        "ambiguo",
+        "Secom, 27/11/2024",
+        depois_do_fechamento=True,
+    ),
+    AnuncioFiscal(
+        date(2026, 11, 11),
+        "Pacote de R$ 50 a 60 bi para 2027 (PLP 299/2026)",
+        "mais",
+        "Agência Brasil, 11/11/2026",
+    ),
+]

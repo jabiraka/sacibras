@@ -30,14 +30,16 @@ from dataclasses import dataclass, field
 
 from sacibras.schema import BlocoPergunta, Cartao, Grafico, ItemPergunta, Pergunta, Tabela
 
-LIDAS_EM = "16/11/2026"
+LIDAS_EM = "19/11/2026"
 """Quando as respostas e conclusões foram escritas contra o dado (ver `leituras.py`)."""
 
 MAXIMO_DE_NUMEROS = 3
 MAXIMO_DE_BLOCOS = 6
 
 Ref = tuple[str, str]
-"""(assunto, id do cartão ou do gráfico). O id pode acabar em "*": vale o primeiro que
+"""(assunto, id do cartão ou do gráfico). O assunto pode ser o Laboratório (Caio, 19/11/2026:
+*"Faz tudo, eu aprovo"*, sobre a pergunta da crise copiar peça de lá): o texto do bloco diz
+então "estimativa nossa". O id pode acabar em "*": vale o primeiro que
 começa assim (os cartões do Focus levam o ano no id)."""
 
 
@@ -580,6 +582,72 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "duas medidas erram: o quanto o Focus costuma errar está na entrada do site, e o "
             "quanto do juro dos títulos é risco, e não expectativa, não dá para separar com "
             "precisão."
+        ),
+    ),
+    Definicao(
+        "crise",
+        "De onde viria uma crise?",
+        "Pelos dados daqui, o ponto fraco são as contas públicas, não as contas com o exterior "
+        "nem os bancos: a dívida sobe, não se espera que pare de subir e o Brasil paga juro "
+        "acima do de fora. Os dados mostram onde está a pressão, não se nem quando ela "
+        "vira crise.",
+        (
+            ("fiscal", "dbgg"),
+            ("riscos", "juro-real-brasil-eua"),
+            ("laboratorio", "dolar-do-brasil"),
+        ),
+        (
+            Bloco(
+                "A dívida sobe e não se espera que pare",
+                "A cada dezembro os analistas refazem a aposta para a dívida dos anos "
+                "seguintes. Hoje, a linha do que esperam sobe até onde a coleta vai.",
+                ("laboratorio", "divida-esperada"),
+                (("laboratorio", "divida-esperada"), ("riscos", "primario-estabiliza")),
+            ),
+            Bloco(
+                "O ajuste esperado costuma ficar maior que o entregue",
+                "Desde 2003, o primário esperado dois anos antes foi, na média, maior que o que"
+                " veio. Parte são choques, como 2020. Estimativa nossa, com faixa de erro.",
+                ("laboratorio", "primario-prometido"),
+                (("laboratorio", "primario-prometido"), ("fiscal", "primario")),
+            ),
+            Bloco(
+                "O Brasil paga mais que os outros para dever",
+                "A distância para o juro real dos EUA é o que se cobra a mais do Brasil. O "
+                "porquê o número não diz: contas, inflação e pouca poupança entram juntos.",
+                ("riscos", "juro-real-brasil-eua"),
+                (("riscos", "juros-sobre-receita"),),
+            ),
+            Bloco(
+                "No dólar, quanto é daqui",
+                "Dólar que sobe contra todas as moedas é problema de fora. O resto é do Brasil:"
+                " contas públicas, política, juro, commodities, sem dizer qual. Estimativa "
+                "nossa.",
+                ("laboratorio", "dolar-mundo-brasil"),
+                (("laboratorio", "dolar-de-fora"),),
+            ),
+            Bloco(
+                "Dólar para pagar as contas de fora, há",
+                "As reservas cobrem com sobra a dívida externa de um ano, e o investimento "
+                "direto supera o déficit externo. Crise por falta de dólar é pouco provável "
+                "hoje.",
+                ("externo", "reservas"),
+                (("riscos", "reservas-cobertura"), ("externo", "transacoes-correntes")),
+            ),
+            Bloco(
+                "O que o painel de alerta mostra",
+                "Cada indicador de risco na régua da própria história. A contagem diz quantos "
+                "estão no quinto pior; não é nota única nem previsão de crise.",
+                ("riscos", "basileia"),
+                (("riscos", "alertas-acesos"), ("riscos", "basileia")),
+            ),
+        ),
+        ("crise", "risco de crise", "o brasil vai quebrar", "crise fiscal", "crise cambial"),
+        conclusao=(
+            "Se a pressão crescer, o caminho mais provável pelos dados é o das contas "
+            "públicas: dívida subindo, juro longo alto e dólar pressionado por razões daqui, "
+            "e não falta de dólares nem bancos frágeis. Se o ajuste será feito, e até quando "
+            "o mercado espera, os dados daqui não decidem."
         ),
     ),
 )

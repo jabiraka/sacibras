@@ -86,6 +86,7 @@ Da aba de riscos (14/11/2026):
 | Receita Federal, `gov.br/receitafederal/dados/arrecadacao-estado.csv` | arrecadação federal por UF e tributo, mês a mês (Impostos) | 2,4 MB, latin-1, `;`, até set/2026 em 14/11/2026. 2001–2002 misturam vírgula de milhar e decimal: lido de 2003 em diante. Previdência por UF só desde 2013 (as somas comparáveis começam aí). Algumas linhas de 2023–2024 trazem ponto de milhar. |
 | Receita Federal, Demonstrativo dos Gastos Tributários, bases efetivas | gasto tributário realizado, total e principais (Impostos) | Página `…/relatorios/renuncia/gastos-tributarios-bases-efetivas` (lista, 20 por página); o XLSX baixa com `/@@download/file` no lugar de `/view`. Abas `Q XXVI` (série, linhas `TOTAL` e `GT / PIB`) e `Q X` (principais); a de 2022 tem "Q X " com espaço. XLSX desde a edição de 2016; antes, PDF. Edição mais nova: 2023 (realizado até 2023). |
 | FRED `fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10` | juro real do título americano de 10 anos indexado à inflação (TIPS), prazo constante, diário desde 02/01/2003: a série H.15 do Federal Reserve | Em uso desde 15/11/2026 (Riscos › Mercado e contas externas, juro real de 10 anos do Brasil menos o dos EUA), citada como "Federal Reserve, H.15 (via FRED)". Dia sem negócio vem em branco. Se o FRED falhar, a alternativa oficial é o CSV do Tesouro americano (`daily_treasury_real_yield_curve`, abaixo). |
+| FRED `fredgraph.csv?id=DEXBZUS` e `?id=DTWEXEMEGS` | reais por dólar (taxa de compra ao meio-dia em Nova York) e o índice nominal do dólar contra as moedas das economias emergentes (jan/2006 = 100), diários: séries H.10 do Federal Reserve | Em uso desde 19/11/2026 (Laboratório › O dólar: o mundo ou o Brasil?), citadas como "Federal Reserve, H.10 (via FRED)". Conferidas na página de cada série e no CSV, que responde da nuvem; o índice começa em 02/01/2006 e o real está na cesta, com peso pequeno. |
 | Tesouro Direto, história desde 2004 | juro real de 10 anos e inflação implícita de 8 anos, no último dia de cada mês | A mesma curva zero de Juros, montada mês a mês. O prefixado de 10 anos falta em metade dos meses (a NTN-F mais longa às vezes vence antes de 10 anos): a implícita do painel usa 8 anos (223 meses desde mai/2007). Linha com "PU Base Manha" 0,00 é lixo (NTN-F 2021 em 29/01/2010 com taxa 0,06) e taxa 0,00 é o lado não negociado no dia: os dois saem da conta (15/11/2026). |
 | BCB SGS 29407, 29408 e 13521 | Índice de Liquidez (desde o 4º tri/2015) e LCR (desde o 1º tri/2016) do sistema bancário, trimestrais; meta para a inflação de cada ano | Fora do CKAN; conferidas no serviço de metadados do SGS em 15/11/2026. As duas de liquidez saem com uns seis meses de atraso (2º tri/2026 em nov/2026). O 29409 é o NSFR. |
 | BCB Focus, `ExpectativasMercadoInflacao12Meses` | a mediana do IPCA dos 12 meses seguintes (suavizada), dia a dia desde 12/12/2001 | Filtrar `Suavizada eq 'S'` e `baseCalculo eq 0`; ~6 mil linhas numa chamada (`$top=10000`). |
@@ -228,3 +229,87 @@ O que dá para acrescentar, por ordem de valor para a leitura macro:
 7. **Moedas de emergentes contra o dólar** e o real entre elas: BIS (`WS_XRU`, mensal, aberto).
 8. **Juro de 10 anos e bolsas de fora** para comparar: OCDE (`DF_FINMARK`) e FRED.
 9. **Risco-país**: o EMBI+ aberto parou em 2024; CDS não tem fonte gratuita.
+
+
+## Metas das LDOs (lidas em 19/11/2026)
+
+A meta de primário do Governo Central no texto original de cada LDO (`leis.METAS_DAS_LDOS`),
+lida na "Publicação Original" do Senado, `legis.senado.leg.br/norma/<norma>/publicacao/<id>`.
+O id sai de `legis.senado.leg.br/dadosabertos/legislacao/lista?tipo=LEI&numero=N&ano=A`.
+Até 2005 o artigo remete ao Anexo de Metas Fiscais: os de 2002, 2004 e 2005 foram lidos no
+PDF de anexos da Câmara (`www2.camara.leg.br/legin/fed/lei/<ano>/lei-...-anexo-pl.pdf`); o de
+2002 é imagem escaneada, lida a olho (R$ 29,2 bilhões, 2,24 % do PIB).
+
+| Exercício | Lei | norma/publicação no Senado |
+|---|---|---|
+| 2002 | 10.266/2001 | 552142/15676405 |
+| 2003 | 10.524/2002 | 552400/15807849 |
+| 2004 | 10.707/2003 | 552583/15677990 |
+| 2005 | 10.934/2004 | 552810/15716811 |
+| 2006 | 11.178/2005 | 572717/15725820 |
+| 2007 | 11.439/2006 | 572591/15734404 |
+| 2008 | 11.514/2007 | 572666/15738508 |
+| 2009 | 11.768/2008 | 582190/15744849 |
+| 2010 | 12.017/2009 | 580240/15749750 |
+| 2011 | 12.309/2010 | 575951/15746694 |
+| 2012 | 12.465/2011 | 584321/15759595 |
+| 2013 | 12.708/2012 | 588084/15776430 |
+| 2014 | 12.919/2013 | 591367/15638695 |
+| 2015 | 13.080/2015 | 584892/15617886 |
+| 2016 | 13.242/2015 | 602467/15619051 |
+| 2017 | 13.408/2016 | 602632/15656024 |
+| 2018 | 13.473/2017 | 17745360/17745518 |
+| 2019 | 13.707/2018 | 27457218/27457680 |
+| 2020 | 13.898/2019 | 31666914/31698084 |
+| 2021 | 14.116/2020 | 33040572/33043504 |
+| 2022 | 14.194/2021 | 34722181/34724027 |
+| 2023 | 14.436/2022 | 36225432/36226679 |
+| 2024 | 14.791/2023 | 38065853/38100272 |
+| 2025 | 15.080/2024 | 40035025/40094758 |
+| 2026 | 15.321/2025 | 41912067/41913017 |
+
+Leis que mudaram a meta durante o ano (não entram na comparação, que é com a meta original):
+12.053/2009, 12.377/2010, 13.053/2014, 13.199/2015, 13.291/2016 e 13.480/2017. A lista não é
+exaustiva.
+
+## Anúncios fiscais (lidos em 19/11/2026)
+
+As datas de `relatorios.ANUNCIOS_FISCAIS`, cada uma conferida na página ao lado. O estudo
+de evento saiu da tela no mesmo dia (resultado fraco); a lista fica para uma medida melhor. Quase
+nenhuma página dá a hora do anúncio; `depois_do_fechamento` só entra onde ela diz que foi à
+noite.
+
+| Data | Página |
+|---|---|
+| 29/08/2011 | memoria.ebc.com.br/agenciabrasil, "Government raises primary surplus target" (30/08/2011) |
+| 11/11/2014 | congressonacional.leg.br/materias/pesquisa/-/materia/118860 |
+| 27/11/2014 | agenciabrasil.ebc.com.br/economia/noticia/2014-11/meta-de-superavit-primario-em-2015-sera-de-12-do-pib-diz-joaquim-levy |
+| 29/12/2014 | agenciabrasil.ebc.com.br/geral/noticia/2014-12/governo-publica-mps-com-regras-sobre-pensao-auxilio-doenca-e-seguro-desemprego |
+| 19/01/2015 | agenciabrasil.ebc.com.br/economia/noticia/2015-01/governo-aumenta-impostos-para-arrecadar-r-206-bilhoes |
+| 22/07/2015 | agenciabrasil.ebc.com.br/economia/noticia/2015-07/governo-amplia-corte-no-orcamento-para-r-794-bilhoes |
+| 31/08/2015 | www12.senado.leg.br/noticias/materias/2015/08/31/orcamento-de-2016-salario-minimo-de-r-865-deficit-de-r-30-bi-e-crescimento-perto-de-zero |
+| 14/09/2015 | agenciabrasil.ebc.com.br/economia/noticia/2015-09/governo-anuncia-cortes-de-r-26-bilhoes-no-orcamento-de-2016 |
+| 27/10/2015 | agenciabrasil.ebc.com.br/economia/noticia/2015-10/deficit-do-orcamento-em-2015-sera-de-r-518-bilhoes-diz-relator |
+| 23/03/2016 | agenciabrasil.ebc.com.br/economia/noticia/2016-03/governo-envia-projeto-para-encerrar-ano-com-deficit-primario-de-r-967 |
+| 20/05/2016 (noite) | camara.leg.br/noticias/488630-governo-anuncia-possivel-deficit-primario-de-ate-r-1705-bilhoes/ |
+| 24/05/2016 | agenciabrasil.ebc.com.br/economia/noticia/2016-05/governo-vai-criar-teto-para-divida-publica-e-quer-de-volta-r-100-bi-do |
+| 07/07/2016 | agenciabrasil.ebc.com.br/economia/noticia/2016-07/governo-estima-deficit-primario-de-r-139-bilhoes-em-2017 |
+| 07/04/2017 | agenciabrasil.ebc.com.br/economia/noticia/2017-04/governo-propoe-salario-minimo-de-r-979-para-o-proximo-ano |
+| 15/08/2017 (noite) | agenciabrasil.ebc.com.br/economia/noticia/2017-08/governo-eleva-metas-de-deficit-primario-para-2017-e-2018 |
+| 05/11/2019 | www12.senado.leg.br/noticias/materias/2019/11/05/senado-recebe-novo-pacote-de-reformas-do-governo |
+| 09/08/2021 | camara.leg.br/noticias/791275-bolsonaro-entrega-a-lira-a-mp-que-cria-o-auxilio-brasil-em-substituicao-ao-bolsa-familia/ |
+| 16/11/2022 (noite) | www12.senado.leg.br/noticias/materias/2022/11/16/alckmin-entrega-ao-senado-sugestao-de-texto-da-pec-da-transicao |
+| 12/01/2023 | gov.br/fazenda/pt-br/assuntos/noticias/2023/janeiro/fernando-haddad-apresenta-conjunto-de-medidas-para-recuperacao-fiscal |
+| 30/03/2023 | gov.br/fazenda/pt-br/assuntos/noticias/2023/marco/ministerio-da-fazenda-apresenta-nova-regra-fiscal-e-planeja-zerar-o-deficit-primario |
+| 15/04/2024 | agenciabrasil.ebc.com.br/economia/noticia/2024-04/projeto-da-ldo-mantem-meta-de-deficit-zero-para-2025 |
+| 03/07/2024 (noite) | agenciagov.ebc.com.br/noticias/202407/haddad-cumpra-se-o-arcabouco-fiscal |
+| 27/11/2024 (noite) | gov.br/secom/pt-br/assuntos/noticias/2024/11/fernando-haddad-201cmedidas-vao-gerar-uma-economia-de-r-70-bilhoes-nos-proximos-dois-anos201d |
+| 11/11/2026 | agenciabrasil.ebc.com.br/economia/noticia/2026-11/governo-anuncia-medidas-de-ajuste-para-economia-de-ate-r-60-bilhoes |
+
+Ficaram de fora, com a data conferida mas cabendo mal no critério: o texto da PEC do teto
+(15/06/2016, a mesma política do anúncio de 24/05), os contingenciamentos de 09/02/2011,
+29/03/2017 e 22/05/2025, a proposta de 19/02/2016, o Renda Cidadã (28/09/2020), a fala sobre
+R$ 30 bi fora do teto (20/10/2021), a PEC dos combustíveis (06/06/2022), a MP da reoneração
+(28/12/2023) e as alternativas ao IOF (08/06/2025). Não conferidos, não usar: o corte de
+fev/2014, o de mai/2015, a meta de 2016 em dez/2015, a LDO de 2021, o envio do PLP 93/2023 e
+a contenção de jul/2024.

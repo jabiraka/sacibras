@@ -105,6 +105,58 @@ META_PRIMARIA_2026 = MetaPrimaria(
 
 
 @dataclass(frozen=True)
+class MetaDaLDO:
+    """A meta de primário do Governo Central (orçamentos fiscal e da seguridade social) no
+    texto ORIGINAL da LDO de um exercício: em % do PIB (até 2010) ou em R$ bilhões (de 2011 em
+    diante; negativo é déficit), como a lei escreveu."""
+
+    lei: str
+    pct_do_pib: float | None = None
+    reais_bi: float | None = None
+    abatimento: str = ""
+    """O que a própria lei deixava descontar da meta (PPI, PAC), em poucas palavras."""
+
+
+# Lidas em 19/11/2026 na "Publicação Original" de cada lei no Senado
+# (legis.senado.leg.br/norma/<id>/publicacao/<id>; os endereços estão em docs/FONTES.md,
+# "Metas das LDOs"), art. 2º (arts. 15, 16 ou 18 até 2005, que remetem ao Anexo de Metas
+# Fiscais; os anexos de 2002, 2004 e 2005 foram lidos no PDF da Câmara, e o de 2002 é imagem
+# escaneada, lida a olho). É a meta como a lei saiu, sem as mudanças feitas durante o ano
+# (2009, 2015, 2016, 2017 e 2018 tiveram lei que a mudou: é esse o ponto da comparação).
+# Trechos: 2006, "2,45% [...] para os orçamentos fiscal e da seguridade social"; 2011, "R$
+# 81.760.000.000,00 [...] para os Orçamentos Fiscal e da Seguridade Social"; 2017, "meta de
+# déficit primário dos Orçamentos Fiscal e da Seguridade Social da União de R$
+# 139.000.000.000,00"; 2024, "meta de resultado primário de R$ 0,00 (zero real)".
+METAS_DAS_LDOS: dict[int, MetaDaLDO] = {
+    2002: MetaDaLDO("Lei nº 10.266/2001", pct_do_pib=2.24),
+    2003: MetaDaLDO("Lei nº 10.524/2002", pct_do_pib=2.25),
+    2004: MetaDaLDO("Lei nº 10.707/2003", pct_do_pib=2.45),
+    2005: MetaDaLDO("Lei nº 10.934/2004", pct_do_pib=2.45),
+    2006: MetaDaLDO("Lei nº 11.178/2005", pct_do_pib=2.45),
+    2007: MetaDaLDO("Lei nº 11.439/2006", pct_do_pib=2.45, abatimento="PPI, até R$ 4,6 bi"),
+    2008: MetaDaLDO("Lei nº 11.514/2007", pct_do_pib=2.20, abatimento="PPI, até R$ 13,8 bi"),
+    2009: MetaDaLDO("Lei nº 11.768/2008", pct_do_pib=2.20, abatimento="PPI, até R$ 15,6 bi"),
+    2010: MetaDaLDO("Lei nº 12.017/2009", pct_do_pib=2.15, abatimento="PAC, até R$ 22,5 bi"),
+    2011: MetaDaLDO("Lei nº 12.309/2010", reais_bi=81.76, abatimento="PAC, até R$ 32 bi"),
+    2012: MetaDaLDO("Lei nº 12.465/2011", reais_bi=96.973, abatimento="PAC, até R$ 40,6 bi"),
+    2013: MetaDaLDO("Lei nº 12.708/2012", reais_bi=108.09, abatimento="até R$ 45,2 bi"),
+    2014: MetaDaLDO("Lei nº 12.919/2013", reais_bi=116.072, abatimento="até R$ 67 bi"),
+    2015: MetaDaLDO("Lei nº 13.080/2015", reais_bi=55.279),
+    2016: MetaDaLDO("Lei nº 13.242/2015", reais_bi=24.0),
+    2017: MetaDaLDO("Lei nº 13.408/2016", reais_bi=-139.0),
+    2018: MetaDaLDO("Lei nº 13.473/2017", reais_bi=-129.0),
+    2019: MetaDaLDO("Lei nº 13.707/2018", reais_bi=-139.0),
+    2020: MetaDaLDO("Lei nº 13.898/2019", reais_bi=-124.1),
+    2021: MetaDaLDO("Lei nº 14.116/2020", reais_bi=-247.118225),
+    2022: MetaDaLDO("Lei nº 14.194/2021", reais_bi=-170.473716),
+    2023: MetaDaLDO("Lei nº 14.436/2022", reais_bi=-65.90576),
+    2024: MetaDaLDO("Lei nº 14.791/2023", reais_bi=0.0, abatimento="tolerância de R$ 28,8 bi"),
+    2025: MetaDaLDO("Lei nº 15.080/2024", reais_bi=0.0, abatimento="tolerância de R$ 31,0 bi"),
+    2026: MetaDaLDO("Lei nº 15.321/2025", reais_bi=34.264603518, abatimento="piso em zero"),
+}
+
+
+@dataclass(frozen=True)
 class AvaliacaoBimestral:
     """O que o governo projeta para o primário do ano no Relatório de Avaliação de Receitas e
     Despesas Primárias (o que a LDO 2026, art. 73, § 4º, manda publicar), em R$ bilhões.

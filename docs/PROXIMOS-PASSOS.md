@@ -21,6 +21,8 @@ a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibov
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
 
+**19/11/2026**, a pedido do Caio: as perguntas ficam recolhidas (no menu, "Perguntas" abre no toque e sozinho dentro de uma pergunta; no pé da pergunta, "Outras perguntas") e a vista aberta do painel de alerta sai como imagem (PNG e Copiar, `desenhoDosAlertas` em `alertas.ts`, nas quatro vistas). **Falta olhar a 390 e 1280 px com o site rodando** (a nuvem não abre as fontes para montar os dados).
+
 **16/11/2026**, no `main`: a entrada virou perguntas (Caio: *"o gancho vai ser problemas e
 perguntas [...] mostrar o dado que responde uma pergunta ou problema"*). Feito: o "Saiu por
 último" (o número contra o Focus, `saiu.py`); as oito perguntas (`perguntas.py`,
@@ -133,6 +135,32 @@ e outros? E ver onde cada Estado e outros está gastando com a receita?"*):
   e a receita de cada esfera *depois* dos repasses (o FMI separa o repasse geral, mas não
   quanto vai a estados e quanto a municípios).
 
+**19/11/2026** (Caio: *"continue o laboratório com as propostas [...] essas métricas vão
+nos ajudar a ver o desenrolar e de onde está vindo se tiver uma crise, bem como oq
+poderíamos ter feito pra prevenir, o foco principal hj está no ajuste fiscal"*; e, sobre as
+sugestões: *"Faz tudo, eu aprovo"*). No `main`. Oito peças novas no Laboratório
+(`secoes/laboratorio_ajuste.py`, contas em `modelos/ajuste.py`), todas sobre o que já
+aconteceu, e uma pergunta:
+- **O mercado: de onde vem a pressão** (`#laboratorio/pressao`): o dólar em 12 meses
+  repartido entre o que veio de fora e o que é só do Brasil (Federal Reserve, H.10), com as
+  cinco maiores altas; e o estudo de evento do Copom, que veio para cá. O **estudo de
+  evento dos anúncios fiscais** foi feito (24 datas conferidas em página oficial) e saiu da
+  tela no mesmo dia: resultado fraco (Caio: *"Se o resultado for fraco, acho que não
+  precisa colocar não"*); a lista e a conta ficam no código, sem serem chamadas.
+- **O ajuste fiscal: o que foi feito** (`#laboratorio/reacao-fiscal`): a dívida com outro
+  primário desde 2014, por onde o primário já mudou (receita ou despesa, RTN desde 1997), o
+  **custo de esperar** (o primário que estabiliza conforme o ano de partida, com a dívida
+  do Focus e a faixa do juro neutro) e o teste de Bohn.
+- **O prometido e o que veio** (`#laboratorio/promessa`): **a meta original de cada LDO**
+  contra o primário do Governo Central (25 leis lidas no Senado, `leis.METAS_DAS_LDOS`;
+  abaixo da meta em 14 de 24 anos, e sem 2020 a média não se distingue de zero), o primário
+  que o Focus esperava de um a quatro anos antes e a **dívida bruta que o Focus esperava,
+  safra a safra**.
+- **Pergunta nova, "De onde viria uma crise?"** (a décima; o teto do teste foi de nove
+  para dez): copia peças do Laboratório, com "estimativa nossa" no texto.
+O Laboratório segue com cinco partes: o estudo do Copom perdeu a parte própria, e os
+cartões `dolar-beta` e `copom-dias` saíram da tela (continuam calculados).
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:
@@ -143,7 +171,10 @@ Na ordem do plano; o que está aqui ainda não foi feito:
    dia anterior); a decomposição do PIB por habitante com a população em idade de trabalhar
    (ONU), separando demografia de participação.
 2. **Laboratório, leva 2** (do plano): controle sintético de episódios, quem ficou com o
-   crescimento por faixa de renda, o viés das previsões do orçamento, o tom das atas.
+   crescimento por faixa de renda, o tom das atas. Do viés das previsões, entraram o do
+   Focus e a meta de cada LDO (19/11); faltam os parâmetros de cada orçamento (PIB, inflação
+   e receita previstos) contra o que veio. O que sobrou de pressão e ajuste está no
+   [PROPOSTAS](PROPOSTAS.md), "Crise e ajuste fiscal".
 3. **O gasto, o que falta**: a série do gasto por função no tempo (o COFOG do Brasil desde
    2010) e a despesa por função só da União (o Tesouro publica o COFOG do Governo Central).
    América Latina tem só cinco países com COFOG do governo geral no FMI; Chile, México e
@@ -159,6 +190,8 @@ Na ordem do plano; o que está aqui ainda não foi feito:
 A lista inteira sai de `sacibras leituras --todas` (`leituras.py`); a issue `releitura` avisa.
 As próximas:
 
+- **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
+- **até 19/02/2027**: as dez perguntas (`perguntas.LIDAS_EM`).
 - **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e
   `relatorios.RECEITA_PREVISTA`.
 - **até 03/12**: nota fiscal do BC → `relatorios.ELASTICIDADES`.
@@ -197,6 +230,18 @@ As próximas:
 
 ## Espera o Caio
 
+- **Olhar as peças de 19/11**, que foram ao `main` (Caio: *"junte ao main"*). O que
+  decidi sozinho e pode ser trocado: (1) "só do Brasil" no dólar é um resto e a faixa é
+  estreita quando o dólar lá fora quase não se mexe; (2) o segundo cenário da dívida é piso
+  de 1 % do PIB (a média de 2003 a 2013 dava 33 % do PIB, longe demais do que a conta
+  mede); (3) pela regra do resultado fraco, do teste de Bohn ficou só a tabela dos
+  dois períodos (o cartão e o gráfico saíram da tela); a meta da LDO fica inteira (Caio:
+  *"Pode tirar só o do Bohn"*); (4) a meta da LDO é a cheia, sem o abatimento de PPI e PAC que a lei
+  deixava de 2007 a 2014; (5) a décima pergunta passou do teto de nove: se pesar, a
+  candidata a juntar com ela é "O que o mercado espera do Brasil?".
+- **Na página traduzida para o inglês**, a 390 px, a tela "O prometido e o que veio" passa
+  17 px do quadro (a unidade "pp do PIB" vira "percentage points of GDP" no cartão); em
+  português cabe. Já era assim com o cartão do teste de Bohn.
 - **Olhar o Laboratório e a pergunta do gasto**: os textos dizem o que a conta acha e onde
   ela é fraca. Pontos a conferir: a regra de Taylor dá 11,7 % contra a Selic de 13,75 %; o
   juro neutro vai de 5,1 % a 7,2 % conforme o método; o estudo de evento acha 4,5 pb no juro

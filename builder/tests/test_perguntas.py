@@ -39,7 +39,7 @@ def test_cada_peca_citada_mora_numa_parte_do_assunto() -> None:
 
 def test_o_orcamento_de_atencao() -> None:
     ids = [d.id for d in perguntas.PERGUNTAS]
-    assert len(ids) == len(set(ids)) <= 9
+    assert len(ids) == len(set(ids)) <= 10  # a décima: a da crise (Caio, 19/11/2026)
     for d in perguntas.PERGUNTAS:
         assert d.titulo.endswith("?")
         assert len(d.numeros) <= perguntas.MAXIMO_DE_NUMEROS, d.id

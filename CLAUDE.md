@@ -95,7 +95,9 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   ainda por fazer). As perguntas moram em `builder/src/sacibras/perguntas.py`: resposta curta,
   até 3 números, de 3 a 6 explicações na ordem em que contam a história, cada uma com até 2
   números, 1 gráfico e, se couber, 1 tabela **copiados dos assuntos**, com a data e a fonte
-  deles, e a conclusão ("Juntando as peças"). A tela (`#pergunta/<id>`) abre a primeira
+  deles, e a conclusão ("Juntando as peças"). A pergunta pode copiar peça do Laboratório
+  (Caio, 19/11/2026, sobre "De onde viria uma crise?"): o texto do bloco diz então
+  "estimativa nossa". São dez perguntas, o teto do teste. A tela (`#pergunta/<id>`) abre a primeira
   explicação e guarda as outras atrás do clique. **Peça nova nos Dados diz a que pergunta
   responde**; se não responde a nenhuma, pense duas vezes antes de pôr. Pergunta nova ganha
   as palavras de busca em `palavras`.
@@ -171,7 +173,20 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   1950 (Penn World Table). As contas de estatística moram em `modelos/estatistica.py`, sem
   biblioteca de fora (MQO com erro de Newey-West, HP, Hamilton). Cada peça diz o método e
   mostra a faixa; resultado fraco se diz fraco (o estudo de evento, por exemplo, mede mal a
-  surpresa sem os juros futuros da B3). Peça nova dele vai ao ar com o Caio olhando.
+  surpresa sem os juros futuros da B3). Em 19/11/2026 (Caio: *"essas métricas vão nos
+  ajudar a ver [...] de onde está vindo se tiver uma crise, bem como oq poderíamos ter feito
+  pra prevenir, o foco principal hj está no ajuste fiscal"*; e *"Faz tudo, eu aprovo"*)
+  entraram as peças de pressão e ajuste (`secoes/laboratorio_ajuste.py`,
+  `modelos/ajuste.py`): o dólar repartido entre o mundo e o Brasil, a dívida com outro primário,
+  por onde o primário já mudou, o custo de esperar, a meta original de cada LDO contra o que
+  veio (`leis.METAS_DAS_LDOS`) e o primário e a dívida que o Focus esperava. Todas refazem
+  o que já aconteceu. O Laboratório está no teto de cinco partes. **Resultado fraco não precisa ir à tela**
+  (Caio, 19/11/2026: *"Se o resultado for fraco, acho que não precisa colocar não"*, sobre
+  o estudo de evento dos anúncios fiscais, que saiu): conta que não distingue o efeito do
+  acaso fica no código e no PROPOSTAS como "testada e fora", não na tela com ressalva. Pelo
+  mesmo motivo, do teste de Bohn ficou só a tabela dos dois períodos (Caio, mesmo dia:
+  *"Pode tirar só o do Bohn"*): o cartão e o gráfico mostravam a amostra inteira, que não
+  se distingue de zero. Peça nova dele vai ao ar com o Caio olhando.
 - **O gasto: obrigatório, discricionário e por função** (Caio, 16/11/2026: *"tem como
   separar as despesas das obrigatórias? Talvez fazer uma análise de onde dá pra cortar
   gastos [...] comparar com outros países"*): Contas públicas › Onde está o gasto
