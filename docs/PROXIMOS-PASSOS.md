@@ -23,6 +23,31 @@ ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PR
 
 **19/11/2026**, a pedido do Caio: as perguntas ficam recolhidas (no menu, "Perguntas" abre no toque e sozinho dentro de uma pergunta; no pé da pergunta, "Outras perguntas") e a vista aberta do painel de alerta sai como imagem (PNG e Copiar, `desenhoDosAlertas` em `alertas.ts`, nas quatro vistas). **Falta olhar a 390 e 1280 px com o site rodando** (a nuvem não abre as fontes para montar os dados).
 
+**19/11/2026, servidores e estatais** (Caio: *"inclua a distribuição dos gastos por
+servidores públicos (quem fica com mais) e compare o rendimento e benefícios dos servidores
+com o setor privado, adicione uma pergunta de quanto as estatais dão lucro ou prejuízo aos
+cofres públicos"*), no ramo `ccr-eaea0089-yahn44`:
+- **Contas públicas › Servidores públicos** (`secoes/servidores.py`): a folha por esfera e
+  contra os outros países (FMI: 11,1 % do PIB na ativa, contra 8,6 % na mediana dos
+  emergentes; estados e municípios ficam com 81 % da folha da ativa), por tipo na União
+  (RTN: 43 % da folha vai a aposentados e pensionistas), por poder (Siconfi; e a remuneração
+  média lida na avaliação atuarial do PLDO 2027: Legislativo R$ 18,5 mil, Ministério Público
+  R$ 16,7 mil, Judiciário R$ 15,0 mil, Executivo R$ 13,4 mil), o rendimento contra o setor
+  privado (PNAD: estatutário R$ 6.825, privado com carteira R$ 3.403) e a aposentadoria
+  contra a do INSS (R$ 13,3 mil contra R$ 2,1 mil, com os dois tetos).
+- **Contas públicas › Estatais** (`secoes/estatais.py`): dividendos por empresa (RTN), a
+  conta do ano (Sest: em 2025, R$ 45,8 bi de dividendos menos R$ 32,6 bi de subvenção e
+  aporte, saldo de R$ 13,1 bi, o menor desde 2021), quem recebe a subvenção, o lucro dos
+  maiores e o primário das estatais (BC: déficit de R$ 7,3 bi nas federais em 12 meses).
+- **Duas perguntas novas** (onze agora; o teste subiu de 9 para 11): "Servidor público ganha
+  mais que quem trabalha no setor privado?" e "As estatais dão lucro ou prejuízo aos cofres
+  públicos?"; e a explicação "A folha dos servidores" em "Onde dá para cortar gasto?".
+- **Para caber no teto de cinco partes**: "Meta fiscal" entrou em "Primário, juros e meta"
+  (o gráfico do primário mês a mês saiu da tela) e "Receita e despesa da União" juntou-se a
+  "Onde está o gasto", agora "Receita e gasto" (saiu o cartão da obrigatória em % do PIB).
+  Os endereços `#fiscal/meta` e `#fiscal/receita-despesa` redirecionam (`PARTES_ANTIGAS` em
+  `main.ts`).
+
 **16/11/2026**, no `main`: a entrada virou perguntas (Caio: *"o gancho vai ser problemas e
 perguntas [...] mostrar o dado que responde uma pergunta ou problema"*). Feito: o "Saiu por
 último" (o número contra o Focus, `saiu.py`); as oito perguntas (`perguntas.py`,
@@ -104,6 +129,11 @@ Na ordem do plano; o que está aqui ainda não foi feito:
    2010) e a despesa por função só da União (o Tesouro publica o COFOG do Governo Central).
    América Latina tem só cinco países com COFOG do governo geral no FMI; Chile, México e
    Colômbia publicam só o governo central.
+   **Servidores, o que falta**: o prêmio salarial com a mesma escolaridade (pede os
+   microdados da PNAD: a tabela do SIDRA não cruza posição com instrução); a remuneração
+   por poder nos estados (o RGF de cada tribunal e assembleia, 27 × 5 chamadas, e sem
+   contagem de servidores); a folha por função (professores, policiais, saúde). **Estatais,
+   o que falta**: as estaduais (só há o primário do BC) e a série da subvenção antes de 2021.
 4. **A árvore do diagnóstico de crescimento** e o crédito direcionado nas perguntas.
 5. **Contador de acesso nosso**: espera o projeto Supabase do sacibras.
 6. **Estados e Brasil no mundo** com 6 métricas na lista; Estados › Duas métricas com poucos
@@ -127,6 +157,13 @@ As próximas:
 - **até 31/12**: RPM de dezembro → modelos e faixa do efeito da Selic.
 - **até 10/01/2027**: decreto do salário mínimo de 2027 → `leis.SALARIO_MINIMO_NORMAS`
   (o valor vem do SGS 1619; a tela só cita a norma do ano que estiver no dicionário).
+- **até 20/01/2027**: teto do INSS de 2027 (portaria de janeiro) → `relatorios.TETO_INSS`.
+- **até 28/02/2027**: aposentadoria média do INSS (BEPS, quadro 15) →
+  `relatorios.INSS_APOSENTADORIA_MEDIA`.
+- **até 15/05/2027**: avaliações atuariais do PLDO 2028 → `relatorios.SERVIDORES_POR_PODER`
+  e `MILITARES_ATIVOS` (as tabelas por poder são imagem no PDF).
+- **até 15/07/2027**: Relatório Agregado das Estatais 2027 (Sest) →
+  `relatorios.ESTATAIS_POR_ANO`; a resposta da pergunta diz "o menor em cinco anos".
 - **até 30/11/2027**: a conferência do PIB trimestral por estado contra RS, PR, MG, BA e ES
   (`relatorios.CONFERENCIA_PIB_ESTADOS`; `scripts/conferir_pib_estados.py` refaz).
 
@@ -153,6 +190,15 @@ As próximas:
 
 ## Espera o Caio
 
+- **Olhar Servidores, Estatais e as duas perguntas novas** (19/11/2026). O que decidir:
+  (1) são onze perguntas agora; se pesar, a dos servidores pode virar só a explicação que já
+  está em "Onde dá para cortar gasto?"; (2) a junção das partes de Contas públicas (a meta
+  dentro de "Primário, juros e meta"; saíram da tela o primário mês a mês e o cartão da
+  obrigatória em % do PIB); (3) a comparação de rendimento é de médias, sem controlar a
+  escolaridade, e o texto diz isso: ver se está claro o bastante; (4) na aposentadoria, o
+  servidor é de jul/2025 e o INSS de set/2026 (cada um com a data na tabela); (5) a resposta
+  das estatais afirma que "dão mais do que recebem" no caixa e deixa em aberto se vale a
+  pena o Estado ser dono.
 - **Olhar o Laboratório e a pergunta do gasto**: os textos dizem o que a conta acha e onde
   ela é fraca. Pontos a conferir: a regra de Taylor dá 11,7 % contra a Selic de 13,75 %; o
   juro neutro vai de 5,1 % a 7,2 % conforme o método; o estudo de evento acha 4,5 pb no juro

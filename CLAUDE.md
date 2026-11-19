@@ -165,11 +165,23 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   surpresa sem os juros futuros da B3). Peça nova dele vai ao ar com o Caio olhando.
 - **O gasto: obrigatório, discricionário e por função** (Caio, 16/11/2026: *"tem como
   separar as despesas das obrigatórias? Talvez fazer uma análise de onde dá pra cortar
-  gastos [...] comparar com outros países"*): Contas públicas › Onde está o gasto
+  gastos [...] comparar com outros países"*): Contas públicas › Receita e gasto
   (`secoes/gasto.py`). Obrigatória e discricionária vêm do RTN (Governo Central); a
   comparação por função, do COFOG do FMI (governo geral, `fontes/fmi_cofog.py`), contra a
   mediana dos grupos do FMI. A tela não diz onde cortar: mostra onde o Brasil gasta acima dos
   outros e o que a lei amarra, e diz que eficiência de cada programa estes dados não medem.
+- **Servidores e estatais** (Caio, 19/11/2026: *"inclua a distribuição dos gastos por
+  servidores públicos (quem fica com mais) e compare o rendimento e benefícios dos servidores
+  com o setor privado, adicione uma pergunta de quanto as estatais dão lucro ou prejuízo aos
+  cofres públicos"*): Contas públicas › Servidores públicos (`secoes/servidores.py`) e ›
+  Estatais (`secoes/estatais.py`). A folha vem por esfera e contra os outros países (FMI),
+  por tipo (RTN), por poder (Siconfi, com a remuneração média lida na avaliação atuarial do
+  PLDO) e o contracheque contra o do setor privado (PNAD). **A comparação é de médias, e a
+  tela diz isso**: o servidor tem mais escola, e estes dados não separam o quanto da diferença
+  vem daí. Nas estatais, a conta é a do caixa (dividendos menos subvenção e aporte, a mesma
+  que a Sest faz), dita como tal: não é o lucro das empresas nem o valor delas, e a tela não
+  diz se vale a pena o Estado ser dono. Para caber no teto de cinco partes, a meta fiscal
+  entrou em "Primário, juros e meta" e a receita e a despesa da União em "Receita e gasto".
 - **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
   muitas informações em uma página [...] classifique melhor em categorias, crie
   subcategorias"*). Tudo mora em `builder/src/sacibras/organizacao.py`: `CATEGORIAS` agrupa os

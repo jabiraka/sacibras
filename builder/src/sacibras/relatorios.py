@@ -625,3 +625,181 @@ FONTE_CONFERENCIA_PIB_ESTADOS = (
     "PIB trimestral estadual: DEE/SPGG (RS), IPARDES (PR), Fundação João Pinheiro (MG), "
     "SEI (BA) e IJSN (ES)"
 )
+
+
+# ------------------------------------------------------------------ servidores
+
+
+# Quanto ganha, em média, o servidor civil da União de cada poder, na ativa e aposentado
+# (Caio, 19/11/2026: *"inclua a distribuição dos gastos por servidores públicos (quem fica
+# com mais) e compare o rendimento e benefícios dos servidores com o setor privado"*).
+# Lido em 19/11/2026 no PLDO 2027, Anexo IV.11, "Avaliação Atuarial do Regime Próprio de
+# Previdência Social dos Servidores Civis" (relatório de março/2026), tabelas 3 a 6, p. 16 e
+# 17, coluna "Geral"; as tabelas são imagem no PDF e foram lidas na página.
+# gov.br/planejamento/pt-br/assuntos/orcamento/orcamentos-anuais/2027/pldo/
+#   anexo-iv-11-avaliacao-atuarial-rpps.pdf
+# P. 14-15: "os dados da base cadastral dos servidores, aposentados e pensionistas, usados no
+# cálculo atuarial, devem referir-se ao mês de julho de 2025" e "foram considerados 1.557.180
+# segurados, sendo 792.702 (50,9%) servidores ativos, 467.837 (30,0%) aposentados e 296.641
+# (19,0%) pensionistas" (as quantidades por poder abaixo somam esses totais).
+# O Executivo inclui o Banco Central, a Abin e a Defensoria; o Legislativo, o TCU; o
+# Ministério Público é o da União. Sai todo ano, em abril, com o PLDO.
+@dataclass(frozen=True)
+class ServidoresDoPoder:
+    poder: str
+    ativos: int
+    remuneracao: float
+    """Remuneração média dos servidores na ativa, R$ por mês."""
+    aposentados: int
+    provento: float
+    """Provento médio dos aposentados, R$ por mês."""
+    pensionistas: int
+    pensao: float
+
+
+SERVIDORES_EM = date(2025, 7, 1)
+SERVIDORES_POR_PODER = [
+    ServidoresDoPoder("Executivo", 663_308, 13_369.72, 421_369, 12_013.58, 281_712, 7_050.41),
+    ServidoresDoPoder("Judiciário", 105_545, 14_977.90, 34_919, 22_056.80, 10_145, 16_016.67),
+    ServidoresDoPoder(
+        "Legislativo (com o TCU)", 6_960, 18_541.40, 8_752, 39_389.57, 3_729, 25_356.55
+    ),
+    ServidoresDoPoder(
+        "Ministério Público da União", 16_889, 16_663.22, 2_797, 23_664.18, 1_055, 17_383.86
+    ),
+]
+FONTE_SERVIDORES = (
+    "Ministério da Previdência Social, Avaliação Atuarial do RPPS dos servidores civis da "
+    "União (PLDO 2027, Anexo IV.11), tabelas 3 a 6"
+)
+
+# Os militares das Forças Armadas, do mesmo PLDO 2027, Anexo IV.12, volume 1 ("Avaliação
+# atuarial dos proventos de militares inativos e dos benefícios de pensionistas de
+# militares"), seções 3.1.1 e 3.1.2, p. 6 e 7, lido em 19/11/2026: "Os dados correntes
+# utilizados foram de maio de 2025, extrapolados para a posição de 31 de dezembro de 2025."
+# (grupo, quantidade, remuneração média em R$ por mês). Os praças temporários são, na maior
+# parte, recrutas do serviço militar obrigatório.
+MILITARES_ATIVOS = [
+    ("Oficiais de carreira", 34_076, 21_456.96),
+    ("Oficiais temporários", 16_589, 12_840.88),
+    ("Praças de carreira", 102_922, 8_854.28),
+    ("Praças temporários", 181_334, 2_486.77),
+    ("Praças especiais de carreira", 8_063, 2_620.22),
+    ("Praças especiais temporários", 7_874, 5_168.51),
+]
+MILITARES_INATIVOS = [("Oficiais", 53_030, 25_719.58), ("Praças", 115_534, 10_296.38)]
+FONTE_MILITARES = (
+    "Ministério da Defesa, Avaliação Atuarial do Sistema de Pensões Militares das Forças "
+    "Armadas (PLDO 2027, Anexo IV.12, volume 1)"
+)
+
+# O que o INSS paga, para comparar. Boletim Estatístico da Previdência Social, set/2026
+# (vol. 31, nº 9), quadro 15, "Benefícios emitidos pelo INSS, por clientela, segundo os grupos
+# de espécies", p. 32, lido em 19/11/2026; valor médio em R$ por mês:
+#   "Aposentadorias [...] 2.051,05 2.339,68 1.437,93" (total, urbano, rural)
+#   "Tempo de Contribuição [...] 3.032,35"; "Idade [...] 1.617,72"
+# gov.br/previdencia/.../boletins-da-previdencia-social/2026/beps092026_final.pdf. Mensal.
+INSS_EM = date(2026, 9, 1)
+INSS_APOSENTADORIA_MEDIA = 2_051.05
+INSS_APOSENTADORIA_TEMPO = 3_032.35
+INSS_APOSENTADORIA_IDADE = 1_617.72
+INSS_APOSENTADORIAS = 24_727_767
+FONTE_INSS = "Ministério da Previdência Social, Boletim Estatístico da Previdência Social"
+
+# Os dois tetos. O do INSS: Portaria Interministerial MPS/MF nº 13, de 9/1/2026 (DOU de
+# 12/1/2026), art. 2º, lida em 19/11/2026 na cópia do DOU no site do ministério: "O salário
+# de benefício e o salário de contribuição, a partir de 1º de janeiro de 2026, não poderão ser
+# inferiores a R$ 1.621,00 [...] nem superiores a R$ 8.475,55". Muda todo janeiro.
+# O do serviço público é o subsídio de ministro do STF: Lei nº 14.520, de 9/1/2023, art. 1º,
+# III, lida em 19/11/2026 no Senado (legis.senado.leg.br/norma/36753460/publicacao/36755366):
+# "R$ 46.366,19 [...], a partir de 1º de fevereiro de 2025". Nenhuma lei de 2025 ou de 2026
+# (até 18/11/2026) com "subsídio" na ementa na lista do Senado.
+TETO_INSS = 8_475.55
+TETO_INSS_ANO = 2026
+TETO_SERVICO_PUBLICO = 46_366.19
+FONTE_TETOS = (
+    "Portaria Interministerial MPS/MF nº 13/2026, art. 2º (INSS); Lei nº 14.520/2023, "
+    "art. 1º (subsídio de ministro do STF)"
+)
+
+
+# ------------------------------------------------------------------ estatais
+
+
+# O que as estatais federais dão e o que recebem da União, ano a ano (Caio, 19/11/2026:
+# *"adicione uma pergunta de quanto as estatais dão lucro ou prejuízo aos cofres
+# públicos"*). Lido em 19/11/2026 no "Relatório Agregado das Empresas Estatais Federais 2026 |
+# Ano Base 2025" (Sest, Ministério da Gestão, 18/6/2026), p. 86, "Anexo I – Séries históricas,
+# Dados gerais (todas as empresas)", e conferido somando as linhas da planilha do mesmo anexo:
+#   "Resultado Líquido 187.473,4 275.122,9 197.908,1 116.478,9 169.382,8"
+#   "Pagos à União 40.147,4 86.744,4 49.635,1 72.016,9 45.756,7"
+#   "Subvenção 20.345,2 22.224,6 23.930,4 27.160,7 30.924,6"
+# gov.br/gestao/pt-br/assuntos/estatais/transparencia/defeso_relatorio%20agregado
+# O aporte de capital (AFAC, adiantamento para futuro aumento de capital) vem da soma da
+# planilha: a tabela da p. 86 traz 3.418,3 em 2025, o dobro, e o texto da p. 17 diz "da ordem
+# de R$ 1,7 bilhão", que é a soma (1.709,1). P. 17: "o retorno financeiro das estatais
+# federais em 2025 (dividendos e JCP pagos à União menos os valores de subvenções e de [...]
+# AFAC) foi de R$ 13,1 bilhões". P. 21: "No universo das 44 empresas de controle direto, 17
+# são dependentes e 27 não dependentes de recursos do Tesouro Nacional."
+# Sai uma vez por ano, em junho. Valores em R$ milhões.
+@dataclass(frozen=True)
+class EstataisNoAno:
+    lucro: float
+    """Resultado líquido de todas as estatais federais somadas (os prejuízos descontados)."""
+    dividendos_uniao: float
+    """Dividendos e juros sobre capital próprio pagos à União."""
+    subvencao: float
+    """O que o Tesouro repassou às dependentes para pessoal e custeio."""
+    aporte: float
+    """Adiantamento para futuro aumento de capital."""
+    prejuizos: float
+    """A soma só das empresas que fecharam o ano no vermelho (soma nossa da planilha)."""
+
+
+ESTATAIS_POR_ANO: dict[int, EstataisNoAno] = {
+    2021: EstataisNoAno(187_473.4, 40_147.4, 20_345.2, 1_123.6, -3_793.7),
+    2022: EstataisNoAno(275_122.9, 86_744.4, 22_224.6, 2_036.0, -3_427.5),
+    2023: EstataisNoAno(197_908.1, 49_635.1, 23_930.4, 2_399.5, -3_674.3),
+    2024: EstataisNoAno(116_478.9, 72_016.9, 27_160.7, 1_572.2, -4_764.0),
+    2025: EstataisNoAno(169_382.8, 45_756.7, 30_924.6, 1_709.1, -10_583.7),
+}
+ESTATAIS_DIRETAS = 44
+ESTATAIS_DEPENDENTES = 17
+
+# Quem recebeu a subvenção em 2025 (mesmo relatório, p. 17, quadro "Recursos recebidos do
+# Tesouro Nacional – Subvenção, em 2025 (R$ milhões)": "HU Brasil (Ebserh) 13.678,0 / Embrapa
+# 4.501,4 [...] TOTAL 30.925"), com o que cada uma faz, para a tela.
+SUBVENCOES_2025: list[tuple[str, float]] = [
+    ("Ebserh (hospitais universitários)", 13_678.0),
+    ("Embrapa (pesquisa agropecuária)", 4_501.4),
+    ("Grupo Hospitalar Conceição", 2_650.1),
+    ("Hospital de Clínicas de Porto Alegre", 2_026.5),
+    ("Codevasf (obras nos vales do São Francisco e do Parnaíba)", 1_694.6),
+    ("Conab (abastecimento)", 1_327.2),
+    ("CBTU (trens urbanos)", 1_285.3),
+    ("CPRM (Serviço Geológico)", 698.3),
+    ("EBC (comunicação pública)", 609.5),
+    ("Amazul (programa nuclear da Marinha)", 512.6),
+    ("Nuclep (equipamentos pesados)", 450.5),
+    ("Telebras", 406.9),
+    ("Trensurb (trens de Porto Alegre)", 324.0),
+    ("Infra S.A. (ferrovias e projetos)", 274.9),
+    ("Imbel (material bélico)", 239.5),
+    ("EPE (pesquisa energética)", 176.5),
+    ("Ceitec (semicondutores)", 68.7),
+]
+
+# O lucro (ou prejuízo) dos maiores, R$ milhões, 2024 e 2025 (mesmo relatório, p. 88 a 105,
+# e a planilha do Anexo I, coluna "RESULTADO LÍQUIDO"). P. 15: "Petrobras (R$ 110,6 bilhões),
+# BNDES (R$ 25,6 bilhões) e BB (R$ 17,8 bilhões), que responderam por 90,9% do lucro total".
+LUCRO_DOS_MAIORES: list[tuple[str, float, float]] = [
+    ("Petrobras", 37_009.0, 110_605.0),
+    ("BNDES", 26_387.7, 25_571.6),
+    ("Banco do Brasil", 35_439.9, 17_808.0),
+    ("Caixa", 13_526.5, 16_051.8),
+    ("Correios", -2_447.2, -8_457.8),
+]
+FONTE_ESTATAIS = (
+    "Ministério da Gestão (Sest), Relatório Agregado das Empresas Estatais Federais 2026, "
+    "ano-base 2025, anexo I"
+)

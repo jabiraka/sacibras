@@ -534,6 +534,40 @@ SGS: dict[str, SerieSGS] = {
         "M",
         "14/11/2026",
     ),
+    # Conferidas no package_search em 19/11/2026 (fq=codigo_sgs:N): "NFSP sem desvalorização
+    # cambial (% PIB) - Fluxo acumulado em 12 meses - Resultado primário - Total - Empresas
+    # estatais federais" (5790), "estaduais" (5791) e "municipais" (5792), Percentual, e
+    # "NFSP sem desvalorização cambial - Fluxo mensal corrente - Resultado primário - Total -
+    # Empresas estatais federais" (4646), Milhões de reais. As estatísticas fiscais do BC não
+    # contam os bancos públicos nem, desde 2009 e 2010, a Petrobras e a Eletrobras.
+    "ESTATAIS_FEDERAIS_12M": SerieSGS(
+        5790,
+        "NFSP, resultado primário em 12 meses, empresas estatais federais",
+        "% do PIB",
+        "M",
+        "19/11/2026",
+    ),
+    "ESTATAIS_ESTADUAIS_12M": SerieSGS(
+        5791,
+        "NFSP, resultado primário em 12 meses, empresas estatais estaduais",
+        "% do PIB",
+        "M",
+        "19/11/2026",
+    ),
+    "ESTATAIS_MUNICIPAIS_12M": SerieSGS(
+        5792,
+        "NFSP, resultado primário em 12 meses, empresas estatais municipais",
+        "% do PIB",
+        "M",
+        "19/11/2026",
+    ),
+    "ESTATAIS_FEDERAIS_MES": SerieSGS(
+        4646,
+        "NFSP, resultado primário, fluxo mensal, empresas estatais federais",
+        "R$ milhões",
+        "M",
+        "19/11/2026",
+    ),
     # Conferida no package_search em 14/11/2026: "NFSP sem desvalorização cambial - Fluxo
     # mensal corrente - Resultado primário - Total - Governo Federal e Banco Central" (o
     # Governo Central, que é o da meta da LDO), mensal, mesma família e unidade da 4649.

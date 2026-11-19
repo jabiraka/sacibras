@@ -6,6 +6,7 @@ Aqui tudo vira RESULTADO: superávit positivo, déficit negativo.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 
 from sacibras import contas, leis
@@ -21,7 +22,7 @@ from sacibras.schema import (
     Secao,
     Tabela,
 )
-from sacibras.secoes import gasto
+from sacibras.secoes import estatais, gasto, servidores
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -569,6 +570,54 @@ def montar(ctx: Contexto) -> Secao:
         tabelas += t_pais
     except Exception as erro:
         print(f"    o gasto por função (FMI) ficou de fora: {str(erro)[:120]}")
+
+    # --- Servidores e estatais (Caio, 19/11/2026). Cada fonte que falhar deixa só o pedaço
+    # dela de fora.
+    try:
+        pib_12m = ctx.sgs("PIB_12M", anos)
+        c_serv, g_serv, t_serv = servidores.pecas(pib_12m, inicio, ctx.hoje)
+        cartoes += c_serv
+        graficos += g_serv
+        tabelas += t_serv
+        das_estatais: list[tuple[str, Callable[[], estatais.Pecas]]] = [
+            (
+                "os dividendos (RTN)",
+                lambda: estatais.dividendos(
+                    tesouro_rtn.detalhes(),
+                    pib_12m,
+                    "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, "
+                    f"tabela 1.2); PIB: {ctx.fonte_sgs('PIB_12M')}",
+                    inicio,
+                ),
+            ),
+            ("a conta do ano (Sest)", estatais.conta_do_ano),
+            (
+                "o primário das estatais (BC)",
+                lambda: estatais.primario(
+                    ctx.sgs("ESTATAIS_FEDERAIS_12M", anos),
+                    ctx.sgs("ESTATAIS_ESTADUAIS_12M", anos),
+                    ctx.sgs("ESTATAIS_MUNICIPAIS_12M", anos),
+                    ctx.sgs("ESTATAIS_FEDERAIS_MES", anos),
+                    ctx.fonte_sgs(
+                        "ESTATAIS_FEDERAIS_12M",
+                        "ESTATAIS_ESTADUAIS_12M",
+                        "ESTATAIS_MUNICIPAIS_12M",
+                        "ESTATAIS_FEDERAIS_MES",
+                    ),
+                    inicio,
+                ),
+            ),
+        ]
+        for nome, montar in das_estatais:
+            try:
+                c_est, g_est, t_est = montar()
+                cartoes += c_est
+                graficos += g_est
+                tabelas += t_est
+            except Exception as erro:
+                print(f"    estatais: {nome} ficou de fora: {str(erro)[:120]}")
+    except Exception as erro:
+        print(f"    servidores e estatais ficaram de fora: {str(erro)[:120]}")
 
     # --- Dívida por indexador (SGS 4173 a 4180: dívida mobiliária federal, posição em carteira) ---
     chaves_divida = [

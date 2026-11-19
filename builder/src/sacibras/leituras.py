@@ -73,7 +73,7 @@ LEITURAS: list[Leitura] = [
         "perguntas.LIDAS_EM",
         date(2026, 11, 16),
         date(2027, 2, 16),
-        "Abrir as oito perguntas no site e conferir cada frase contra o número ao lado: a "
+        "Abrir as perguntas no site e conferir cada frase contra o número ao lado: a "
         "inflação contra o teto, o ritmo dos núcleos, a desocupação contra o mínimo da série, "
         "o primário que estabiliza contra o maior já feito, a implícita contra o Focus. A "
         "cada três meses, e antes disso se o IPCA voltar à meta ou a Selic mudar de direção.",
@@ -310,6 +310,52 @@ LEITURAS: list[Leitura] = [
         date(2026, 11, 14),
         date(2027, 3, 31),
         "PGFN em Números (gov.br/pgfn, institucional), que sai em março. Uma vez por ano.",
+    ),
+    # ------------------------------------------------------------- servidores e estatais
+    Leitura(
+        "Servidores civis da União por poder: quantos são e a remuneração média",
+        "relatorios.SERVIDORES_POR_PODER",
+        date(2026, 11, 19),
+        date(2027, 5, 15),
+        "PLDO 2028 (sai até 15/4/2027), anexo de metas fiscais, 'Avaliação Atuarial do RPPS "
+        "dos servidores civis', tabelas por poder (são imagem no PDF: ler na página). Trocar "
+        "também SERVIDORES_EM. Uma vez por ano.",
+    ),
+    Leitura(
+        "Militares das Forças Armadas: quantos são e a remuneração média",
+        "relatorios.MILITARES_ATIVOS",
+        date(2026, 11, 19),
+        date(2027, 5, 15),
+        "PLDO 2028, 'Avaliação Atuarial do Sistema de Pensões Militares das Forças Armadas', "
+        "volume 1, seções 3.1.1 e 3.1.2; atualizar também MILITARES_INATIVOS. Uma vez por ano.",
+    ),
+    Leitura(
+        "Valor médio das aposentadorias do INSS",
+        "relatorios.INSS_APOSENTADORIA_MEDIA",
+        date(2026, 11, 19),
+        date(2027, 2, 28),
+        "Boletim Estatístico da Previdência Social (gov.br/previdencia, boletins da "
+        "previdência social), quadro 15, linhas Aposentadorias, Idade e Tempo de Contribuição; "
+        "trocar também INSS_EM. Sai todo mês; reler a cada três, e nunca com o mês do 13º.",
+    ),
+    Leitura(
+        "Teto do INSS e teto do serviço público",
+        "relatorios.TETO_INSS",
+        date(2026, 11, 19),
+        date(2027, 1, 20),
+        "Portaria interministerial MPS/MF de janeiro (art. 2º, o maior salário de benefício); "
+        "e a lista de leis do Senado, para ver se há lei nova do subsídio de ministro do STF. "
+        "Trocar TETO_INSS_ANO. Uma vez por ano.",
+    ),
+    Leitura(
+        "Estatais federais: lucro, dividendos à União, subvenção e aporte, por ano",
+        "relatorios.ESTATAIS_POR_ANO",
+        date(2026, 11, 19),
+        date(2027, 7, 15),
+        "Sest (gov.br/gestao, estatais, transparência), Relatório Agregado das Empresas "
+        "Estatais Federais 2027, anexo I (PDF e planilha; o nome do arquivo muda a cada "
+        "edição). Acrescentar 2026 e atualizar SUBVENCOES_2025 e LUCRO_DOS_MAIORES. Sai em "
+        "junho. O texto da pergunta das estatais diz 'o menor em cinco anos': conferir.",
     ),
 ]
 

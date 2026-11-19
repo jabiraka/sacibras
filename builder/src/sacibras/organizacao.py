@@ -268,34 +268,63 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "resultado",
-            "Primário e juros",
-            "O resultado do setor público antes e depois dos juros.",
-            cartoes=["primario", "juros-divida", "nominal"],
-            graficos=["primario", "nominal", "primario-mensal"],
-            tabelas=["primario-bc-fmi"],
-        ),
-        Parte(
-            "meta",
-            "Meta fiscal",
-            "O primário do Governo Central contra a meta da LDO e os descontos da apuração.",
-            cartoes=["meta-primario"],
-            graficos=["meta-primario"],
-            tabelas=["meta-primario"],
-        ),
-        Parte(
-            "receita-despesa",
-            "Receita e despesa da União",
-            "Quanto o Governo Central arrecada e gasta, e com o quê.",
-            cartoes=["despesa-gc", "previdencia-rgps"],
-            graficos=["receita-despesa", "despesa-composicao"],
+            "Primário, juros e meta",
+            "O resultado do setor público antes e depois dos juros, e o primário do Governo "
+            "Central contra a meta da LDO.",
+            cartoes=["primario", "juros-divida", "nominal", "meta-primario"],
+            graficos=["primario", "nominal", "meta-primario"],
+            tabelas=["primario-bc-fmi", "meta-primario"],
         ),
         Parte(
             "gasto",
-            "Onde está o gasto",
-            "O que é obrigatório e o que não é, e o Brasil contra os outros países por função.",
-            cartoes=["discricionaria-parte", "obrigatoria-pib", "gasto-acima-pares"],
-            graficos=["despesa-rigidez"],
+            "Receita e gasto",
+            "Quanto o Governo Central arrecada e gasta, o que é obrigatório e o Brasil contra "
+            "os outros países por função.",
+            cartoes=["despesa-gc", "previdencia-rgps", "discricionaria-parte", "gasto-acima-pares"],
+            graficos=["receita-despesa", "despesa-composicao", "despesa-rigidez"],
             tabelas=["despesa-obrigatoria", "gasto-por-funcao"],
+        ),
+        # Caio, 19/11/2026: "inclua a distribuição dos gastos por servidores públicos (quem
+        # fica com mais) e compare o rendimento e benefícios [...] com o setor privado" e a
+        # pergunta das estatais. Para caber no teto de cinco partes, a meta entrou em
+        # "Primário, juros e meta" (o primário mês a mês saiu da tela) e "Receita e despesa
+        # da União" juntou-se a "Onde está o gasto" (saiu o cartão da obrigatória em % do PIB,
+        # que está no gráfico).
+        Parte(
+            "servidores",
+            "Servidores públicos",
+            "Quanto custa a folha, quem fica com mais (esfera, poder, ativos e aposentados) e "
+            "o contracheque e a aposentadoria contra os do setor privado.",
+            cartoes=[
+                "folha-ativos-pib",
+                "servidor-rendimento",
+                "aposentadoria-servidor",
+                "folha-inativos",
+            ],
+            graficos=["rendimento-publico-privado", "folha-por-esfera", "folha-uniao"],
+            tabelas=[
+                "folha-quem-fica",
+                "folha-por-poder",
+                "remuneracao-por-poder",
+                "folha-uniao",
+                "rendimento-por-posicao",
+                "aposentadoria-publico-privado",
+                "folha-paises",
+            ],
+        ),
+        Parte(
+            "estatais",
+            "Estatais",
+            "O que as estatais federais pagam à União em dividendos, o que recebem em "
+            "subvenção e capital, e o resultado das que contam no setor público.",
+            cartoes=["estatais-saldo", "dividendos-12m", "estatais-subvencao", "estatais-primario"],
+            graficos=["estatais-conta", "dividendos-por-empresa", "estatais-primario"],
+            tabelas=[
+                "estatais-conta",
+                "dividendos-por-empresa",
+                "estatais-subvencoes",
+                "estatais-lucro",
+            ],
         ),
     ],
     "impostos": [

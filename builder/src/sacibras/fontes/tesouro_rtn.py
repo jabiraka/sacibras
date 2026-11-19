@@ -47,6 +47,41 @@ LINHAS = {
 }
 
 
+# As outras abas mensais têm o mesmo desenho da 1.1 (cabeçalho na linha 5, uma coluna por
+# mês). Rótulos lidos no arquivo de jul/2026, em 19/11/2026 (Caio: "inclua a distribuição dos
+# gastos por servidores públicos" e "quanto as estatais dão lucro ou prejuízo").
+ABA_DIVIDENDOS = "1.2"
+"""Resultado primário, versão aberta: os dividendos que a União recebe, empresa por empresa."""
+LINHAS_DIVIDENDOS = {
+    "dividendos e participacoes": "dividendos",
+    "banco do brasil": "div_bb",
+    "bnb": "div_bnb",
+    "bndes": "div_bndes",
+    "caixa economica federal": "div_caixa",
+    "empresa brasileira de correios e telegrafos (correios)": "div_correios",
+    "eletrobras": "div_eletrobras",
+    "irb": "div_irb",
+    "petrobras": "div_petrobras",
+    "demais dividendos e participacoes": "div_demais",
+}
+ABA_INVESTIMENTO = "1.3"
+"""Investimento e inversões financeiras: o dinheiro que a União põe no capital das estatais."""
+LINHAS_INVESTIMENTO = {
+    "despesas com aumento de capital de empresas estatais nao dependentes "
+    "(participacao da uniao no capital)": "aumento_de_capital",
+}
+ABA_PAGO = "1.5"
+"""Despesas pelo critério de valor pago: a folha aberta em ativos e inativos, civis e
+militares (desde 2008)."""
+LINHAS_PESSOAL = {
+    "pessoal e encargos sociais": "pessoal_pago",
+    "ativo civil": "ativo_civil",
+    "ativo militar": "ativo_militar",
+    "aposentadorias e pensoes civis": "inativo_civil",
+    "reformas e pensoes militares": "inativo_militar",
+}
+
+
 class LinhaSumiuError(FonteForaDoArError):
     """Um rótulo esperado não está mais na tabela (o Tesouro mudou o arquivo)."""
 
@@ -62,18 +97,25 @@ def normalizar(rotulo: str) -> str:
     return re.sub(r"\s+", " ", texto).strip()
 
 
-def ler_aba(conteudo: bytes) -> dict[str, list[Ponto]]:
-    """{nome da linha: [(1º dia do mês, R$ milhões)]} da aba 1.1; mês vazio é pulado."""
+def ler_aba(
+    conteudo: bytes, aba: str = ABA, rotulos: dict[str, str] | None = None
+) -> dict[str, list[Ponto]]:
+    """{nome da linha: [(1º dia do mês, R$ milhões)]} da aba (a 1.1, se não disser outra);
+    mês vazio é pulado."""
     livro = openpyxl.load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
     try:
-        if ABA not in livro.sheetnames:
-            raise LinhaSumiuError(f"RTN: sem a aba {ABA!r} (abas: {livro.sheetnames[:6]}...)")
-        linhas = list(livro[ABA].iter_rows(values_only=True))
+        return _ler_folha(livro, aba, LINHAS if rotulos is None else rotulos)
     finally:
         livro.close()
 
+
+def _ler_folha(livro: Any, aba: str, rotulos: dict[str, str]) -> dict[str, list[Ponto]]:
+    if aba not in livro.sheetnames:
+        raise LinhaSumiuError(f"RTN: sem a aba {aba!r} (abas: {livro.sheetnames[:6]}...)")
+    linhas = list(livro[aba].iter_rows(values_only=True))
+
     if len(linhas) < LINHA_DO_CABECALHO:
-        raise LinhaSumiuError(f"RTN: a aba {ABA} tem só {len(linhas)} linhas")
+        raise LinhaSumiuError(f"RTN: a aba {aba} tem só {len(linhas)} linhas")
     cabecalho = linhas[LINHA_DO_CABECALHO - 1]
     colunas = [
         (i, c.date() if isinstance(c, datetime) else c)
@@ -81,17 +123,17 @@ def ler_aba(conteudo: bytes) -> dict[str, list[Ponto]]:
         if i > 0 and isinstance(c, (datetime, date))
     ]
     if not colunas:
-        raise LinhaSumiuError(f"RTN: sem datas no cabeçalho da aba {ABA} (linha 5)")
+        raise LinhaSumiuError(f"RTN: sem datas no cabeçalho da aba {aba} (linha 5)")
 
     achadas: dict[str, tuple[Any, ...]] = {}
     for linha in linhas[LINHA_DO_CABECALHO:]:
         if isinstance(linha[0], str):
-            nome = LINHAS.get(normalizar(linha[0]))
+            nome = rotulos.get(normalizar(linha[0]))
             if nome and nome not in achadas:  # vale a primeira: os detalhes vêm depois
                 achadas[nome] = linha
-    faltam = [r for r, n in LINHAS.items() if n not in achadas]
+    faltam = [r for r, n in rotulos.items() if n not in achadas]
     if faltam:
-        raise LinhaSumiuError(f"RTN, aba {ABA}: rótulo(s) que sumiram da tabela: {faltam}")
+        raise LinhaSumiuError(f"RTN, aba {aba}: rótulo(s) que sumiram da tabela: {faltam}")
 
     return {
         nome: [
@@ -122,3 +164,25 @@ def endereco_da_serie_historica() -> str:
 def serie_historica() -> dict[str, list[Ponto]]:
     corpo = baixar(endereco_da_serie_historica(), validade=24 * 3600, tempo_limite=180)
     return ler_aba(corpo)
+
+
+def ler_detalhes(conteudo: bytes) -> dict[str, list[Ponto]]:
+    """Os dividendos por empresa (aba 1.2), o aumento de capital das estatais (1.3) e a folha
+    por tipo de servidor (1.5), num dicionário só: os nomes não se repetem entre as abas."""
+    livro = openpyxl.load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
+    try:
+        saida: dict[str, list[Ponto]] = {}
+        for aba, rotulos in (
+            (ABA_DIVIDENDOS, LINHAS_DIVIDENDOS),
+            (ABA_INVESTIMENTO, LINHAS_INVESTIMENTO),
+            (ABA_PAGO, LINHAS_PESSOAL),
+        ):
+            saida |= _ler_folha(livro, aba, rotulos)
+        return saida
+    finally:
+        livro.close()
+
+
+def detalhes() -> dict[str, list[Ponto]]:
+    corpo = baixar(endereco_da_serie_historica(), validade=24 * 3600, tempo_limite=180)
+    return ler_detalhes(corpo)

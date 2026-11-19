@@ -352,7 +352,7 @@ PERGUNTAS: tuple[Definicao, ...] = (
         "infraestrutura.",
         (
             ("fiscal", "discricionaria-parte"),
-            ("fiscal", "obrigatoria-pib"),
+            ("fiscal", "previdencia-rgps"),
             ("fiscal", "gasto-acima-pares"),
         ),
         (
@@ -378,6 +378,14 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 None,
                 (("fiscal", "gasto-acima-pares"),),
                 ("fiscal", "gasto-por-funcao"),
+            ),
+            Bloco(
+                "A folha dos servidores",
+                "A folha de quem está na ativa pesa mais no Brasil que na mediana dos "
+                "emergentes, e a maior parte dela é de estados e municípios.",
+                ("fiscal", "folha-por-esfera"),
+                (("fiscal", "folha-ativos-pib"), ("fiscal", "folha-inativos")),
+                ("fiscal", "folha-paises"),
             ),
             Bloco(
                 "O que se deixa de arrecadar também é gasto",
@@ -406,6 +414,132 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "gasto do Brasil acima dos outros países está na proteção social e nos juros. "
             "Onde cortar é escolha política, e se cada real é bem gasto pede avaliar programa "
             "por programa, o que estes números não fazem."
+        ),
+    ),
+    Definicao(
+        "servidores",
+        "Servidor público ganha mais que quem trabalha no setor privado?",
+        "Na média, sim: o servidor estatutário ganha cerca do dobro do empregado com "
+        "carteira, e a aposentadoria média do servidor federal é várias vezes a do INSS. "
+        "Quanto disso vem de o servidor ter mais escola, estes dados não separam.",
+        (
+            ("fiscal", "servidor-rendimento"),
+            ("fiscal", "aposentadoria-servidor"),
+            ("fiscal", "folha-ativos-pib"),
+        ),
+        (
+            Bloco(
+                "O contracheque",
+                "O rendimento médio de quem trabalha para o governo e de quem trabalha para "
+                "empresa, com e sem carteira, já descontada a inflação.",
+                ("fiscal", "rendimento-publico-privado"),
+                (("fiscal", "servidor-rendimento"),),
+                ("fiscal", "rendimento-por-posicao"),
+            ),
+            Bloco(
+                "A aposentadoria",
+                "O servidor federal aposentado recebe, em média, bem acima do teto do INSS; "
+                "no INSS, a maioria das aposentadorias fica perto do salário mínimo.",
+                None,
+                (("fiscal", "aposentadoria-servidor"), ("fiscal", "folha-inativos")),
+                ("fiscal", "aposentadoria-publico-privado"),
+            ),
+            Bloco(
+                "Quem fica com mais: os poderes",
+                "Na União, o Executivo leva a maior parte da folha porque tem mais gente; "
+                "as médias mais altas são do Legislativo, do Ministério Público e do Judiciário.",
+                ("fiscal", "folha-uniao"),
+                (),
+                ("fiscal", "remuneracao-por-poder"),
+            ),
+            Bloco(
+                "Quem fica com mais: as esferas",
+                "Mais da metade do gasto com servidores é de estados e municípios, onde "
+                "estão os professores, os policiais e a maior parte da saúde.",
+                ("fiscal", "folha-por-esfera"),
+                (),
+                ("fiscal", "folha-quem-fica"),
+            ),
+            Bloco(
+                "O Brasil e os outros países",
+                "A folha da ativa do governo todo, em relação ao PIB, contra a mediana dos "
+                "emergentes, da América Latina e dos países ricos.",
+                None,
+                (("fiscal", "folha-ativos-pib"),),
+                ("fiscal", "folha-paises"),
+            ),
+        ),
+        (
+            "salário de servidor",
+            "funcionário público",
+            "funcionalismo",
+            "supersalários",
+            "aposentadoria de servidor",
+            "folha de pagamento do governo",
+        ),
+        conclusao=(
+            "O servidor ganha mais na média e se aposenta com mais: isso os dados mostram. Se "
+            "ganha mais que alguém com a mesma formação no setor privado, eles não decidem. E "
+            "a média esconde muito: as mais altas são de poucos, no Legislativo, no Ministério "
+            "Público e no Judiciário."
+        ),
+    ),
+    Definicao(
+        "estatais",
+        "As estatais dão lucro ou prejuízo aos cofres públicos?",
+        "No caixa da União, dão mais do que recebem: desde 2021, os dividendos superam todo "
+        "ano a subvenção e o capital que o Tesouro põe nelas. Mas o ganho vem de quatro "
+        "empresas, oscila muito, e o saldo de 2025 foi o menor em cinco anos.",
+        (
+            ("fiscal", "estatais-saldo"),
+            ("fiscal", "dividendos-12m"),
+            ("fiscal", "estatais-primario"),
+        ),
+        (
+            Bloco(
+                "O que entra e o que sai",
+                "De um lado, os dividendos que a União recebe; do outro, a subvenção e o "
+                "capital que ela põe nas estatais. A diferença é o saldo do ano.",
+                ("fiscal", "estatais-conta"),
+                (("fiscal", "estatais-saldo"),),
+                ("fiscal", "estatais-conta"),
+            ),
+            Bloco(
+                "Quatro empresas pagam quase tudo",
+                "BNDES, Petrobras, Banco do Brasil e Caixa. O dividendo acompanha o lucro "
+                "delas, que sobe e desce com o petróleo e com o crédito.",
+                ("fiscal", "dividendos-por-empresa"),
+                (("fiscal", "dividendos-12m"),),
+                ("fiscal", "estatais-lucro"),
+            ),
+            Bloco(
+                "As que vivem do orçamento",
+                "As estatais dependentes recebem do Tesouro para pagar pessoal e custeio. "
+                "São na maior parte hospitais, pesquisa e obras: não vendem o que fazem.",
+                None,
+                (("fiscal", "estatais-subvencao"),),
+                ("fiscal", "estatais-subvencoes"),
+            ),
+            Bloco(
+                "As que gastam mais do que arrecadam",
+                "Sem os bancos, a Petrobras e a Eletrobras, as estatais federais fecham no "
+                "vermelho, e esse déficit entra na conta do setor público.",
+                ("fiscal", "estatais-primario"),
+                (("fiscal", "estatais-primario"),),
+            ),
+        ),
+        (
+            "estatais dão prejuízo",
+            "lucro das estatais",
+            "dividendos da Petrobras",
+            "prejuízo dos Correios",
+            "privatização",
+            "empresas públicas",
+        ),
+        conclusao=(
+            "Como caixa, as estatais ajudam o Tesouro, e a ajuda depende de poucas empresas. "
+            "Se vale a pena o Estado ser dono delas é outra pergunta: depende do que cada uma "
+            "entrega e de quanto valeria vendida, e isso estes dados não medem."
         ),
     ),
     Definicao(

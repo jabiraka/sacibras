@@ -1897,6 +1897,46 @@ TERMOS: list[Termo] = [
         "#fiscal/gasto",
     ),
     Termo(
+        "estatutario",
+        "Servidor estatutário",
+        "O servidor concursado, regido por um estatuto próprio e não pela CLT. Tem "
+        "estabilidade depois do estágio probatório e não tem FGTS.",
+        ("estatutário", "estatutários", "servidor estatutário"),
+        "#fiscal/servidores",
+    ),
+    Termo(
+        "estatal-dependente",
+        "Estatal dependente",
+        "Empresa do governo que recebe dinheiro do orçamento para pagar pessoal e custeio, "
+        "porque não vive do que vende. O gasto dela já está dentro da despesa do governo.",
+        ("estatal dependente", "estatais dependentes", "dependentes"),
+        "#fiscal/estatais",
+    ),
+    Termo(
+        "subvencao",
+        "Subvenção",
+        "Dinheiro que o Tesouro repassa a uma estatal dependente para cobrir pessoal e "
+        "custeio. Não é empréstimo nem compra de ações: não volta.",
+        ("subvenção", "subvenções"),
+        "#fiscal/estatais",
+    ),
+    Termo(
+        "aporte-de-capital",
+        "Aporte de capital",
+        "Dinheiro que o dono põe na empresa em troca de mais ações. Na conta das estatais, "
+        "é o que a União adianta para futuro aumento de capital.",
+        ("aporte de capital", "aumento de capital"),
+        "#fiscal/estatais",
+    ),
+    Termo(
+        "jcp",
+        "Juros sobre capital próprio",
+        "Um jeito de a empresa distribuir lucro aos donos, parecido com o dividendo, com "
+        "tratamento diferente no imposto.",
+        ("juros sobre capital próprio", "juros sobre capital", "JCP"),
+        "#fiscal/estatais",
+    ),
+    Termo(
         "cofog",
         "COFOG",
         "A classificação da ONU da despesa do governo por função (saúde, educação, proteção "

@@ -178,6 +178,83 @@ def rgf(
     return _demonstrativo("RGF", "Q", ano, quadrimestre, anexo, ente, esfera_do_ente=esfera)
 
 
+PODERES_DA_UNIAO = {
+    "E": "Executivo",
+    "J": "Judiciário",
+    "L": "Legislativo (com o TCU)",
+    "M": "Ministério Público da União",
+    "D": "Defensoria Pública da União",
+}
+"""`co_poder` do RGF da União. Conferido em 19/11/2026 no 3º quadrimestre de 2025: o
+Executivo vem num demonstrativo só (linhas "União", "Distrito Federal", "Amapá" e "Roraima":
+as três últimas são o que a União paga de pessoal do DF e dos ex-territórios); o Judiciário,
+num por tribunal (mais de 90), em páginas de 5.000 linhas; o Legislativo, em três (Câmara,
+Senado e TCU)."""
+CONTA_BRUTA = "DespesaComPessoalBruta"
+CONTA_LIQUIDA = "DespesaComPessoalLiquida"
+COL_12_MESES = "TOTAL (ÚLTIMOS 12 MESES)"
+PAGINA = 5000
+
+
+def rgf_da_uniao(ano: int, quadrimestre: int, poder: str) -> list[dict[str, Any]]:
+    """Todas as linhas do RGF-Anexo 01 dos órgãos de um poder da União (a API pagina)."""
+    itens: list[dict[str, Any]] = []
+    while True:
+        params = {
+            "an_exercicio": str(ano),
+            "in_periodicidade": "Q",
+            "nr_periodo": str(quadrimestre),
+            "co_tipo_demonstrativo": "RGF",
+            "no_anexo": "RGF-Anexo 01",
+            "co_esfera": "U",
+            "co_poder": poder,
+            "id_ente": "1",
+            "offset": str(len(itens)),
+        }
+        resposta = baixar_json(f"{BASE}/rgf", params=params, validade=VALIDADE, tempo_limite=120)
+        pagina = list(resposta["items"])
+        itens += pagina
+        time.sleep(PAUSA)
+        if len(pagina) < PAGINA or not resposta.get("hasMore", True):
+            return itens
+
+
+def pessoal_do_poder(itens: list[dict[str, Any]]) -> tuple[float, int] | None:
+    """(despesa bruta com pessoal em 12 meses, em R$; quantos órgãos) de um poder: a soma dos
+    demonstrativos. Órgão que só informa a despesa líquida (a Defensoria) entra por ela."""
+    por_orgao: dict[tuple[str, str], dict[str, float]] = {}
+    for i in itens:
+        coluna = re.sub(r"\s+", " ", str(i.get("coluna", "")))
+        if not coluna.startswith(COL_12_MESES) or i.get("cod_conta") not in (
+            CONTA_BRUTA,
+            CONTA_LIQUIDA,
+        ):
+            continue
+        if i.get("valor") is None:
+            continue
+        orgao = (str(i.get("instituicao", "")), str(i.get("rotulo", "")))
+        por_orgao.setdefault(orgao, {})[str(i["cod_conta"])] = float(i["valor"])
+    if not por_orgao:
+        return None
+    total = sum(v.get(CONTA_BRUTA, v.get(CONTA_LIQUIDA, 0.0)) for v in por_orgao.values())
+    return total, len({orgao for orgao, _ in por_orgao})
+
+
+def pessoal_da_uniao_por_poder(hoje: date) -> tuple[int, dict[str, tuple[float, int]]] | None:
+    """(ano, {poder: (R$ em 12 meses até dezembro, órgãos)}) do último ano fechado em que os
+    cinco poderes entregaram o RGF do 3º quadrimestre."""
+    for ano in (hoje.year - 1, hoje.year - 2):
+        achados: dict[str, tuple[float, int]] = {}
+        for poder in PODERES_DA_UNIAO:
+            soma = pessoal_do_poder(rgf_da_uniao(ano, 3, poder))
+            if soma is None:
+                break
+            achados[poder] = soma
+        if len(achados) == len(PODERES_DA_UNIAO):
+            return ano, achados
+    return None
+
+
 def rreo(
     ano: int,
     bimestre: int,

@@ -53,6 +53,11 @@ const GRAFICOS_A_VISTA = 2;
 
 const lidos = new Map<string, Promise<unknown>>();
 
+const PARTES_ANTIGAS: Record<string, string> = {
+  "fiscal/meta": "resultado",
+  "fiscal/receita-despesa": "gasto",
+};
+
 function ler<T>(arquivo: string): Promise<T> {
   let pedido = lidos.get(arquivo);
   if (!pedido) {
@@ -1056,7 +1061,11 @@ async function iniciar(): Promise<void> {
       history.replaceState(null, "", `#${novo}${bruto ? `/${bruto}` : ""}`);
     }
     const alvo = novo ?? pedido;
-    const peca = decodeURIComponent(bruto);
+    // Parte que entrou em outra (19/11/2026): a meta fiscal mora em "Primário, juros e
+    // meta", e a receita e a despesa da União em "Receita e gasto".
+    const parteNova = PARTES_ANTIGAS[`${alvo}/${bruto}`];
+    if (parteNova) history.replaceState(null, "", `#${alvo}/${parteNova}`);
+    const peca = decodeURIComponent(parteNova ?? bruto);
     const item = painel.secoes.find((s) => s.id === alvo && s.id !== "resumo");
     const assunto = item ? alvo : "";
     const chave = assunto ? `${assunto}/${peca}` : "";
