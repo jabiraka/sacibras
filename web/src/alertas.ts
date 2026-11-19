@@ -766,7 +766,7 @@ function desenhoDosAlertas(grupos: GrupoImg[], cabecalho: string[] | null): Dese
           ctx.moveTo(x0, y + 0.5);
           ctx.lineTo(x0 + w, y + 0.5);
           ctx.stroke();
-          const larguraNome = l.regua ? 250 : 360;
+          const larguraNome = l.regua ? 300 : 360;
           ctx.textAlign = "left";
           ctx.font = fonte(500, 13);
           ctx.fillStyle = t.tinta;
@@ -785,8 +785,8 @@ function desenhoDosAlertas(grupos: GrupoImg[], cabecalho: string[] | null): Dese
           }
           const r = l.regua;
           if (r) {
-            const rx = x0 + 268;
-            const rw = 250;
+            const rx = x0 + 316;
+            const rw = 220;
             const ry = y + 22;
             const px = (f: number): number => rx + f * rw;
             ctx.fillStyle = barra;
@@ -849,7 +849,7 @@ function desenhoDosAlertas(grupos: GrupoImg[], cabecalho: string[] | null): Dese
             ctx.fillText(l.valor, x0 + w, y + 22);
             ctx.font = fonte(l.aceso ? 600 : 400, 10.5);
             ctx.fillStyle = l.aceso ? laranja : t.tinta2;
-            ctx.fillText(caber(ctx, l.selo, 220), x0 + w, y + 38);
+            ctx.fillText(caber(ctx, l.selo, 200), x0 + w, y + 38);
           }
           y += alturaLinha;
         }
@@ -953,7 +953,7 @@ export function montarAlertas(alertas: Alerta[]): HTMLElement {
           id: `alertas-${vista}`,
           titulo: `Painel de alerta: ${v.rotulo.toLowerCase()}`,
           sub: `${acesos(alertas)} de ${alertas.length} indicadores no quinto pior da própria história · ▲ = pior que 80 %`,
-          fonte: `Fonte: ${[...fontes].join("; ")}. Conta do painel.`,
+          fonte: `Fonte: ${[...new Set([...fontes].flatMap((f) => f.split(";").map((x) => x.split(",")[0]?.trim() ?? "")).filter(Boolean))].join("; ")}. Conta do painel; a fonte de cada indicador está na tela.`,
           nota: `${v.explica} Não é previsão de crise nem nota de risco.`,
           legenda,
           desenho: desenhoDosAlertas(grupos, vista === "resumo" ? ["História", "Países", "Um ano"] : null),
