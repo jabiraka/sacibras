@@ -90,7 +90,8 @@ obrigatórias? [...] comparar com outros países"*):
 **19/11/2026** (Caio: *"continue o laboratório com as propostas [...] essas métricas vão
 nos ajudar a ver o desenrolar e de onde está vindo se tiver uma crise, bem como oq
 poderíamos ter feito pra prevenir, o foco principal hj está no ajuste fiscal"*; e, sobre as
-sugestões: *"Faz tudo, eu aprovo"*). Nove peças novas no Laboratório
+sugestões: *"Faz tudo, eu aprovo"*). No ramo `ccr-f1b65a71-8udk6t`, **ainda não no
+`main`**. Nove peças novas no Laboratório
 (`secoes/laboratorio_ajuste.py`, contas em `modelos/ajuste.py`), todas sobre o que já
 aconteceu, e uma pergunta:
 - **O mercado: de onde vem a pressão** (`#laboratorio/pressao`): o dólar em 12 meses
@@ -182,7 +183,8 @@ As próximas:
 
 ## Espera o Caio
 
-- **Olhar as peças de 19/11** (foram ao `main` com o *"Faz tudo, eu aprovo"*). O que
+- **Juntar o ramo `ccr-f1b65a71-8udk6t` no `main`**: as peças de 19/11 estão aprovadas
+  (*"Faz tudo, eu aprovo"*) e só no ramo; falta o "junte no main" para irem ao ar. O que
   decidi sozinho e pode ser trocado: (1) "só do Brasil" no dólar é um resto e a faixa é
   estreita quando o dólar lá fora quase não se mexe; (2) o segundo cenário da dívida é piso
   de 1 % do PIB (a média de 2003 a 2013 dava 33 % do PIB, longe demais do que a conta
