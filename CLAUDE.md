@@ -162,7 +162,14 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   1950 (Penn World Table). As contas de estatística moram em `modelos/estatistica.py`, sem
   biblioteca de fora (MQO com erro de Newey-West, HP, Hamilton). Cada peça diz o método e
   mostra a faixa; resultado fraco se diz fraco (o estudo de evento, por exemplo, mede mal a
-  surpresa sem os juros futuros da B3). Peça nova dele vai ao ar com o Caio olhando.
+  surpresa sem os juros futuros da B3). Em 19/11/2026 (Caio: *"essas métricas vão nos
+  ajudar a ver [...] de onde está vindo se tiver uma crise, bem como oq poderíamos ter feito
+  pra prevenir, o foco principal hj está no ajuste fiscal"*) entraram as peças de pressão e
+  ajuste (`secoes/laboratorio_ajuste.py`, `modelos/ajuste.py`): o dólar repartido entre o
+  mundo e o Brasil, a dívida com outro primário desde 2014, o primário que o Focus esperava
+  contra o que veio e por onde o primário já mudou (receita ou despesa). Todas refazem o
+  que já aconteceu; cenário para a frente continua pedindo o "sim". O Laboratório está no
+  teto de cinco partes. Peça nova dele vai ao ar com o Caio olhando.
 - **O gasto: obrigatório, discricionário e por função** (Caio, 16/11/2026: *"tem como
   separar as despesas das obrigatórias? Talvez fazer uma análise de onde dá pra cortar
   gastos [...] comparar com outros países"*): Contas públicas › Onde está o gasto

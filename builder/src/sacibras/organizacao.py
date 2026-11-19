@@ -414,19 +414,33 @@ PARTES: dict[str, list[Parte]] = {
             tabelas=["juro-neutro-metodos"],
         ),
         Parte(
+            "pressao",
+            "O dólar: o mundo ou o Brasil?",
+            "Quanto da alta do dólar veio de fora e quanto é só do Brasil, hoje e nas crises.",
+            cartoes=["dolar-do-brasil", "dolar-de-fora", "dolar-beta"],
+            graficos=["dolar-mundo-brasil"],
+            tabelas=["dolar-altas"],
+        ),
+        Parte(
+            "reacao-fiscal",
+            "O ajuste fiscal em quatro contas",
+            "O primário reage à dívida? O que se esperava e o que veio, por onde ele já mudou "
+            "e a dívida com outro primário.",
+            cartoes=["reacao-fiscal", "divida-sem-deficit", "primario-prometido"],
+            graficos=["divida-outro-primario", "primario-prometido", "reacao-fiscal"],
+            tabelas=[
+                "primario-episodios",
+                "divida-outro-primario",
+                "primario-erro-horizonte",
+                "reacao-fiscal-amostras",
+            ],
+        ),
+        Parte(
             "copom",
             "O mercado e as surpresas do Copom",
             "Quando o Copom surpreende o Focus, quanto o juro de 2 anos e o dólar se mexem.",
             cartoes=["copom-efeito", "copom-dias"],
             tabelas=["copom-surpresas"],
-        ),
-        Parte(
-            "reacao-fiscal",
-            "O governo reage à dívida?",
-            "O teste de Bohn: quando a dívida sobe, o primário melhora no ano seguinte?",
-            cartoes=["reacao-fiscal"],
-            graficos=["reacao-fiscal"],
-            tabelas=["reacao-fiscal-amostras"],
         ),
         Parte(
             "crescimento",

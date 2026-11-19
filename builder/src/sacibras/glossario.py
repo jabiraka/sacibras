@@ -1880,6 +1880,15 @@ TERMOS: list[Termo] = [
         "#laboratorio/reacao-fiscal",
     ),
     Termo(
+        "dolar-contra-emergentes",
+        "Dólar contra os emergentes",
+        "Índice do Federal Reserve que mede o dólar contra uma cesta de moedas de países "
+        "emergentes, pesada pelo comércio com os EUA. Sobe quando o dólar ganha valor contra "
+        "todas elas, e serve para separar o que é do mundo do que é de um país só.",
+        ("dólar contra os emergentes", "dólar contra as moedas dos emergentes"),
+        "#laboratorio/pressao",
+    ),
+    Termo(
         "despesa-obrigatoria",
         "Despesa obrigatória",
         "A que a Constituição ou uma lei manda pagar: aposentadorias, salários, BPC, seguro-"

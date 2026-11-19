@@ -9,6 +9,10 @@ Quatro peças, da leva 1 do plano (docs/PLANO-FASE-2.md):
 - a reação fiscal (o teste de Bohn): quando a dívida sobe, o primário responde?
 - o PIB por habitante desde 1950: de onde veio o crescimento e a distância para os EUA.
 
+Em 19/11/2026 entraram três peças sobre pressão e ajuste fiscal, que moram em
+`secoes/laboratorio_ajuste.py`: o dólar repartido entre o mundo e o Brasil, a dívida com outro
+primário desde 2014 e o primário que o Focus esperava contra o que veio.
+
 Nada aqui é número oficial: a fonte de cada peça diz "conta nossa" e o dado de onde ela sai.
 Onde a conta não dá resposta firme (pouca observação, medida ruim), a tela diz isso.
 """
@@ -24,6 +28,7 @@ from sacibras.calendario import dia_util
 from sacibras.fontes import bcb_copom, bcb_focus, ibge_sidra, pwt, tesouro_direto
 from sacibras.modelos import estatistica
 from sacibras.schema import Cartao, Faixa, Grafico, LinhaTabela, Secao, Tabela
+from sacibras.secoes import laboratorio_ajuste
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -755,7 +760,11 @@ def montar(ctx: Contexto) -> Secao:
     for nome, peca in (
         ("juro neutro", _juro_neutro),
         ("Copom", _copom),
+        ("o dólar entre o mundo e o Brasil", laboratorio_ajuste.dolar),
         ("reação fiscal", _reacao),
+        ("a dívida com outro primário", laboratorio_ajuste.divida),
+        ("o primário esperado e o que veio", laboratorio_ajuste.promessa),
+        ("os ajustes que já houve", laboratorio_ajuste.episodios),
         ("crescimento", _crescimento),
     ):
         try:

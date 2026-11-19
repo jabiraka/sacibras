@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 16/11/2026 (por último, o "Saiu por último" da entrada e a conversa sobre o que incluir e tirar).
+Última atualização: 19/11/2026 (por último, as ideias de crise e ajuste fiscal para o Laboratório).
 Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -146,6 +146,43 @@ Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e 
     (OCDE, a cada três) e anos de estudo (PNAD), por estado onde houver. É o capital
     humano da conta do crescimento.
   - **Crédito direcionado** em % do crédito total (SGS): serve à página do juro alto.
+
+## Crise e ajuste fiscal (sessão de 19/11/2026)
+
+Caio: *"essas métricas vão nos ajudar a ver o desenrolar e de onde está vindo se tiver uma
+crise, bem como oq poderíamos ter feito pra prevenir, o foco principal hj está no ajuste
+fiscal, mas temo que o governo não queira implementar"*. Entraram quatro peças no
+Laboratório (o dólar entre o mundo e o Brasil, a dívida com outro primário, o primário
+esperado contra o que veio, receita ou despesa em cada mudança do primário). O que pensei e
+ficou, na ordem em que eu faria:
+
+- **O prometido pelo governo contra o que veio**: a meta de primário de cada LDO e a
+  receita e a despesa de cada orçamento contra o realizado (o "viés do governo" da leva 2).
+  Hoje só há o do mercado (Focus). Leitura à mão de umas vinte leis, com prazo; **do PC**
+  (Planalto) ou pelo Senado e pela Câmara.
+- **Estudo de evento dos anúncios fiscais**: o juro longo e a parte do dólar que é só do
+  Brasil no dia de cada anúncio (arcabouço, pacotes, mudança de meta). Pede a lista de datas
+  lida à mão, com fonte e prazo; o Caio precisa dizer que anúncios contam.
+- **A dívida que o Focus esperava, por safra**: o mesmo desenho do primário para a DBGG
+  (o Focus só coleta desde 2018) e para a DLSP (desde 2001): a estabilização que sempre
+  fica para daqui a alguns anos, ou não.
+- **O mundo ou o Brasil, para o juro longo e a bolsa**: a mesma conta do dólar com o juro
+  real de 10 anos contra o dos EUA (já lido em Riscos) e com o Ibovespa contra um índice de
+  emergentes (falta fonte oficial e aberta para o índice).
+- **Pergunta nova, "De onde viria uma crise?"**: o painel de alerta, a parte do dólar que é
+  do Brasil e o primário esperado, na ordem em que contam a história. Hoje as perguntas só
+  copiam peça dos Dados; pede decidir se podem copiar do Laboratório, com a marca de
+  estimativa nossa.
+- **O custo de esperar**: o primário que estabiliza a dívida se o ajuste começar daqui a
+  um, três ou cinco anos (a dívida de partida é maior a cada ano). É cenário para a frente;
+  entra no simulador da dívida ou pede o "sim" do Caio.
+- **Receita de uma vez só nos episódios**: separar, na tabela "receita ou despesa", o que
+  foi receita extraordinária (concessões, dividendos, Refis; o RTN tem as linhas) do que
+  ficou.
+- **Testado e fora**: a correlação móvel entre o juro prefixado de 5 anos e o dólar (dias
+  em que os dois sobem juntos como sinal de prêmio de risco). É positiva quase sempre desde
+  2013 (entre 0,2 e 0,7), sem marcar 2015 nem 2024 melhor que os outros anos, e custa 45 s
+  de build (uma curva por dia). Não entra.
 
 ## Achados da revisão das telas (15/11/2026)
 

@@ -5,6 +5,15 @@ Só série que o FRED redistribui de fonte oficial, citada pela fonte de origem.
 prazo constante, % ao ano, diário — a série H.15 do Federal Reserve. Conferido em 15/11/2026:
 `fredgraph.csv?id=DFII10` responde da nuvem, com `observation_date,DFII10`, desde 02/01/2003,
 e dia sem negócio vem em branco.
+
+Para o Laboratório (o dólar repartido entre o mundo e o Brasil), duas séries da H.10 do
+Federal Reserve, conferidas em 19/11/2026 na página de cada uma no FRED e no CSV, que
+responde da nuvem:
+- `DEXBZUS`, "Brazilian Reals to U.S. Dollar Spot Exchange Rate": reais por dólar, taxa de
+  compra ao meio-dia em Nova York, diária;
+- `DTWEXEMEGS`, "Nominal Emerging Market Economies U.S. Dollar Index": o dólar contra uma
+  cesta de moedas de economias emergentes, pesada pelo comércio de bens e serviços (jan/2006 =
+  100; sobe quando o dólar se valoriza), diária desde 02/01/2006. O real está na cesta.
 """
 
 from __future__ import annotations
@@ -19,6 +28,12 @@ from sacibras.tipos import Ponto
 URL = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 TIPS_10_ANOS = "DFII10"
 FONTE_TIPS = "Federal Reserve, H.15, TIPS de 10 anos (DFII10, via FRED)"
+REAL_POR_DOLAR = "DEXBZUS"
+DOLAR_EMERGENTES = "DTWEXEMEGS"
+FONTE_CAMBIO = (
+    "Federal Reserve, H.10: reais por dólar e índice do dólar contra as moedas dos emergentes "
+    "(DEXBZUS e DTWEXEMEGS, via FRED)"
+)
 
 
 def ler_csv(texto: str) -> list[Ponto]:
