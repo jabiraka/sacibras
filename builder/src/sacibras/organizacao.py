@@ -353,6 +353,22 @@ PARTES: dict[str, list[Parte]] = {
             graficos=["gasto-tributario", "divida-ativa"],
             tabelas=["gasto-tributario", "gasto-tributario-regioes", "divida-ativa"],
         ),
+        Parte(
+            "esferas",
+            "União, estados e municípios",
+            "Quem arrecada, quanto a União repassa e para onde vai a despesa de cada esfera "
+            '(pergunta "Para onde vai o imposto?").',
+            cartoes=["carga-uniao", "carga-estados", "carga-municipios", "repasses-uniao"],
+            graficos=["carga-esferas"],
+            tabelas=["despesa-esferas"],
+            veja=[
+                Elo(
+                    endereco="#estados/m-gasto_saude",
+                    titulo="Cada estado, um por um",
+                    resumo="Saúde, educação, segurança e previdência na despesa dos 27.",
+                ),
+            ],
+        ),
     ],
     "longo-prazo": [
         Parte(

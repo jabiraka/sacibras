@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 17/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 19/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -86,6 +86,20 @@ obrigatórias? [...] comparar com outros países"*):
   (RTN; ~10 % da despesa federal é discricionária) e a despesa por função do governo geral
   contra a mediana dos emergentes, da América Latina e dos avançados (COFOG do FMI).
 - **Pergunta nova**: "Onde dá para cortar gasto?" (nove perguntas agora).
+
+**19/11/2026** (Caio: *"nos impostos, dá pra separar oq é receita da união e dos Estados
+e outros? E ver onde cada Estado e outros está gastando com a receita?"*):
+- **Impostos › União, estados e municípios** (`impostos._esferas`): quanto cada esfera
+  arrecada (OCDE; a União com o INSS fica com ~71 %), o repasse geral da União (FPE, FPM;
+  4,7 % do PIB em 2024) e a tabela "Para onde vai a despesa de cada esfera" (FMI, COFOG por
+  esfera: `fmi_cofog.por_esfera`, até 2024). O gráfico "Quem arrecada", que estava fora da
+  tela, voltou nela. A pergunta "Para onde vai o imposto?" ganhou a tabela.
+- **Estados › Mapa e ranking**: quatro métricas novas, "Gasto com saúde / educação /
+  segurança / previdência", em % da despesa do estado sem os encargos especiais (DCA,
+  conta nossa; `estados._gasto_por_area`).
+- Falta: os municípios um por um (são 5.570; hoje só as capitais têm conta no SICONFI aqui)
+  e a receita de cada esfera *depois* dos repasses (o FMI separa o repasse geral, mas não
+  quanto vai a estados e quanto a municípios).
 
 ## O que vem agora (fase 2)
 

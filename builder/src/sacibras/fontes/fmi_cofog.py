@@ -71,3 +71,62 @@ def por_funcao(desde: int) -> PorPais:
         tempo_limite=240,
     )
     return ler(bruto)
+
+
+# ------------------------------------------------------------------ por esfera, só o Brasil
+#
+# O mesmo conjunto abre o Brasil em três esferas (conferido em 19/11/2026, BRA até 2024):
+# `S1311` (governo central: a União), `S1312MIXED` (os estados e o DF) e `S1313MIXED` (os
+# municípios). Cada esfera conta o que ela paga, os repasses a outra esfera inclusive: o
+# FPE, o FPM e a cota do ICMS ficam na função "transferências gerais entre esferas"
+# (GF0180, dentro de serviços públicos gerais), e o repasse com destino certo (o SUS, o
+# complemento do Fundeb) fica na função dele. Por isso a soma das três passa do governo
+# geral (`S13`), que tira o que uma esfera passa à outra. Em 2024, a União repassou R$ 548
+# bi em GF0180 e os estados, R$ 197 bi. A unidade `POTO_PT` é a parte da despesa da própria
+# esfera; `POGDP_PT`, % do PIB.
+
+ESFERAS: dict[str, str] = {
+    "S1311": "União",
+    "S1312MIXED": "Estados",
+    "S1313MIXED": "Municípios",
+}
+REPASSES = "GF0180_T"
+"""Transferências gerais entre esferas (FPE, FPM, cota do ICMS): sem destino amarrado."""
+
+PorEsfera = dict[str, dict[str, dict[str, dict[int, float]]]]
+"""{esfera: {função: {unidade: {ano: valor}}}}."""
+
+
+def ler_esferas(bruto: dict[str, Any]) -> PorEsfera:
+    """A resposta SDMX-JSON (país, setor, grupo, função, unidade, frequência) por esfera."""
+    estrutura, dados = bruto["structure"], bruto["dataSets"][0]
+    dims = estrutura["dimensions"]["series"]
+    anos = [int(v["id"][:4]) for v in estrutura["dimensions"]["observation"][0]["values"]]
+    saida: PorEsfera = {}
+    for chave, serie in dados["series"].items():
+        i = [int(x) for x in chave.split(":")]
+        esfera = dims[1]["values"][i[1]]["id"]
+        funcao = dims[3]["values"][i[3]]["id"]
+        unidade = dims[4]["values"][i[4]]["id"]
+        valores = {
+            anos[int(t)]: float(obs[0])
+            for t, obs in serie["observations"].items()
+            if obs and obs[0] not in (None, "")
+        }
+        if valores:
+            saida.setdefault(esfera, {}).setdefault(funcao, {})[unidade] = valores
+    return saida
+
+
+def por_esfera(desde: int) -> PorEsfera:
+    """A despesa da União, dos estados e dos municípios por função, em % do PIB e em % da
+    despesa da própria esfera."""
+    funcoes = "+".join([*FUNCOES, REPASSES])
+    bruto = baixar_json(
+        f"{BASE}/BRA.{'+'.join(ESFERAS)}.G2MF.{funcoes}.POGDP_PT+POTO_PT.A",
+        params={"startPeriod": str(desde)},
+        cabecalhos={"Accept": "application/json"},
+        validade=7 * 86400,
+        tempo_limite=240,
+    )
+    return ler_esferas(bruto)

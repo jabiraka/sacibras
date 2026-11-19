@@ -1390,6 +1390,24 @@ TERMOS: list[Termo] = [
         "#impostos/por-estado",
     ),
     Termo(
+        "esfera",
+        "Esfera de governo",
+        "Cada nível do governo: a União, os 26 estados e o DF, e os municípios. Cada um "
+        "cobra os próprios impostos e parte do que a União e os estados arrecadam é repassada "
+        "aos outros.",
+        ("esfera", "esferas"),
+        "#impostos/esferas",
+    ),
+    Termo(
+        "repasse-geral",
+        "Repasse geral",
+        "O dinheiro que uma esfera passa a outra sem destino amarrado: o FPE e o FPM da União, "
+        "a cota do ICMS que os estados entregam aos municípios. O repasse com destino certo, "
+        "como o do SUS, conta na área dele.",
+        ("Repasse geral", "repasses a outras esferas"),
+        "#impostos/esferas",
+    ),
+    Termo(
         "fundeb",
         "Fundeb",
         "O fundo da educação básica: estados e municípios põem nele parte dos impostos, e o "

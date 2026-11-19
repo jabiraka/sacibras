@@ -308,10 +308,12 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
             Bloco(
                 "Para onde vai",
-                "A despesa do Governo Central por destino: previdência, pessoal, "
-                "benefícios sociais, saúde, educação e o resto.",
+                "A União arrecada sete em cada dez reais e gasta mais com previdência e juros; "
+                "os estados, com segurança, saúde e educação; os municípios, com saúde e "
+                "educação.",
                 ("fiscal", "despesa-composicao"),
-                (("fiscal", "previdencia-rgps"), ("fiscal", "juros-divida")),
+                (("impostos", "carga-uniao"), ("fiscal", "previdencia-rgps")),
+                ("impostos", "despesa-esferas"),
             ),
             Bloco(
                 "O que se deixa de cobrar",
@@ -335,7 +337,13 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 (("impostos", "reforma-aliquota-cheia"),),
             ),
         ),
-        ("carga tributária", "quem paga imposto", "gasto público", "reforma tributária"),
+        (
+            "carga tributária",
+            "quem paga imposto",
+            "gasto público",
+            "reforma tributária",
+            "imposto da União, dos estados e dos municípios",
+        ),
         conclusao=(
             "A reforma do consumo simplifica a cobrança, mas não muda o peso entre consumo e "
             "renda: isso está na lei. Cobrar mais da renda ou rever isenções mudaria quem paga; o"

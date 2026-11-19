@@ -174,6 +174,20 @@ SINONIMOS: dict[str, list[str]] = {
     "despesa": ["gastos", "gasto publico", "custeio"],
     "pessoal": ["folha", "servidores", "funcionalismo", "salarios do governo"],
     "icms": ["imposto estadual", "arrecadacao dos estados", "imposto"],
+    "arrecadado pela uniao": [
+        "receita da uniao",
+        "receita dos estados",
+        "receita dos municipios",
+        "esferas",
+        "pacto federativo",
+        "quem fica com o imposto",
+    ],
+    "repasse geral": ["transferencias", "fpe", "fpm", "repasses da uniao", "pacto federativo"],
+    "cada esfera": ["gasto dos estados", "gasto dos municipios", "gasto da uniao", "esferas"],
+    "gasto com saude": ["despesa com saude", "sus", "gasto dos estados"],
+    "gasto com educacao": ["despesa com educacao", "escola", "gasto dos estados"],
+    "gasto com seguranca": ["policia", "despesa com seguranca", "gasto dos estados"],
+    "gasto com previdencia": ["aposentadoria dos servidores", "rpps", "gasto dos estados"],
     "rcl": ["receita corrente liquida"],
     "nota de credito": [
         "rating",
@@ -555,6 +569,12 @@ SINONIMOS: dict[str, list[str]] = {
 # sem acento e em minúsculas.
 OUTRAS_LINGUAS: dict[str, list[str]] = {
     # assuntos e partes
+    "uniao, estados e municipios": [
+        "federal state and local government",
+        "fiscal federalism",
+        "gobierno federal estatal y municipal",
+        "federalisme fiscal",
+    ],
     "o que vende e compra": [
         "exports by sector",
         "commodities",

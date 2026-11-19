@@ -31,6 +31,7 @@ import pycountry
 from sacibras import contas, leis, relatorios
 from sacibras.fontes import (
     fmi,
+    fmi_cofog,
     ocde_receita,
     receita_arrecadacao,
     receita_gastos,
@@ -1639,6 +1640,147 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
     return [], [transicao, destino], [regras, regimes], ""
 
 
+# ------------------------------------------------------- União, estados e municípios
+#
+# Caio, 19/11/2026: "nos impostos, dá pra separar oq é receita da união e dos Estados e
+# outros? E ver onde cada Estado e outros está gastando com a receita?". Quem arrecada sai da
+# OCDE (receita por esfera); o repasse geral da União e para onde vai a despesa de cada
+# esfera, do FMI (COFOG por esfera, `fmi_cofog.por_esfera`). Cada estado, um por um, fica em
+# Estados (as métricas "Gasto com ...", da DCA).
+
+
+def _esferas(ctx: Contexto) -> Pecas:
+    ocde = ocde_receita.carga(["BRA"], list(ESFERAS), ["_T"], inicio=2000)
+    por = {s: ocde.get(("BRA", s, "_T"), {}) for s in ESFERAS}
+    anos = sorted(a for a in por["S1311"] if all(a in por[s] for s in ESFERAS))
+    if not anos:
+        raise RuntimeError("OCDE sem a receita do Brasil por esfera")
+    total = {a: sum(por[s][a] for s in ESFERAS) for a in anos}
+    # O INSS (fundos de seguridade social, S1314) é federal: vai com a União.
+    parte = {
+        "S1311": {a: (por["S1311"][a] + por["S1314"][a]) / total[a] * 100 for a in anos},
+        "S1312": {a: por["S1312"][a] / total[a] * 100 for a in anos},
+        "S1313": {a: por["S1313"][a] / total[a] * 100 for a in anos},
+    }
+    fonte_ocde = f"{ocde_receita.FONTE}; parte de cada esfera: conta nossa"
+    cartoes = [
+        cartao(
+            id_,
+            rotulo,
+            _pontos_anuais(parte[s]),
+            unidade="% da carga",
+            casas=0,
+            periodicidade="A",
+            detalhe=detalhe,
+            fonte=fonte_ocde,
+            secao="impostos",
+            mini=30,
+        )
+        for s, id_, rotulo, detalhe in (
+            ("S1311", "carga-uniao", "Arrecadado pela União", "Com o INSS; antes dos repasses"),
+            ("S1312", "carga-estados", "Pelos estados", "Sobretudo ICMS e IPVA"),
+            ("S1313", "carga-municipios", "Pelos municípios", "ISS e IPTU, sem o que recebem"),
+        )
+    ]
+
+    cofog = fmi_cofog.por_esfera(2010)
+    repasse = cofog.get("S1311", {}).get(fmi_cofog.REPASSES, {}).get("POGDP_PT", {})
+    if repasse:
+        cartoes.append(
+            cartao(
+                "repasses-uniao",
+                "Repasse geral da União",
+                _pontos_anuais(repasse),
+                unidade="% do PIB",
+                casas=1,
+                periodicidade="A",
+                detalhe="FPE, FPM e outros, sem destino amarrado",
+                fonte=f"{fmi_cofog.FONTE.replace('governo geral', 'por esfera')}",
+                secao="impostos",
+                mini=30,
+            )
+        )
+
+    tabelas: list[Tabela] = []
+    esferas = [e for e in fmi_cofog.ESFERAS if e in cofog]
+    comuns = [
+        a
+        for a in sorted({a for e in esferas for a in cofog[e].get("GF10_T", {}).get("POTO_PT", {})})
+        if all(a in cofog[e].get("GF10_T", {}).get("POTO_PT", {}) for e in esferas)
+    ]
+    if len(esferas) == 3 and comuns:
+        ano = comuns[-1]
+
+        def v(e: str, f: str, u: str) -> float | None:
+            return cofog[e].get(f, {}).get(u, {}).get(ano)
+
+        principais = [f for f in fmi_cofog.FUNCOES if len(f) == len("GF10_T")]
+        linhas = [
+            LinhaTabela(
+                rotulo="Despesa total",
+                valores=[
+                    _arredondar_1(sum(v(e, f, "POGDP_PT") or 0 for f in principais))
+                    for e in esferas
+                ],
+                unidade="% do PIB",
+                casas=1,
+            )
+        ]
+        for f, nome in fmi_cofog.FUNCOES.items():
+            linhas.append(
+                LinhaTabela(
+                    rotulo=nome,
+                    valores=[_arredondar_1(v(e, f, "POTO_PT")) for e in esferas],
+                    unidade="% da despesa",
+                    casas=1,
+                    grupo="Por função, em % da despesa de cada esfera",
+                )
+            )
+            if f == "GF0170_T":
+                linhas.append(
+                    LinhaTabela(
+                        rotulo="  dos quais: repasses a outras esferas",
+                        valores=[
+                            _arredondar_1(v(e, fmi_cofog.REPASSES, "POTO_PT")) for e in esferas
+                        ],
+                        unidade="% da despesa",
+                        casas=1,
+                        grupo="Por função, em % da despesa de cada esfera",
+                    )
+                )
+        tabelas.append(
+            Tabela(
+                id="despesa-esferas",
+                titulo="Para onde vai a despesa de cada esfera",
+                subtitulo=f"{ano}; cada coluna soma 100 % da despesa daquela esfera",
+                colunas=[fmi_cofog.ESFERAS[e] for e in esferas],
+                linhas=linhas,
+                fonte=(
+                    "FMI, Government Finance Statistics (COFOG), União (governo central), "
+                    f"estados e municípios, {ano}"
+                ),
+                nota=(
+                    "Cada esfera conta o que paga, inclusive o que repassa às outras: o FPE, "
+                    "o FPM e a cota do ICMS dos municípios estão em repasses; o repasse com "
+                    "destino certo (o SUS, o Fundeb) fica na função dele. Por isso as três "
+                    "despesas somadas passam da do governo geral. Na União, a proteção social "
+                    "é quase toda o INSS. Cada estado, um por um, em Estados › Mapa e ranking."
+                ),
+            )
+        )
+
+    u, e_, m = (parte[s][anos[-1]] for s in ("S1311", "S1312", "S1313"))
+    frase = (
+        f"Em {anos[-1]}, a União (com o INSS) arrecadou {br(u, 0)} % dos tributos, os estados "
+        f"{br(e_, 0)} % e os municípios {br(m, 0)} %, antes dos repasses."
+    )
+    return cartoes, [], tabelas, frase
+
+
+def _arredondar_1(x: float | None) -> float | None:
+    return None if x is None else round(x, 1)
+
+
 MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
     ("bases contra outros países", _bases_paises),
     ("arrecadação por estado", _por_estado),
@@ -1651,6 +1793,7 @@ MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
     ("dívida ativa", _divida_ativa),
     ("alíquotas", _aliquotas),
     ("reforma", _reforma),
+    ("União, estados e municípios", _esferas),
 ]
 
 
