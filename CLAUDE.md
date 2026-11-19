@@ -174,7 +174,10 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   o que já aconteceu. O Laboratório está no teto de cinco partes. **Resultado fraco não precisa ir à tela**
   (Caio, 19/11/2026: *"Se o resultado for fraco, acho que não precisa colocar não"*, sobre
   o estudo de evento dos anúncios fiscais, que saiu): conta que não distingue o efeito do
-  acaso fica no código e no PROPOSTAS como "testada e fora", não na tela com ressalva. Peça nova dele vai ao ar com o Caio olhando.
+  acaso fica no código e no PROPOSTAS como "testada e fora", não na tela com ressalva. Pelo
+  mesmo motivo, do teste de Bohn ficou só a tabela dos dois períodos (Caio, mesmo dia:
+  *"Pode tirar só o do Bohn"*): o cartão e o gráfico mostravam a amostra inteira, que não
+  se distingue de zero. Peça nova dele vai ao ar com o Caio olhando.
 - **O gasto: obrigatório, discricionário e por função** (Caio, 16/11/2026: *"tem como
   separar as despesas das obrigatórias? Talvez fazer uma análise de onde dá pra cortar
   gastos [...] comparar com outros países"*): Contas públicas › Onde está o gasto

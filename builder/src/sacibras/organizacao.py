@@ -425,10 +425,10 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "reacao-fiscal",
             "O ajuste fiscal: o que foi feito",
-            "O primário reage à dívida? Por onde ele já mudou, a dívida com outro primário e "
-            "o que custa esperar.",
-            cartoes=["divida-sem-deficit", "reacao-fiscal"],
-            graficos=["divida-outro-primario", "reacao-fiscal"],
+            "A dívida com outro primário, por onde ele já mudou, o que custa esperar e se ele "
+            "reage à dívida.",
+            cartoes=["divida-sem-deficit"],
+            graficos=["divida-outro-primario"],
             tabelas=[
                 "primario-episodios",
                 "divida-outro-primario",

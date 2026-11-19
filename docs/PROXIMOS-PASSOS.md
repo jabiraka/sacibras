@@ -90,8 +90,7 @@ obrigatórias? [...] comparar com outros países"*):
 **19/11/2026** (Caio: *"continue o laboratório com as propostas [...] essas métricas vão
 nos ajudar a ver o desenrolar e de onde está vindo se tiver uma crise, bem como oq
 poderíamos ter feito pra prevenir, o foco principal hj está no ajuste fiscal"*; e, sobre as
-sugestões: *"Faz tudo, eu aprovo"*). No ramo `ccr-f1b65a71-8udk6t`, **ainda não no
-`main`**. Oito peças novas no Laboratório
+sugestões: *"Faz tudo, eu aprovo"*). No `main`. Oito peças novas no Laboratório
 (`secoes/laboratorio_ajuste.py`, contas em `modelos/ajuste.py`), todas sobre o que já
 aconteceu, e uma pergunta:
 - **O mercado: de onde vem a pressão** (`#laboratorio/pressao`): o dólar em 12 meses
@@ -183,14 +182,13 @@ As próximas:
 
 ## Espera o Caio
 
-- **Juntar o ramo `ccr-f1b65a71-8udk6t` no `main`**: as peças de 19/11 estão aprovadas
-  (*"Faz tudo, eu aprovo"*) e só no ramo; falta o "junte no main" para irem ao ar. O que
+- **Olhar as peças de 19/11**, que foram ao `main` (Caio: *"junte ao main"*). O que
   decidi sozinho e pode ser trocado: (1) "só do Brasil" no dólar é um resto e a faixa é
   estreita quando o dólar lá fora quase não se mexe; (2) o segundo cenário da dívida é piso
   de 1 % do PIB (a média de 2003 a 2013 dava 33 % do PIB, longe demais do que a conta
-  mede); (3) pela regra nova do resultado fraco, dois antigos são candidatos a sair e
-  ficaram esperando a sua palavra: o teste de Bohn na amostra inteira (não se distingue de
-  zero; o de 2002 a 2013 sim) e a meta da LDO sem 2020; (4) a meta da LDO é a cheia, sem o abatimento de PPI e PAC que a lei
+  mede); (3) pela regra do resultado fraco, do teste de Bohn ficou só a tabela dos
+  dois períodos (o cartão e o gráfico saíram da tela); a meta da LDO fica inteira (Caio:
+  *"Pode tirar só o do Bohn"*); (4) a meta da LDO é a cheia, sem o abatimento de PPI e PAC que a lei
   deixava de 2007 a 2014; (5) a décima pergunta passou do teto de nove: se pesar, a
   candidata a juntar com ela é "O que o mercado espera do Brasil?".
 - **Na página traduzida para o inglês**, a 390 px, a tela "O prometido e o que veio" passa
