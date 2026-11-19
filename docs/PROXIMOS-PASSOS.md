@@ -112,7 +112,23 @@ e outros? E ver onde cada Estado e outros está gastando com a receita?"*):
   tributos, receita e despesa, para onde vai a despesa, obrigatória × discricionária e o
   INSS (`com_variantes` e `em_reais_de_hoje` em `secoes/base.py`). Ficaram de fora, por
   pedirem série nova do SGS conferida no catálogo: o primário, a dívida e a conta corrente
-  em reais (ou dólares).
+  em reais (ou dólares). Entraram depois, conferidas: a dívida bruta e a líquida em reais
+  (SGS 13761, que o CKAN não lista, e 4478; a razão com o PIB fecha com a 13762 e a 4513),
+  o primário em reais de hoje (soma nossa da série mensal) e a conta corrente em dólares.
+- **Parecidos atrás de uma lista, em todo o site** (Caio, mesmo dia: *"Aplique isso
+  sistematicamente"*; a regra está no CLAUDE.md): gráfico ou tabela parecida fica atrás do
+  principal, numa lista ("Gráfico" ou "Tabela"), e conta como um no orçamento
+  (`AGRUPAR` em `organizacao.py`, `web/src/alternativas.ts`). Voltaram assim 44 dos 49
+  gráficos e tabelas que estavam calculados e fora da tela (o PIB pela oferta e pela demanda, a fome,
+  o saneamento, a moradia, o Gini, o desalento, as curvas de juro real, o imobiliário, a
+  dívida por vencimento, a carga contra o crescimento, a população, a esperança de vida, a
+  previdência dos servidores, os riscos de mercado...), e partes com dois ou três gráficos
+  do mesmo tema ficaram com um na tela. A busca acha a peça de trás e a tela abre a lista
+  nela. Ficaram fora: os três de Trabalho que repetem Longo prazo (analfabetismo e renda
+  por escolaridade), os reservatórios e a tabela de governança de Riscos (sem par
+  parecido) e 35 cartões (Trabalho, Juros, Longo prazo, Riscos): cartão não entra em lista;
+  dá para fazer o mesmo com eles, se o Caio quiser. O Laboratório não mudou: muda com o
+  Caio olhando.
 - Falta: os municípios um por um (são 5.570; hoje só as capitais têm conta no SICONFI aqui)
   e a receita de cada esfera *depois* dos repasses (o FMI separa o repasse geral, mas não
   quanto vai a estados e quanto a municípios).

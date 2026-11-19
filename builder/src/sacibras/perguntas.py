@@ -621,8 +621,17 @@ def montar(
                     titulo=b.titulo,
                     texto=b.texto,
                     numeros=numeros,
-                    grafico=grafico.model_copy(update={"secao": assunto}) if grafico else None,
-                    tabela=(tabelas or {}).get(b.tabela) if b.tabela else None,
+                    # Na pergunta, só a peça escolhida: a lista das parecidas fica nos Dados.
+                    grafico=(
+                        grafico.model_copy(update={"secao": assunto, "alternativas": []})
+                        if grafico
+                        else None
+                    ),
+                    tabela=(
+                        tabela.model_copy(update={"alternativas": []})
+                        if b.tabela and (tabela := (tabelas or {}).get(b.tabela))
+                        else None
+                    ),
                     assunto=assunto,
                     assunto_titulo=titulos.get(assunto, ""),
                     elo=f"#{assunto}/g-{grafico.id}" if grafico else f"#{assunto}",

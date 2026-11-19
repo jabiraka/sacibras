@@ -12,10 +12,10 @@ builder avisa, para alguém pôr no lugar certo.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Literal
 
-from sacibras.schema import Categoria, Elo, Secao, Subcategoria
+from sacibras.schema import Categoria, Elo, Grafico, Secao, Subcategoria, Tabela
 
 Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
 
@@ -47,6 +47,15 @@ class Parte:
     tabelas: list[str] = field(default_factory=list)
     extras: list[Extra] = field(default_factory=list)
     veja: list[Elo] = field(default_factory=list)
+    juntos: dict[str, list[str]] = field(default_factory=dict)
+    """{gráfico da parte: os parecidos que ficam atrás da lista dele} (Caio,
+    19/11/2026: *"mudando o parâmetro muda o gráfico ou tabela, podendo acrescentar
+    informações ao site sem ter que excluir coisas e sem ficar pesado"*). Os de trás não
+    contam no orçamento de atenção: na tela fica só o principal."""
+    tabelas_juntas: dict[str, list[str]] = field(default_factory=dict)
+    """O mesmo para as tabelas (gráfico e tabela podem ter o mesmo id)."""
+    rotulos: dict[str, str] = field(default_factory=dict)
+    """{id: nome curto na lista}, de gráfico ou de tabela; sem nome, vale o título."""
 
 
 EFEITO_DA_SELIC = "#juros/efeito"
@@ -555,6 +564,344 @@ MAXIMO_DE_GRAFICOS = 3
 quatro números e três gráficos à vista. Tabela não tem teto: fica guardada atrás do clique.
 Peça que a seção calcula e não está em `PARTES` sai da tela (o builder avisa)."""
 
+
+# ------------------------------------------------- peças parecidas, atrás de uma lista
+#
+# Caio, 19/11/2026: *"vamos usar o artifício de colocar parâmetros para gráficos parecidos,
+# assim mudando o parâmetro muda o gráfico ou tabela, podendo acrescentar informações ao site
+# sem ter que excluir coisas e sem ficar pesado de informações, mantendo amostra do
+# principal. Aplique isso sistematicamente"*. Por parte: {principal: [os de trás]}, para
+# gráficos e para tabelas, e o nome curto de cada um na lista. O principal fica na tela; os
+# de trás saem da lista da parte sozinhos (abaixo) e não contam no orçamento de atenção.
+# Muitos dos de trás tinham saído da tela no corte de 16/11 e voltam assim. O Laboratório
+# fica como está (peça dele vai ao ar com o Caio olhando).
+
+
+@dataclass(frozen=True)
+class Agrupar:
+    graficos: dict[str, list[str]] = field(default_factory=dict)
+    tabelas: dict[str, list[str]] = field(default_factory=dict)
+    rotulos: dict[str, str] = field(default_factory=dict)
+
+
+AGRUPAR: dict[str, dict[str, Agrupar]] = {
+    "atividade": {
+        "pib": Agrupar(
+            graficos={"pib-trimestral": ["pib-oferta", "pib-demanda", "demanda-privada"]},
+            rotulos={
+                "pib-trimestral": "PIB a cada trimestre",
+                "pib-oferta": "Pela oferta, em um ano",
+                "pib-demanda": "Pela demanda, em um ano",
+                "demanda-privada": "Demanda privada",
+            },
+        ),
+        "mes-a-mes": Agrupar(
+            graficos={"setores-mensais": ["confianca"]},
+            rotulos={
+                "setores-mensais": "Indústria, varejo e serviços",
+                "confianca": "Confiança do consumidor",
+            },
+        ),
+        "investimento": Agrupar(
+            graficos={"investimento-paises": ["poupanca-paises"]},
+            rotulos={"investimento-paises": "Investimento", "poupanca-paises": "Poupança"},
+        ),
+    },
+    "trabalho": {
+        "desemprego": Agrupar(
+            graficos={"subutilizacao": ["desalento", "procura-longa"]},
+            rotulos={
+                "subutilizacao": "Subutilização",
+                "desalento": "Desalentados",
+                "procura-longa": "Procura há 2 anos ou mais",
+            },
+        ),
+        "quem-trabalha": Agrupar(
+            graficos={"emprego-formal": ["emprego-setores"]},
+            tabelas={"trabalho-detalhe": ["emprego-setores"]},
+            rotulos={
+                "emprego-formal": "Vagas no mês",
+                "emprego-setores": "Por setor",
+                "trabalho-detalhe": "Em detalhe",
+            },
+        ),
+        "renda": Agrupar(
+            graficos={"rendimento": ["renda-trabalho-grupos"]},
+            rotulos={"rendimento": "Média", "renda-trabalho-grupos": "Por sexo e cor"},
+        ),
+        "linha-de-pobreza": Agrupar(
+            graficos={
+                "pobreza": [
+                    "fome-pesquisas",
+                    "fome-fao",
+                    "programas-sociais",
+                    "saneamento",
+                    "internet-lenha",
+                    "moradia",
+                ],
+                "fatias": ["gini"],
+            },
+            tabelas={"pobreza-estados": ["pobreza-sinisa"], "pobreza-fome": ["pobreza-saneamento"]},
+            rotulos={
+                "pobreza": "Pobreza",
+                "fome-pesquisas": "Fome (IBGE)",
+                "fome-fao": "Fome (FAO)",
+                "programas-sociais": "Programas sociais",
+                "saneamento": "Água, esgoto e lixo",
+                "internet-lenha": "Internet, luz e lenha",
+                "moradia": "Moradia",
+                "fatias": "Fatias da renda",
+                "gini": "Índice de Gini",
+                "pobreza-estados": "Os estados",
+                "pobreza-sinisa": "Esgoto por estado",
+                "pobreza-fome": "Fome por lugar e idade",
+                "pobreza-saneamento": "Cidade e campo",
+            },
+        ),
+        "quem-ganha-mais": Agrupar(
+            tabelas={"pobreza-irpf": ["pobreza-centis"]},
+            rotulos={"pobreza-irpf": "Por faixa", "pobreza-centis": "Do pé ao topo"},
+        ),
+    },
+    "inflacao": {
+        "ipca": Agrupar(
+            graficos={"ipca-12m": ["ipca-mensal"]},
+            rotulos={"ipca-12m": "Em 12 meses", "ipca-mensal": "Mês a mês"},
+        ),
+        "nucleos": Agrupar(
+            graficos={"nucleos-ritmo": ["ipca-difusao"]},
+            rotulos={"nucleos-ritmo": "Núcleos", "ipca-difusao": "Difusão"},
+        ),
+        "grupos": Agrupar(
+            graficos={"ipca-contribuicoes": ["ipca-aberturas", "ipca-itens"]},
+            tabelas={"ipca-grupos": ["ipca-itens"]},
+            rotulos={
+                "ipca-contribuicoes": "Por grupo",
+                "ipca-aberturas": "Serviços, livres e administrados",
+                "ipca-itens": "Itens",
+                "ipca-grupos": "Por grupo",
+            },
+        ),
+    },
+    "juros": {
+        "selic": Agrupar(
+            graficos={"juro-real": ["selic-ipca"]},
+            rotulos={"juro-real": "Juro real", "selic-ipca": "Selic e IPCA"},
+        ),
+        "efeito": Agrupar(
+            graficos={"selic-ciclos-alinhados": ["ipca-ciclos-alinhados"]},
+            tabelas={"selic-ciclos-corte": ["selic-ciclos-alta"]},
+            rotulos={
+                "selic-ciclos-alinhados": "Selic",
+                "ipca-ciclos-alinhados": "IPCA",
+                "selic-ciclos-corte": "Ciclos de corte",
+                "selic-ciclos-alta": "Ciclos de alta",
+            },
+        ),
+        "curva": Agrupar(
+            graficos={
+                "curva-prefixada": ["curva-real", "juro-titulos-focus"],
+                "inflacao-titulos-focus": ["inflacao-implicita"],
+            },
+            rotulos={
+                "curva-prefixada": "Prefixada",
+                "curva-real": "Juro real",
+                "juro-titulos-focus": "Contra a Selic do Focus",
+                "inflacao-titulos-focus": "Contra o IPCA do Focus",
+                "inflacao-implicita": "No tempo",
+            },
+        ),
+        "volume-custo": Agrupar(
+            graficos={"credito-custo": ["credito-pib"]},
+            rotulos={"credito-custo": "Custo", "credito-pib": "Crédito sobre o PIB"},
+        ),
+        "familias": Agrupar(
+            graficos={
+                "familias": ["familias-juros", "familias-sem-casa"],
+                "ivgr": ["imobiliario-taxa", "imobiliario-concessoes"],
+            },
+            rotulos={
+                "familias": "Dívida e parcelas",
+                "familias-juros": "Só os juros",
+                "familias-sem-casa": "Sem o imobiliário",
+                "ivgr": "Preço dos imóveis",
+                "imobiliario-taxa": "Juro do financiamento",
+                "imobiliario-concessoes": "Financiamento concedido",
+            },
+        ),
+    },
+    "externo": {
+        "conta-corrente": Agrupar(
+            graficos={"conta-corrente": ["conta-corrente-partes", "servicos-partes"]},
+            tabelas={"balanco-pagamentos": ["servicos-partes"]},
+            rotulos={
+                "conta-corrente": "Conta corrente e investimento",
+                "conta-corrente-partes": "Em partes",
+                "servicos-partes": "Serviços",
+                "balanco-pagamentos": "Balanço de pagamentos",
+            },
+        ),
+        "comercio": Agrupar(
+            graficos={"exportacoes-composicao": ["importacoes-uso"]},
+            tabelas={
+                "exportacoes-setores": ["importacoes-setores", "importacoes-uso"],
+                "exportacoes-produtos": ["importacoes-produtos"],
+            },
+            rotulos={
+                "exportacoes-composicao": "Exportações",
+                "importacoes-uso": "Importações por uso",
+                "exportacoes-setores": "Exportações por setor",
+                "importacoes-setores": "Importações por setor",
+                "exportacoes-produtos": "Exportações",
+                "importacoes-produtos": "Importações",
+            },
+        ),
+        "cambio": Agrupar(
+            graficos={"ibovespa": ["ibovespa-dolar"]},
+            rotulos={"ibovespa": "Em pontos", "ibovespa-dolar": "Em dólares"},
+        ),
+    },
+    "fiscal": {
+        "divida": Agrupar(
+            graficos={"divida-indexador": ["divida-vencimento"]},
+            rotulos={"divida-indexador": "Por indexador", "divida-vencimento": "Por vencimento"},
+        ),
+        "resultado": Agrupar(
+            graficos={"primario": ["primario-mensal"]},
+            rotulos={"primario": "Em 12 meses", "primario-mensal": "Mês a mês"},
+        ),
+    },
+    "impostos": {
+        "arrecadacao": Agrupar(
+            tabelas={
+                "arrecadacao-tributos": ["arrecadacao-setores", "arrecadacao-previsto"],
+                "arrecadacao-estados": ["fpe-fpm-estados"],
+            },
+            rotulos={
+                "arrecadacao-tributos": "Por tributo",
+                "arrecadacao-setores": "Por setor",
+                "arrecadacao-previsto": "Previsto e realizado",
+                "arrecadacao-estados": "O que sai de cada estado",
+                "fpe-fpm-estados": "O que volta (FPE e FPM)",
+            },
+        ),
+        "carga": Agrupar(
+            graficos={"carga-tributaria": ["carga-crescimento"]},
+            tabelas={
+                "carga-paises": ["carga-bases-paises", "imposto-lucro-paises"],
+                "quem-paga-irpf": ["quem-paga-retido"],
+            },
+            rotulos={
+                "carga-tributaria": "No tempo",
+                "carga-crescimento": "Contra o crescimento",
+                "carga-paises": "Carga e composição",
+                "carga-bases-paises": "Por base",
+                "imposto-lucro-paises": "Imposto sobre o lucro",
+                "quem-paga-irpf": "Por faixa de renda",
+                "quem-paga-retido": "Retido e acerto",
+            },
+        ),
+        "reforma": Agrupar(
+            tabelas={
+                "reforma-linha-do-tempo": ["reforma-seletivo-simples", "reforma-regimes"],
+                "reforma-aliquota": ["reforma-descontos"],
+            },
+            rotulos={
+                "reforma-linha-do-tempo": "Ano a ano",
+                "reforma-seletivo-simples": "Seletivo e Simples",
+                "reforma-regimes": "Regras próprias",
+                "reforma-aliquota": "Alíquota cheia",
+                "reforma-descontos": "Quem paga menos",
+            },
+        ),
+        "gasto-tributario": Agrupar(
+            tabelas={"gasto-tributario": ["gasto-tributario-regioes"]},
+            rotulos={"gasto-tributario": "Os maiores", "gasto-tributario-regioes": "Por região"},
+        ),
+    },
+    "longo-prazo": {
+        "populacao": Agrupar(
+            graficos={
+                "crescimento-15-64": ["populacao", "populacao-onu", "nascimentos-obitos"],
+                "fecundidade": ["esperanca-de-vida", "mortalidade-infantil"],
+            },
+            rotulos={
+                "crescimento-15-64": "Crescimento de 15 a 64",
+                "populacao": "População",
+                "populacao-onu": "Projeção da ONU",
+                "nascimentos-obitos": "Nascimentos e óbitos",
+                "fecundidade": "Filhos por mulher",
+                "esperanca-de-vida": "Esperança de vida",
+                "mortalidade-infantil": "Mortalidade infantil",
+            },
+        ),
+        "envelhecimento": Agrupar(
+            graficos={"dependencia": ["idosos"], "inss": ["previdencia-uniao"]},
+            rotulos={
+                "dependencia": "Dependentes",
+                "idosos": "Idosos na população",
+                "inss": "INSS",
+                "previdencia-uniao": "INSS, servidores e militares",
+            },
+        ),
+        "produtividade": Agrupar(
+            graficos={"crescimento-decomposto": ["produtividade"]},
+            rotulos={
+                "crescimento-decomposto": "Gente ou produto",
+                "produtividade": "Por pessoa e por hora",
+            },
+        ),
+    },
+    "previsoes": {
+        "inflacao-juros-dolar": Agrupar(
+            graficos={"focus-selic": ["focus-ipca", "focus-câmbio"]},
+            rotulos={"focus-selic": "Selic", "focus-ipca": "IPCA", "focus-câmbio": "Dólar"},
+        ),
+    },
+    "riscos": {
+        "mercado-externo": Agrupar(
+            graficos={
+                "juro-real-brasil-eua": [
+                    "cambio-real",
+                    "reservas-cobertura",
+                    "vol-dolar",
+                    "queda-ibovespa",
+                ],
+                "basileia": ["credito-atrasos"],
+            },
+            rotulos={
+                "juro-real-brasil-eua": "Juro real: Brasil e EUA",
+                "cambio-real": "Câmbio real",
+                "reservas-cobertura": "Reservas e dívida curta",
+                "vol-dolar": "Quanto o dólar balança",
+                "queda-ibovespa": "Ibovespa abaixo do pico",
+                "basileia": "Capital dos bancos",
+                "credito-atrasos": "Atrasos do crédito",
+            },
+        ),
+    },
+}
+
+
+def _com_agrupar(assunto: str, p: Parte) -> Parte:
+    a = AGRUPAR.get(assunto, {}).get(p.id)
+    if a is None:
+        return p
+    atras_g = {i for v in a.graficos.values() for i in v}
+    atras_t = {i for v in a.tabelas.values() for i in v}
+    return replace(
+        p,
+        graficos=[i for i in p.graficos if i not in atras_g],
+        tabelas=[i for i in p.tabelas if i not in atras_t],
+        juntos={**p.juntos, **a.graficos},
+        tabelas_juntas={**p.tabelas_juntas, **a.tabelas},
+        rotulos={**p.rotulos, **a.rotulos},
+    )
+
+
+PARTES = {s: [_com_agrupar(s, p) for p in ps] for s, ps in PARTES.items()}
+
+
 # Estados tem peças próprias (mapa, ranking, ficha, duas métricas), montadas no navegador:
 # as partes dizem só o nome e o resumo, e o site sabe o que vai em cada uma (Caio,
 # 14/11/2026: "diminua a tela ao abrir por estado, também não precisa mostrar tudo em uma
@@ -589,9 +936,39 @@ def esperados(secao_id: str) -> dict[str, set[str]]:
     ver. Só estes vêm da rodada anterior quando a fonte falha (peça tirada do código não fica
     voltando)."""
     partes = PARTES.get(secao_id, [])
-    return {
+    saida = {
         k: {i for p in partes for i in getattr(p, k)} for k in ("cartoes", "graficos", "tabelas")
     }
+    # Os que moram atrás da lista de um principal também são esperados.
+    saida["graficos"] |= {i for p in partes for v in p.juntos.values() for i in v}
+    saida["tabelas"] |= {i for p in partes for v in p.tabelas_juntas.values() for i in v}
+    return saida
+
+
+def _juntar[T: (Grafico, Tabela)](
+    na_tela: list[T], todos: dict[str, T], partes: list[Parte], campo: str
+) -> list[T]:
+    """Tira da lista os que vão atrás de um principal e os põe nas `alternativas` dele."""
+    atras: set[str] = set()
+    saida: list[T] = []
+    juntos = {k: v for p in partes for k, v in getattr(p, campo).items()}
+    rotulos = {k: v for p in partes for k, v in p.rotulos.items()}
+    for x in na_tela:
+        for i in juntos.get(x.id, []):
+            atras.add(i)
+    for x in na_tela:
+        if x.id in atras:
+            continue
+        outros = [todos[i] for i in juntos.get(x.id, []) if i in todos and i != x.id]
+        nome = rotulos.get(x.id, x.rotulo_opcao)
+        if outros:
+            alternativas = [
+                o.model_copy(update={"rotulo_opcao": rotulos.get(o.id, o.rotulo_opcao)})
+                for o in outros
+            ]
+            x = x.model_copy(update={"alternativas": alternativas, "rotulo_opcao": nome})
+        saida.append(x)
+    return saida
 
 
 def aplicar(secao: Secao) -> list[str]:
@@ -637,13 +1014,28 @@ def aplicar(secao: Secao) -> list[str]:
                     tabelas=listas["tabelas"],
                 )
             )
+    # O que fica atrás da lista de um principal que está na tela também tem lugar.
+    graficos_atras = {g.id: g for g in secao.graficos}
+    tabelas_atras = {t.id: t for t in secao.tabelas}
+    for p in partes:
+        for k, campo in (("graficos", "juntos"), ("tabelas", "tabelas_juntas")):
+            for principal, outros in getattr(p, campo).items():
+                if principal in usados[k]:
+                    usados[k].update(i for i in outros if i in tem[k])
     sobra = {k: [i for i in tem[k] if i not in usados[k]] for k in tem}
     extras_sobrando = [e for e in extras_da_secao if not any(e in s.extras for s in subcategorias)]
     # O que não tem parte sai da tela (orçamento de atenção, 16/11/2026): a seção continua
     # calculando, o builder avisa, e a peça volta quando ganhar lugar numa parte.
     secao.cartoes = [c for c in secao.cartoes if c.id in usados["cartoes"]]
-    secao.graficos = [g for g in secao.graficos if g.id in usados["graficos"]]
-    secao.tabelas = [t for t in secao.tabelas if t.id in usados["tabelas"]]
+    secao.graficos = _juntar(
+        [g for g in secao.graficos if g.id in usados["graficos"]], graficos_atras, partes, "juntos"
+    )
+    secao.tabelas = _juntar(
+        [t for t in secao.tabelas if t.id in usados["tabelas"]],
+        tabelas_atras,
+        partes,
+        "tabelas_juntas",
+    )
     if extras_sobrando:
         subcategorias.append(
             Subcategoria(

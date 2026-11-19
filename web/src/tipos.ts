@@ -67,6 +67,10 @@ export interface Grafico {
   secao?: string;
   /** Por que não há CSV nem PNG (dado privado cujos termos vedam reproduzir; licencas.py). */
   sem_download?: string;
+  /** Gráficos parecidos no mesmo lugar, na lista "Gráfico" (organizacao.py, `juntos`). */
+  alternativas?: Grafico[];
+  /** O nome curto na lista; vazio, vale o título. */
+  rotulo_opcao?: string;
   /** Outras métricas do gráfico, na lista "Métrica"; a primeira é a que abre. */
   variantes?: VarianteGrafico[];
   /** O nome da lista das variantes ("Métrica", ou "Ver em" quando só troca a unidade). */
@@ -144,6 +148,9 @@ export interface Tabela {
   nota: string;
   visoes?: VisaoTabela[];
   rotulo_visoes?: string;
+  /** Tabelas parecidas no mesmo lugar, na lista "Tabela". */
+  alternativas?: Tabela[];
+  rotulo_opcao?: string;
 }
 
 export interface SimuladorDivida {

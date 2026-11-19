@@ -24,6 +24,7 @@ import { montarMundo } from "./mundo";
 import { montarDispersao } from "./dispersao";
 import { montarPiramide } from "./piramide";
 import { montarRetornos } from "./retornos";
+import { comAlternativas } from "./alternativas";
 import { montarComEscolha } from "./variantes";
 import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
@@ -178,6 +179,7 @@ function corpoDaTabela(colunas: string[], linhas: LinhaTabela[]): HTMLTableEleme
 }
 
 function montarTabela(t: Tabela): HTMLElement {
+  if (t.alternativas?.length) return comAlternativas(t, montarTabela, "t");
   const caixa = guardar(t.titulo, t.subtitulo, () => {
     const rolavel = el("div", "tabela-rolavel");
     const partes: HTMLElement[] = [];
@@ -232,6 +234,7 @@ function botaoDeAbrir(rotulo: string, quantos: number, abrir: () => void): HTMLE
 
 /** O gráfico, ou a peça própria quando o gráfico tem uma (o comparador de retornos). */
 function montarPeca(g: Grafico): HTMLElement {
+  if (g.alternativas?.length) return comAlternativas(g, montarPeca, "g");
   if (g.piramide) return montarPiramide(g, g.piramide);
   if (g.dispersao) return montarDispersao(g, g.dispersao);
   if (g.variantes?.length || g.escolher_series) return montarComEscolha(g);
@@ -636,7 +639,11 @@ function contagem(p: Subcategoria): string {
 }
 
 /** A parte em que a peça do endereço ("c-ipca-12m", "t-alertas") mora. */
-function parteDaPeca(partes: Subcategoria[], peca: string): Subcategoria | undefined {
+function parteDaPeca(
+  partes: Subcategoria[],
+  peca: string,
+  s?: Secao,
+): Subcategoria | undefined {
   if (peca === "t-alertas" || peca.startsWith("a-")) {
     return partes.find((p) => p.extras.includes("alertas"));
   }
@@ -648,7 +655,13 @@ function parteDaPeca(partes: Subcategoria[], peca: string): Subcategoria | undef
   const campo = campos[peca.slice(0, 2)];
   if (!campo) return undefined;
   const id = peca.slice(2);
-  return partes.find((p) => p[campo].includes(id));
+  const direto = partes.find((p) => p[campo].includes(id));
+  if (direto || !s || campo === "cartoes") return direto;
+  // Atrás da lista de outro gráfico ou tabela: a parte é a do principal.
+  const lista: { id: string; alternativas?: { id: string }[] }[] =
+    campo === "graficos" ? s.graficos : s.tabelas;
+  const principal = lista.find((x) => x.alternativas?.some((a) => a.id === id));
+  return principal ? partes.find((p) => p[campo].includes(principal.id)) : undefined;
 }
 
 /** O que uma parte mostra, inteiro: números, a peça própria, gráficos e tabelas. */
@@ -836,7 +849,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
     .then((s) => {
       const partes = s.subcategorias ?? [];
       const parte =
-        partes.find((p) => p.id === peca) ?? (peca ? parteDaPeca(partes, peca) : undefined);
+        partes.find((p) => p.id === peca) ?? (peca ? parteDaPeca(partes, peca, s) : undefined);
 
       if (!partes.length) {
         // Assunto sem partes: abre inteiro, como antes.

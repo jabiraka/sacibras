@@ -119,7 +119,16 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   clique. Nos Dados, o teto está em `organizacao.py` e em teste: **até 5 partes por assunto
   e, por parte, até 4 números e 3 gráficos** (tabela não tem teto: fica atrás do clique).
   Entra um, sai um. **Peça que a seção calcula e não está em `PARTES` sai da tela** (não há
-  mais "Outros" para cartão, gráfico ou tabela); o builder avisa quantas ficaram de fora.
+  mais "Outros" para cartão, gráfico ou tabela); o builder avisa quais ficaram de fora.
+- **Parecidos atrás de uma lista** (Caio, 19/11/2026: *"vamos usar o artifício de colocar
+  parâmetros para gráficos parecidos, assim mudando o parâmetro muda o gráfico ou tabela,
+  podendo acrescentar informações ao site sem ter que excluir coisas e sem ficar pesado de
+  informações, mantendo amostra do principal. Aplique isso sistematicamente"*). Duas
+  formas: a mesma conta em outra unidade ou métrica vai em `variantes` do gráfico (lista
+  "Ver em" ou "Métrica": `com_variantes` em `secoes/base.py`); outro gráfico ou tabela do
+  mesmo tema vai atrás do principal em `AGRUPAR` (`organizacao.py`; lista "Gráfico" ou
+  "Tabela"), que conta como um só no orçamento. Peça nova que se parece com uma da tela
+  entra atrás dela antes de pensar em tirar outra.
 - **Nove assuntos nos Dados** (Caio, 16/11/2026: *"faça 1 e 2 já"*, sobre juntar os
   assuntos e a frase do gráfico): Atividade, Trabalho e renda (com a pobreza), Inflação,
   Juros e crédito, Contas públicas, Impostos, Exterior e mercados, Longo prazo (demografia,

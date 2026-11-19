@@ -4197,3 +4197,16 @@ table.dados.limites-tabela td {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px var(--cor);
 }
+
+/* A lista das peças parecidas (alternativas.ts): a caixa não conta na grade. */
+.com-alternativas {
+  display: contents;
+}
+
+.alternativas-barra {
+  margin: 0 0 10px;
+}
+
+details.guardado > .alternativas-barra {
+  margin: 12px 0 4px;
+}

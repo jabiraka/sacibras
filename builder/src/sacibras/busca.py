@@ -1186,11 +1186,32 @@ def montar(saida: Path) -> list[Item]:
             )
             extra = f"{c['detalhe']} {c.get('texto', '')}"
             itens.append(_item(c["rotulo"], f"{local} · número", f"{h}/{alvo}", extra, n))
-        for g in dados.get("graficos", []):
+        # O que mora atrás da lista de um gráfico ou tabela (`alternativas`) também se acha:
+        # o endereço é o dele, e a tela abre a lista nele.
+        todos_g = [x for p in dados.get("graficos", []) for x in (p, *p.get("alternativas", []))]
+        for g in todos_g:
             alvo = f"g-{g['id']}"
-            itens.append(_item(g["titulo"], f"{onde.get(alvo, nome)} · gráfico", f"{h}/{alvo}"))
-        for t in dados.get("tabelas", []):
+            local = onde.get(alvo) or next(
+                (
+                    onde.get(f"g-{p['id']}", nome)
+                    for p in dados.get("graficos", [])
+                    if any(a["id"] == g["id"] for a in p.get("alternativas", []))
+                ),
+                nome,
+            )
+            itens.append(_item(g["titulo"], f"{local} · gráfico", f"{h}/{alvo}"))
+        todas_t = [x for p in dados.get("tabelas", []) for x in (p, *p.get("alternativas", []))]
+        for t in todas_t:
             alvo = f"t-{t['id']}"
+            if alvo not in onde:
+                onde[alvo] = next(
+                    (
+                        onde.get(f"t-{p['id']}", nome)
+                        for p in dados.get("tabelas", [])
+                        if any(a["id"] == t["id"] for a in p.get("alternativas", []))
+                    ),
+                    nome,
+                )
             local = f"{onde.get(alvo, nome)} · tabela"
             itens.append(
                 _item(

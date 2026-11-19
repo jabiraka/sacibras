@@ -159,6 +159,14 @@ class Grafico(Modelo):
     """O assunto de onde o gráfico veio: só na página inicial, para o elo "abrir"."""
     variantes: list[VarianteGrafico] = Field(default_factory=list)
     """Outras métricas do gráfico, na lista "Métrica"; a primeira opção é o próprio gráfico."""
+    alternativas: list[Grafico] = Field(default_factory=list)
+    """Outros gráficos parecidos no mesmo lugar, na lista "Gráfico" (Caio, 19/11/2026:
+    *"vamos usar o artifício de colocar parâmetros para gráficos parecidos, assim mudando o
+    parâmetro muda o gráfico ou tabela, podendo acrescentar informações ao site sem ter que
+    excluir coisas"*). Quem junta é `organizacao.aplicar`, pelas `juntos` de cada parte; este
+    abre primeiro e é o principal."""
+    rotulo_opcao: str = ""
+    """O nome curto do gráfico na lista; vazio, vale o título."""
     rotulo_variantes: str = "Métrica"
     """O nome da lista das variantes ("Ver em", quando a troca é só de unidade)."""
     escolher_series: bool = False
@@ -259,6 +267,10 @@ class Tabela(Modelo):
     15/11/2026: o PIB por componente "com parâmetro pra indicar [...] qual trimestre ou qual
     ano"); `colunas` e `linhas` repetem a primeira, para a busca e para quem não lê as visões."""
     rotulo_visoes: str = ""
+    alternativas: list[Tabela] = Field(default_factory=list)
+    """Outras tabelas parecidas no mesmo lugar, na lista "Tabela" (como `Grafico.alternativas`)."""
+    rotulo_opcao: str = ""
+    """O nome curto da tabela na lista; vazio, vale o título."""
     """O nome da lista ("Período")."""
 
 
@@ -809,3 +821,13 @@ class Painel(Modelo):
 
 def pontos(serie: list[Ponto], casas: int = 4) -> list[tuple[date, float | None]]:
     return [(d, round(v, casas)) for d, v in serie]
+
+
+def achatar_graficos(lista: list[Grafico]) -> list[Grafico]:
+    """Cada gráfico e as alternativas dele, todos no mesmo nível (busca, perguntas, rodada
+    anterior)."""
+    return [x for g in lista for x in (g, *g.alternativas)]
+
+
+def achatar_tabelas(lista: list[Tabela]) -> list[Tabela]:
+    return [x for t in lista for x in (t, *t.alternativas)]
