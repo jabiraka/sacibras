@@ -14,6 +14,19 @@ export interface Serie {
   cor?: number;
 }
 
+/** Outra métrica do mesmo gráfico, na lista "Métrica" (o teste de estresse). */
+export interface VarianteGrafico {
+  id: string;
+  rotulo: string;
+  titulo: string;
+  unidade: string;
+  casas: number;
+  periodicidade: Periodicidade;
+  series: Serie[];
+  linhas: { valor: number; rotulo: string }[];
+  nota: string;
+}
+
 export interface Grafico {
   id: string;
   titulo: string;
@@ -52,6 +65,10 @@ export interface Grafico {
   secao?: string;
   /** Por que não há CSV nem PNG (dado privado cujos termos vedam reproduzir; licencas.py). */
   sem_download?: string;
+  /** Outras métricas do gráfico, na lista "Métrica"; a primeira é a que abre. */
+  variantes?: VarianteGrafico[];
+  /** A pessoa liga e desliga cada série que não é de consenso (fichas em cima do gráfico). */
+  escolher_series?: boolean;
 }
 
 /** Um ponto por país: uma métrica em cada eixo (`chave` é o ISO3; o Brasil é BRA). */

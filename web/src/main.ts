@@ -24,6 +24,7 @@ import { montarMundo } from "./mundo";
 import { montarDispersao } from "./dispersao";
 import { montarPiramide } from "./piramide";
 import { montarRetornos } from "./retornos";
+import { montarComEscolha } from "./variantes";
 import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import { montarSimulador } from "./simulador";
@@ -233,6 +234,7 @@ function botaoDeAbrir(rotulo: string, quantos: number, abrir: () => void): HTMLE
 function montarPeca(g: Grafico): HTMLElement {
   if (g.piramide) return montarPiramide(g, g.piramide);
   if (g.dispersao) return montarDispersao(g, g.dispersao);
+  if (g.variantes?.length || g.escolher_series) return montarComEscolha(g);
   return g.id === "retornos-em-reais" ? montarRetornos(g) : montarGrafico(g);
 }
 

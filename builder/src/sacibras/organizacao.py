@@ -506,7 +506,8 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "custo",
             "Custo, rolagem e crises",
-            "Quanto se paga de juros, quanto vence logo e a dívida se cada crise se repetisse.",
+            "Quanto se paga de juros, quanto vence logo e o que cada crise faria hoje com a "
+            "dívida, o PIB, a inflação, o dólar, a bolsa e a Selic.",
             cartoes=[
                 "juros-sobre-receita",
                 "vence-em-12-meses",

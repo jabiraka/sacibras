@@ -97,6 +97,14 @@ e outros? E ver onde cada Estado e outros está gastando com a receita?"*):
 - **Estados › Mapa e ranking**: quatro métricas novas, "Gasto com saúde / educação /
   segurança / previdência", em % da despesa do estado sem os encargos especiais (DCA,
   conta nossa; `estados._gasto_por_area`).
+- **Riscos › Custo, rolagem e crises**, o teste de estresse (Caio, mesmo dia: *"veja o
+  efeito sobre outras métricas tb, coloque o parâmetro pra mudar a métrica no gráfico
+  mesmo"* e *"deixe tbm escolher qual teste mostrar, se todos ou só alguns"*): o gráfico
+  ganhou a lista "Métrica" (dívida, PIB, inflação, primário, dólar, Ibovespa e Selic) e
+  fichas para ligar e desligar cada episódio, com "Todos". As contas anuais usam os mesmos
+  desvios que já moviam a dívida; o mercado repete os 24 meses desde o começo da janela,
+  no nível de hoje. O mecanismo é geral (`variantes` e `escolher_series` no `Grafico`,
+  `web/src/variantes.ts`): outro gráfico pode usar.
 - Falta: os municípios um por um (são 5.570; hoje só as capitais têm conta no SICONFI aqui)
   e a receita de cada esfera *depois* dos repasses (o FMI separa o repasse geral, mas não
   quanto vai a estados e quanto a municípios).

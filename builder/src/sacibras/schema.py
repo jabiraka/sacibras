@@ -101,6 +101,23 @@ class Dispersao(Modelo):
     correlacao: float | None = None
 
 
+class VarianteGrafico(Modelo):
+    """Outra métrica do mesmo gráfico, que a pessoa escolhe na lista "Métrica" (Caio,
+    19/11/2026, no teste de estresse: *"veja o efeito sobre outras métricas tb, coloque o
+    parâmetro pra mudar a métrica no gráfico mesmo"*). Troca as séries, a unidade e a nota;
+    o resto do gráfico fica."""
+
+    id: str
+    rotulo: str
+    titulo: str
+    unidade: str
+    casas: int = 1
+    periodicidade: Periodicidade
+    series: list[Serie]
+    linhas: list[LinhaRef] = Field(default_factory=list)
+    nota: str = ""
+
+
 class Grafico(Modelo):
     id: str
     titulo: str
@@ -138,6 +155,11 @@ class Grafico(Modelo):
     """Com ela, o site desenha um ponto por país no lugar das séries."""
     secao: str = ""
     """O assunto de onde o gráfico veio: só na página inicial, para o elo "abrir"."""
+    variantes: list[VarianteGrafico] = Field(default_factory=list)
+    """Outras métricas do gráfico, na lista "Métrica"; a primeira opção é o próprio gráfico."""
+    escolher_series: bool = False
+    """A pessoa liga e desliga cada série que não é de consenso (Caio, 19/11/2026: *"deixe
+    tbm escolher qual teste mostrar, se todos ou só alguns"*)."""
     sem_download: str = ""
     """Por que não há CSV nem PNG: a fonte cita dado privado cujos termos vedam reproduzir
     (`licencas.py`). Sai sozinho da `fonte`; não se escreve à mão."""
