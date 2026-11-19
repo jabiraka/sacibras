@@ -414,19 +414,36 @@ PARTES: dict[str, list[Parte]] = {
             tabelas=["juro-neutro-metodos"],
         ),
         Parte(
-            "copom",
-            "O mercado e as surpresas do Copom",
-            "Quando o Copom surpreende o Focus, quanto o juro de 2 anos e o dólar se mexem.",
-            cartoes=["copom-efeito", "copom-dias"],
-            tabelas=["copom-surpresas"],
+            "pressao",
+            "O mercado: de onde vem a pressão",
+            "Quanto da alta do dólar é só do Brasil, e o que o juro e o dólar fazem quando o "
+            "Copom surpreende.",
+            cartoes=["dolar-do-brasil", "dolar-de-fora", "copom-efeito"],
+            graficos=["dolar-mundo-brasil"],
+            tabelas=["dolar-altas", "copom-surpresas"],
         ),
         Parte(
             "reacao-fiscal",
-            "O governo reage à dívida?",
-            "O teste de Bohn: quando a dívida sobe, o primário melhora no ano seguinte?",
-            cartoes=["reacao-fiscal"],
-            graficos=["reacao-fiscal"],
-            tabelas=["reacao-fiscal-amostras"],
+            "O ajuste fiscal: o que foi feito",
+            "A dívida com outro primário, por onde ele já mudou, o que custa esperar e se ele "
+            "reage à dívida.",
+            cartoes=["divida-sem-deficit"],
+            graficos=["divida-outro-primario"],
+            tabelas=[
+                "primario-episodios",
+                "divida-outro-primario",
+                "custo-de-esperar",
+                "reacao-fiscal-amostras",
+            ],
+        ),
+        Parte(
+            "promessa",
+            "O prometido e o que veio",
+            "A meta de cada ano e o que o mercado esperava, contra o primário e a dívida que "
+            "vieram.",
+            cartoes=["meta-ldo", "primario-prometido", "divida-esperada"],
+            graficos=["meta-ldo", "primario-prometido", "divida-esperada"],
+            tabelas=["meta-ldo", "primario-erro-horizonte"],
         ),
         Parte(
             "crescimento",

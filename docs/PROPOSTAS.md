@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 16/11/2026 (por último, o "Saiu por último" da entrada e a conversa sobre o que incluir e tirar).
+Última atualização: 19/11/2026 (por último, as ideias de crise e ajuste fiscal para o Laboratório).
 Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -146,6 +146,36 @@ Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e 
     (OCDE, a cada três) e anos de estudo (PNAD), por estado onde houver. É o capital
     humano da conta do crescimento.
   - **Crédito direcionado** em % do crédito total (SGS): serve à página do juro alto.
+
+## Crise e ajuste fiscal (sessão de 19/11/2026)
+
+Caio: *"essas métricas vão nos ajudar a ver o desenrolar e de onde está vindo se tiver uma
+crise, bem como oq poderíamos ter feito pra prevenir, o foco principal hj está no ajuste
+fiscal, mas temo que o governo não queira implementar"*; e *"Faz tudo, eu aprovo"*. Entrou
+tudo o que estava aqui (meta de cada LDO, dívida esperada por safra, custo de esperar e a
+pergunta da crise; o estudo dos anúncios fiscais foi feito e saiu). Ficou:
+
+- **Os parâmetros de cada orçamento contra o que veio** (PIB, inflação e receita previstos
+  no PLOA): a outra metade do "viés do governo". Leitura à mão de umas vinte mensagens
+  presidenciais, com prazo.
+- **O mundo ou o Brasil, para o juro longo e a bolsa**: a mesma conta do dólar com o juro
+  real de 10 anos contra o dos EUA (já lido em Riscos) e com o Ibovespa contra um índice de
+  emergentes (falta fonte oficial e aberta para o índice).
+- **Receita de uma vez só nos episódios**: separar, na tabela "receita ou despesa", o que
+  foi receita extraordinária (concessões, dividendos, Refis; o RTN tem as linhas) do que
+  ficou.
+- **Testado e fora da tela: o estudo de evento dos anúncios fiscais** (Caio, 19/11/2026:
+  *"Se o resultado for fraco, acho que não precisa colocar não"*). Com 24 datas conferidas
+  e janela de dois pregões, o juro de 5 anos subiu em 8 de 12 anúncios de menos aperto e
+  em 5 de 9 de mais aperto: não se distingue do acaso. Volta se houver medida melhor: a
+  hora de cada anúncio (quase nenhuma página oficial dá) e o juro do dia (a B3 está
+  desligada). A lista (`relatorios.ANUNCIOS_FISCAIS`) e a conta ficam no código.
+- **Meta da LDO com o abatimento**: refazer a comparação com a meta já descontada do PPI e
+  do PAC efetivamente usados (2007 a 2014), que está nos relatórios de cumprimento de meta.
+- **Testado e fora**: a correlação móvel entre o juro prefixado de 5 anos e o dólar (dias
+  em que os dois sobem juntos como sinal de prêmio de risco). É positiva quase sempre desde
+  2013 (entre 0,2 e 0,7), sem marcar 2015 nem 2024 melhor que os outros anos, e custa 45 s
+  de build (uma curva por dia). Não entra.
 
 ## Achados da revisão das telas (15/11/2026)
 
