@@ -126,8 +126,8 @@ e outros? E ver onde cada Estado e outros está gastando com a receita?"*):
   do mesmo tema ficaram com um na tela. A busca acha a peça de trás e a tela abre a lista
   nela. Ficaram fora: os três de Trabalho que repetem Longo prazo (analfabetismo e renda
   por escolaridade), os reservatórios e a tabela de governança de Riscos (sem par
-  parecido) e 35 cartões (Trabalho, Juros, Longo prazo, Riscos): cartão não entra em lista;
-  dá para fazer o mesmo com eles, se o Caio quiser. O Laboratório não mudou: muda com o
+  parecido) e 35 cartões (Trabalho, Juros, Longo prazo, Riscos): cartão não entra em lista
+  (Caio, 19/11/2026: *"nos cartões não vamos aplicar por enquanto"*). O Laboratório não mudou: muda com o
   Caio olhando.
 - Falta: os municípios um por um (são 5.570; hoje só as capitais têm conta no SICONFI aqui)
   e a receita de cada esfera *depois* dos repasses (o FMI separa o repasse geral, mas não
