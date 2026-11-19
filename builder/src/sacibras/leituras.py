@@ -81,15 +81,6 @@ LEITURAS: list[Leitura] = [
         "cada três meses, e antes disso se o IPCA voltar à meta ou a Selic mudar de direção.",
     ),
     Leitura(
-        "Anúncios fiscais do estudo de evento (regra nova, mudança de meta, pacote)",
-        "relatorios.ANUNCIOS_FISCAIS",
-        date(2026, 11, 19),
-        date(2027, 2, 19),
-        "Notícias do Ministério da Fazenda e da Agência Brasil: pôr na lista o anúncio novo "
-        "que caiba no critério, com o dia, o sentido e a página. A cada três meses, e logo "
-        "depois de um pacote (em 18/11/2026 a Fazenda falou em novas medidas, sem detalhar).",
-    ),
-    Leitura(
         "Meta de primário no texto original de cada LDO (o prometido contra o que veio)",
         "leis.METAS_DAS_LDOS",
         date(2026, 11, 19),

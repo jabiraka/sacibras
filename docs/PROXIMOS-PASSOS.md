@@ -91,14 +91,15 @@ obrigatórias? [...] comparar com outros países"*):
 nos ajudar a ver o desenrolar e de onde está vindo se tiver uma crise, bem como oq
 poderíamos ter feito pra prevenir, o foco principal hj está no ajuste fiscal"*; e, sobre as
 sugestões: *"Faz tudo, eu aprovo"*). No ramo `ccr-f1b65a71-8udk6t`, **ainda não no
-`main`**. Nove peças novas no Laboratório
+`main`**. Oito peças novas no Laboratório
 (`secoes/laboratorio_ajuste.py`, contas em `modelos/ajuste.py`), todas sobre o que já
 aconteceu, e uma pergunta:
 - **O mercado: de onde vem a pressão** (`#laboratorio/pressao`): o dólar em 12 meses
   repartido entre o que veio de fora e o que é só do Brasil (Federal Reserve, H.10), com as
-  cinco maiores altas; o **estudo de evento dos anúncios fiscais** (24 datas conferidas em
-  página oficial, `relatorios.ANUNCIOS_FISCAIS`: o juro de 5 anos e o dólar só do Brasil da
-  véspera ao dia seguinte; resultado fraco, dito na tela); e o do Copom, que veio para cá.
+  cinco maiores altas; e o estudo de evento do Copom, que veio para cá. O **estudo de
+  evento dos anúncios fiscais** foi feito (24 datas conferidas em página oficial) e saiu da
+  tela no mesmo dia: resultado fraco (Caio: *"Se o resultado for fraco, acho que não
+  precisa colocar não"*); a lista e a conta ficam no código, sem serem chamadas.
 - **O ajuste fiscal: o que foi feito** (`#laboratorio/reacao-fiscal`): a dívida com outro
   primário desde 2014, por onde o primário já mudou (receita ou despesa, RTN desde 1997), o
   **custo de esperar** (o primário que estabiliza conforme o ano de partida, com a dívida
@@ -143,8 +144,7 @@ A lista inteira sai de `sacibras leituras --todas` (`leituras.py`); a issue `rel
 As próximas:
 
 - **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
-- **até 19/02/2027**: anúncios fiscais novos → `relatorios.ANUNCIOS_FISCAIS` (em 18/11 a
-  Fazenda falou em novas medidas, sem detalhar); e as dez perguntas (`perguntas.LIDAS_EM`).
+- **até 19/02/2027**: as dez perguntas (`perguntas.LIDAS_EM`).
 - **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e
   `relatorios.RECEITA_PREVISTA`.
 - **até 03/12**: nota fiscal do BC → `relatorios.ELASTICIDADES`.
@@ -188,10 +188,9 @@ As próximas:
   decidi sozinho e pode ser trocado: (1) "só do Brasil" no dólar é um resto e a faixa é
   estreita quando o dólar lá fora quase não se mexe; (2) o segundo cenário da dívida é piso
   de 1 % do PIB (a média de 2003 a 2013 dava 33 % do PIB, longe demais do que a conta
-  mede); (3) nos anúncios fiscais, o sentido de cada um (mais ou menos aperto) é leitura
-  minha, o teto de 2016 entra pelo anúncio (24/05) e não pelo texto da PEC, e ficaram fora
-  nove casos limítrofes (contingenciamentos, falas sem medida) que estão no
-  [FONTES](FONTES.md); (4) a meta da LDO é a cheia, sem o abatimento de PPI e PAC que a lei
+  mede); (3) pela regra nova do resultado fraco, dois antigos são candidatos a sair e
+  ficaram esperando a sua palavra: o teste de Bohn na amostra inteira (não se distingue de
+  zero; o de 2002 a 2013 sim) e a meta da LDO sem 2020; (4) a meta da LDO é a cheia, sem o abatimento de PPI e PAC que a lei
   deixava de 2007 a 2014; (5) a décima pergunta passou do teto de nove: se pesar, a
   candidata a juntar com ela é "O que o mercado espera do Brasil?".
 - **Na página traduzida para o inglês**, a 390 px, a tela "O prometido e o que veio" passa

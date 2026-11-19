@@ -152,8 +152,8 @@ Caio: *"Os simuladores tem mto erro né, melhor focarmos no que podemos pegar e 
 Caio: *"essas métricas vão nos ajudar a ver o desenrolar e de onde está vindo se tiver uma
 crise, bem como oq poderíamos ter feito pra prevenir, o foco principal hj está no ajuste
 fiscal, mas temo que o governo não queira implementar"*; e *"Faz tudo, eu aprovo"*. Entrou
-tudo o que estava aqui (meta de cada LDO, anúncios fiscais, dívida esperada por safra,
-custo de esperar e a pergunta da crise). Ficou:
+tudo o que estava aqui (meta de cada LDO, dívida esperada por safra, custo de esperar e a
+pergunta da crise; o estudo dos anúncios fiscais foi feito e saiu). Ficou:
 
 - **Os parâmetros de cada orçamento contra o que veio** (PIB, inflação e receita previstos
   no PLOA): a outra metade do "viés do governo". Leitura à mão de umas vinte mensagens
@@ -164,9 +164,12 @@ custo de esperar e a pergunta da crise). Ficou:
 - **Receita de uma vez só nos episódios**: separar, na tabela "receita ou despesa", o que
   foi receita extraordinária (concessões, dividendos, Refis; o RTN tem as linhas) do que
   ficou.
-- **Anúncios fiscais, o que melhoraria a medida**: a hora de cada anúncio (quase nenhuma
-  página oficial dá; hoje a janela é de dois pregões) e os nove casos limítrofes que
-  ficaram de fora ([FONTES](FONTES.md)). Com a B3 desligada, não há juro futuro do dia.
+- **Testado e fora da tela: o estudo de evento dos anúncios fiscais** (Caio, 19/11/2026:
+  *"Se o resultado for fraco, acho que não precisa colocar não"*). Com 24 datas conferidas
+  e janela de dois pregões, o juro de 5 anos subiu em 8 de 12 anúncios de menos aperto e
+  em 5 de 9 de mais aperto: não se distingue do acaso. Volta se houver medida melhor: a
+  hora de cada anúncio (quase nenhuma página oficial dá) e o juro do dia (a B3 está
+  desligada). A lista (`relatorios.ANUNCIOS_FISCAIS`) e a conta ficam no código.
 - **Meta da LDO com o abatimento**: refazer a comparação com a meta já descontada do PPI e
   do PAC efetivamente usados (2007 a 2014), que está nos relatórios de cumprimento de meta.
 - **Testado e fora**: a correlação móvel entre o juro prefixado de 5 anos e o dólar (dias

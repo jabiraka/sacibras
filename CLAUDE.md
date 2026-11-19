@@ -168,12 +168,13 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   ajudar a ver [...] de onde está vindo se tiver uma crise, bem como oq poderíamos ter feito
   pra prevenir, o foco principal hj está no ajuste fiscal"*; e *"Faz tudo, eu aprovo"*)
   entraram as peças de pressão e ajuste (`secoes/laboratorio_ajuste.py`,
-  `modelos/ajuste.py`): o dólar repartido entre o mundo e o Brasil, o estudo de evento dos
-  anúncios fiscais (`relatorios.ANUNCIOS_FISCAIS`: só data conferida em página oficial,
-  pelo critério escrito lá, fixado antes de olhar o mercado), a dívida com outro primário,
+  `modelos/ajuste.py`): o dólar repartido entre o mundo e o Brasil, a dívida com outro primário,
   por onde o primário já mudou, o custo de esperar, a meta original de cada LDO contra o que
   veio (`leis.METAS_DAS_LDOS`) e o primário e a dívida que o Focus esperava. Todas refazem
-  o que já aconteceu. O Laboratório está no teto de cinco partes. Peça nova dele vai ao ar com o Caio olhando.
+  o que já aconteceu. O Laboratório está no teto de cinco partes. **Resultado fraco não precisa ir à tela**
+  (Caio, 19/11/2026: *"Se o resultado for fraco, acho que não precisa colocar não"*, sobre
+  o estudo de evento dos anúncios fiscais, que saiu): conta que não distingue o efeito do
+  acaso fica no código e no PROPOSTAS como "testada e fora", não na tela com ressalva. Peça nova dele vai ao ar com o Caio olhando.
 - **O gasto: obrigatório, discricionário e por função** (Caio, 16/11/2026: *"tem como
   separar as despesas das obrigatórias? Talvez fazer uma análise de onde dá pra cortar
   gastos [...] comparar com outros países"*): Contas públicas › Onde está o gasto

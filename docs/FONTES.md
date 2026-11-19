@@ -274,7 +274,8 @@ exaustiva.
 
 ## Anúncios fiscais (lidos em 19/11/2026)
 
-As datas de `relatorios.ANUNCIOS_FISCAIS`, cada uma conferida na página ao lado. Quase
+As datas de `relatorios.ANUNCIOS_FISCAIS`, cada uma conferida na página ao lado. O estudo
+de evento saiu da tela no mesmo dia (resultado fraco); a lista fica para uma medida melhor. Quase
 nenhuma página dá a hora do anúncio; `depois_do_fechamento` só entra onde ela diz que foi à
 noite.
 

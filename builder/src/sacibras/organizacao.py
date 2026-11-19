@@ -416,11 +416,11 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "pressao",
             "O mercado: de onde vem a pressão",
-            "Quanto da alta do dólar é só do Brasil, e o que o juro e o dólar fazem no dia do "
-            "Copom e dos anúncios fiscais.",
-            cartoes=["dolar-do-brasil", "dolar-de-fora", "copom-efeito", "anuncio-fiscal"],
+            "Quanto da alta do dólar é só do Brasil, e o que o juro e o dólar fazem quando o "
+            "Copom surpreende.",
+            cartoes=["dolar-do-brasil", "dolar-de-fora", "copom-efeito"],
             graficos=["dolar-mundo-brasil"],
-            tabelas=["dolar-altas", "anuncios-fiscais", "copom-surpresas"],
+            tabelas=["dolar-altas", "copom-surpresas"],
         ),
         Parte(
             "reacao-fiscal",

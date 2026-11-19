@@ -643,6 +643,11 @@ class AnuncioFiscal:
     depois_do_fechamento: bool = False
 
 
+# FORA DA TELA desde 19/11/2026 (Caio: *"Se o resultado for fraco, acho que não precisa
+# colocar não"*): nos anúncios de menos aperto o juro de 5 anos subiu em 8 de 12 e nos de mais
+# aperto em 5 de 9, o que não se distingue do acaso. A lista e a conta
+# (`laboratorio_ajuste.anuncios`) ficam para quando houver medida melhor (hora do anúncio,
+# juro do dia); `laboratorio.montar` não a chama.
 # Lista lida em 19/11/2026, cada data conferida numa página oficial (Agência Brasil/EBC,
 # Agência Senado, Agência Câmara, Ministério da Fazenda, Secom; os endereços estão em
 # docs/FONTES.md, "Anúncios fiscais"). Critério, fixado antes de olhar o mercado: o dia em que

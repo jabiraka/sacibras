@@ -721,6 +721,9 @@ def esperar(ctx: Contexto) -> Pecas:
 
 # ------------------------------------------------------------------ os anúncios fiscais
 
+# Fora da tela (Caio, 19/11/2026: resultado fraco não precisa entrar): a conta fica aqui,
+# sem ser chamada, com a lista em `relatorios.ANUNCIOS_FISCAIS`.
+
 PRAZO_DO_JURO = 5
 PASSO_DOS_DIAS_COMUNS = 10
 """A régua de um par de dias qualquer: uma janela a cada dez dias úteis."""

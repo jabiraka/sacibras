@@ -763,7 +763,6 @@ def montar(ctx: Contexto) -> Secao:
         ("juro neutro", _juro_neutro),
         ("Copom", _copom),
         ("o dólar entre o mundo e o Brasil", laboratorio_ajuste.dolar),
-        ("os anúncios fiscais", laboratorio_ajuste.anuncios),
         ("reação fiscal", _reacao),
         ("a dívida com outro primário", laboratorio_ajuste.divida),
         ("a meta da LDO e o que veio", laboratorio_ajuste.meta_da_ldo),
