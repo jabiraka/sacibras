@@ -499,6 +499,28 @@ SGS: dict[str, SerieSGS] = {
     "DLSP": SerieSGS(
         4513, "Dívida líquida do setor público consolidado", "% do PIB", "M", "13/11/2026"
     ),
+    # Os saldos em reais, para o "Ver em" do gráfico da dívida (Caio, 19/11/2026). 4478:
+    # conferida no package_search em 19/11/2026 ("Dívida Líquida do Setor Público - Saldos em
+    # R$ milhões - Total - Setor público consolidado", mensal, milhões de reais). 13761: o
+    # CKAN não a lista; conferida em 19/11/2026 no serviço de metadados do SGS (FachadaWSSGS,
+    # getUltimoValorXML): "Dívida bruta do governo geral - Saldos em R$ milhões - Metodologia
+    # utilizada a partir de 2008", M, R$ (milhões), set/2026 = 11.113.782,53. Contra a 13762 e o
+    # PIB de 12 meses (4382): 11.113.782,53 / 13.398.451,0 = 82,95 %, o mesmo da 13762; a
+    # 4478 dá 70,00 %, o mesmo da 4513.
+    "DBGG_RS": SerieSGS(
+        13761,
+        "Dívida bruta do governo geral, saldo, metodologia a partir de 2008",
+        "R$ milhões",
+        "M",
+        "19/11/2026",
+    ),
+    "DLSP_RS": SerieSGS(
+        4478,
+        "Dívida líquida do setor público consolidado, saldo",
+        "R$ milhões",
+        "M",
+        "19/11/2026",
+    ),
     "NFSP_PRIMARIO_12M": SerieSGS(
         5793,
         "NFSP, resultado primário em 12 meses, setor público consolidado",

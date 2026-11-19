@@ -240,3 +240,17 @@ def test_primario_que_estabiliza_com_outros_juros_e_crescimentos() -> None:
     coluna = [linha.valores[1] for linha in t.linhas]
     assert coluna == sorted(coluna, reverse=True)  # type: ignore[type-var]
     assert "54 % da dívida em títulos segue a Selic" in t.nota and "2,1 % do PIB" in t.nota
+
+
+def test_caminho_mensal_pega_o_fim_de_cada_mes_e_a_partida() -> None:
+    from sacibras.modelos import risco
+
+    pontos = [
+        (date(2019, 12, 2), 9.0),
+        (date(2019, 12, 31), 10.0),
+        (date(2020, 1, 15), 11.0),
+        (date(2020, 1, 31), 12.0),
+        (date(2020, 2, 28), 15.0),
+    ]
+    assert risco.caminho_mensal(pontos, date(2020, 1, 1), 2) == [10.0, 12.0, 15.0]
+    assert risco.caminho_mensal(pontos, date(2020, 1, 1), 3) is None  # falta março

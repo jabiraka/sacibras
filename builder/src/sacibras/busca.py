@@ -200,6 +200,20 @@ SINONIMOS: dict[str, list[str]] = {
     "dividendos pagos a uniao": ["lucro das estatais", "dividendos da petrobras"],
     "subvencao": ["estatais dependentes", "prejuizo das estatais", "rombo das estatais"],
     "icms": ["imposto estadual", "arrecadacao dos estados", "imposto"],
+    "arrecadado pela uniao": [
+        "receita da uniao",
+        "receita dos estados",
+        "receita dos municipios",
+        "esferas",
+        "pacto federativo",
+        "quem fica com o imposto",
+    ],
+    "repasse geral": ["transferencias", "fpe", "fpm", "repasses da uniao", "pacto federativo"],
+    "cada esfera": ["gasto dos estados", "gasto dos municipios", "gasto da uniao", "esferas"],
+    "gasto com saude": ["despesa com saude", "sus", "gasto dos estados"],
+    "gasto com educacao": ["despesa com educacao", "escola", "gasto dos estados"],
+    "gasto com seguranca": ["policia", "despesa com seguranca", "gasto dos estados"],
+    "gasto com previdencia": ["aposentadoria dos servidores", "rpps", "gasto dos estados"],
     "rcl": ["receita corrente liquida"],
     "nota de credito": [
         "rating",
@@ -306,6 +320,12 @@ SINONIMOS: dict[str, list[str]] = {
     "focus": ["previsao", "projecao", "expectativa", "mercado espera", "consenso", "boletim focus"],
     "previs": ["projecao", "expectativa", "futuro", "focus", "o que vem"],
     "laboratorio": ["estimativa", "modelo", "conta nossa", "juro neutro", "taylor", "bohn"],
+    "so do brasil": ["risco brasil", "de onde vem a alta do dolar", "crise cambial", "fuga"],
+    "veio de fora": ["dolar no mundo", "dolar forte", "emergentes", "cenario externo"],
+    "outro primario": ["ajuste fiscal", "e se", "o que teria sido", "prevenir", "sem deficit"],
+    "sem os deficits": ["ajuste fiscal", "e se", "o que teria sido", "prevenir"],
+    "esperado dois anos": ["promessa", "credibilidade", "ajuste fiscal", "meta nao cumprida"],
+    "esperava": ["promessa", "credibilidade", "ajuste fiscal", "ajuste que nao veio"],
     "juro neutro": ["taxa neutra", "juro de equilibrio", "r estrela", "juro natural"],
     "discricionaria": ["cortar gasto", "corte de gastos", "margem do orcamento", "despesa livre"],
     "obrigatoria": ["gasto engessado", "rigidez do orcamento", "despesa obrigatoria"],
@@ -581,6 +601,12 @@ SINONIMOS: dict[str, list[str]] = {
 # sem acento e em minúsculas.
 OUTRAS_LINGUAS: dict[str, list[str]] = {
     # assuntos e partes
+    "uniao, estados e municipios": [
+        "federal state and local government",
+        "fiscal federalism",
+        "gobierno federal estatal y municipal",
+        "federalisme fiscal",
+    ],
     "o que vende e compra": [
         "exports by sector",
         "commodities",
@@ -986,6 +1012,9 @@ OUTRAS_LINGUAS: dict[str, list[str]] = {
         "pays emergents",
     ],
     "laboratorio": ["laboratory", "estimates", "laboratorio", "estimaciones", "estimations"],
+    "so do brasil": ["country risk", "riesgo pais", "risque pays", "brazil specific"],
+    "outro primario": ["fiscal adjustment", "ajuste fiscal", "ajustement budgetaire", "what if"],
+    "esperava": ["fiscal credibility", "credibilidad fiscal", "credibilite budgetaire"],
     "juro neutro": ["neutral rate", "natural rate", "r star", "tasa neutral", "taux neutre"],
     "corta": ["spending cuts", "cut spending", "recorte del gasto", "baisse des depenses"],
     "previs": [
@@ -1208,11 +1237,32 @@ def montar(saida: Path) -> list[Item]:
             )
             extra = f"{c['detalhe']} {c.get('texto', '')}"
             itens.append(_item(c["rotulo"], f"{local} · número", f"{h}/{alvo}", extra, n))
-        for g in dados.get("graficos", []):
+        # O que mora atrás da lista de um gráfico ou tabela (`alternativas`) também se acha:
+        # o endereço é o dele, e a tela abre a lista nele.
+        todos_g = [x for p in dados.get("graficos", []) for x in (p, *p.get("alternativas", []))]
+        for g in todos_g:
             alvo = f"g-{g['id']}"
-            itens.append(_item(g["titulo"], f"{onde.get(alvo, nome)} · gráfico", f"{h}/{alvo}"))
-        for t in dados.get("tabelas", []):
+            local = onde.get(alvo) or next(
+                (
+                    onde.get(f"g-{p['id']}", nome)
+                    for p in dados.get("graficos", [])
+                    if any(a["id"] == g["id"] for a in p.get("alternativas", []))
+                ),
+                nome,
+            )
+            itens.append(_item(g["titulo"], f"{local} · gráfico", f"{h}/{alvo}"))
+        todas_t = [x for p in dados.get("tabelas", []) for x in (p, *p.get("alternativas", []))]
+        for t in todas_t:
             alvo = f"t-{t['id']}"
+            if alvo not in onde:
+                onde[alvo] = next(
+                    (
+                        onde.get(f"t-{p['id']}", nome)
+                        for p in dados.get("tabelas", [])
+                        if any(a["id"] == t["id"] for a in p.get("alternativas", []))
+                    ),
+                    nome,
+                )
             local = f"{onde.get(alvo, nome)} · tabela"
             itens.append(
                 _item(

@@ -1390,6 +1390,24 @@ TERMOS: list[Termo] = [
         "#impostos/por-estado",
     ),
     Termo(
+        "esfera",
+        "Esfera de governo",
+        "Cada nível do governo: a União, os 26 estados e o DF, e os municípios. Cada um "
+        "cobra os próprios impostos e parte do que a União e os estados arrecadam é repassada "
+        "aos outros.",
+        ("esfera", "esferas"),
+        "#impostos/esferas",
+    ),
+    Termo(
+        "repasse-geral",
+        "Repasse geral",
+        "O dinheiro que uma esfera passa a outra sem destino amarrado: o FPE e o FPM da União, "
+        "a cota do ICMS que os estados entregam aos municípios. O repasse com destino certo, "
+        "como o do SUS, conta na área dele.",
+        ("Repasse geral", "repasses a outras esferas"),
+        "#impostos/esferas",
+    ),
+    Termo(
         "fundeb",
         "Fundeb",
         "O fundo da educação básica: estados e municípios põem nele parte dos impostos, e o "
@@ -1878,6 +1896,15 @@ TERMOS: list[Termo] = [
         "governo reage e a dívida não explode. Mede-se por regressão nos dados de cada ano.",
         ("teste de Bohn", "reação fiscal"),
         "#laboratorio/reacao-fiscal",
+    ),
+    Termo(
+        "dolar-contra-emergentes",
+        "Dólar contra os emergentes",
+        "Índice do Federal Reserve que mede o dólar contra uma cesta de moedas de países "
+        "emergentes, pesada pelo comércio com os EUA. Sobe quando o dólar ganha valor contra "
+        "todas elas, e serve para separar o que é do mundo do que é de um país só.",
+        ("dólar contra os emergentes", "dólar contra as moedas dos emergentes"),
+        "#laboratorio/pressao",
     ),
     Termo(
         "despesa-obrigatoria",

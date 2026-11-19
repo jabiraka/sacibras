@@ -682,3 +682,30 @@ def test_arrecadacao_federal_por_habitante(monkeypatch: pytest.MonkeyPatch) -> N
     assert m.valores["SP"] == 90.0 and m.valores["AC"] == 100.0 and m.valores["RJ"] is None
     assert m.brasil == pytest.approx(10000.0 / 110.0)
     assert m.referencia == "12 meses até set/2026"
+
+
+def test_gasto_por_area_tira_os_encargos_especiais_da_base() -> None:
+    from sacibras.secoes import estados
+
+    def funcoes(total: float, **por: float) -> siconfi.ContasAnuais:
+        nomes = {"10": "Saúde", "12": "Educação", "06": "Segurança", "09": "Previdência"}
+        f = siconfi.FuncoesAnuais(
+            total=total,
+            por_funcao={c: (nomes.get(c, "Encargos"), v) for c, v in por.items()},
+        )
+        return siconfi.ContasAnuais(receita=None, despesa=None, funcoes=f)
+
+    dca: dict[int, siconfi.ContasAnuais | None] = {
+        cod: funcoes(200.0, **{"10": 20.0, "28": 100.0}) for cod, *_ in estados.UFS
+    }
+    dca[35] = funcoes(1000.0, **{"10": 150.0, "12": 300.0, "28": 0.0})  # SP
+    dca[12] = None  # AC não entregou
+    metricas = estados._gasto_por_area(siconfi.ColetaAnual(2025, dca, {}))
+    saude = next(m for m in metricas if m.id == "gasto_saude")
+    assert saude.valores["SP"] == 15.0 and saude.valores["RJ"] == 20.0
+    assert saude.valores["AC"] is None
+    assert saude.referencia == "2025" and saude.unidade == "% da despesa"
+    # O Brasil: soma das áreas sobre soma das bases (25 UFs × 20 + 150) / (25 × 100 + 1000).
+    assert saude.brasil == round(650 / 3500 * 100, 2)
+    # Educação só em SP: menos de 20 estados com dado, não vira métrica.
+    assert [m.id for m in metricas] == ["gasto_saude"]

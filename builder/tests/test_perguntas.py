@@ -39,7 +39,12 @@ def test_cada_peca_citada_mora_numa_parte_do_assunto() -> None:
 
 def test_o_orcamento_de_atencao() -> None:
     ids = [d.id for d in perguntas.PERGUNTAS]
-    assert len(ids) == len(set(ids)) <= 11
+    assert len(ids) == len(set(ids))
+    # Sem teto para o total: as perguntas se agrupam por tema, e o teto é por tema.
+    temas = [perguntas.TEMA_DE[i] for i in ids]
+    assert set(perguntas.TEMA_DE) == set(ids)
+    assert set(temas) <= {t for t, _ in perguntas.TEMAS}
+    assert max(temas.count(t) for t in set(temas)) <= perguntas.MAXIMO_POR_TEMA
     for d in perguntas.PERGUNTAS:
         assert d.titulo.endswith("?")
         assert len(d.numeros) <= perguntas.MAXIMO_DE_NUMEROS, d.id
@@ -90,3 +95,15 @@ def test_a_tabela_da_explicacao_vem_dos_dados() -> None:
     divida = next(p for p in prontas if p.id == "divida")
     assert divida.blocos[0].tabela == tabela
     assert divida.conclusao.startswith("A dívida é em reais")
+
+
+def test_os_itens_saem_na_ordem_dos_temas() -> None:
+    from sacibras.schema import Pergunta
+
+    feitas = [
+        Pergunta(id=i, titulo=f"{i}?", resposta="", numeros=[], blocos=[])
+        for i in ("crise", "estatais", "juro-alto", "emprego", "inflacao")
+    ]
+    itens = perguntas.itens(feitas)
+    assert [q.id for q in itens] == ["juro-alto", "inflacao", "emprego", "estatais", "crise"]
+    assert itens[0].tema == "Preços e juros" and itens[-1].tema == "Mercado e riscos"

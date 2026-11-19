@@ -26,7 +26,7 @@ ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PR
 **19/11/2026, servidores e estatais** (Caio: *"inclua a distribuição dos gastos por
 servidores públicos (quem fica com mais) e compare o rendimento e benefícios dos servidores
 com o setor privado, adicione uma pergunta de quanto as estatais dão lucro ou prejuízo aos
-cofres públicos"*), no ramo `ccr-eaea0089-yahn44`:
+cofres públicos"*), no `main`:
 - **Contas públicas › Servidores públicos** (`secoes/servidores.py`): a folha por esfera e
   contra os outros países (FMI: 11,1 % do PIB na ativa, contra 8,6 % na mediana dos
   emergentes; estados e municípios ficam com 81 % da folha da ativa), por tipo na União
@@ -39,7 +39,10 @@ cofres públicos"*), no ramo `ccr-eaea0089-yahn44`:
   conta do ano (Sest: em 2025, R$ 45,8 bi de dividendos menos R$ 32,6 bi de subvenção e
   aporte, saldo de R$ 13,1 bi, o menor desde 2021), quem recebe a subvenção, o lucro dos
   maiores e o primário das estatais (BC: déficit de R$ 7,3 bi nas federais em 12 meses).
-- **Duas perguntas novas** (onze agora; o teste subiu de 9 para 11): "Servidor público ganha
+- **As perguntas por tema** (Caio: *"é bom ter uma sessão própria ou organizar melhor as
+  perguntas dentro dos temas"*): quatro temas (`perguntas.TEMAS`), na entrada, no menu e no
+  pé de cada pergunta; o teto de nove no total deu lugar a seis por tema.
+- **Duas perguntas novas** (doze agora, com a da crise): "Servidor público ganha
   mais que quem trabalha no setor privado?" e "As estatais dão lucro ou prejuízo aos cofres
   públicos?"; e a explicação "A folha dos servidores" em "Onde dá para cortar gasto?".
 - **Para caber no teto de cinco partes**: "Meta fiscal" entrou em "Primário, juros e meta"
@@ -114,6 +117,78 @@ obrigatórias? [...] comparar com outros países"*):
   contra a mediana dos emergentes, da América Latina e dos avançados (COFOG do FMI).
 - **Pergunta nova**: "Onde dá para cortar gasto?" (nove perguntas agora).
 
+**19/11/2026** (Caio: *"nos impostos, dá pra separar oq é receita da união e dos Estados
+e outros? E ver onde cada Estado e outros está gastando com a receita?"*):
+- **Impostos › União, estados e municípios** (`impostos._esferas`): quanto cada esfera
+  arrecada (OCDE; a União com o INSS fica com ~71 %), o repasse geral da União (FPE, FPM;
+  4,7 % do PIB em 2024) e a tabela "Para onde vai a despesa de cada esfera" (FMI, COFOG por
+  esfera: `fmi_cofog.por_esfera`, até 2024). O gráfico "Quem arrecada", que estava fora da
+  tela, voltou nela. A pergunta "Para onde vai o imposto?" ganhou a tabela.
+- **Estados › Mapa e ranking**: quatro métricas novas, "Gasto com saúde / educação /
+  segurança / previdência", em % da despesa do estado sem os encargos especiais (DCA,
+  conta nossa; `estados._gasto_por_area`).
+- **Riscos › Custo, rolagem e crises**, o teste de estresse (Caio, mesmo dia: *"veja o
+  efeito sobre outras métricas tb, coloque o parâmetro pra mudar a métrica no gráfico
+  mesmo"* e *"deixe tbm escolher qual teste mostrar, se todos ou só alguns"*): o gráfico
+  ganhou a lista "Métrica" (dívida, PIB, inflação, primário, dólar, Ibovespa e Selic) e
+  fichas para ligar e desligar cada episódio, com "Todos". As contas anuais usam os mesmos
+  desvios que já moviam a dívida; o mercado repete os 24 meses desde o começo da janela,
+  no nível de hoje. O mecanismo é geral (`variantes` e `escolher_series` no `Grafico`,
+  `web/src/variantes.ts`): outro gráfico pode usar.
+- **"Ver em" nos gráficos de fluxo** (Caio, mesmo dia: *"No gráfico da arrecadação
+  Federal, coloque um parâmetro pra mudar o gráfico em % do PIB, veja outras métricas
+  parecidas [...] e aplique"*): a lista troca entre reais de hoje (pelo IPCA), % do PIB e,
+  na arrecadação, o crescimento real. Em seis gráficos: arrecadação federal, os maiores
+  tributos, receita e despesa, para onde vai a despesa, obrigatória × discricionária e o
+  INSS (`com_variantes` e `em_reais_de_hoje` em `secoes/base.py`). Ficaram de fora, por
+  pedirem série nova do SGS conferida no catálogo: o primário, a dívida e a conta corrente
+  em reais (ou dólares). Entraram depois, conferidas: a dívida bruta e a líquida em reais
+  (SGS 13761, que o CKAN não lista, e 4478; a razão com o PIB fecha com a 13762 e a 4513),
+  o primário em reais de hoje (soma nossa da série mensal) e a conta corrente em dólares.
+- **Parecidos atrás de uma lista, em todo o site** (Caio, mesmo dia: *"Aplique isso
+  sistematicamente"*; a regra está no CLAUDE.md): gráfico ou tabela parecida fica atrás do
+  principal, numa lista ("Gráfico" ou "Tabela"), e conta como um no orçamento
+  (`AGRUPAR` em `organizacao.py`, `web/src/alternativas.ts`). Voltaram assim 44 dos 49
+  gráficos e tabelas que estavam calculados e fora da tela (o PIB pela oferta e pela demanda, a fome,
+  o saneamento, a moradia, o Gini, o desalento, as curvas de juro real, o imobiliário, a
+  dívida por vencimento, a carga contra o crescimento, a população, a esperança de vida, a
+  previdência dos servidores, os riscos de mercado...), e partes com dois ou três gráficos
+  do mesmo tema ficaram com um na tela. A busca acha a peça de trás e a tela abre a lista
+  nela. Ficaram fora: os três de Trabalho que repetem Longo prazo (analfabetismo e renda
+  por escolaridade), os reservatórios e a tabela de governança de Riscos (sem par
+  parecido) e 35 cartões (Trabalho, Juros, Longo prazo, Riscos): cartão não entra em lista
+  (Caio, 19/11/2026: *"nos cartões não vamos aplicar por enquanto"*). O Laboratório não mudou: muda com o
+  Caio olhando.
+- Falta: os municípios um por um (são 5.570; hoje só as capitais têm conta no SICONFI aqui)
+  e a receita de cada esfera *depois* dos repasses (o FMI separa o repasse geral, mas não
+  quanto vai a estados e quanto a municípios).
+
+**19/11/2026** (Caio: *"continue o laboratório com as propostas [...] essas métricas vão
+nos ajudar a ver o desenrolar e de onde está vindo se tiver uma crise, bem como oq
+poderíamos ter feito pra prevenir, o foco principal hj está no ajuste fiscal"*; e, sobre as
+sugestões: *"Faz tudo, eu aprovo"*). No `main`. Oito peças novas no Laboratório
+(`secoes/laboratorio_ajuste.py`, contas em `modelos/ajuste.py`), todas sobre o que já
+aconteceu, e uma pergunta:
+- **O mercado: de onde vem a pressão** (`#laboratorio/pressao`): o dólar em 12 meses
+  repartido entre o que veio de fora e o que é só do Brasil (Federal Reserve, H.10), com as
+  cinco maiores altas; e o estudo de evento do Copom, que veio para cá. O **estudo de
+  evento dos anúncios fiscais** foi feito (24 datas conferidas em página oficial) e saiu da
+  tela no mesmo dia: resultado fraco (Caio: *"Se o resultado for fraco, acho que não
+  precisa colocar não"*); a lista e a conta ficam no código, sem serem chamadas.
+- **O ajuste fiscal: o que foi feito** (`#laboratorio/reacao-fiscal`): a dívida com outro
+  primário desde 2014, por onde o primário já mudou (receita ou despesa, RTN desde 1997), o
+  **custo de esperar** (o primário que estabiliza conforme o ano de partida, com a dívida
+  do Focus e a faixa do juro neutro) e o teste de Bohn.
+- **O prometido e o que veio** (`#laboratorio/promessa`): **a meta original de cada LDO**
+  contra o primário do Governo Central (25 leis lidas no Senado, `leis.METAS_DAS_LDOS`;
+  abaixo da meta em 14 de 24 anos, e sem 2020 a média não se distingue de zero), o primário
+  que o Focus esperava de um a quatro anos antes e a **dívida bruta que o Focus esperava,
+  safra a safra**.
+- **Pergunta nova, "De onde viria uma crise?"** (a décima; o teto do teste foi de nove
+  para dez): copia peças do Laboratório, com "estimativa nossa" no texto.
+O Laboratório segue com cinco partes: o estudo do Copom perdeu a parte própria, e os
+cartões `dolar-beta` e `copom-dias` saíram da tela (continuam calculados).
+
 ## O que vem agora (fase 2)
 
 Na ordem do plano; o que está aqui ainda não foi feito:
@@ -124,7 +199,10 @@ Na ordem do plano; o que está aqui ainda não foi feito:
    dia anterior); a decomposição do PIB por habitante com a população em idade de trabalhar
    (ONU), separando demografia de participação.
 2. **Laboratório, leva 2** (do plano): controle sintético de episódios, quem ficou com o
-   crescimento por faixa de renda, o viés das previsões do orçamento, o tom das atas.
+   crescimento por faixa de renda, o tom das atas. Do viés das previsões, entraram o do
+   Focus e a meta de cada LDO (19/11); faltam os parâmetros de cada orçamento (PIB, inflação
+   e receita previstos) contra o que veio. O que sobrou de pressão e ajuste está no
+   [PROPOSTAS](PROPOSTAS.md), "Crise e ajuste fiscal".
 3. **O gasto, o que falta**: a série do gasto por função no tempo (o COFOG do Brasil desde
    2010) e a despesa por função só da União (o Tesouro publica o COFOG do Governo Central).
    América Latina tem só cinco países com COFOG do governo geral no FMI; Chile, México e
@@ -145,6 +223,8 @@ Na ordem do plano; o que está aqui ainda não foi feito:
 A lista inteira sai de `sacibras leituras --todas` (`leituras.py`); a issue `releitura` avisa.
 As próximas:
 
+- **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
+- **até 19/02/2027**: as dez perguntas (`perguntas.LIDAS_EM`).
 - **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e
   `relatorios.RECEITA_PREVISTA`.
 - **até 03/12**: nota fiscal do BC → `relatorios.ELASTICIDADES`.
@@ -190,15 +270,25 @@ As próximas:
 
 ## Espera o Caio
 
-- **Olhar Servidores, Estatais e as duas perguntas novas** (19/11/2026). O que decidir:
-  (1) são onze perguntas agora; se pesar, a dos servidores pode virar só a explicação que já
-  está em "Onde dá para cortar gasto?"; (2) a junção das partes de Contas públicas (a meta
-  dentro de "Primário, juros e meta"; saíram da tela o primário mês a mês e o cartão da
-  obrigatória em % do PIB); (3) a comparação de rendimento é de médias, sem controlar a
-  escolaridade, e o texto diz isso: ver se está claro o bastante; (4) na aposentadoria, o
-  servidor é de jul/2025 e o INSS de set/2026 (cada um com a data na tabela); (5) a resposta
-  das estatais afirma que "dão mais do que recebem" no caixa e deixa em aberto se vale a
-  pena o Estado ser dono.
+- **Servidores e estatais foram ao `main`** (Caio, 19/11/2026: *"Pode manter assim"* e
+  *"Vai pro main e deploy"*), com as perguntas agrupadas por tema. Segue para olhar quando
+  der: a comparação de rendimento é de médias, sem controlar a escolaridade (o texto diz);
+  na aposentadoria, o servidor é de jul/2025 e o INSS de set/2026; saíram da tela o primário
+  mês a mês e o cartão da obrigatória em % do PIB. O tema "Governo: dívida, gasto e
+  impostos" já tem cinco perguntas das seis que cabem: a próxima dele pede dividir o tema
+  (por exemplo, "Dívida e impostos" e "Gasto, servidores e estatais").
+- **Olhar as peças de 19/11**, que foram ao `main` (Caio: *"junte ao main"*). O que
+  decidi sozinho e pode ser trocado: (1) "só do Brasil" no dólar é um resto e a faixa é
+  estreita quando o dólar lá fora quase não se mexe; (2) o segundo cenário da dívida é piso
+  de 1 % do PIB (a média de 2003 a 2013 dava 33 % do PIB, longe demais do que a conta
+  mede); (3) pela regra do resultado fraco, do teste de Bohn ficou só a tabela dos
+  dois períodos (o cartão e o gráfico saíram da tela); a meta da LDO fica inteira (Caio:
+  *"Pode tirar só o do Bohn"*); (4) a meta da LDO é a cheia, sem o abatimento de PPI e PAC que a lei
+  deixava de 2007 a 2014; (5) a décima pergunta passou do teto de nove: se pesar, a
+  candidata a juntar com ela é "O que o mercado espera do Brasil?".
+- **Na página traduzida para o inglês**, a 390 px, a tela "O prometido e o que veio" passa
+  17 px do quadro (a unidade "pp do PIB" vira "percentage points of GDP" no cartão); em
+  português cabe. Já era assim com o cartão do teste de Bohn.
 - **Olhar o Laboratório e a pergunta do gasto**: os textos dizem o que a conta acha e onde
   ela é fraca. Pontos a conferir: a regra de Taylor dá 11,7 % contra a Selic de 13,75 %; o
   juro neutro vai de 5,1 % a 7,2 % conforme o método; o estudo de evento acha 4,5 pb no juro

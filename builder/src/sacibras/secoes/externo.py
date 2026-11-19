@@ -10,7 +10,17 @@ from sacibras.catalogo import SGS
 from sacibras.fontes import comexstat
 from sacibras.fontes.comexstat import Item
 from sacibras.schema import Cartao, Grafico, LinhaRef, LinhaTabela, Secao, Tabela
-from sacibras.secoes.base import MESES, Contexto, br, cartao, grafico, periodo, serie
+from sacibras.secoes.base import (
+    MESES,
+    Contexto,
+    br,
+    cartao,
+    com_variantes,
+    grafico,
+    periodo,
+    serie,
+    variante,
+)
 from sacibras.tipos import Ponto
 
 # O balanço de pagamentos em partes: (chave do catálogo, rótulo, sinal). Na conta financeira o
@@ -632,6 +642,32 @@ def montar(ctx: Contexto) -> Secao:
                 "financia inteiro."
             ),
         ),
+    ]
+    # "Ver em" (Caio, 19/11/2026): também em dólares, soma de 12 meses.
+    tc_usd = [(d, v / 1000) for d, v in ctx.sgs("TC_12M") if d >= inicio]
+    idp_usd = [(d, v / 1000) for d, v in contas.soma_movel(ctx.sgs("IDP")) if d >= inicio]
+    graficos[0] = com_variantes(
+        graficos[0],
+        "% do PIB",
+        variante(
+            "dolares",
+            "US$",
+            "Conta corrente e investimento direto, em dólares",
+            [
+                serie("tc", "Transações correntes", tc_usd),
+                serie("idp", "Investimento direto no país", idp_usd),
+            ],
+            unidade="US$ bilhões, em 12 meses",
+            casas=0,
+            periodicidade="M",
+            nota=(
+                "Soma de 12 meses, em dólares correntes (o investimento direto somado por nós "
+                "a partir da série mensal do Banco Central)."
+            ),
+            fonte=ctx.fonte_sgs("TC_12M", "IDP"),
+        ),
+    )
+    graficos += [
         grafico(
             "balanca",
             "Saldo da balança comercial em 12 meses",

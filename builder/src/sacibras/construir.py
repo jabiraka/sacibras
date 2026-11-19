@@ -33,6 +33,8 @@ from sacibras.schema import (
     Perguntas,
     Secao,
     Tabela,
+    achatar_graficos,
+    achatar_tabelas,
 )
 from sacibras.secoes import (
     atividade,
@@ -110,8 +112,8 @@ FONTES = {
     ),
     "mundo": "FMI (WEO), BIS, OCDE e Tesouro Nacional",
     "laboratorio": (
-        "Laboratório: Banco Central (Focus, Copom, SGS), Tesouro Direto, IBGE (SIDRA) e Penn "
-        "World Table, com conta nossa"
+        "Laboratório: Banco Central (Focus, Copom, SGS), Tesouro Direto, IBGE (SIDRA), Federal "
+        "Reserve (H.10) e Penn World Table, com conta nossa"
     ),
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",
@@ -176,6 +178,9 @@ def completar(secao: BaseModel, caminho: Path) -> list[str]:
     except (OSError, ValueError):  # JSON de outra versão do contrato: não dá para aproveitar
         return []
     mantidos: list[str] = []
+    if isinstance(antigo, Secao):  # o que estava atrás de uma lista volta solto; o aplicar junta
+        antigo.graficos = achatar_graficos(antigo.graficos)
+        antigo.tabelas = achatar_tabelas(antigo.tabelas)
 
     def juntar(campo: str, aceitos: set[str] | None = None) -> None:
         novos = getattr(secao, campo)
@@ -222,7 +227,8 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
     def guardar_graficos(id: str, lista: Sequence[Grafico | dict[str, object]]) -> None:
         for g in lista:
             modelo = g if isinstance(g, Grafico) else Grafico.model_validate(g)
-            todos_graficos[(id, modelo.id)] = modelo
+            for x in achatar_graficos([modelo]):
+                todos_graficos[(id, x.id)] = x
 
     for id, titulo, montar in ORDEM:
         arquivo = f"{id}.json"
@@ -241,8 +247,10 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 )
                 fontes.append(EstadoFonte(fonte=FONTES[id], ok=True))
                 guardar_cartoes(id, antigo.get("cartoes", []))
-                for t in antigo.get("tabelas", []):
-                    todas_tabelas[(id, t["id"])] = Tabela.model_validate(t)
+                for t in achatar_tabelas(
+                    [Tabela.model_validate(t) for t in antigo.get("tabelas", [])]
+                ):
+                    todas_tabelas[(id, t.id)] = t
                 guardar_graficos(id, antigo.get("graficos", []))
             continue
         try:
@@ -263,11 +271,14 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     print(f"  aviso: {id}: contas não gravadas ({erro})")
             if isinstance(secao, Secao):
                 sem_lugar = organizacao.aplicar(secao)
-                for g in secao.graficos:
+                for g in achatar_graficos(secao.graficos):
                     if not g.manchete:
                         g.manchete = manchetes.do_grafico(g)
                 if sem_lugar:
-                    print(f"  aviso: {id}: {len(sem_lugar)} peças fora da tela (sem parte)")
+                    print(
+                        f"  aviso: {id}: {len(sem_lugar)} peças fora da tela (sem parte): "
+                        + ", ".join(sem_lugar)
+                    )
                 for c in secao.cartoes:
                     if len(c.detalhe) > DETALHE_MAXIMO:
                         print(f"  aviso: {id}: detalhe longo em {c.id} ({len(c.detalhe)} letras)")
@@ -277,7 +288,7 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 _gravar(saida, getattr(secao, "arquivo_paises", ""), extra)
             if isinstance(secao, Secao):
                 guardar_cartoes(id, secao.cartoes)
-                todas_tabelas.update({(id, t.id): t for t in secao.tabelas})
+                todas_tabelas.update({(id, t.id): t for t in achatar_tabelas(secao.tabelas)})
                 guardar_graficos(id, secao.graficos)
             itens.append(
                 ItemSecao(
@@ -302,8 +313,10 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 try:
                     antigo = json.loads((saida / arquivo).read_text(encoding="utf-8"))
                     guardar_cartoes(id, antigo.get("cartoes", []))
-                    for t in antigo.get("tabelas", []):
-                        todas_tabelas[(id, t["id"])] = Tabela.model_validate(t)
+                    for t in achatar_tabelas(
+                        [Tabela.model_validate(t) for t in antigo.get("tabelas", [])]
+                    ):
+                        todas_tabelas[(id, t.id)] = t
                     guardar_graficos(id, antigo.get("graficos", []))
                     partes = _partes(antigo)
                 except (OSError, ValueError):

@@ -49,3 +49,39 @@ def test_rigidez_separa_e_soma() -> None:
     assert parte.valor == pytest.approx(12.5)
     assert sum(li.valores[1] for li in tabela.linhas) == pytest.approx(100.0)  # type: ignore[misc]
     assert graficos[0].series[0].pontos[-1][1] == pytest.approx(175 * 12 / 12000 * 100)
+
+
+def test_por_esfera_le_esfera_funcao_e_unidade() -> None:
+    from sacibras.fontes import fmi_cofog
+
+    def valores(*ids: str) -> list[dict[str, str]]:
+        return [{"id": i} for i in ids]
+
+    bruto = {
+        "structure": {
+            "dimensions": {
+                "series": [
+                    {"values": valores("BRA")},
+                    {"values": valores("S1311", "S1312MIXED")},
+                    {"values": valores("G2MF")},
+                    {"values": valores("GF07_T", "GF0180_T")},
+                    {"values": valores("POGDP_PT", "POTO_PT")},
+                    {"values": valores("A")},
+                ],
+                "observation": [{"values": valores("2023", "2024")}],
+            }
+        },
+        "dataSets": [
+            {
+                "series": {
+                    "0:0:0:0:1:0": {"observations": {"0": ["5.9"], "1": ["6.5"]}},
+                    "0:1:0:1:0:0": {"observations": {"1": ["1.7"], "0": [None]}},
+                    "0:1:0:0:1:0": {"observations": {}},
+                }
+            }
+        ],
+    }
+    d = fmi_cofog.ler_esferas(bruto)
+    assert d["S1311"]["GF07_T"]["POTO_PT"] == {2023: 5.9, 2024: 6.5}
+    assert d["S1312MIXED"]["GF0180_T"]["POGDP_PT"] == {2024: 1.7}
+    assert "GF07_T" not in d["S1312MIXED"]  # série vazia não entra

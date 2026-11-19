@@ -71,12 +71,22 @@ LEITURAS: list[Leitura] = [
         "As respostas e conclusões das perguntas (falam do momento: 'ainda não', 'do jeito "
         "que está, não')",
         "perguntas.LIDAS_EM",
-        date(2026, 11, 16),
-        date(2027, 2, 16),
+        date(2026, 11, 19),
+        date(2027, 2, 19),
         "Abrir as perguntas no site e conferir cada frase contra o número ao lado: a "
         "inflação contra o teto, o ritmo dos núcleos, a desocupação contra o mínimo da série, "
-        "o primário que estabiliza contra o maior já feito, a implícita contra o Focus. A "
+        "o primário que estabiliza contra o maior já feito, a implícita contra o Focus, e, na "
+        "da crise, as reservas contra a dívida externa curta e o investimento direto contra o "
+        "déficit externo. A "
         "cada três meses, e antes disso se o IPCA voltar à meta ou a Selic mudar de direção.",
+    ),
+    Leitura(
+        "Meta de primário no texto original de cada LDO (o prometido contra o que veio)",
+        "leis.METAS_DAS_LDOS",
+        date(2026, 11, 19),
+        date(2027, 1, 15),
+        "Senado, publicação original da LDO 2027 (dadosabertos/legislacao/lista?tipo=LEI), "
+        "art. 2º: pôr o ano novo no dicionário. Uma vez por ano, quando a LDO é sancionada.",
     ),
     Leitura(
         "Meta de inflação (CMN)",

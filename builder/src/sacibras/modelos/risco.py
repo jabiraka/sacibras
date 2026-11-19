@@ -296,3 +296,19 @@ def choques_do_episodio(anos: dict[int, Choque], do_episodio: list[int]) -> list
         )
         for a in do_episodio
     ]
+
+
+def caminho_mensal(pontos: list[Ponto], inicio: date, meses: int) -> list[float] | None:
+    """O nível no fim de cada mês, do mês de `inicio` até `meses` meses, e na frente o do fim
+    do mês anterior a `inicio` (a partida). `None` se a série não cobre o caminho."""
+    fim_do_mes: dict[tuple[int, int], float] = {}
+    for d, v in pontos:
+        fim_do_mes[(d.year, d.month)] = v  # pontos em ordem: fica o último do mês
+    ano, mes = inicio.year, inicio.month
+    chaves = [(ano - 1, 12) if mes == 1 else (ano, mes - 1)]
+    for _ in range(meses):
+        chaves.append((ano, mes))
+        ano, mes = (ano + 1, 1) if mes == 12 else (ano, mes + 1)
+    if any(c not in fim_do_mes for c in chaves):
+        return None
+    return [fim_do_mes[c] for c in chaves]

@@ -14,6 +14,21 @@ export interface Serie {
   cor?: number;
 }
 
+/** Outra métrica do mesmo gráfico, na lista "Métrica" (o teste de estresse). */
+export interface VarianteGrafico {
+  id: string;
+  rotulo: string;
+  titulo: string;
+  unidade: string;
+  casas: number;
+  periodicidade: Periodicidade;
+  series: Serie[];
+  linhas: { valor: number; rotulo: string }[];
+  nota: string;
+  /** Quando a métrica vem de outra fonte (o PIB, o IPCA); vazio, vale a do gráfico. */
+  fonte?: string;
+}
+
 export interface Grafico {
   id: string;
   titulo: string;
@@ -52,6 +67,16 @@ export interface Grafico {
   secao?: string;
   /** Por que não há CSV nem PNG (dado privado cujos termos vedam reproduzir; licencas.py). */
   sem_download?: string;
+  /** Gráficos parecidos no mesmo lugar, na lista "Gráfico" (organizacao.py, `juntos`). */
+  alternativas?: Grafico[];
+  /** O nome curto na lista; vazio, vale o título. */
+  rotulo_opcao?: string;
+  /** Outras métricas do gráfico, na lista "Métrica"; a primeira é a que abre. */
+  variantes?: VarianteGrafico[];
+  /** O nome da lista das variantes ("Métrica", ou "Ver em" quando só troca a unidade). */
+  rotulo_variantes?: string;
+  /** A pessoa liga e desliga cada série que não é de consenso (fichas em cima do gráfico). */
+  escolher_series?: boolean;
 }
 
 /** Um ponto por país: uma métrica em cada eixo (`chave` é o ISO3; o Brasil é BRA). */
@@ -123,6 +148,9 @@ export interface Tabela {
   nota: string;
   visoes?: VisaoTabela[];
   rotulo_visoes?: string;
+  /** Tabelas parecidas no mesmo lugar, na lista "Tabela". */
+  alternativas?: Tabela[];
+  rotulo_opcao?: string;
 }
 
 export interface SimuladorDivida {
@@ -512,6 +540,8 @@ export interface ItemPergunta {
   id: string;
   titulo: string;
   resposta: string;
+  /** O nome do tema: a entrada, o menu e o pé da pergunta agrupam por ele. */
+  tema?: string;
 }
 
 export interface Painel {

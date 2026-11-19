@@ -23,7 +23,17 @@ from sacibras.schema import (
     Tabela,
 )
 from sacibras.secoes import estatais, gasto, servidores
-from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.secoes.base import (
+    Contexto,
+    br,
+    cartao,
+    com_variantes,
+    em_reais_de_hoje,
+    grafico,
+    periodo,
+    serie,
+    variante,
+)
 from sacibras.tipos import Ponto
 
 
@@ -467,6 +477,88 @@ def montar(ctx: Contexto) -> Secao:
         ),
     ]
 
+    # "Ver em" (Caio, 19/11/2026): a dívida e o primário também em reais.
+    ipca_longo = ctx.sgs("IPCA", anos + 2)
+    indice = contas.indice_de_precos(ipca_longo)
+
+    def saldo_de_hoje(chave: str) -> tuple[list[Ponto], list[Ponto], date]:
+        """O saldo em R$ tri do mês e a preços do último mês com dado (pelo IPCA)."""
+        saldo = [(d, v / 1e6) for d, v in ctx.sgs(chave, anos) if d >= inicio]
+        base = max(d for d in indice if d <= saldo[-1][0])
+        return saldo, contas.a_precos_de(saldo, indice, base), base
+
+    try:
+        dbgg_rs, dbgg_real, base_div = saldo_de_hoje("DBGG_RS")
+        dlsp_rs, dlsp_real, _ = saldo_de_hoje("DLSP_RS")
+        fonte_div_rs = ctx.fonte_sgs("DBGG_RS", "DLSP_RS")
+        graficos[0] = com_variantes(
+            graficos[0],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ (valor do mês)",
+                "Dívida pública em reais",
+                [
+                    serie("dbgg", "Dívida bruta do governo geral", dbgg_rs),
+                    serie("dlsp", "Dívida líquida do setor público", dlsp_rs),
+                ],
+                unidade="R$ trilhões",
+                casas=1,
+                periodicidade="M",
+                nota="O saldo no fim de cada mês, em reais daquele mês.",
+                fonte=fonte_div_rs,
+            ),
+            variante(
+                "reais-hoje",
+                "R$ de hoje",
+                "Dívida pública em reais de hoje",
+                [
+                    serie("dbgg", "Dívida bruta do governo geral", dbgg_real),
+                    serie("dlsp", "Dívida líquida do setor público", dlsp_real),
+                ],
+                unidade=f"R$ trilhões de {periodo(base_div, 'M')}",
+                casas=1,
+                periodicidade="M",
+                nota="O saldo de cada mês levado a preços de hoje pelo IPCA.",
+                fonte=f"{fonte_div_rs}; IPCA: {ctx.fonte_sgs('IPCA')}",
+            ),
+        )
+    except Exception as erro:
+        print(f"    fiscal: a dívida em reais ficou de fora ({str(erro)[:100]})")
+    try:
+        fonte_prim_rs = (
+            f"{ctx.fonte_sgs('NFSP_PRIMARIO_MES', 'NFSP_PRIMARIO_GC_MES')}; "
+            f"IPCA: {ctx.fonte_sgs('IPCA')}"
+        )
+        cons_r, base_p = em_reais_de_hoje(
+            _resultado(ctx.sgs("NFSP_PRIMARIO_MES", anos)), ipca_longo
+        )
+        gc_r, _ = em_reais_de_hoje(_resultado(ctx.sgs("NFSP_PRIMARIO_GC_MES", anos)), ipca_longo)
+        graficos[1] = com_variantes(
+            graficos[1],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ de hoje",
+                "Resultado primário em 12 meses, em reais de hoje",
+                [
+                    serie("consolidado", "Setor público consolidado", cons_r, desde=inicio),
+                    serie("gc", "Governo Federal e Banco Central", gc_r, desde=inicio),
+                ],
+                unidade=f"R$ bilhões de {periodo(base_p, 'M')} (superávit +, déficit −)",
+                casas=0,
+                periodicidade="M",
+                nota=(
+                    "Soma de 12 meses do resultado mensal, cada mês a preços de hoje pelo IPCA "
+                    "(conta nossa sobre a série mensal do Banco Central). O Focus não projeta o "
+                    "primário em reais."
+                ),
+                fonte=fonte_prim_rs,
+            ),
+        )
+    except Exception as erro:
+        print(f"    fiscal: o primário em reais ficou de fora ({str(erro)[:100]})")
+
     tabelas: list[Tabela] = []
     try:  # o FMI fora do ar não derruba a seção: só a comparação fica de fora
         weo = fmi.weo(["BRA"], ["GGXONLB_NGDP"], ctx.hoje.year - 8, ctx.hoje.year)
@@ -558,7 +650,66 @@ def montar(ctx: Contexto) -> Secao:
                 nota="Demais despesas = despesa total menos benefícios previdenciários e pessoal.",
             ),
         ]
-        c_rig, g_rig, t_rig = gasto.rigidez(rtn, pib, fonte_rtn, inicio)
+        ipca = ctx.sgs("IPCA", anos + 2)
+
+        def reais(chave: str) -> list[Ponto]:
+            return [p for p in em_reais_de_hoje(rtn[chave], ipca)[0] if p[0] >= inicio]
+
+        mes_base = periodo(em_reais_de_hoje(rtn["despesa_total"], ipca)[1], "M")
+        unidade_reais = f"R$ bilhões de {mes_base}, em 12 meses"
+        nota_reais = "Soma de 12 meses, cada mês levado a preços de hoje pelo IPCA."
+        fonte_reais = (
+            "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, tabela 1.1); "
+            f"IPCA: {ctx.fonte_sgs('IPCA')}"
+        )
+        graficos[-2] = com_variantes(
+            graficos[-2],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ de hoje",
+                "Receita e despesa do Governo Central, em reais de hoje",
+                [
+                    serie("receita", "Receita líquida", reais("receita_liquida"), casas=1),
+                    serie("despesa", "Despesa total", reais("despesa_total"), casas=1),
+                ],
+                unidade=unidade_reais,
+                casas=0,
+                periodicidade="M",
+                nota=f"{nota_reais} Receita líquida de transferências a estados e municípios.",
+                fonte=fonte_reais,
+            ),
+        )
+        despesa_r, rgps_r, pessoal_r = (
+            reais("despesa_total"),
+            reais("rgps"),
+            reais("pessoal"),
+        )
+        graficos[-1] = com_variantes(
+            graficos[-1],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ de hoje",
+                "Para onde vai a despesa, em reais de hoje",
+                [
+                    serie("rgps", "Benefícios previdenciários", rgps_r, casas=1),
+                    serie("pessoal", "Pessoal e encargos sociais", pessoal_r, casas=1),
+                    serie(
+                        "demais",
+                        "Demais despesas",
+                        contas.subtrair(contas.subtrair(despesa_r, rgps_r), pessoal_r),
+                        casas=1,
+                    ),
+                ],
+                unidade=unidade_reais,
+                casas=0,
+                periodicidade="M",
+                nota=nota_reais,
+                fonte=fonte_reais,
+            ),
+        )
+        c_rig, g_rig, t_rig = gasto.rigidez(rtn, pib, fonte_rtn, inicio, ipca, fonte_reais)
         cartoes += c_rig
         graficos += g_rig
         tabelas += t_rig

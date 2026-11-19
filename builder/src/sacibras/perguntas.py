@@ -30,14 +30,16 @@ from dataclasses import dataclass, field
 
 from sacibras.schema import BlocoPergunta, Cartao, Grafico, ItemPergunta, Pergunta, Tabela
 
-LIDAS_EM = "16/11/2026"
+LIDAS_EM = "19/11/2026"
 """Quando as respostas e conclusões foram escritas contra o dado (ver `leituras.py`)."""
 
 MAXIMO_DE_NUMEROS = 3
 MAXIMO_DE_BLOCOS = 6
 
 Ref = tuple[str, str]
-"""(assunto, id do cartão ou do gráfico). O id pode acabar em "*": vale o primeiro que
+"""(assunto, id do cartão ou do gráfico). O assunto pode ser o Laboratório (Caio, 19/11/2026:
+*"Faz tudo, eu aprovo"*, sobre a pergunta da crise copiar peça de lá): o texto do bloco diz
+então "estimativa nossa". O id pode acabar em "*": vale o primeiro que
 começa assim (os cartões do Focus levam o ano no id)."""
 
 
@@ -62,6 +64,33 @@ class Definicao:
     conclusao: str = ""
     """Juntando as peças: o que a história contada torna mais provável."""
 
+
+TEMAS: tuple[tuple[str, str], ...] = (
+    ("precos-juros", "Preços e juros"),
+    ("crescimento-renda", "Crescimento, emprego e renda"),
+    ("contas-publicas", "Governo: dívida, gasto e impostos"),
+    ("mercado-riscos", "Mercado e riscos"),
+)
+"""As perguntas se agrupam por tema na entrada, no menu e no pé de cada pergunta (Caio,
+19/11/2026: *"podemos incluir mais perguntas com o tempo, entao é bom ter uma sessão própria
+ou organizar melhor as perguntas dentro dos temas"*). Não há mais teto para o total: o teto é
+por tema (`MAXIMO_POR_TEMA`). Tema cheio pede tema novo ou juntar duas perguntas."""
+MAXIMO_POR_TEMA = 6
+TEMA_DE: dict[str, str] = {
+    "juro-alto": "precos-juros",
+    "inflacao": "precos-juros",
+    "crescimento": "crescimento-renda",
+    "emprego": "crescimento-renda",
+    "desigualdade": "crescimento-renda",
+    "divida": "contas-publicas",
+    "imposto": "contas-publicas",
+    "cortar-gasto": "contas-publicas",
+    "servidores": "contas-publicas",
+    "estatais": "contas-publicas",
+    "mercado": "mercado-riscos",
+    "crise": "mercado-riscos",
+}
+"""O tema de cada pergunta (o teste confere que toda pergunta tem um)."""
 
 PERGUNTAS: tuple[Definicao, ...] = (
     Definicao(
@@ -308,10 +337,12 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
             Bloco(
                 "Para onde vai",
-                "A despesa do Governo Central por destino: previdência, pessoal, "
-                "benefícios sociais, saúde, educação e o resto.",
+                "A União arrecada sete em cada dez reais e gasta mais com previdência e juros; "
+                "os estados, com segurança, saúde e educação; os municípios, com saúde e "
+                "educação.",
                 ("fiscal", "despesa-composicao"),
-                (("fiscal", "previdencia-rgps"), ("fiscal", "juros-divida")),
+                (("impostos", "carga-uniao"), ("fiscal", "previdencia-rgps")),
+                ("impostos", "despesa-esferas"),
             ),
             Bloco(
                 "O que se deixa de cobrar",
@@ -335,7 +366,13 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 (("impostos", "reforma-aliquota-cheia"),),
             ),
         ),
-        ("carga tributária", "quem paga imposto", "gasto público", "reforma tributária"),
+        (
+            "carga tributária",
+            "quem paga imposto",
+            "gasto público",
+            "reforma tributária",
+            "imposto da União, dos estados e dos municípios",
+        ),
         conclusao=(
             "A reforma do consumo simplifica a cobrança, mas não muda o peso entre consumo e "
             "renda: isso está na lei. Cobrar mais da renda ou rever isenções mudaria quem paga; o"
@@ -708,6 +745,72 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "precisão."
         ),
     ),
+    Definicao(
+        "crise",
+        "De onde viria uma crise?",
+        "Pelos dados daqui, o ponto fraco são as contas públicas, não as contas com o exterior "
+        "nem os bancos: a dívida sobe, não se espera que pare de subir e o Brasil paga juro "
+        "acima do de fora. Os dados mostram onde está a pressão, não se nem quando ela "
+        "vira crise.",
+        (
+            ("fiscal", "dbgg"),
+            ("riscos", "juro-real-brasil-eua"),
+            ("laboratorio", "dolar-do-brasil"),
+        ),
+        (
+            Bloco(
+                "A dívida sobe e não se espera que pare",
+                "A cada dezembro os analistas refazem a aposta para a dívida dos anos "
+                "seguintes. Hoje, a linha do que esperam sobe até onde a coleta vai.",
+                ("laboratorio", "divida-esperada"),
+                (("laboratorio", "divida-esperada"), ("riscos", "primario-estabiliza")),
+            ),
+            Bloco(
+                "O ajuste esperado costuma ficar maior que o entregue",
+                "Desde 2003, o primário esperado dois anos antes foi, na média, maior que o que"
+                " veio. Parte são choques, como 2020. Estimativa nossa, com faixa de erro.",
+                ("laboratorio", "primario-prometido"),
+                (("laboratorio", "primario-prometido"), ("fiscal", "primario")),
+            ),
+            Bloco(
+                "O Brasil paga mais que os outros para dever",
+                "A distância para o juro real dos EUA é o que se cobra a mais do Brasil. O "
+                "porquê o número não diz: contas, inflação e pouca poupança entram juntos.",
+                ("riscos", "juro-real-brasil-eua"),
+                (("riscos", "juros-sobre-receita"),),
+            ),
+            Bloco(
+                "No dólar, quanto é daqui",
+                "Dólar que sobe contra todas as moedas é problema de fora. O resto é do Brasil:"
+                " contas públicas, política, juro, commodities, sem dizer qual. Estimativa "
+                "nossa.",
+                ("laboratorio", "dolar-mundo-brasil"),
+                (("laboratorio", "dolar-de-fora"),),
+            ),
+            Bloco(
+                "Dólar para pagar as contas de fora, há",
+                "As reservas cobrem com sobra a dívida externa de um ano, e o investimento "
+                "direto supera o déficit externo. Crise por falta de dólar é pouco provável "
+                "hoje.",
+                ("externo", "reservas"),
+                (("riscos", "reservas-cobertura"), ("externo", "transacoes-correntes")),
+            ),
+            Bloco(
+                "O que o painel de alerta mostra",
+                "Cada indicador de risco na régua da própria história. A contagem diz quantos "
+                "estão no quinto pior; não é nota única nem previsão de crise.",
+                ("riscos", "basileia"),
+                (("riscos", "alertas-acesos"), ("riscos", "basileia")),
+            ),
+        ),
+        ("crise", "risco de crise", "o brasil vai quebrar", "crise fiscal", "crise cambial"),
+        conclusao=(
+            "Se a pressão crescer, o caminho mais provável pelos dados é o das contas "
+            "públicas: dívida subindo, juro longo alto e dólar pressionado por razões daqui, "
+            "e não falta de dólares nem bancos frágeis. Se o ajuste será feito, e até quando "
+            "o mercado espera, os dados daqui não decidem."
+        ),
+    ),
 )
 
 
@@ -747,8 +850,17 @@ def montar(
                     titulo=b.titulo,
                     texto=b.texto,
                     numeros=numeros,
-                    grafico=grafico.model_copy(update={"secao": assunto}) if grafico else None,
-                    tabela=(tabelas or {}).get(b.tabela) if b.tabela else None,
+                    # Na pergunta, só a peça escolhida: a lista das parecidas fica nos Dados.
+                    grafico=(
+                        grafico.model_copy(update={"secao": assunto, "alternativas": []})
+                        if grafico
+                        else None
+                    ),
+                    tabela=(
+                        tabela.model_copy(update={"alternativas": []})
+                        if b.tabela and (tabela := (tabelas or {}).get(b.tabela))
+                        else None
+                    ),
                     assunto=assunto,
                     assunto_titulo=titulos.get(assunto, ""),
                     elo=f"#{assunto}/g-{grafico.id}" if grafico else f"#{assunto}",
@@ -770,4 +882,17 @@ def montar(
 
 
 def itens(perguntas: list[Pergunta]) -> list[ItemPergunta]:
-    return [ItemPergunta(id=p.id, titulo=p.titulo, resposta=p.resposta) for p in perguntas]
+    """As perguntas para a entrada e o menu, na ordem dos temas."""
+    nomes = dict(TEMAS)
+    ordem = {tema: i for i, tema in enumerate(nomes)}
+    saida = [
+        ItemPergunta(
+            id=p.id,
+            titulo=p.titulo,
+            resposta=p.resposta,
+            tema=nomes.get(TEMA_DE.get(p.id, ""), ""),
+        )
+        for p in perguntas
+    ]
+    posicao = {p.id: ordem.get(TEMA_DE.get(p.id, ""), len(ordem)) for p in perguntas}
+    return sorted(saida, key=lambda q: posicao[q.id])

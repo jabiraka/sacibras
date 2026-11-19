@@ -49,6 +49,7 @@ from sacibras.schema import (
     Serie,
     SimuladorDivida,
     Tabela,
+    VarianteGrafico,
 )
 from sacibras.secoes import estados, inflacao, mundo, previsoes
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
@@ -61,6 +62,7 @@ ACESO = 80.0
 """Pior que esta parte da própria história = "aceso" (o quinto pior). O site usa o mesmo corte."""
 ANOS_DO_LEQUE = 5
 ANOS_DO_ESTRESSE = 4
+MESES_DO_ESTRESSE = 24
 
 FISCAL = "Contas públicas"
 EXTERNO = "Câmbio e contas externas"
@@ -1586,40 +1588,29 @@ def _estresse(
             ),
         )
     )
+    variantes: list[VarianteGrafico] = []
     if base and caminhos:
         partida = (date(base.ano_inicial, 1, 1), base.divida_inicial)
         futuros = base.anos[:n]
+        nome_base = "Linha de base (hipóteses do Focus)"
 
         def caminho_serie(valores: list[float]) -> list[Ponto]:
             return [partida, *[(date(a, 1, 1), v) for a, v in zip(futuros, valores, strict=True)]]
 
-        bloco.graficos.append(
-            grafico(
-                "estresse-divida",
-                "A dívida se cada crise se repetisse agora",
-                [
-                    serie(
-                        "base",
-                        "Linha de base (hipóteses do Focus)",
-                        caminho_serie(linha_de_base),
-                        papel="consenso",
-                        casas=1,
-                    ),
+        variantes.append(
+            VarianteGrafico(
+                id="divida",
+                rotulo="Dívida bruta",
+                titulo="A dívida se cada crise se repetisse agora",
+                unidade="% do PIB",
+                periodicidade="A",
+                series=[
+                    serie("base", nome_base, caminho_serie(linha_de_base), papel="consenso"),
                     *[
-                        serie(
-                            f"ep-{ep.id}",
-                            ep.nome,
-                            caminho_serie(caminho),
-                            papel="previsao",
-                            casas=1,
-                        )
-                        for ep, caminho in caminhos
+                        serie(f"ep-{ep.id}", ep.nome, caminho_serie(c), papel="previsao")
+                        for ep, c in caminhos
                     ],
                 ],
-                unidade="% do PIB",
-                casas=1,
-                periodicidade="A",
-                fonte=f"{base.fonte}; {ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL')}",
                 nota=(
                     "Método: para cada episódio, mede-se quanto crescimento, primário, juro da "
                     "dívida e inflação dos anos da crise se afastaram da média dos dois anos "
@@ -1628,7 +1619,158 @@ def _estresse(
                     "continua lá, rendendo juro. Ordem de grandeza: não separa a dívida cambial "
                     "nem o que entra na dívida sem passar pelo primário."
                 ),
+            )
+        )
+        # As hipóteses da linha de base com o desvio de cada crise: as mesmas contas que
+        # movem a dívida, mostradas uma a uma. Choque = (juro, crescimento, inflação, primário).
+        com_choques = [
+            (ep, risco.choques_do_episodio(anos, list(ep.anos)) or []) for ep, _ in caminhos
+        ]
+        for id_, rotulo, titulo, k, hipotese, nota in (
+            (
+                "pib",
+                "PIB (crescimento)",
+                "O crescimento do PIB se cada crise se repetisse agora",
+                1,
+                base.crescimento[:n],
+                "Crescimento real no ano.",
+            ),
+            (
+                "inflacao",
+                "Inflação",
+                "A inflação se cada crise se repetisse agora",
+                2,
+                base.inflacao[:n],
+                "A inflação da linha de base do simulador da dívida.",
+            ),
+            (
+                "primario",
+                "Resultado primário",
+                "O primário se cada crise se repetisse agora",
+                3,
+                base.primario[:n],
+                "Positivo é superávit, negativo é déficit.",
+            ),
+        ):
+            variantes.append(
+                VarianteGrafico(
+                    id=id_,
+                    rotulo=rotulo,
+                    titulo=titulo,
+                    unidade="% do PIB" if id_ == "primario" else "%",
+                    periodicidade="A",
+                    series=[
+                        serie(
+                            "base",
+                            nome_base,
+                            [(date(a, 1, 1), v) for a, v in zip(futuros, hipotese, strict=True)],
+                            papel="consenso",
+                        ),
+                        *[
+                            serie(
+                                f"ep-{ep.id}",
+                                ep.nome,
+                                [
+                                    (date(a, 1, 1), v + (ch[i][k] if i < len(ch) else 0.0))
+                                    for i, (a, v) in enumerate(zip(futuros, hipotese, strict=True))
+                                ],
+                                papel="previsao",
+                            )
+                            for ep, ch in com_choques
+                        ],
+                    ],
+                    nota=(
+                        f"{nota} A linha de base é a do Focus; em cada episódio, soma-se aos "
+                        "primeiros anos o quanto aquele número se afastou, nos anos da crise, "
+                        "da média dos dois anos anteriores. Depois, a base volta."
+                    ),
+                )
+            )
+
+    # O mercado mês a mês: o caminho de cada crise desde o começo da janela, posto no nível
+    # de hoje (o dólar e o Ibovespa na mesma proporção; a Selic com a mesma mudança em pp).
+    hoje_mes = dolar[-1][0].replace(day=1)
+
+    def meses_a_frente(k: int) -> date:
+        a, m = divmod(hoje_mes.month - 1 + k, 12)
+        return date(hoje_mes.year + a, m + 1, 1)
+
+    nota_mercado = (
+        f"O caminho de cada crise nos {MESES_DO_ESTRESSE} meses desde o começo da janela, "
+        "aplicado ao nível de hoje{como}. Não é previsão: é o tamanho de trancos que já "
+        "aconteceram. A linha horizontal é o nível de hoje."
+    )
+    for id_, rotulo, titulo, pontos, unidade, casas, escala, soma in (
+        ("dolar", "Dólar", "O dólar se cada crise se repetisse agora", dolar, "R$", 2, 1.0, False),
+        (
+            "ibovespa",
+            "Ibovespa",
+            "O Ibovespa se cada crise se repetisse agora",
+            ibov,
+            "mil pontos",
+            0,
+            1000.0,
+            False,
+        ),
+        ("selic", "Selic", "A Selic se cada crise se repetisse agora", selic, "%", 2, 1.0, True),
+    ):
+        hoje = pontos[-1][1] / escala
+        series_mercado = []
+        for ep in EPISODIOS:
+            c = risco.caminho_mensal(pontos, ep.inicio, MESES_DO_ESTRESSE)
+            if c is None:
+                continue
+            valores = (
+                [max(0.0, hoje + v - c[0]) for v in c] if soma else [hoje * v / c[0] for v in c]
+            )
+            series_mercado.append(
+                serie(
+                    f"ep-{ep.id}",
+                    ep.nome,
+                    [(meses_a_frente(k), v) for k, v in enumerate(valores)],
+                    papel="previsao",
+                    casas=casas + 1,
+                )
+            )
+        if series_mercado:
+            variantes.append(
+                VarianteGrafico(
+                    id=id_,
+                    rotulo=rotulo,
+                    titulo=titulo,
+                    unidade=unidade,
+                    casas=casas,
+                    periodicidade="M",
+                    series=series_mercado,
+                    linhas=[LinhaRef(valor=round(hoje, casas + 1), rotulo="Hoje")],
+                    nota=nota_mercado.format(
+                        como=(
+                            " (a mesma mudança, em pontos percentuais; nunca abaixo de zero)"
+                            if soma
+                            else " (a mesma alta ou queda, em %)"
+                        )
+                    ),
+                )
+            )
+
+    if variantes:
+        v0 = variantes[0]
+        bloco.graficos.append(
+            grafico(
+                "estresse-divida",
+                v0.titulo,
+                v0.series,
+                unidade=v0.unidade,
+                casas=v0.casas,
+                periodicidade=v0.periodicidade,
+                linhas=v0.linhas,
+                fonte=(f"{base.fonte}; " if base else "")
+                + f"{ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL', 'DOLAR', 'SELIC_META')}; "
+                "IPEADATA (Ibovespa); cálculo próprio",
+                nota=v0.nota,
                 largura="inteira",
+                variantes=variantes,
+                escolher_series=True,
             )
         )
     return bloco

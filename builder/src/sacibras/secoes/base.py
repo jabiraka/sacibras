@@ -6,10 +6,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from sacibras import licencas
+from sacibras import contas, licencas
 from sacibras.catalogo import SGS
 from sacibras.fontes import bcb_sgs
-from sacibras.schema import Cartao, Grafico, Procedencia, Serie
+from sacibras.schema import Cartao, Grafico, Procedencia, Serie, VarianteGrafico
 from sacibras.tipos import Periodicidade, Ponto
 
 MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
@@ -143,3 +143,61 @@ def ha_um_ano(pontos: list[Ponto]) -> float | None:
     alvo = pontos[-1][0] - timedelta(days=365)
     antes = [v for d, v in pontos if d <= alvo]
     return antes[-1] if antes else None
+
+
+def em_reais_de_hoje(mensal_milhoes: list[Ponto], ipca: list[Ponto]) -> tuple[list[Ponto], date]:
+    """A soma de 12 meses de um fluxo mensal em R$ milhões, em R$ bilhões a preços do
+    último mês do dado (ou do último com IPCA, se o IPCA ainda não chegou nele), e esse mês.
+    Mês sem IPCA fica de fora."""
+    indice = contas.indice_de_precos(ipca)
+    ultimo = max(d for d, _ in mensal_milhoes)
+    base = max(d for d in indice if d <= ultimo)
+    reais = contas.a_precos_de(mensal_milhoes, indice, base)
+    return [(d, v / 1000) for d, v in contas.soma_movel(reais)], base
+
+
+def variante(
+    id: str,
+    rotulo: str,
+    titulo: str,
+    series: list[Serie],
+    *,
+    unidade: str,
+    periodicidade: Periodicidade,
+    casas: int = 1,
+    nota: str = "",
+    fonte: str = "",
+) -> VarianteGrafico:
+    return VarianteGrafico(
+        id=id,
+        rotulo=rotulo,
+        titulo=titulo,
+        series=series,
+        unidade=unidade,
+        casas=casas,
+        periodicidade=periodicidade,
+        nota=nota,
+        fonte=fonte,
+    )
+
+
+def com_variantes(
+    g: Grafico, rotulo: str, *outras: VarianteGrafico, nome_da_lista: str = "Ver em"
+) -> Grafico:
+    """O gráfico com a lista que troca a unidade (Caio, 19/11/2026: *"coloque um parâmetro
+    pra mudar o gráfico em % do PIB"*): ele mesmo é a primeira opção, com o nome `rotulo`."""
+    primeira = VarianteGrafico(
+        id="principal",
+        rotulo=rotulo,
+        titulo=g.titulo,
+        unidade=g.unidade,
+        casas=g.casas,
+        periodicidade=g.periodicidade,
+        series=g.series,
+        linhas=g.linhas,
+        nota=g.nota,
+        fonte=g.fonte,
+    )
+    return g.model_copy(
+        update={"variantes": [primeira, *outras], "rotulo_variantes": nome_da_lista}
+    )

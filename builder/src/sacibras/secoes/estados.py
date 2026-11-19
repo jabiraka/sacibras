@@ -1224,6 +1224,67 @@ def _posicao(valores: dict[str, float], uf: str) -> int:
     return 1 + sum(1 for v in valores.values() if v > valores[uf])
 
 
+# Caio, 19/11/2026: "ver onde cada Estado [...] está gastando com a receita". A parte de cada
+# área na despesa do estado (DCA, Anexo I-E), sem os encargos especiais (função 28: juros e
+# amortização da dívida e, em parte dos estados, a cota do ICMS dos municípios lançada como
+# despesa), que mudam de estado para estado só pela forma de registrar.
+GASTO_POR_AREA = {
+    "10": ("gasto_saude", "Saúde"),
+    "12": ("gasto_educacao", "Educação"),
+    "06": ("gasto_seguranca", "Segurança pública"),
+    "09": ("gasto_previdencia", "Previdência"),
+}
+ENCARGOS_ESPECIAIS = "28"
+
+
+def _gasto_por_area(anual: siconfi.ColetaAnual) -> list[MetricaEstados]:
+    base: dict[str, float] = {}
+    por_area: dict[str, dict[str, float]] = {cod: {} for cod in GASTO_POR_AREA}
+    for cod_uf, contas in anual.dca.items():
+        f = contas.funcoes if contas else None
+        if f is None:
+            continue
+        encargos = f.por_funcao.get(ENCARGOS_ESPECIAIS, ("", 0.0))[1]
+        sem = f.total - encargos
+        if sem <= 0:
+            continue
+        base[SIGLA[cod_uf]] = sem
+        for cod in GASTO_POR_AREA:
+            if cod in f.por_funcao:
+                por_area[cod][SIGLA[cod_uf]] = f.por_funcao[cod][1]
+    metricas = []
+    for cod, (id_, nome) in GASTO_POR_AREA.items():
+        valores = por_area[cod]
+        if len(valores) < 20:
+            continue
+        soma_base = sum(base[u] for u in valores)
+        metricas.append(
+            MetricaEstados(
+                id=id_,
+                nome=f"Gasto com {nome.lower() if cod != '06' else 'segurança'}",
+                grupo=CONTAS,
+                descricao=(
+                    f"A parte da despesa do governo do estado que foi para {nome.lower()}, no "
+                    "ano. Sem os encargos especiais (juros e amortização da dívida e repasses "
+                    "aos municípios), que cada estado registra de um jeito; conta nossa."
+                ),
+                unidade="% da despesa",
+                casas=1,
+                referencia=str(anual.ano),
+                fonte=(
+                    "Tesouro Nacional, SICONFI, Declaração de Contas Anuais (DCA), Anexo I-E, "
+                    f"despesas liquidadas por função, {anual.ano}; a parte: conta nossa"
+                ),
+                valores={
+                    u: round(valores[u] / base[u] * 100, 2) if u in valores else None
+                    for _, u, _, _ in UFS
+                },
+                brasil=round(sum(valores.values()) / soma_base * 100, 2),
+            )
+        )
+    return metricas
+
+
 def _contas(
     anual: siconfi.ColetaAnual,
     rgf: siconfi.ColetaRgf | None,
@@ -1450,6 +1511,7 @@ def montar(ctx: Contexto) -> Estados:
             print("  aviso: nenhuma DCA recente com 24 estados; estados.json sai sem as contas")
         else:
             contas = _contas(anual, coleta, siconfi.entes(), ctx.agora())
+            metricas += _gasto_por_area(anual)
     except Exception as erro:
         print(f"  aviso: contas dos estados indisponíveis ({erro}); estados.json sai sem elas")
 

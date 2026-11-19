@@ -212,3 +212,59 @@ def test_endereco_antigo_aponta_para_assunto_que_existe() -> None:
     assuntos = {id for id, _, _ in construir.ORDEM}
     assert set(juntos.ANTIGOS.values()) <= assuntos and not set(juntos.ANTIGOS) & assuntos
     assert {s for c in organizacao.CATEGORIAS for s in c.secoes} == assuntos
+
+
+def test_juntos_apontam_para_peca_da_parte_e_nao_repetem() -> None:
+    """O principal está na parte; o de trás não está em parte nenhuma nem atrás de outro."""
+    for secao, partes in organizacao.PARTES.items():
+        for tipo, campo in (("graficos", "juntos"), ("tabelas", "tabelas_juntas")):
+            nas_partes = {i for p in partes for i in getattr(p, tipo)}
+            atras = [i for p in partes for v in getattr(p, campo).values() for i in v]
+            assert len(atras) == len(set(atras)), (secao, tipo)
+            for p in partes:
+                for principal, outros in getattr(p, campo).items():
+                    assert principal in getattr(p, tipo), (secao, principal)
+                    assert not set(outros) & nas_partes, (secao, principal)
+
+
+def test_aplicar_poe_os_parecidos_atras_da_lista(monkeypatch: pytest.MonkeyPatch) -> None:
+    parte = organizacao.Parte(
+        "ipca",
+        "IPCA",
+        "r",
+        graficos=["ipca-12m"],
+        tabelas=["t1"],
+        juntos={"ipca-12m": ["ipca-mensal", "nao-veio"]},
+        tabelas_juntas={"t1": ["t2"]},
+        rotulos={"ipca-12m": "12 meses", "ipca-mensal": "No mês"},
+    )
+    monkeypatch.setitem(organizacao.PARTES, "inflacao", [parte])
+
+    def tabela(id: str) -> Tabela:
+        return Tabela(id=id, titulo=id, colunas=[], linhas=[], fonte="x")
+
+    secao = Secao(
+        id="inflacao",
+        titulo="Inflação",
+        graficos=[_grafico("ipca-12m"), _grafico("ipca-mensal"), _grafico("solto")],
+        tabelas=[tabela("t1"), tabela("t2")],
+        gerado_em=AGORA,
+    )
+    sem_lugar = organizacao.aplicar(secao)
+    assert sem_lugar == ["g-solto"]  # o de trás não conta como fora da tela
+    [g] = secao.graficos
+    assert (g.id, g.rotulo_opcao) == ("ipca-12m", "12 meses")
+    assert [(a.id, a.rotulo_opcao) for a in g.alternativas] == [("ipca-mensal", "No mês")]
+    [t] = secao.tabelas
+    assert [a.id for a in t.alternativas] == ["t2"]
+    assert secao.subcategorias[0].graficos == ["ipca-12m"]
+
+
+def test_agrupar_aponta_para_partes_que_existem() -> None:
+    for assunto, por_parte in organizacao.AGRUPAR.items():
+        ids = {p.id for p in organizacao.PARTES[assunto]}
+        assert set(por_parte) <= ids, assunto
+        for a in por_parte.values():
+            nomeados = {*a.graficos, *a.tabelas, *(i for v in a.graficos.values() for i in v)}
+            nomeados |= {i for v in a.tabelas.values() for i in v}
+            assert set(a.rotulos) <= nomeados, (assunto, set(a.rotulos) - nomeados)

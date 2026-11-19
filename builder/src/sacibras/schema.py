@@ -101,6 +101,25 @@ class Dispersao(Modelo):
     correlacao: float | None = None
 
 
+class VarianteGrafico(Modelo):
+    """Outra métrica do mesmo gráfico, que a pessoa escolhe na lista "Métrica" (Caio,
+    19/11/2026, no teste de estresse: *"veja o efeito sobre outras métricas tb, coloque o
+    parâmetro pra mudar a métrica no gráfico mesmo"*). Troca as séries, a unidade e a nota;
+    o resto do gráfico fica."""
+
+    id: str
+    rotulo: str
+    titulo: str
+    unidade: str
+    casas: int = 1
+    periodicidade: Periodicidade
+    series: list[Serie]
+    linhas: list[LinhaRef] = Field(default_factory=list)
+    nota: str = ""
+    fonte: str = ""
+    """Quando a métrica vem de outra fonte (o PIB, o IPCA); vazio, vale a do gráfico."""
+
+
 class Grafico(Modelo):
     id: str
     titulo: str
@@ -138,6 +157,21 @@ class Grafico(Modelo):
     """Com ela, o site desenha um ponto por país no lugar das séries."""
     secao: str = ""
     """O assunto de onde o gráfico veio: só na página inicial, para o elo "abrir"."""
+    variantes: list[VarianteGrafico] = Field(default_factory=list)
+    """Outras métricas do gráfico, na lista "Métrica"; a primeira opção é o próprio gráfico."""
+    alternativas: list[Grafico] = Field(default_factory=list)
+    """Outros gráficos parecidos no mesmo lugar, na lista "Gráfico" (Caio, 19/11/2026:
+    *"vamos usar o artifício de colocar parâmetros para gráficos parecidos, assim mudando o
+    parâmetro muda o gráfico ou tabela, podendo acrescentar informações ao site sem ter que
+    excluir coisas"*). Quem junta é `organizacao.aplicar`, pelas `juntos` de cada parte; este
+    abre primeiro e é o principal."""
+    rotulo_opcao: str = ""
+    """O nome curto do gráfico na lista; vazio, vale o título."""
+    rotulo_variantes: str = "Métrica"
+    """O nome da lista das variantes ("Ver em", quando a troca é só de unidade)."""
+    escolher_series: bool = False
+    """A pessoa liga e desliga cada série que não é de consenso (Caio, 19/11/2026: *"deixe
+    tbm escolher qual teste mostrar, se todos ou só alguns"*)."""
     sem_download: str = ""
     """Por que não há CSV nem PNG: a fonte cita dado privado cujos termos vedam reproduzir
     (`licencas.py`). Sai sozinho da `fonte`; não se escreve à mão."""
@@ -233,6 +267,10 @@ class Tabela(Modelo):
     15/11/2026: o PIB por componente "com parâmetro pra indicar [...] qual trimestre ou qual
     ano"); `colunas` e `linhas` repetem a primeira, para a busca e para quem não lê as visões."""
     rotulo_visoes: str = ""
+    alternativas: list[Tabela] = Field(default_factory=list)
+    """Outras tabelas parecidas no mesmo lugar, na lista "Tabela" (como `Grafico.alternativas`)."""
+    rotulo_opcao: str = ""
+    """O nome curto da tabela na lista; vazio, vale o título."""
     """O nome da lista ("Período")."""
 
 
@@ -747,6 +785,8 @@ class ItemPergunta(Modelo):
     id: str
     titulo: str
     resposta: str
+    tema: str = ""
+    """O nome do tema ("Preços e juros"): a tela agrupa as perguntas por ele."""
 
 
 class ItemSecao(Modelo):
@@ -783,3 +823,13 @@ class Painel(Modelo):
 
 def pontos(serie: list[Ponto], casas: int = 4) -> list[tuple[date, float | None]]:
     return [(d, round(v, casas)) for d, v in serie]
+
+
+def achatar_graficos(lista: list[Grafico]) -> list[Grafico]:
+    """Cada gráfico e as alternativas dele, todos no mesmo nível (busca, perguntas, rodada
+    anterior)."""
+    return [x for g in lista for x in (g, *g.alternativas)]
+
+
+def achatar_tabelas(lista: list[Tabela]) -> list[Tabela]:
+    return [x for t in lista for x in (t, *t.alternativas)]

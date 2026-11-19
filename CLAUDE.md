@@ -95,10 +95,17 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   ainda por fazer). As perguntas moram em `builder/src/sacibras/perguntas.py`: resposta curta,
   até 3 números, de 3 a 6 explicações na ordem em que contam a história, cada uma com até 2
   números, 1 gráfico e, se couber, 1 tabela **copiados dos assuntos**, com a data e a fonte
-  deles, e a conclusão ("Juntando as peças"). A tela (`#pergunta/<id>`) abre a primeira
+  deles, e a conclusão ("Juntando as peças"). A pergunta pode copiar peça do Laboratório
+  (Caio, 19/11/2026, sobre "De onde viria uma crise?"): o texto do bloco diz então
+  "estimativa nossa". São dez perguntas, o teto do teste. A tela (`#pergunta/<id>`) abre a primeira
   explicação e guarda as outras atrás do clique. **Peça nova nos Dados diz a que pergunta
   responde**; se não responde a nenhuma, pense duas vezes antes de pôr. Pergunta nova ganha
   as palavras de busca em `palavras`.
+- **Perguntas por tema, sem teto para o total** (Caio, 19/11/2026: *"podemos incluir mais
+  perguntas com o tempo, entao é bom ter uma sessão própria ou organizar melhor as perguntas
+  dentro dos temas"*): cada pergunta tem tema em `perguntas.TEMA_DE` (os temas e a ordem em
+  `perguntas.TEMAS`), e a entrada, o menu e o pé de cada pergunta listam por tema. O teto é
+  por tema (`MAXIMO_POR_TEMA`, seis, em teste): tema cheio pede tema novo ou juntar duas.
 - **Claro onde a evidência é clara, em aberto onde ela é fraca** (Caio, 16/11/2026: *"não
   precisa ser completamente neutro, não existe isso, fale oq for mais provável com base na
   história contada [...] é melhor ser mais claro do que deixar implícito pra interpretação"*;
@@ -119,7 +126,16 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   clique. Nos Dados, o teto está em `organizacao.py` e em teste: **até 5 partes por assunto
   e, por parte, até 4 números e 3 gráficos** (tabela não tem teto: fica atrás do clique).
   Entra um, sai um. **Peça que a seção calcula e não está em `PARTES` sai da tela** (não há
-  mais "Outros" para cartão, gráfico ou tabela); o builder avisa quantas ficaram de fora.
+  mais "Outros" para cartão, gráfico ou tabela); o builder avisa quais ficaram de fora.
+- **Parecidos atrás de uma lista** (Caio, 19/11/2026: *"vamos usar o artifício de colocar
+  parâmetros para gráficos parecidos, assim mudando o parâmetro muda o gráfico ou tabela,
+  podendo acrescentar informações ao site sem ter que excluir coisas e sem ficar pesado de
+  informações, mantendo amostra do principal. Aplique isso sistematicamente"*). Duas
+  formas: a mesma conta em outra unidade ou métrica vai em `variantes` do gráfico (lista
+  "Ver em" ou "Métrica": `com_variantes` em `secoes/base.py`); outro gráfico ou tabela do
+  mesmo tema vai atrás do principal em `AGRUPAR` (`organizacao.py`; lista "Gráfico" ou
+  "Tabela"), que conta como um só no orçamento. Peça nova que se parece com uma da tela
+  entra atrás dela antes de pensar em tirar outra.
 - **Nove assuntos nos Dados** (Caio, 16/11/2026: *"faça 1 e 2 já"*, sobre juntar os
   assuntos e a frase do gráfico): Atividade, Trabalho e renda (com a pobreza), Inflação,
   Juros e crédito, Contas públicas, Impostos, Exterior e mercados, Longo prazo (demografia,
@@ -162,7 +178,20 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   1950 (Penn World Table). As contas de estatística moram em `modelos/estatistica.py`, sem
   biblioteca de fora (MQO com erro de Newey-West, HP, Hamilton). Cada peça diz o método e
   mostra a faixa; resultado fraco se diz fraco (o estudo de evento, por exemplo, mede mal a
-  surpresa sem os juros futuros da B3). Peça nova dele vai ao ar com o Caio olhando.
+  surpresa sem os juros futuros da B3). Em 19/11/2026 (Caio: *"essas métricas vão nos
+  ajudar a ver [...] de onde está vindo se tiver uma crise, bem como oq poderíamos ter feito
+  pra prevenir, o foco principal hj está no ajuste fiscal"*; e *"Faz tudo, eu aprovo"*)
+  entraram as peças de pressão e ajuste (`secoes/laboratorio_ajuste.py`,
+  `modelos/ajuste.py`): o dólar repartido entre o mundo e o Brasil, a dívida com outro primário,
+  por onde o primário já mudou, o custo de esperar, a meta original de cada LDO contra o que
+  veio (`leis.METAS_DAS_LDOS`) e o primário e a dívida que o Focus esperava. Todas refazem
+  o que já aconteceu. O Laboratório está no teto de cinco partes. **Resultado fraco não precisa ir à tela**
+  (Caio, 19/11/2026: *"Se o resultado for fraco, acho que não precisa colocar não"*, sobre
+  o estudo de evento dos anúncios fiscais, que saiu): conta que não distingue o efeito do
+  acaso fica no código e no PROPOSTAS como "testada e fora", não na tela com ressalva. Pelo
+  mesmo motivo, do teste de Bohn ficou só a tabela dos dois períodos (Caio, mesmo dia:
+  *"Pode tirar só o do Bohn"*): o cartão e o gráfico mostravam a amostra inteira, que não
+  se distingue de zero. Peça nova dele vai ao ar com o Caio olhando.
 - **O gasto: obrigatório, discricionário e por função** (Caio, 16/11/2026: *"tem como
   separar as despesas das obrigatórias? Talvez fazer uma análise de onde dá pra cortar
   gastos [...] comparar com outros países"*): Contas públicas › Receita e gasto

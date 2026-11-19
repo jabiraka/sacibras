@@ -7,6 +7,7 @@
 //   - chinês e japonês, que não separam palavras: o termo do índice dentro do que se digitou;
 //   - nada achado: as buscas parecidas que acham alguma coisa e alguns assuntos.
 
+import { escolherAlternativa } from "./alternativas";
 import { el } from "./pecas";
 import { idiomaAtual } from "./traducao";
 
@@ -616,6 +617,7 @@ export function revelar(alvo: string): void {
   if (!no && (alvo.startsWith("uf-") || alvo.startsWith("p-"))) {
     no = document.getElementById(alvo) ?? document.querySelector(".mapa, .ranking-pontos");
   }
+  if (!no && (alvo.startsWith("g-") || alvo.startsWith("t-"))) no = escolherAlternativa(alvo);
   if (!no) {
     // Pode estar atrás de "Mais números"/"Mais gráficos" ou numa tabela guardada.
     document.querySelectorAll<HTMLButtonElement>(".abrir button").forEach((b) => b.click());

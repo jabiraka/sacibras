@@ -24,6 +24,8 @@ import { montarMundo } from "./mundo";
 import { montarDispersao } from "./dispersao";
 import { montarPiramide } from "./piramide";
 import { montarRetornos } from "./retornos";
+import { comAlternativas } from "./alternativas";
+import { montarComEscolha } from "./variantes";
 import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import { montarSimulador } from "./simulador";
@@ -37,6 +39,7 @@ import type {
   ItemSecao,
   Mundo,
   Painel,
+  ItemPergunta,
   Pergunta,
   Perguntas,
   Secao,
@@ -52,6 +55,39 @@ const NUMEROS_A_VISTA = 4;
 const GRAFICOS_A_VISTA = 2;
 
 const lidos = new Map<string, Promise<unknown>>();
+
+/** As perguntas por tema, na ordem em que vêm (Caio, 19/11/2026: "organizar melhor as
+ * perguntas dentro dos temas"). Sem tema no dado, um grupo só, sem nome. */
+function porTema(perguntas: ItemPergunta[]): [string, ItemPergunta[]][] {
+  const grupos = new Map<string, ItemPergunta[]>();
+  for (const q of perguntas) {
+    const tema = q.tema ?? "";
+    grupos.set(tema, [...(grupos.get(tema) ?? []), q]);
+  }
+  return [...grupos.entries()];
+}
+
+/** As listas de perguntas, um título por tema; `primeiro` põe um tema na frente. */
+function listasDePerguntas(perguntas: ItemPergunta[], primeiro = ""): HTMLElement[] {
+  const grupos = porTema(perguntas).sort(
+    (a, b) => Number(b[0] === primeiro) - Number(a[0] === primeiro),
+  );
+  const saida: HTMLElement[] = [];
+  for (const [tema, lista] of grupos) {
+    if (tema) saida.push(el("h3", "tema-perguntas", tema));
+    const ul = el("ul", "perguntas");
+    for (const q of lista) {
+      const li = el("li");
+      const a = el("a", "vidro pergunta");
+      a.href = `#pergunta/${q.id}`;
+      a.append(el("span", "pergunta-titulo", q.titulo), el("span", "seta", "→"));
+      li.append(a);
+      ul.append(li);
+    }
+    saida.push(ul);
+  }
+  return saida;
+}
 
 const PARTES_ANTIGAS: Record<string, string> = {
   "fiscal/meta": "resultado",
@@ -182,6 +218,7 @@ function corpoDaTabela(colunas: string[], linhas: LinhaTabela[]): HTMLTableEleme
 }
 
 function montarTabela(t: Tabela): HTMLElement {
+  if (t.alternativas?.length) return comAlternativas(t, montarTabela, "t");
   const caixa = guardar(t.titulo, t.subtitulo, () => {
     const rolavel = el("div", "tabela-rolavel");
     const partes: HTMLElement[] = [];
@@ -236,8 +273,10 @@ function botaoDeAbrir(rotulo: string, quantos: number, abrir: () => void): HTMLE
 
 /** O gráfico, ou a peça própria quando o gráfico tem uma (o comparador de retornos). */
 function montarPeca(g: Grafico): HTMLElement {
+  if (g.alternativas?.length) return comAlternativas(g, montarPeca, "g");
   if (g.piramide) return montarPiramide(g, g.piramide);
   if (g.dispersao) return montarDispersao(g, g.dispersao);
+  if (g.variantes?.length || g.escolher_series) return montarComEscolha(g);
   return g.id === "retornos-em-reais" ? montarRetornos(g) : montarGrafico(g);
 }
 
@@ -436,16 +475,19 @@ function montarMenu(painel: Painel): void {
       el("small", "", `${painel.perguntas.length}`),
     );
     grupo.append(resumo);
-    const ul = el("ul");
-    for (const q of painel.perguntas) {
-      const li = el("li");
-      const a = el("a", "menu-assunto menu-pergunta", q.titulo);
-      a.href = `#pergunta/${q.id}`;
-      a.dataset.assunto = `pergunta/${q.id}`;
-      li.append(a);
-      ul.append(li);
+    for (const [tema, lista] of porTema(painel.perguntas)) {
+      if (tema) grupo.append(el("p", "menu-categoria menu-tema", tema));
+      const ul = el("ul");
+      for (const q of lista) {
+        const li = el("li");
+        const a = el("a", "menu-assunto menu-pergunta", q.titulo);
+        a.href = `#pergunta/${q.id}`;
+        a.dataset.assunto = `pergunta/${q.id}`;
+        li.append(a);
+        ul.append(li);
+      }
+      grupo.append(ul);
     }
-    grupo.append(ul);
     menu.append(grupo, el("p", "menu-andar menu-andar-dados", "Dados"));
   }
   for (const c of categorias(painel)) {
@@ -596,16 +638,7 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
     document.createTextNode("O que você quer entender? "),
     el("span", "apagado", "Toque numa pergunta."),
   );
-  const lista = el("ul", "perguntas");
-  for (const q of painel.perguntas ?? []) {
-    const li = el("li");
-    const a = el("a", "vidro pergunta");
-    a.href = `#pergunta/${q.id}`;
-    a.append(el("span", "pergunta-titulo", q.titulo), el("span", "seta", "→"));
-    li.append(a);
-    lista.append(li);
-  }
-  bloco.append(h2, lista);
+  bloco.append(h2, ...listasDePerguntas(painel.perguntas ?? []));
   if (!painel.perguntas?.length) bloco.remove();
 
   // Os dados, por assunto, só com o nome: quem quer o número vai direto.
@@ -649,7 +682,11 @@ function contagem(p: Subcategoria): string {
 }
 
 /** A parte em que a peça do endereço ("c-ipca-12m", "t-alertas") mora. */
-function parteDaPeca(partes: Subcategoria[], peca: string): Subcategoria | undefined {
+function parteDaPeca(
+  partes: Subcategoria[],
+  peca: string,
+  s?: Secao,
+): Subcategoria | undefined {
   if (peca === "t-alertas" || peca.startsWith("a-")) {
     return partes.find((p) => p.extras.includes("alertas"));
   }
@@ -661,7 +698,13 @@ function parteDaPeca(partes: Subcategoria[], peca: string): Subcategoria | undef
   const campo = campos[peca.slice(0, 2)];
   if (!campo) return undefined;
   const id = peca.slice(2);
-  return partes.find((p) => p[campo].includes(id));
+  const direto = partes.find((p) => p[campo].includes(id));
+  if (direto || !s || campo === "cartoes") return direto;
+  // Atrás da lista de outro gráfico ou tabela: a parte é a do principal.
+  const lista: { id: string; alternativas?: { id: string }[] }[] =
+    campo === "graficos" ? s.graficos : s.tabelas;
+  const principal = lista.find((x) => x.alternativas?.some((a) => a.id === id));
+  return principal ? partes.find((p) => p[campo].includes(principal.id)) : undefined;
 }
 
 /** O que uma parte mostra, inteiro: números, a peça própria, gráficos e tabelas. */
@@ -849,7 +892,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
     .then((s) => {
       const partes = s.subcategorias ?? [];
       const parte =
-        partes.find((p) => p.id === peca) ?? (peca ? parteDaPeca(partes, peca) : undefined);
+        partes.find((p) => p.id === peca) ?? (peca ? parteDaPeca(partes, peca, s) : undefined);
 
       if (!partes.length) {
         // Assunto sem partes: abre inteiro, como antes.
@@ -992,17 +1035,12 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
       const chamada = el("summary", "sobretitulo");
       chamada.append(el("span", "", "Outras perguntas"), el("small", "", `${quantas}`));
       outras.append(chamada);
-      const ul = el("ul", "perguntas");
-      for (const o of painel.perguntas ?? []) {
-        if (o.id === id) continue;
-        const li = el("li");
-        const a = el("a", "vidro pergunta");
-        a.href = `#pergunta/${o.id}`;
-        a.append(el("span", "pergunta-titulo", o.titulo), el("span", "seta", "→"));
-        li.append(a);
-        ul.append(li);
-      }
-      outras.append(ul);
+      outras.append(
+        ...listasDePerguntas(
+          (painel.perguntas ?? []).filter((o) => o.id !== id),
+          item?.tema ?? "",
+        ),
+      );
       corpo.append(outras);
     })
     .catch((erro: unknown) => {

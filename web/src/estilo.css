@@ -3990,6 +3990,24 @@ summary.menu-andar small,
   line-height: 1.35;
 }
 
+/* O nome do tema sobre cada grupo de perguntas (entrada e pé da pergunta). */
+.tema-perguntas {
+  margin: 28px 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta-3);
+}
+
+.tema-perguntas + .perguntas {
+  margin-top: 10px;
+}
+
+.menu-tema {
+  margin-top: 10px;
+}
+
 .perguntas {
   list-style: none;
   margin: 24px 0 0;
@@ -4220,4 +4238,42 @@ summary.menu-andar small,
   color: var(--tinta);
   font-weight: 500;
   text-wrap: pretty;
+}
+
+/* Gráfico com a lista "Métrica" e as fichas das séries (variantes.ts): a caixa não conta na
+   grade, o gráfico dentro dela ocupa o lugar dele. */
+.grafico-com-escolha {
+  display: contents;
+}
+
+.grafico-com-escolha .escolhidos {
+  margin-top: 4px;
+}
+
+.grafico-com-escolha .escolhidos .escolha-campo {
+  margin-right: 6px;
+}
+
+.grafico-com-escolha .ficha.pais[aria-pressed="false"] {
+  border-style: dashed;
+  border-color: var(--borda-forte);
+  color: var(--tinta-3);
+}
+
+.grafico-com-escolha .ficha.pais[aria-pressed="false"] i {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--cor);
+}
+
+/* A lista das peças parecidas (alternativas.ts): a caixa não conta na grade. */
+.com-alternativas {
+  display: contents;
+}
+
+.alternativas-barra {
+  margin: 0 0 10px;
+}
+
+details.guardado > .alternativas-barra {
+  margin: 12px 0 4px;
 }

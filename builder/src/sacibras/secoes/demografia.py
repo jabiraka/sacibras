@@ -34,7 +34,17 @@ from sacibras.schema import (
     Serie,
     Tabela,
 )
-from sacibras.secoes.base import Contexto, br, cartao, grafico, serie
+from sacibras.secoes.base import (
+    Contexto,
+    br,
+    cartao,
+    com_variantes,
+    em_reais_de_hoje,
+    grafico,
+    periodo,
+    serie,
+    variante,
+)
 from sacibras.secoes.estados import UFS
 from sacibras.tipos import Ponto
 
@@ -305,6 +315,34 @@ def montar(ctx: Contexto) -> Secao:
                     "RGPS, os dois somados em 12 meses e divididos pelo PIB dos mesmos 12 meses."
                 ),
             )
+        )
+        ipca = ctx.sgs("IPCA", 30)
+        benef_r, mes = em_reais_de_hoje(rtn["rgps"], ipca)
+        arrec_r, _ = em_reais_de_hoje(rtn["arrecadacao_rgps"], ipca)
+        graficos_inss[-1] = com_variantes(
+            graficos_inss[-1],
+            "% do PIB",
+            variante(
+                "reais",
+                "R$ de hoje",
+                "INSS: benefícios, arrecadação e o déficit, em reais de hoje",
+                [
+                    serie("beneficios", "Benefícios", benef_r, casas=1),
+                    serie("arrecadacao", "Arrecadação líquida", arrec_r, casas=1),
+                    serie("deficit", "Déficit", contas.subtrair(benef_r, arrec_r), casas=1),
+                ],
+                unidade=f"R$ bilhões de {periodo(mes, 'M')}, em 12 meses",
+                casas=0,
+                periodicidade="M",
+                nota=(
+                    "Soma de 12 meses, cada mês levado a preços de hoje pelo IPCA. Regime Geral "
+                    "(o INSS), sem servidores nem militares."
+                ),
+                fonte=(
+                    "Tesouro Nacional, Resultado do Tesouro Nacional (tabela 1.1); "
+                    f"IPCA: {ctx.fonte_sgs('IPCA')}"
+                ),
+            ),
         )
     except Exception as erro:
         print(f"    RTN ficou de fora da demografia: {str(erro)[:120]}")
