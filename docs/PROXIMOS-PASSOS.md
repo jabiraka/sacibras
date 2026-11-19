@@ -87,27 +87,30 @@ obrigatórias? [...] comparar com outros países"*):
   contra a mediana dos emergentes, da América Latina e dos avançados (COFOG do FMI).
 - **Pergunta nova**: "Onde dá para cortar gasto?" (nove perguntas agora).
 
-**19/11/2026**, no ramo `ccr-f1b65a71-8udk6t`, **ainda não no `main`** (Caio: *"continue o
-laboratório com as propostas [...] essas métricas vão nos ajudar a ver o desenrolar e de
-onde está vindo se tiver uma crise, bem como oq poderíamos ter feito pra prevenir, o foco
-principal hj está no ajuste fiscal"*). Quatro peças novas no Laboratório
+**19/11/2026** (Caio: *"continue o laboratório com as propostas [...] essas métricas vão
+nos ajudar a ver o desenrolar e de onde está vindo se tiver uma crise, bem como oq
+poderíamos ter feito pra prevenir, o foco principal hj está no ajuste fiscal"*; e, sobre as
+sugestões: *"Faz tudo, eu aprovo"*). Nove peças novas no Laboratório
 (`secoes/laboratorio_ajuste.py`, contas em `modelos/ajuste.py`), todas sobre o que já
-aconteceu, sem previsão:
-- **O dólar: o mundo ou o Brasil?** (parte nova, `#laboratorio/pressao`): a variação do
-  dólar em 12 meses repartida entre o que veio de fora (o dólar contra a cesta de emergentes
-  do Federal Reserve, vezes o quanto o real costuma acompanhá-la) e o que é só do Brasil,
-  com a tabela das cinco maiores altas desde 2011.
-- **A dívida com outro primário desde 2014**: sem os déficits (2020 como foi), a dívida
-  bruta de 2025 seria de uns 65 % do PIB, e não 78,6 %; com piso de 1 % do PIB, uns 55 %.
-  Contabilidade com o juro e o PIB que aconteceram; a nota diz os dois erros da conta.
-- **O primário que o Focus esperava e o que veio**: a mediana de dezembro de um a quatro
-  anos antes contra o realizado, desde 2002. Dois anos antes, esperava-se em média 1,1 pp
-  do PIB a mais do que veio; sem 2020, o intervalo de um e dois anos encosta no zero.
-- **Quando o primário mudou: receita ou despesa?** (RTN, desde 1997): cada sequência de
-  anos em que o primário do Governo Central andou 1 pp ou mais, repartida entre as duas.
-A parte "O governo reage à dívida?" virou "O ajuste fiscal em quatro contas" (o endereço
-`#laboratorio/reacao-fiscal` é o mesmo), com o teste de Bohn dentro. O Laboratório tem
-agora cinco partes, o teto.
+aconteceu, e uma pergunta:
+- **O mercado: de onde vem a pressão** (`#laboratorio/pressao`): o dólar em 12 meses
+  repartido entre o que veio de fora e o que é só do Brasil (Federal Reserve, H.10), com as
+  cinco maiores altas; o **estudo de evento dos anúncios fiscais** (24 datas conferidas em
+  página oficial, `relatorios.ANUNCIOS_FISCAIS`: o juro de 5 anos e o dólar só do Brasil da
+  véspera ao dia seguinte; resultado fraco, dito na tela); e o do Copom, que veio para cá.
+- **O ajuste fiscal: o que foi feito** (`#laboratorio/reacao-fiscal`): a dívida com outro
+  primário desde 2014, por onde o primário já mudou (receita ou despesa, RTN desde 1997), o
+  **custo de esperar** (o primário que estabiliza conforme o ano de partida, com a dívida
+  do Focus e a faixa do juro neutro) e o teste de Bohn.
+- **O prometido e o que veio** (`#laboratorio/promessa`): **a meta original de cada LDO**
+  contra o primário do Governo Central (25 leis lidas no Senado, `leis.METAS_DAS_LDOS`;
+  abaixo da meta em 14 de 24 anos, e sem 2020 a média não se distingue de zero), o primário
+  que o Focus esperava de um a quatro anos antes e a **dívida bruta que o Focus esperava,
+  safra a safra**.
+- **Pergunta nova, "De onde viria uma crise?"** (a décima; o teto do teste foi de nove
+  para dez): copia peças do Laboratório, com "estimativa nossa" no texto.
+O Laboratório segue com cinco partes: o estudo do Copom perdeu a parte própria, e os
+cartões `dolar-beta` e `copom-dias` saíram da tela (continuam calculados).
 
 ## O que vem agora (fase 2)
 
@@ -119,11 +122,10 @@ Na ordem do plano; o que está aqui ainda não foi feito:
    dia anterior); a decomposição do PIB por habitante com a população em idade de trabalhar
    (ONU), separando demografia de participação.
 2. **Laboratório, leva 2** (do plano): controle sintético de episódios, quem ficou com o
-   crescimento por faixa de renda, o tom das atas. Do viés das previsões, entrou o do Focus
-   para o primário (19/11); falta o do governo: a meta de cada LDO e os parâmetros de cada
-   orçamento contra o que veio (leitura à mão, com prazo; o Planalto só abre do PC).
-   As outras ideias de pressão e ajuste estão no [PROPOSTAS](PROPOSTAS.md), "Crise e ajuste
-   fiscal".
+   crescimento por faixa de renda, o tom das atas. Do viés das previsões, entraram o do
+   Focus e a meta de cada LDO (19/11); faltam os parâmetros de cada orçamento (PIB, inflação
+   e receita previstos) contra o que veio. O que sobrou de pressão e ajuste está no
+   [PROPOSTAS](PROPOSTAS.md), "Crise e ajuste fiscal".
 3. **O gasto, o que falta**: a série do gasto por função no tempo (o COFOG do Brasil desde
    2010) e a despesa por função só da União (o Tesouro publica o COFOG do Governo Central).
    América Latina tem só cinco países com COFOG do governo geral no FMI; Chile, México e
@@ -139,6 +141,9 @@ Na ordem do plano; o que está aqui ainda não foi feito:
 A lista inteira sai de `sacibras leituras --todas` (`leituras.py`); a issue `releitura` avisa.
 As próximas:
 
+- **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
+- **até 19/02/2027**: anúncios fiscais novos → `relatorios.ANUNCIOS_FISCAIS` (em 18/11 a
+  Fazenda falou em novas medidas, sem detalhar); e as dez perguntas (`perguntas.LIDAS_EM`).
 - **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e
   `relatorios.RECEITA_PREVISTA`.
 - **até 03/12**: nota fiscal do BC → `relatorios.ELASTICIDADES`.
@@ -177,14 +182,19 @@ As próximas:
 
 ## Espera o Caio
 
-- **Olhar as quatro peças de 19/11 e dizer se vão para o `main`** (peça nova do
-  Laboratório vai ao ar com o Caio olhando; estão só no ramo). Pontos a conferir: (1) "só do
-  Brasil" é um resto, junta fiscal, política, juro e commodities, e a faixa do número é
-  estreita quando o dólar lá fora quase não se mexeu; (2) a dívida com outro primário não
-  mexe no juro nem no PIB, e o segundo cenário (piso de 1 % do PIB) é escolha minha: a
-  média de 2003 a 2013 (2,9 %) dava 33 % do PIB e achei longe demais do que a conta mede;
-  (3) o viés do Focus some em parte sem 2020; (4) a parte fiscal ficou com 3 cartões, 3
-  gráficos e 4 tabelas: se pesar, o gráfico do teste de Bohn é o candidato a sair.
+- **Olhar as peças de 19/11** (foram ao `main` com o *"Faz tudo, eu aprovo"*). O que
+  decidi sozinho e pode ser trocado: (1) "só do Brasil" no dólar é um resto e a faixa é
+  estreita quando o dólar lá fora quase não se mexe; (2) o segundo cenário da dívida é piso
+  de 1 % do PIB (a média de 2003 a 2013 dava 33 % do PIB, longe demais do que a conta
+  mede); (3) nos anúncios fiscais, o sentido de cada um (mais ou menos aperto) é leitura
+  minha, o teto de 2016 entra pelo anúncio (24/05) e não pelo texto da PEC, e ficaram fora
+  nove casos limítrofes (contingenciamentos, falas sem medida) que estão no
+  [FONTES](FONTES.md); (4) a meta da LDO é a cheia, sem o abatimento de PPI e PAC que a lei
+  deixava de 2007 a 2014; (5) a décima pergunta passou do teto de nove: se pesar, a
+  candidata a juntar com ela é "O que o mercado espera do Brasil?".
+- **Na página traduzida para o inglês**, a 390 px, a tela "O prometido e o que veio" passa
+  17 px do quadro (a unidade "pp do PIB" vira "percentage points of GDP" no cartão); em
+  português cabe. Já era assim com o cartão do teste de Bohn.
 - **Olhar o Laboratório e a pergunta do gasto**: os textos dizem o que a conta acha e onde
   ela é fraca. Pontos a conferir: a regra de Taylor dá 11,7 % contra a Selic de 13,75 %; o
   juro neutro vai de 5,1 % a 7,2 % conforme o método; o estudo de evento acha 4,5 pb no juro

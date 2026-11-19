@@ -766,6 +766,7 @@ def montar(ctx: Contexto) -> Secao:
         ("os anúncios fiscais", laboratorio_ajuste.anuncios),
         ("reação fiscal", _reacao),
         ("a dívida com outro primário", laboratorio_ajuste.divida),
+        ("a meta da LDO e o que veio", laboratorio_ajuste.meta_da_ldo),
         ("o primário esperado e o que veio", laboratorio_ajuste.promessa),
         ("os ajustes que já houve", laboratorio_ajuste.episodios),
         ("a dívida que o Focus espera", laboratorio_ajuste.divida_esperada),

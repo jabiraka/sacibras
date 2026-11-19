@@ -14,10 +14,10 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from sacibras import contas, relatorios
+from sacibras import contas, leis, relatorios
 from sacibras.calendario import dia_util
 from sacibras.fontes import bcb_fiscal, bcb_focus, fred, tesouro_direto, tesouro_rtn
-from sacibras.modelos import ajuste
+from sacibras.modelos import ajuste, estatistica
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Tabela
 from sacibras.secoes.base import MESES, Contexto, br, grafico, serie
 from sacibras.tipos import Ponto
@@ -857,3 +857,131 @@ def anuncios(ctx: Contexto) -> Pecas:
         ),
     )
     return cartoes, [], [tabela]
+
+
+# ------------------------------------------------------------------ a meta da LDO e o que veio
+
+
+def meta_em_pct(meta: leis.MetaDaLDO, pib_bi: float | None) -> float | None:
+    """A meta em % do PIB: a que a lei escreveu assim, ou a em reais sobre o PIB do ano."""
+    if meta.pct_do_pib is not None:
+        return meta.pct_do_pib
+    if meta.reais_bi is None or not pib_bi:
+        return None
+    return meta.reais_bi / pib_bi * 100
+
+
+def _media_com_intervalo(erros: list[float]) -> tuple[float, float, float]:
+    r = estatistica.mqo(erros, [[] for _ in erros])
+    lo, hi = r.intervalo(0)
+    return r.coef[0], lo, hi
+
+
+def meta_da_ldo(ctx: Contexto) -> Pecas:
+    realizado = ajuste.ultimo_de_cada_ano(contas.escalar(ctx.sgs("NFSP_PRIMARIO_GC_12M", 30), -1))
+    pib = {a: v / 1000 for a, v in ajuste.ultimo_de_cada_ano(ctx.sgs("PIB_12M", 30)).items()}
+    metas = {
+        a: m
+        for a, x in sorted(leis.METAS_DAS_LDOS.items())
+        if a in realizado and (m := meta_em_pct(x, pib.get(a))) is not None
+    }
+    if len(metas) < 10:
+        raise ValueError("poucos anos com meta e realizado")
+    anos = sorted(metas)
+    erros = [metas[a] - realizado[a] for a in anos]
+    media, lo, hi = _media_com_intervalo(erros)
+    sem = [e for a, e in zip(anos, erros, strict=True) if a != EXCECAO]
+    media_sem, lo_sem, hi_sem = _media_com_intervalo(sem)
+    abaixo = sum(e > 0 for e in erros)
+    fonte = (
+        "Meta: texto original da LDO de cada ano (Senado), para os orçamentos fiscal e da "
+        f"seguridade social; realizado e PIB: {ctx.fonte_sgs('NFSP_PRIMARIO_GC_12M', 'PIB_12M')}; "
+        f"{CONTA}"
+    )
+    cartoes = [
+        Cartao(
+            id="meta-ldo",
+            rotulo="Primário do Governo Central: a meta da LDO menos o que veio",
+            valor=round(media, 2),
+            unidade="pp do PIB",
+            casas=1,
+            referencia=date(anos[-1], 12, 1),
+            periodicidade="A",
+            detalhe=(
+                f"90 %: de {_sinal(lo)} a {_sinal(hi)} pp; abaixo da meta em {abaixo} de "
+                f"{len(anos)} anos"
+            ),
+            fonte=fonte,
+            procedencia="calculado",
+            secao="laboratorio",
+        )
+    ]
+    graficos = [
+        grafico(
+            "meta-ldo",
+            "A meta de primário de cada LDO e o que veio",
+            [
+                serie(
+                    "realizado",
+                    "Primário do Governo Central",
+                    [(date(a, 1, 1), realizado[a]) for a in anos],
+                ),
+                serie(
+                    "meta",
+                    "Meta no texto original da LDO",
+                    [(date(a, 1, 1), metas[a]) for a in anos],
+                ),
+            ],
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            manchete=(
+                f"De {anos[0]} a {anos[-1]}, o primário do Governo Central ficou abaixo da meta "
+                f"original da LDO em {abaixo} de {len(anos)} anos"
+            ),
+            nota=(
+                "A meta é a que a LDO fixou quando foi sancionada, para os orçamentos fiscal e "
+                "da seguridade social, sem as mudanças feitas depois, durante o ano. Até 2010 a "
+                "lei a escrevia em % do PIB; de 2011 em diante, em reais, aqui divididos pelo "
+                "PIB do ano. O realizado é o do Banco Central, que apura a meta. Duas ressalvas: "
+                "de 2007 a 2014 a própria lei deixava descontar investimentos (PPI, PAC) e a "
+                "comparação aqui é com a meta cheia; e ficar abaixo junta choque que ninguém "
+                f"previa ({EXCECAO}) com meta que foi trocada no caminho. Sem {EXCECAO}, a "
+                f"diferença média é de {_sinal(media_sem)} pp (90 %: de {_sinal(lo_sem)} a "
+                f"{_sinal(hi_sem)})."
+            ),
+        )
+    ]
+    tabela = Tabela(
+        id="meta-ldo",
+        titulo="A meta de primário de cada LDO e o que veio, ano a ano",
+        subtitulo="Governo Central, % do PIB; a meta é a do texto original da lei",
+        colunas=["Meta", "Realizado", "Realizado menos meta (pp)"],
+        linhas=[
+            LinhaTabela(
+                rotulo=str(a),
+                valores=[
+                    round(metas[a], 2),
+                    round(realizado[a], 2),
+                    round(realizado[a] - metas[a], 2),
+                ],
+                unidade="",
+                casas=2,
+                fonte=leis.METAS_DAS_LDOS[a].lei,
+            )
+            for a in reversed(anos)
+        ],
+        fonte=fonte,
+        nota=(
+            "Meta em reais dividida pelo PIB do ano como o Banco Central o publica hoje. A "
+            "meta é a cheia; o que o texto original já deixava descontar ou tolerar: "
+            + "; ".join(
+                f"{a}, {leis.METAS_DAS_LDOS[a].abatimento}"
+                for a in anos
+                if leis.METAS_DAS_LDOS[a].abatimento
+            )
+            + "."
+        ),
+    )
+    return cartoes, graficos, [tabela]

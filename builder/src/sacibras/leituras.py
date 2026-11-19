@@ -90,6 +90,14 @@ LEITURAS: list[Leitura] = [
         "depois de um pacote (em 18/11/2026 a Fazenda falou em novas medidas, sem detalhar).",
     ),
     Leitura(
+        "Meta de primário no texto original de cada LDO (o prometido contra o que veio)",
+        "leis.METAS_DAS_LDOS",
+        date(2026, 11, 19),
+        date(2027, 1, 15),
+        "Senado, publicação original da LDO 2027 (dadosabertos/legislacao/lista?tipo=LEI), "
+        "art. 2º: pôr o ano novo no dicionário. Uma vez por ano, quando a LDO é sancionada.",
+    ),
+    Leitura(
         "Meta de inflação (CMN)",
         "leis.META_CONTINUA",
         date(2026, 11, 14),

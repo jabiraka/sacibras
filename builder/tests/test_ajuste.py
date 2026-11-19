@@ -108,3 +108,18 @@ def test_corridas_de_melhora_e_de_piora() -> None:
         (2002, 2003),
         (2010, 2011),
     ]
+
+
+def test_meta_da_ldo_em_pct_do_pib() -> None:
+    from sacibras import leis
+    from sacibras.secoes.laboratorio_ajuste import janela_do_anuncio, meta_em_pct
+
+    assert meta_em_pct(leis.MetaDaLDO("x", pct_do_pib=2.45), 1000.0) == 2.45
+    assert meta_em_pct(leis.MetaDaLDO("x", reais_bi=-139.0), 6950.0) == pytest.approx(-2.0)
+    assert meta_em_pct(leis.MetaDaLDO("x", reais_bi=10.0), None) is None
+    assert sorted(leis.METAS_DAS_LDOS) == list(range(2002, 2027))
+    # Anúncio de manhã numa terça: da segunda à quarta; à noite: da terça à quinta.
+    assert janela_do_anuncio(date(2016, 6, 14), False) == (date(2016, 6, 13), date(2016, 6, 15))
+    assert janela_do_anuncio(date(2016, 6, 14), True) == (date(2016, 6, 14), date(2016, 6, 16))
+    # Sexta à noite: o primeiro pregão que vê é o de segunda.
+    assert janela_do_anuncio(date(2016, 6, 17), True) == (date(2016, 6, 17), date(2016, 6, 21))
