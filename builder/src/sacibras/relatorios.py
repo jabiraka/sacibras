@@ -625,3 +625,23 @@ FONTE_CONFERENCIA_PIB_ESTADOS = (
     "PIB trimestral estadual: DEE/SPGG (RS), IPARDES (PR), Fundação João Pinheiro (MG), "
     "SEI (BA) e IJSN (ES)"
 )
+
+
+# ------------------------------------------------------------------ anúncios fiscais
+
+
+@dataclass(frozen=True)
+class AnuncioFiscal:
+    """Um dia em que o governo federal anunciou regra fiscal nova, mudança de meta de
+    primário ou pacote de ajuste (o estudo de evento do Laboratório)."""
+
+    dia: date
+    o_que: str
+    sentido: str
+    """"mais" (mais aperto do que o que valia), "menos" ou "ambiguo": leitura nossa."""
+    fonte: str
+    depois_do_fechamento: bool = False
+
+
+ANUNCIOS_FISCAIS: list[AnuncioFiscal] = []
+"""A lista entra com cada data conferida numa página oficial (em leitura, 19/11/2026)."""

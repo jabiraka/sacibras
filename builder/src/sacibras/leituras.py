@@ -71,11 +71,13 @@ LEITURAS: list[Leitura] = [
         "As respostas e conclusões das perguntas (falam do momento: 'ainda não', 'do jeito "
         "que está, não')",
         "perguntas.LIDAS_EM",
-        date(2026, 11, 16),
-        date(2027, 2, 16),
-        "Abrir as oito perguntas no site e conferir cada frase contra o número ao lado: a "
+        date(2026, 11, 19),
+        date(2027, 2, 19),
+        "Abrir as dez perguntas no site e conferir cada frase contra o número ao lado: a "
         "inflação contra o teto, o ritmo dos núcleos, a desocupação contra o mínimo da série, "
-        "o primário que estabiliza contra o maior já feito, a implícita contra o Focus. A "
+        "o primário que estabiliza contra o maior já feito, a implícita contra o Focus, e, na "
+        "da crise, as reservas contra a dívida externa curta e o investimento direto contra o "
+        "déficit externo. A "
         "cada três meses, e antes disso se o IPCA voltar à meta ou a Selic mudar de direção.",
     ),
     Leitura(

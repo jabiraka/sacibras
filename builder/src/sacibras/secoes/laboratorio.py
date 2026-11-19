@@ -353,6 +353,7 @@ def _juro_neutro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
         ),
     )
     ctx.memo["laboratorio_hiato_hp"] = gaps["hp"]
+    ctx.memo["laboratorio_neutro"] = (faixa_hoje[0], central, faixa_hoje[1])
     return cartoes, graficos, [tabela]
 
 
@@ -397,6 +398,7 @@ def _copom(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
     ]
     esperado = bcb_focus.selic_antes_das_reunioes([(k, r.data) for k, r in rotuladas])
     td = tesouro_direto.curvas(INICIO)
+    ctx.memo["laboratorio_td"] = td
     dolar = dict(ctx.sgs("DOLAR", 25))
     eventos: list[tuple[date, float, float, float, float, float | None]] = []
     calmos: list[float] = []
@@ -761,10 +763,13 @@ def montar(ctx: Contexto) -> Secao:
         ("juro neutro", _juro_neutro),
         ("Copom", _copom),
         ("o dólar entre o mundo e o Brasil", laboratorio_ajuste.dolar),
+        ("os anúncios fiscais", laboratorio_ajuste.anuncios),
         ("reação fiscal", _reacao),
         ("a dívida com outro primário", laboratorio_ajuste.divida),
         ("o primário esperado e o que veio", laboratorio_ajuste.promessa),
         ("os ajustes que já houve", laboratorio_ajuste.episodios),
+        ("a dívida que o Focus espera", laboratorio_ajuste.divida_esperada),
+        ("o custo de esperar", laboratorio_ajuste.esperar),
         ("crescimento", _crescimento),
     ):
         try:

@@ -12,10 +12,11 @@ Nada aqui é número oficial nem previsão: são contas nossas sobre o que já a
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
-from sacibras import contas
-from sacibras.fontes import bcb_fiscal, bcb_focus, fred, tesouro_rtn
+from sacibras import contas, relatorios
+from sacibras.calendario import dia_util
+from sacibras.fontes import bcb_fiscal, bcb_focus, fred, tesouro_direto, tesouro_rtn
 from sacibras.modelos import ajuste
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Tabela
 from sacibras.secoes.base import MESES, Contexto, br, grafico, serie
@@ -48,6 +49,10 @@ def dolar(ctx: Contexto) -> Pecas:
     y, x = ajuste.variacoes(brl, dias), ajuste.variacoes(eme, dias)
     partes = ajuste.repartir_dolar(dias[1:], y, x, janela=JANELA, janela_beta=JANELA_BETA)
     hoje = partes[-1]
+    ctx.memo["laboratorio_dolar_diario"] = {
+        p.dia: p.do_brasil
+        for p in ajuste.repartir_dolar(dias[1:], y, x, janela=1, janela_beta=JANELA_BETA)
+    }
     beta, b_lo, b_hi = ajuste.beta_com_intervalo(y, x, JANELA_BETA)
     fora_log = sum(x[-JANELA:])
     lo, hi = ajuste.faixa_do_brasil(y, x, janela=JANELA)
@@ -439,13 +444,12 @@ def promessa(ctx: Contexto) -> Pecas:
                 continue
             linhas.append(
                 LinhaTabela(
-                    rotulo=f"{h} ano{'s' if h > 1 else ''} antes",
+                    rotulo=f"{h} ano{'s' if h > 1 else ''} antes ({len(e.anos)} anos)",
                     valores=[
                         round(e.media, 2),
                         round(e.de, 2),
                         round(e.ate, 2),
-                        float(e.otimistas),
-                        float(len(e.anos)),
+                        round(e.otimistas / len(e.anos) * 100, 0),
                     ],
                     unidade="",
                     casas=1,
@@ -459,7 +463,7 @@ def promessa(ctx: Contexto) -> Pecas:
             f"esperado pelo Focus menos realizado, pp do PIB, anos de {dois.anos[0]} a "
             f"{dois.anos[-1]}; positivo: esperava-se mais"
         ),
-        colunas=["Média", "90 %: de", "até", "Anos com o esperado acima", "Anos na conta"],
+        colunas=["Média", "90 %: de", "até", "Anos com o esperado acima (%)"],
         linhas=linhas,
         fonte=fonte,
         nota=(
@@ -537,3 +541,319 @@ def episodios(ctx: Contexto) -> Pecas:
         ),
     )
     return [], [], [tabela]
+
+
+# ------------------------------------------------------------------ a dívida que se espera
+
+SAFRAS_NO_GRAFICO = 4
+"""Quantas safras antigas do Focus cabem no gráfico (uma a cada dois anos), além da de hoje."""
+INDICADOR_DIVIDA = "Dívida bruta do governo geral"
+
+
+def divida_esperada(ctx: Contexto) -> Pecas:
+    realizada = ajuste.ultimo_de_cada_ano(ctx.sgs("DBGG", 30))
+    safras = _safras(INDICADOR_DIVIDA, ctx.hoje.year - 1)
+    agora = bcb_focus.mediana_anual_hoje(INDICADOR_DIVIDA)
+    if not safras or not agora:
+        raise ValueError("Focus sem a dívida bruta esperada")
+    ultimo = max(realizada)
+    primeira = min(safras)
+    escolhidas = sorted(safras)[::-1][::2][:SAFRAS_NO_GRAFICO][::-1]
+    series = [
+        serie(
+            "realizada",
+            "Dívida bruta (o que aconteceu)",
+            [(date(a, 1, 1), v) for a, v in sorted(realizada.items()) if a >= primeira],
+        )
+    ]
+    for feita in escolhidas:
+        series.append(
+            serie(
+                f"safra-{feita}",
+                f"O que o Focus esperava em dez/{feita}",
+                [
+                    (date(a, 1, 1), v)
+                    for a, v in sorted(safras[feita].items())
+                    if feita <= a <= feita + 5
+                ],
+            )
+        )
+    futuros = {a: v for a, v in agora.items() if ultimo < a <= ultimo + 6}
+    series.append(
+        serie(
+            "focus-hoje",
+            "O que o Focus espera hoje",
+            [(date(a, 1, 1), v) for a, v in sorted(futuros.items())],
+            papel="previsao",
+        )
+    )
+    alvo = max(futuros)
+    antes = safras[max(safras)].get(alvo)
+    fonte = (
+        f"Banco Central (Focus, mediana de dezembro de cada ano e a de hoje; "
+        f"{ctx.fonte_sgs('DBGG')}); {CONTA}"
+    )
+    erros = {h: ajuste.erro_por_horizonte(safras, realizada, h) for h in HORIZONTES}
+    feitos = [
+        f"{h} ano{'s' if h > 1 else ''} antes, {_sinal(e.media)} pp" for h, e in erros.items() if e
+    ]
+    cartoes = [
+        Cartao(
+            id="divida-esperada",
+            rotulo=f"Dívida bruta que o Focus espera para {alvo}",
+            valor=round(futuros[alvo], 2),
+            unidade="% do PIB",
+            casas=1,
+            referencia=ctx.hoje,
+            periodicidade="D",
+            detalhe=(
+                f"em dez/{max(safras)}, esperava {br(antes)} % para o mesmo ano"
+                if antes is not None
+                else f"em {ultimo} ela era de {br(realizada[ultimo])} %"
+            ),
+            fonte=fonte,
+            procedencia="calculado",
+            secao="laboratorio",
+        )
+    ]
+    graficos = [
+        grafico(
+            "divida-esperada",
+            "A dívida bruta que o mercado esperava, safra a safra",
+            series,
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            manchete=(
+                f"O Focus espera dívida bruta de {br(futuros[alvo])} % do PIB em {alvo}; em "
+                f"{ultimo} ela foi de {br(realizada[ultimo])} %"
+            ),
+            nota=(
+                "Cada linha de expectativa é uma safra: a mediana que os analistas do Focus "
+                "davam, em dezembro daquele ano, para a dívida bruta do governo geral nos "
+                "cinco anos seguintes. Linha que sobe sem parar: o mercado não via a dívida "
+                "estabilizar naquele horizonte. O Focus coleta esta expectativa desde "
+                f"{primeira}; são poucas safras, e o PIB revisado muda o nível da dívida em % "
+                "do PIB depois do fato (a queda de 2021 e 2022 veio em boa parte da inflação e "
+                "da revisão do PIB)."
+                + (
+                    f" Erro médio da expectativa (esperado menos realizado): {'; '.join(feitos)}."
+                    if feitos
+                    else ""
+                )
+            ),
+        )
+    ]
+    return cartoes, graficos, []
+
+
+# ------------------------------------------------------------------ o custo de esperar
+
+ESPERAS = (0, 2, 4)
+"""Começar a estabilizar no fim deste ano, ou dois e quatro anos depois."""
+
+
+def esperar(ctx: Contexto) -> Pecas:
+    from sacibras.modelos import risco
+
+    neutro = ctx.memo.get("laboratorio_neutro")
+    if neutro is None:
+        raise ValueError("sem o juro neutro desta rodada")
+    divida = bcb_focus.mediana_anual_hoje(INDICADOR_DIVIDA)
+    pib = bcb_focus.mediana_anual_hoje("PIB Total")
+    if not divida or not pib:
+        raise ValueError("Focus sem a dívida ou o PIB esperados")
+    crescimento = pib[max(pib)]
+    partida = ctx.hoje.year
+    linhas = []
+    for espera in ESPERAS:
+        ano = partida + espera
+        if ano not in divida:
+            continue
+        linhas.append(
+            LinhaTabela(
+                rotulo=f"A partir do fim de {ano}",
+                valores=[
+                    round(divida[ano], 1),
+                    *(
+                        round(risco.primario_que_estabiliza(divida[ano], r, crescimento), 2)
+                        for r in neutro
+                    ),
+                ],
+                unidade="",
+                casas=1,
+            )
+        )
+    if len(linhas) < 2:
+        raise ValueError("Focus sem a dívida dos próximos anos")
+    tabela = Tabela(
+        id="custo-de-esperar",
+        titulo="O primário que estabiliza a dívida, conforme o ano em que ela para de subir",
+        subtitulo=(
+            "% do PIB; a dívida de partida é a que o Focus espera para o fim de cada ano, e o "
+            "juro, cada ponta e a mediana do juro neutro estimado aqui"
+        ),
+        colunas=[
+            "Dívida de partida (Focus)",
+            f"Com juro real de {br(neutro[0])} %",
+            f"Com juro real de {br(neutro[1])} %",
+            f"Com juro real de {br(neutro[2])} %",
+        ],
+        linhas=linhas,
+        fonte=(
+            f"Banco Central (Focus de {bcb_focus.data_da_ultima_edicao():%d/%m/%Y}: dívida bruta "
+            f"e PIB); juro neutro: estimativa do Laboratório; {CONTA}"
+        ),
+        nota=(
+            "A conta de sempre, dívida × (juro − crescimento) ÷ (1 + crescimento), em termos "
+            f"reais, com o crescimento do PIB que o Focus espera para {max(pib)} "
+            f"({br(crescimento)} % ao ano) e três juros reais: a menor, a mediana e a maior "
+            "estimativa do juro neutro. Não é previsão: é um cenário de longo prazo em que a "
+            "dívida custa o juro neutro (hoje ela custa mais). Esperar muda pouco o primário "
+            "necessário, porque ele cresce na proporção da dívida; o que muda é o nível em que "
+            "a dívida para, e quanto juro se paga sobre ela daí em diante. A conta não mede se "
+            "o juro sobe com a dívida mais alta, que é o risco de esperar."
+        ),
+    )
+    return [], [], [tabela]
+
+
+# ------------------------------------------------------------------ os anúncios fiscais
+
+PRAZO_DO_JURO = 5
+PASSO_DOS_DIAS_COMUNS = 10
+"""A régua de um par de dias qualquer: uma janela a cada dez dias úteis."""
+SENTIDOS = {"mais": "mais aperto", "menos": "menos aperto", "ambiguo": "ambíguo"}
+
+
+def _util(d: date, passo: int) -> date:
+    d += timedelta(days=passo)
+    while not dia_util(d):
+        d += timedelta(days=passo)
+    return d
+
+
+def _juro_longo(td: tesouro_direto.Curvas, dia: date) -> float | None:
+    from sacibras.secoes.juros import _anos_depois, _curvas_no_dia
+
+    try:
+        achado, nominal, _ = _curvas_no_dia(td, dia)
+    except (KeyError, ValueError, StopIteration):
+        return None
+    if achado != dia:
+        return None
+    du = nominal.du_de(_anos_depois(dia, PRAZO_DO_JURO))
+    return nominal.taxa(du) * 100 if du <= nominal.fim else None
+
+
+def janela_do_anuncio(dia: date, depois_do_fechamento: bool) -> tuple[date, date]:
+    """(véspera, dia útil seguinte ao primeiro pregão que viu o anúncio): dois pregões, para
+    pegar tanto o anúncio de manhã quanto o do meio do dia (as taxas do Tesouro Direto são
+    as da manhã)."""
+    visto = _util(dia, 1) if depois_do_fechamento or not dia_util(dia) else dia
+    return _util(visto, -1), _util(visto, 1)
+
+
+def anuncios(ctx: Contexto) -> Pecas:
+    eventos = [e for e in relatorios.ANUNCIOS_FISCAIS if e.dia <= ctx.hoje]
+    inicio = min(e.dia for e in eventos) - timedelta(days=30)
+    td = ctx.memo.get("laboratorio_td") or tesouro_direto.curvas(date(inicio.year, 1, 1))
+    do_brasil: dict[date, float] = ctx.memo.get("laboratorio_dolar_diario", {})
+
+    def movimento(de: date, ate: date) -> tuple[float, float | None] | None:
+        a, b = _juro_longo(td, de), _juro_longo(td, ate)
+        if a is None or b is None:
+            return None
+        dias_dolar = [d for d in do_brasil if de < d <= ate]
+        dolar = ajuste.composta(sum(do_brasil[d] for d in dias_dolar)) if dias_dolar else None
+        return (b - a) * 100, dolar
+
+    medidos = []
+    for e in eventos:
+        m = movimento(*janela_do_anuncio(e.dia, e.depois_do_fechamento))
+        if m is not None:
+            medidos.append((e, *m))
+    if len(medidos) < 5:
+        raise ValueError("poucos anúncios fiscais com taxa nos dois dias")
+    comuns: list[float] = []
+    dia = _util(medidos[0][0].dia, -1)
+    while dia < ctx.hoje - timedelta(days=5):
+        m = movimento(_util(dia, -1), _util(dia, 1))
+        if m is not None:
+            comuns.append(abs(m[0]))
+        for _ in range(PASSO_DOS_DIAS_COMUNS):
+            dia = _util(dia, 1)
+    comum = sum(comuns) / len(comuns)
+    media = sum(abs(j) for _, j, _ in medidos) / len(medidos)
+    maiores = sum(abs(j) > comum for _, j, _ in medidos)
+    menos = [j for e, j, _ in medidos if e.sentido == "menos"]
+    mais = [j for e, j, _ in medidos if e.sentido == "mais"]
+    fonte = (
+        "Datas: anúncios oficiais do governo federal (lista lida à mão, cada uma com a "
+        "fonte); Tesouro Direto (títulos prefixados, curva zero); "
+        f"{fred.FONTE_CAMBIO}; {CONTA}"
+    )
+    cartoes = [
+        Cartao(
+            id="anuncio-fiscal",
+            rotulo=f"Juro de {PRAZO_DO_JURO} anos em dois dias de anúncio fiscal: quanto mexe",
+            valor=round(media, 2),
+            unidade="pb",
+            casas=0,
+            referencia=medidos[-1][0].dia,
+            periodicidade="D",
+            detalhe=f"em dois dias comuns: {br(comum, 0)} pb; {len(medidos)} anúncios, sem sinal",
+            fonte=fonte,
+            procedencia="calculado",
+            secao="laboratorio",
+        )
+    ]
+
+    def sobe(valores: list[float]) -> str:
+        return f"subiu em {sum(v > 0 for v in valores)} de {len(valores)}"
+
+    tabela = Tabela(
+        id="anuncios-fiscais",
+        titulo="O juro longo e o dólar nos anúncios fiscais",
+        subtitulo=(
+            f"{len(medidos)} anúncios desde {medidos[0][0].dia.year}; da véspera ao dia "
+            "seguinte ao anúncio"
+        ),
+        colunas=[
+            "O que foi anunciado",
+            "Sentido",
+            f"Juro de {PRAZO_DO_JURO} anos (pb)",
+            "Dólar, só do Brasil (%)",
+        ],
+        linhas=[
+            LinhaTabela(
+                rotulo=e.dia.strftime("%d/%m/%Y"),
+                valores=[],
+                textos=[
+                    e.o_que,
+                    SENTIDOS[e.sentido],
+                    _sinal(j, 0),
+                    "s/d" if d is None else _sinal(d),
+                ],
+                unidade="",
+                fonte=e.fonte,
+            )
+            for e, j, d in reversed(medidos)
+        ],
+        fonte=fonte,
+        nota=(
+            "Estudo de evento: o movimento do juro prefixado de "
+            f"{PRAZO_DO_JURO} anos (curva zero do Tesouro Direto) e da parte do dólar que é só "
+            "do Brasil entre a véspera do anúncio e o dia seguinte a ele. Entram os dias em "
+            "que o governo federal anunciou regra fiscal nova, mudança de meta de primário ou "
+            "pacote de ajuste; o sentido (mais ou menos aperto que o que valia) é leitura "
+            f"nossa do anúncio. Em {maiores} dos {len(medidos)} o juro mexeu mais que num par "
+            f"de dias comum ({br(comum, 0)} pb, média sem sinal). Nos anúncios de menos "
+            f"aperto, o juro {sobe(menos) if menos else 'não tem caso'}; nos de mais aperto, "
+            f"{sobe(mais) if mais else 'não tem caso'}. São poucos casos, o mercado costuma "
+            "saber antes (o vazamento fica fora da janela) e outras notícias caem nos mesmos "
+            "dias: a tabela mostra o que aconteceu, não o que o anúncio causou."
+        ),
+    )
+    return cartoes, [], [tabela]

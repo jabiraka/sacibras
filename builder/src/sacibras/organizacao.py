@@ -415,32 +415,35 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "pressao",
-            "O dólar: o mundo ou o Brasil?",
-            "Quanto da alta do dólar veio de fora e quanto é só do Brasil, hoje e nas crises.",
-            cartoes=["dolar-do-brasil", "dolar-de-fora", "dolar-beta"],
+            "O mercado: de onde vem a pressão",
+            "Quanto da alta do dólar é só do Brasil, e o que o juro e o dólar fazem no dia do "
+            "Copom e dos anúncios fiscais.",
+            cartoes=["dolar-do-brasil", "dolar-de-fora", "copom-efeito", "anuncio-fiscal"],
             graficos=["dolar-mundo-brasil"],
-            tabelas=["dolar-altas"],
+            tabelas=["dolar-altas", "anuncios-fiscais", "copom-surpresas"],
         ),
         Parte(
             "reacao-fiscal",
-            "O ajuste fiscal em quatro contas",
-            "O primário reage à dívida? O que se esperava e o que veio, por onde ele já mudou "
-            "e a dívida com outro primário.",
-            cartoes=["reacao-fiscal", "divida-sem-deficit", "primario-prometido"],
-            graficos=["divida-outro-primario", "primario-prometido", "reacao-fiscal"],
+            "O ajuste fiscal: o que foi feito",
+            "O primário reage à dívida? Por onde ele já mudou, a dívida com outro primário e "
+            "o que custa esperar.",
+            cartoes=["divida-sem-deficit", "reacao-fiscal"],
+            graficos=["divida-outro-primario", "reacao-fiscal"],
             tabelas=[
                 "primario-episodios",
                 "divida-outro-primario",
-                "primario-erro-horizonte",
+                "custo-de-esperar",
                 "reacao-fiscal-amostras",
             ],
         ),
         Parte(
-            "copom",
-            "O mercado e as surpresas do Copom",
-            "Quando o Copom surpreende o Focus, quanto o juro de 2 anos e o dólar se mexem.",
-            cartoes=["copom-efeito", "copom-dias"],
-            tabelas=["copom-surpresas"],
+            "promessa",
+            "O prometido e o que veio",
+            "A meta de cada ano e o que o mercado esperava, contra o primário e a dívida que "
+            "vieram.",
+            cartoes=["meta-ldo", "primario-prometido", "divida-esperada"],
+            graficos=["meta-ldo", "primario-prometido", "divida-esperada"],
+            tabelas=["meta-ldo", "primario-erro-horizonte"],
         ),
         Parte(
             "crescimento",
