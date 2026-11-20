@@ -633,12 +633,20 @@ class Agrupar:
 AGRUPAR: dict[str, dict[str, Agrupar]] = {
     "atividade": {
         "pib": Agrupar(
-            graficos={"pib-trimestral": ["pib-oferta", "pib-demanda", "demanda-privada"]},
+            graficos={
+                "pib-trimestral": [
+                    "pib-oferta",
+                    "pib-demanda",
+                    "demanda-privada",
+                    "pib-por-habitante",
+                ]
+            },
             rotulos={
                 "pib-trimestral": "PIB a cada trimestre",
                 "pib-oferta": "Pela oferta, em um ano",
                 "pib-demanda": "Pela demanda, em um ano",
                 "demanda-privada": "Demanda privada",
+                "pib-por-habitante": "Por habitante, ano a ano",
             },
         ),
         "mes-a-mes": Agrupar(
@@ -655,8 +663,17 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
     },
     "trabalho": {
         "desemprego": Agrupar(
-            graficos={"subutilizacao": ["desalento", "procura-longa"]},
+            graficos={
+                "subutilizacao": ["desalento", "procura-longa"],
+                "desocupacao": ["desocupacao-mais-inflacao"],
+                "desocupacao-fatores": ["okun", "phillips"],
+            },
             rotulos={
+                "desocupacao": "Taxa de desocupação",
+                "desocupacao-mais-inflacao": "Somada à inflação",
+                "desocupacao-fatores": "Por que mudou",
+                "okun": "Contra o PIB (Okun)",
+                "phillips": "Contra a inflação (Phillips)",
                 "subutilizacao": "Subutilização",
                 "desalento": "Desalentados",
                 "procura-longa": "Procura há 2 anos ou mais",
@@ -826,6 +843,13 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             graficos={"primario": ["primario-mensal"]},
             rotulos={"primario": "Em 12 meses", "primario-mensal": "Mês a mês"},
         ),
+        "gasto": Agrupar(
+            graficos={"receita-despesa": ["despesa-real"]},
+            rotulos={
+                "receita-despesa": "Receita e despesa",
+                "despesa-real": "Crescimento real da despesa",
+            },
+        ),
     },
     "impostos": {
         "arrecadacao": Agrupar(
@@ -901,8 +925,9 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             },
         ),
         "produtividade": Agrupar(
-            graficos={"crescimento-decomposto": ["produtividade"]},
+            graficos={"crescimento-decomposto": ["produtividade", "rendimento-produtividade"]},
             rotulos={
+                "rendimento-produtividade": "Contra o rendimento",
                 "crescimento-decomposto": "Gente ou produto",
                 "produtividade": "Por pessoa e por hora",
             },

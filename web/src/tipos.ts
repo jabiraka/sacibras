@@ -85,6 +85,12 @@ export interface Dispersao {
   eixo_y: { nome: string; unidade: string; casas: number };
   pontos: { chave: string; nome: string; x: number; y: number }[];
   correlacao: number | null;
+  /** A chave do ponto em verde ("BRA", ou o ano mais novo) e os nomes da legenda e da tabela. */
+  destaque?: string;
+  nome_destaque?: string;
+  nome_outros?: string;
+  coluna?: string;
+  rotular_todos?: boolean;
 }
 
 /** Pessoas por sexo e grupo de idade (mil), um ano por linha de `homens`/`mulheres`. */

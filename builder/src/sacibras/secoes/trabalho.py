@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 
 from sacibras import contas, leis
 from sacibras.fontes import ibge_sidra
 from sacibras.modelos import decomposicoes
-from sacibras.schema import Cartao, ComparadorSalario, Grafico, LinhaTabela, Secao, Tabela
+from sacibras.schema import (
+    Cartao,
+    ComparadorSalario,
+    Dispersao,
+    EixoDispersao,
+    Grafico,
+    LinhaTabela,
+    PontoDispersao,
+    Secao,
+    Tabela,
+)
+from sacibras.secoes import produtividade
 from sacibras.secoes.base import Contexto, br, cartao, grafico, ha_um_ano, periodo, serie
 from sacibras.tipos import Periodicidade, Ponto
 
@@ -107,6 +119,179 @@ def grafico_fatores_da_massa(
             "quanto veio de haver mais (ou menos) gente trabalhando; a segunda, de cada "
             "ocupado ganhar mais (ou menos) acima da inflação."
         ),
+    )
+
+
+def grafico_desocupacao_mais_inflacao(
+    desocupacao: list[Ponto], ipca_12m: list[Ponto], inicio: date, fonte: str
+) -> Grafico | None:
+    """A taxa de desocupação somada ao IPCA de 12 meses (o "índice de miséria" de Okun)."""
+    ipca = dict(ipca_12m)
+    datas = [d for d, _ in desocupacao if d in ipca and d >= inicio]
+    if not datas:
+        return None
+    taxa = dict(desocupacao)
+    soma = [(d, taxa[d] + ipca[d]) for d in datas]
+    quando, valor = soma[-1]
+    return grafico(
+        "desocupacao-mais-inflacao",
+        "Desocupação mais inflação",
+        [
+            serie("soma", "Soma das duas", soma),
+            serie("desocupacao", "Taxa de desocupação", [(d, taxa[d]) for d in datas]),
+            serie("ipca", "IPCA em 12 meses", [(d, ipca[d]) for d in datas]),
+        ],
+        unidade="%",
+        casas=1,
+        periodicidade="M",
+        janela_anos=10,
+        manchete=(
+            f"{br(valor)} em {periodo(quando, 'M')}: {br(taxa[quando])} % de desocupação mais "
+            f"{br(ipca[quando])} % de inflação."
+        ),
+        fonte=fonte,
+        nota=(
+            "A soma da taxa de desocupação com a inflação de 12 meses, que o economista Arthur "
+            'Okun propôs nos anos 1970 e ficou conhecida como "índice de miséria": junta num '
+            "número só os dois males que mais pesam no dia a dia. É uma soma simples: dá o "
+            "mesmo peso a um ponto de desemprego e a um ponto de inflação, e as duas linhas "
+            "de baixo mostram de onde vem cada mudança."
+        ),
+    )
+
+
+def media_do_ano(mensal: list[Ponto], minimo: int = 12) -> dict[int, float]:
+    """{ano: média}, só nos anos com pelo menos `minimo` pontos."""
+    por: dict[int, list[float]] = {}
+    for d, v in mensal:
+        por.setdefault(d.year, []).append(v)
+    return {a: sum(v) / len(v) for a, v in por.items() if len(v) >= minimo}
+
+
+def _pontos_por_ano(
+    id: str,
+    titulo: str,
+    xs: dict[int, float],
+    ys: dict[int, float],
+    eixo_x: EixoDispersao,
+    eixo_y: EixoDispersao,
+    fonte: str,
+    nota: Callable[[float, int], str],
+) -> Grafico | None:
+    anos = sorted(set(xs) & set(ys))
+    if len(anos) < 5:
+        return None
+    pontos = [
+        PontoDispersao(
+            chave=str(a), nome=str(a), x=round(xs[a], eixo_x.casas), y=round(ys[a], eixo_y.casas)
+        )
+        for a in anos
+    ]
+    r = correlacao([p.x for p in pontos], [p.y for p in pontos])
+    return Grafico(
+        id=id,
+        titulo=titulo,
+        subtitulo=f"um ponto por ano, de {anos[0]} a {anos[-1]}",
+        unidade="",
+        periodicidade="A",
+        series=[],
+        fonte=fonte,
+        dispersao=Dispersao(
+            eixo_x=eixo_x,
+            eixo_y=eixo_y,
+            pontos=pontos,
+            correlacao=round(r, 2),
+            destaque=str(anos[-1]),
+            nome_destaque=str(anos[-1]),
+            nome_outros="Outros anos",
+            coluna="Ano",
+            rotular_todos=True,
+        ),
+        nota=nota(r, len(anos)),
+    )
+
+
+def correlacao(xs: list[float], ys: list[float]) -> float:
+    n = len(xs)
+    mx, my = sum(xs) / n, sum(ys) / n
+    cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys, strict=True))
+    vx = sum((x - mx) ** 2 for x in xs) ** 0.5
+    vy = sum((y - my) ** 2 for y in ys) ** 0.5
+    return cov / (vx * vy) if vx and vy else 0.0
+
+
+def _forca(r: float) -> str:
+    forca = abs(r)
+    if forca < 0.1:
+        return "praticamente nenhuma relação"
+    if forca < 0.3:
+        return "relação fraca"
+    if forca < 0.5:
+        return "relação moderada"
+    return "relação forte"
+
+
+def grafico_phillips(
+    desocupacao: dict[int, float], servicos: dict[int, float], fonte: str
+) -> Grafico | None:
+    """A curva de Phillips: a desocupação média do ano contra a inflação de serviços do ano."""
+
+    def nota(r: float, n: int) -> str:
+        if r <= -0.3:
+            veio = "nestes anos ela aparece: com menos desocupação, mais inflação de serviços"
+        elif r >= 0.3:
+            veio = "nestes anos os dois andaram no mesmo sentido, o contrário do que ela diz"
+        else:
+            veio = "nestes anos ela mal aparece"
+        return (
+            "A curva de Phillips diz que, com pouca gente sem trabalho, os salários sobem e os "
+            "preços vão atrás, sobretudo os de serviços, que são quase só salário. "
+            f"Correlação de {br(r, 2)} em {n} anos ({_forca(r)}): {veio}. São poucos pontos, "
+            "e a inflação também responde ao dólar, às expectativas e a choques como o de "
+            "2021: andar junto não mede o quanto um causa o outro."
+        )
+
+    return _pontos_por_ano(
+        "phillips",
+        "Desocupação e inflação de serviços (curva de Phillips)",
+        desocupacao,
+        servicos,
+        EixoDispersao(nome="Desocupação média do ano", unidade="%", casas=1),
+        EixoDispersao(nome="Inflação de serviços no ano", unidade="%", casas=1),
+        fonte,
+        nota,
+    )
+
+
+def grafico_okun(
+    pib: dict[int, float], desocupacao: dict[int, float], fonte: str
+) -> Grafico | None:
+    """A lei de Okun: o crescimento do PIB contra a mudança da desocupação média do ano."""
+    mudanca = {a: v - desocupacao[a - 1] for a, v in desocupacao.items() if a - 1 in desocupacao}
+
+    def nota(r: float, n: int) -> str:
+        if r <= -0.3:
+            veio = "nestes anos ela aparece: quando o PIB cresce mais, a desocupação cai"
+        elif r >= 0.3:
+            veio = "nestes anos os dois andaram no mesmo sentido, o contrário do que ela diz"
+        else:
+            veio = "nestes anos ela mal aparece"
+        return (
+            "A lei de Okun diz que a desocupação cai quando a economia cresce acima do seu "
+            f"ritmo normal e sobe quando cresce abaixo. Correlação de {br(r, 2)} em {n} anos "
+            f"({_forca(r)}): {veio}. A taxa também muda quando mais ou menos gente procura "
+            'trabalho (o gráfico "Por que mudou" separa as duas coisas).'
+        )
+
+    return _pontos_por_ano(
+        "okun",
+        "Crescimento do PIB e mudança da desocupação (lei de Okun)",
+        pib,
+        mudanca,
+        EixoDispersao(nome="Crescimento do PIB no ano", unidade="%", casas=1),
+        EixoDispersao(nome="Mudança da desocupação média", unidade="pontos", casas=1),
+        fonte,
+        nota,
     )
 
 
@@ -652,6 +837,45 @@ def montar(ctx: Contexto) -> Secao:
             graficos.append(fatores)
     except Exception as erro:  # a conta a mais não derruba a seção
         print(f"  aviso: trabalho sem os fatores da desocupação: {str(erro)[:120]}")
+    try:
+        ipca_mes = ctx.sgs("IPCA")
+        g_soma = grafico_desocupacao_mais_inflacao(
+            desocupacao,
+            contas.acumulado(ipca_mes, 12),
+            inicio,
+            f"IBGE, PNAD Contínua (SIDRA 6381); IPCA: {ctx.fonte_sgs('IPCA')}; conta nossa",
+        )
+        if g_soma:
+            graficos.append(g_soma)
+        taxa_ano = media_do_ano(desocupacao)
+        servicos = {
+            d.year: v for d, v in contas.acumulado(ctx.sgs("IPCA_SERVICOS"), 12) if d.month == 12
+        }
+        volume = ibge_sidra.serie(1620, 583, classificacao="c11255/90707", trimestral=True)
+        volume_ano = produtividade.anual(volume, media=True)
+        pib_ano = {
+            a: (v / volume_ano[a - 1] - 1) * 100
+            for a, v in volume_ano.items()
+            if a - 1 in volume_ano
+        }
+        for g_pontos in (
+            grafico_phillips(
+                taxa_ano,
+                servicos,
+                "IBGE, PNAD Contínua (SIDRA 6381, média dos 12 trimestres móveis do ano); "
+                f"inflação de serviços: {ctx.fonte_sgs('IPCA_SERVICOS')}, acumulada no ano",
+            ),
+            grafico_okun(
+                pib_ano,
+                taxa_ano,
+                "IBGE, Contas Nacionais Trimestrais (SIDRA 1620, volume) e PNAD Contínua "
+                "(SIDRA 6381, média dos 12 trimestres móveis do ano); conta nossa",
+            ),
+        ):
+            if g_pontos:
+                graficos.append(g_pontos)
+    except Exception as erro:  # a conta a mais não derruba a seção
+        print(f"  aviso: trabalho sem os indicadores clássicos: {str(erro)[:120]}")
     fatores_massa = grafico_fatores_da_massa(massa, ocupados, inicio)
     if fatores_massa:
         graficos.append(fatores_massa)

@@ -98,6 +98,59 @@ def _bi(valor_em_milhoes: float) -> float:
     return valor_em_milhoes / 1000
 
 
+def despesa_contra_a_faixa(despesa: list[Ponto], ipca: list[Ponto], inicio: date) -> list[Grafico]:
+    """O crescimento real, em 12 meses, da despesa primária total do Governo Central, contra a
+    faixa em que a lei deixa crescer o limite da despesa (LC 200/2023)."""
+    faixa = leis.FAIXA_DA_DESPESA
+    reais, _ = em_reais_de_hoje(despesa, ipca)
+    cresc = [p for p in contas.variacao(reais, 12) if p[0] >= inicio]
+    if not cresc:
+        return []
+    quando, valor = cresc[-1]
+    if valor > faixa.teto:
+        onde = "acima do teto"
+    elif valor < faixa.piso:
+        onde = "abaixo do piso"
+    else:
+        onde = "dentro"
+    banda = [(d, faixa.piso, faixa.teto) for d, _ in cresc if d >= faixa.desde]
+    return [
+        grafico(
+            "despesa-real",
+            "Despesa do Governo Central: crescimento acima da inflação",
+            [serie("despesa", "Despesa total, 12 meses contra os 12 anteriores", cresc)],
+            unidade="% em 12 meses, descontada a inflação",
+            casas=1,
+            periodicidade="M",
+            janela_anos=2,
+            faixa=Faixa(
+                nome=f"faixa do limite da despesa ({br(faixa.piso)} % a {br(faixa.teto)} % ao ano)",
+                pontos=banda,
+            )
+            if banda
+            else None,
+            manchete=(
+                f"{br(valor)} % nos 12 meses até {periodo(quando, 'M')}, {onde} da faixa de "
+                f"{br(faixa.piso)} % a {br(faixa.teto)} % ao ano."
+            ),
+            fonte=(
+                "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, tabela "
+                f"1.1); IPCA (Banco Central, SGS 433); faixa: {faixa.referencia}; conta nossa"
+            ),
+            nota=(
+                "A soma de 12 meses da despesa primária, cada mês a preços de hoje pelo IPCA, "
+                "contra a dos 12 meses anteriores. A faixa é o quanto a lei deixa crescer, por "
+                "ano, o limite da despesa desde 2024. Pagamento grande num mês só faz a linha "
+                "saltar, e de novo um ano depois, quando ele sai da conta. Não é a apuração "
+                "oficial: o limite deixa "
+                "despesas de fora (como o complemento da União ao Fundeb e os créditos extraordinários) e "
+                "é corrigido pelo IPCA até junho do ano anterior; a despesa total pode sair da "
+                "faixa sem descumprir a lei."
+            ),
+        )
+    ]
+
+
 def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
     """O primário do Governo Central em 12 meses, pelo BC, contra a meta da LDO.
 
@@ -709,6 +762,7 @@ def montar(ctx: Contexto) -> Secao:
                 fonte=fonte_reais,
             ),
         )
+        graficos += despesa_contra_a_faixa(rtn["despesa_total"], ipca_longo, inicio)
         c_rig, g_rig, t_rig = gasto.rigidez(rtn, pib, fonte_rtn, inicio, ipca, fonte_reais)
         cartoes += c_rig
         graficos += g_rig

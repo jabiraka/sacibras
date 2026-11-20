@@ -525,6 +525,32 @@ TERMOS: list[Termo] = [
         "#juros/curva",
     ),
     Termo(
+        "curva-de-phillips",
+        "Curva de Phillips",
+        "A ideia de que, com pouca gente sem trabalho, os salários sobem e a inflação vai "
+        "atrás; com muita, a inflação cede. No dado, a relação aparece em alguns períodos e "
+        "some em outros.",
+        ("curva de Phillips",),
+        "#trabalho/desemprego",
+    ),
+    Termo(
+        "lei-de-okun",
+        "Lei de Okun",
+        "A regularidade de que a desocupação cai quando a economia cresce mais que o normal e "
+        "sobe quando cresce menos. Leva o nome do economista Arthur Okun.",
+        ("lei de Okun",),
+        "#trabalho/desemprego",
+    ),
+    Termo(
+        "arcabouco-fiscal",
+        "Arcabouço fiscal",
+        "A regra de 2023 para a despesa federal: o limite da despesa cresce, acima da "
+        "inflação, entre 0,6 % e 2,5 % ao ano, conforme a receita (Lei Complementar nº 200, "
+        "de 2023, art. 5º). Substituiu o teto de gastos.",
+        ("arcabouço fiscal", "limite da despesa"),
+        "#fiscal/gasto",
+    ),
+    Termo(
         "expectativas-desancoradas",
         "Expectativas desancoradas",
         "Quando o mercado espera, por muito tempo, inflação diferente da meta. Quem fixa "

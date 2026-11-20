@@ -379,6 +379,17 @@ SINONIMOS: dict[str, list[str]] = {
         "expectativas",
         "inflation expectations",
     ],
+    "desocupacao mais inflacao": ["indice de miseria", "misery index", "desconforto"],
+    "curva de phillips": ["desemprego e inflacao", "phillips curve", "trade-off"],
+    "lei de okun": ["pib e desemprego", "crescimento e emprego", "okun's law"],
+    "produto por pessoa ocupada": ["salario e produtividade", "custo do trabalho", "wages"],
+    "crescimento acima da inflacao": [
+        "arcabouco fiscal",
+        "teto de gastos",
+        "limite de despesa",
+        "regra fiscal",
+        "crescimento real da despesa",
+    ],
     "inclinacao da curva": [
         "curva invertida",
         "inversao da curva",

@@ -34,6 +34,35 @@ META_CONTINUA = MetaDeInflacao(
 
 
 @dataclass(frozen=True)
+class FaixaDaDespesa:
+    """Entre quanto e quanto pode crescer, acima da inflação, o limite da despesa primária."""
+
+    piso: float
+    teto: float
+    desde: date
+    referencia: str
+
+
+# Lida em 20/11/2026 no Senado, publicação original
+# (legis.senado.leg.br/norma/37553820/publicacao/37556723), Lei Complementar nº 200, de
+# 30/8/2023. Art. 3º: "ficam estabelecidos, para cada exercício a partir de 2024 [...] limites
+# individualizados para o montante global das dotações orçamentárias relativas a despesas
+# primárias". Art. 5º: a variação real dos limites fica em 70 % da variação real da receita
+# (50 % se a meta de primário do ano anterior não foi cumprida); § 1º: "O crescimento real dos
+# limites da despesa primária [...] não será inferior a 0,6% a.a. (seis décimos por cento ao
+# ano) nem superior a 2,5% a.a. (dois inteiros e cinco décimos por cento ao ano)." O art. 4º
+# corrige os limites pelo IPCA "no período de 12 (doze) meses encerrado em junho do exercício
+# anterior", e o art. 3º, § 2º, deixa despesas de fora: a faixa é do limite, não da despesa
+# total do Tesouro.
+FAIXA_DA_DESPESA = FaixaDaDespesa(
+    piso=0.6,
+    teto=2.5,
+    desde=date(2024, 1, 1),
+    referencia="Lei Complementar nº 200, de 30/8/2023, art. 5º, § 1º",
+)
+
+
+@dataclass(frozen=True)
 class LimiteLegal:
     """Um limite em % da receita corrente líquida, com a norma de onde ele sai."""
 

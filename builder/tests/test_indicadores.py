@@ -61,3 +61,77 @@ def test_ibovespa_real_leva_o_passado_a_precos_do_ultimo_ipca() -> None:
         (date(2026, 10, 1), 101_000.0),
     ]
     assert mercados.ibovespa_real([], ipca) == ([], None)
+
+
+def test_pib_por_habitante_desconta_o_crescimento_da_populacao() -> None:
+    from sacibras.secoes import atividade
+
+    pib, por_hab = atividade.pib_por_habitante(
+        {2023: 100.0, 2024: 103.0, 2025: 103.0}, {2023: 200.0, 2024: 202.0, 2025: 206.12}
+    )
+    assert [d.year for d, _ in pib] == [2024, 2025]
+    assert pib[0][1] == pytest.approx(3.0)
+    assert por_hab[0][1] == pytest.approx((1.03 / 1.01 - 1) * 100)
+    assert pib[1][1] == pytest.approx(0.0)
+    assert por_hab[1][1] < 0  # o PIB parou e a população cresceu
+
+
+def test_rendimento_e_produto_partem_de_100_nas_mesmas_datas() -> None:
+    from sacibras.secoes import produtividade
+
+    tri = [date(2012 + i // 4, 3 * (i % 4) + 1, 1) for i in range(8)]
+    por_ocupado = [(d, 100.0 + i) for i, d in enumerate(tri[3:])]
+    rendimento = [(d, 2000.0) for d in tri[:4]] + [(d, 2200.0) for d in tri[4:]]
+    produto, renda = produtividade.rendimento_e_produto(por_ocupado, rendimento)
+    assert [d for d, _ in produto] == [d for d, _ in renda] == tri[3:]
+    assert produto[0][1] == renda[0][1] == 100.0
+    assert renda[-1][1] == pytest.approx(110.0)
+    assert produto[-1][1] == pytest.approx(104.0)
+
+
+def test_desocupacao_mais_inflacao_soma_as_duas_no_mesmo_mes() -> None:
+    from sacibras.secoes import trabalho
+
+    g = trabalho.grafico_desocupacao_mais_inflacao(
+        [(date(2026, 8, 1), 5.6), (date(2026, 9, 1), 5.4)],
+        [(date(2026, 9, 1), 4.5), (date(2026, 10, 1), 4.7)],
+        date(2020, 1, 1),
+        "f",
+    )
+    assert g is not None
+    assert g.series[0].pontos == [(date(2026, 9, 1), 9.9)]
+    assert g.manchete.startswith("9,9 em set/2026")
+
+
+def test_phillips_e_okun_um_ponto_por_ano_com_o_ultimo_em_destaque() -> None:
+    from sacibras.secoes import trabalho
+
+    taxa = {2019: 12.0, 2020: 13.5, 2021: 13.2, 2022: 9.3, 2023: 8.0, 2024: 6.9, 2025: 6.0}
+    servicos = {2019: 3.5, 2020: 1.7, 2021: 4.8, 2022: 7.6, 2023: 6.2, 2024: 4.8, 2025: 6.0}
+    pib = {2020: -3.3, 2021: 4.8, 2022: 3.0, 2023: 3.2, 2024: 3.4, 2025: 2.3}
+    phillips = trabalho.grafico_phillips(taxa, servicos, "f")
+    assert phillips is not None and phillips.dispersao is not None
+    assert len(phillips.dispersao.pontos) == 7
+    assert phillips.dispersao.destaque == "2025"
+    assert phillips.dispersao.rotular_todos
+    assert phillips.dispersao.correlacao is not None and phillips.dispersao.correlacao < 0
+    okun = trabalho.grafico_okun(pib, taxa, "f")
+    assert okun is not None and okun.dispersao is not None
+    ponto_2020 = next(p for p in okun.dispersao.pontos if p.chave == "2020")
+    assert (ponto_2020.x, ponto_2020.y) == (-3.3, 1.5)
+    assert trabalho.grafico_okun({2024: 3.4}, taxa, "f") is None  # poucos anos
+    assert trabalho.media_do_ano([(date(2026, m, 1), 6.0) for m in range(1, 10)]) == {}
+
+
+def test_despesa_real_contra_a_faixa_do_arcabouco() -> None:
+    from sacibras.secoes import fiscal
+
+    meses = [date(2023 + i // 12, i % 12 + 1, 1) for i in range(36)]
+    despesa = [(d, 100.0 if d.year == 2023 else 104.0 if d.year == 2024 else 105.0) for d in meses]
+    ipca = [(d, 0.0) for d in meses]
+    (g,) = fiscal.despesa_contra_a_faixa(despesa, ipca, date(2024, 1, 1))
+    assert g.series[0].pontos[-1] == (date(2025, 12, 1), pytest.approx(0.96, abs=0.01))
+    assert dict(g.series[0].pontos)[date(2024, 12, 1)] == pytest.approx(4.0)
+    assert g.faixa is not None and g.faixa.pontos[0] == (date(2024, 12, 1), 0.6, 2.5)
+    assert "dentro da faixa de 0,6 % a 2,5 %" in g.manchete
+    assert fiscal.despesa_contra_a_faixa(despesa[:12], ipca, date(2024, 1, 1)) == []

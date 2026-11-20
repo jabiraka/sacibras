@@ -19,15 +19,18 @@ export function montarDispersao(g: Grafico, d: Dispersao): HTMLElement {
   cabeca.append(titulos);
   artigo.append(cabeca);
 
+  const destaque = d.destaque ?? "BRA";
+  const nomeDestaque = d.nome_destaque ?? "Brasil";
+  const nomeOutros = d.nome_outros ?? "Outros países";
   const legenda = el("div", "legenda");
   const item = el("span", "legenda-item");
   const chave = el("i", "chave redonda");
   chave.style.setProperty("--cor", "var(--verde)");
-  item.append(chave, document.createTextNode("Brasil"));
+  item.append(chave, document.createTextNode(nomeDestaque));
   const outros = el("span", "legenda-item");
   const chaveOutros = el("i", "chave redonda");
   chaveOutros.style.setProperty("--cor", "var(--eixo)");
-  outros.append(chaveOutros, document.createTextNode("Outros países"));
+  outros.append(chaveOutros, document.createTextNode(nomeOutros));
   legenda.append(item, outros);
   artigo.append(legenda);
 
@@ -54,12 +57,12 @@ export function montarDispersao(g: Grafico, d: Dispersao): HTMLElement {
         nota: textoSemBotoes(aviso),
         legenda: [
           {
-            nome: "Brasil",
+            nome: nomeDestaque,
             chave: "ponto",
             cor: css.getPropertyValue("--verde").trim(),
           },
           {
-            nome: "Outros países",
+            nome: nomeOutros,
             chave: "ponto",
             cor: css.getPropertyValue("--eixo").trim(),
           },
@@ -86,8 +89,8 @@ export function montarDispersao(g: Grafico, d: Dispersao): HTMLElement {
     nome: p.nome,
     x: p.x,
     y: p.y,
-    marca: p.chave === "BRA" ? "brasil" : "comum",
-    rotulo: p.chave === "BRA",
+    marca: p.chave === destaque ? "brasil" : "comum",
+    rotulo: p.chave === destaque || d.rotular_todos === true,
   }));
   let comExtremos = false;
   const desenhar = (): void => {
@@ -127,12 +130,14 @@ function tabela(g: Grafico, d: Dispersao): HTMLTableElement {
   const t = el("table", "dados");
   const cab = t.createTHead().insertRow();
   cab.append(
-    el("th", "", "País"),
+    el("th", "", d.coluna ?? "País"),
     el("th", "", `${d.eixo_x.nome} (${d.eixo_x.unidade})`),
     el("th", "", `${d.eixo_y.nome} (${d.eixo_y.unidade})`),
   );
   const corpo = t.createTBody();
-  for (const p of [...d.pontos].sort((a, b) => b.x - a.x)) {
+  const porChave = (d.coluna ?? "País") !== "País";
+  const ordenados = [...d.pontos].sort((a, b) => (porChave ? b.chave.localeCompare(a.chave) : b.x - a.x));
+  for (const p of ordenados) {
     const linha = corpo.insertRow();
     linha.append(
       el("th", "", p.nome),

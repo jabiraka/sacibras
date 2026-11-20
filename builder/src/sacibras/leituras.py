@@ -43,6 +43,14 @@ LEITURAS: list[Leitura] = [
         do_pc=True,
     ),
     Leitura(
+        "Faixa do crescimento real do limite da despesa (arcabouço fiscal)",
+        "leis.FAIXA_DA_DESPESA",
+        date(2026, 11, 20),
+        date(2027, 11, 20),
+        "Senado, LC 200/2023 (legis.senado.leg.br/norma/37553820), art. 5º, § 1º: ver se lei "
+        "complementar nova mudou o piso de 0,6 % ou o teto de 2,5 %. Uma vez por ano.",
+    ),
+    Leitura(
         "Avaliação bimestral do primário (o desconto da meta)",
         "leis.AVALIACOES_2026",
         date(2026, 11, 14),

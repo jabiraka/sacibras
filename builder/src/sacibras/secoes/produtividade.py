@@ -17,7 +17,7 @@ from typing import NamedTuple
 from sacibras import contas
 from sacibras.fontes import ibge_sidra, pwt
 from sacibras.schema import Cartao, Grafico, Intervalo, LinhaTabela, Tabela
-from sacibras.secoes.base import br, cartao, grafico, serie
+from sacibras.secoes.base import br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
 PIB_VOLUME = (1620, 583, "c11255/90707")
@@ -63,6 +63,59 @@ def produtividade(pib: list[Ponto], ocupados: list[Ponto]) -> dict[str, list[Pon
         "ocupados": contas.base_100([(d, ocup_4t[d]) for d in datas]),
         "por_ocupado": contas.base_100(por_ocupado),
     }
+
+
+RENDIMENTO = (6390, 5933)
+"""PNAD Contínua, rendimento médio real habitual de todos os trabalhos (R$, a preços do último
+mês), trimestre móvel; a mesma série da seção Trabalho."""
+
+
+def rendimento_e_produto(
+    por_ocupado: list[Ponto], rendimento: list[Ponto]
+) -> tuple[list[Ponto], list[Ponto]]:
+    """(produto por ocupado, rendimento real), os dois com 100 na primeira janela de quatro
+    trimestres em que há os dois, nas mesmas datas."""
+    renda_4t = dict(contas.media_movel(rendimento, 4))
+    datas = [d for d, _ in por_ocupado if d in renda_4t]
+    produto = dict(por_ocupado)
+    return (
+        contas.base_100([(d, produto[d]) for d in datas]),
+        contas.base_100([(d, renda_4t[d]) for d in datas]),
+    )
+
+
+def grafico_rendimento_e_produto(por_ocupado: list[Ponto]) -> Grafico | None:
+    rendimento = trimestre_civil(ibge_sidra.serie(*RENDIMENTO))
+    produto, renda = rendimento_e_produto(por_ocupado, rendimento)
+    if not produto:
+        return None
+    quando = produto[-1][0]
+    return grafico(
+        "rendimento-produtividade",
+        "O rendimento do trabalho e o produto por pessoa ocupada",
+        [
+            serie("produto", "PIB por ocupado", produto, casas=1),
+            serie("rendimento", "Rendimento real do trabalho", renda, casas=1),
+        ],
+        unidade="índice, 2012 = 100",
+        casas=1,
+        periodicidade="T",
+        manchete=(
+            f"Desde 2012, o PIB por ocupado mudou {br(produto[-1][1] - 100)} % e o "
+            f"rendimento real, {br(renda[-1][1] - 100)} % (até o {periodo(quando, 'T')})."
+        ),
+        fonte=(
+            f"IBGE, Contas Nacionais Trimestrais (SIDRA {PIB_VOLUME[0]}) e PNAD Contínua "
+            f"(SIDRA {OCUPADOS[0]} e {RENDIMENTO[0]}); conta nossa"
+        ),
+        nota=(
+            "Médias de quatro trimestres, as duas com 100 em 2012 (a PNAD começa aí). O "
+            "rendimento é o habitual de todos os trabalhos, descontada a inflação pelo IBGE. "
+            "No longo prazo, o salário só cresce de forma duradoura se cada trabalhador "
+            "produz mais; em prazos curtos os dois se afastam (o rendimento médio sobe, por "
+            "exemplo, quando quem ganha menos perde o emprego, como em 2020)."
+        ),
+    )
 
 
 def por_hora(pib: list[Ponto], ocupados: list[Ponto], horas: list[Ponto]) -> list[Ponto]:
@@ -445,6 +498,12 @@ def pecas() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             ),
         ),
     ]
+    try:
+        g_renda = grafico_rendimento_e_produto(prod["por_ocupado"])
+        if g_renda:
+            graficos.append(g_renda)
+    except Exception as erro:  # a conta a mais não derruba a seção
+        print(f"  aviso: produtividade sem o rendimento ao lado: {str(erro)[:120]}")
     if decomposicao:
         graficos.append(
             grafico(

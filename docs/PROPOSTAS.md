@@ -181,23 +181,13 @@ pergunta da crise; o estudo dos anúncios fiscais foi feito e saiu). Ficou:
 
 Caio: *"veja se dá pra colocar, se não ficar muito poluído, gráficos ou variações de gráficos
 com as métricas que temos, alguns indicadores que economistas usam [...] só os que vc tiver
-high ou medium confidente"*. Entraram quatro, todos atrás de uma lista (inclinação da curva,
-inflação esperada contra a meta, massa de rendimento por fator e Ibovespa descontada a
-inflação; ver o [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)). Ficaram, com confiança média, à
-espera do "sim":
+high ou medium confidente"*; e depois: *"Pode incluir os outros também de média confiança,
+faça tudo"*. Entraram os dez (ver o [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)). Ficou:
 
-- **PIB por habitante** como opção da lista do PIB ("Ver em: por habitante"): o crescimento
-  descontado o da população (IBGE, projeção). Diz se a renda média cresce, e não só o país.
-- **Rendimento real contra a produtividade** (os dois em índice, mesma base; PNAD e PIB por
-  ocupado): se o salário anda junto com o que cada trabalhador produz. A PNAD começa em 2012.
-- **Desocupação mais inflação** (o "índice de miséria" de Okun), atrás da lista da
-  desocupação: simples e conhecido, mas soma duas coisas de natureza diferente, e o nome
-  pede outro na tela ("desocupação mais inflação").
-- **Curva de Phillips e lei de Okun** como "duas métricas no tempo" (já estavam em "Crescimento
-  e longo prazo", acima): um ponto por ano, a teoria em uma frase e o dado dizendo se ela
-  aparece. Pede o gráfico de pontos com o tempo marcado, que ainda não existe.
-- **Crescimento real da despesa contra o limite do arcabouço** (LC 200/2023: de 0,6 % a 2,5 %
-  ao ano): pede a lei lida (Senado ou Câmara) e a regra de correção, que tem exceções.
+- **A despesa sujeita ao limite**, no lugar da despesa total, contra a faixa do arcabouço: o
+  número oficial sai no Relatório de Avaliação bimestral (leitura à mão, com prazo).
+- **Phillips e Okun com mais anos**: a PNAD Contínua começa em 2012; antes, só emendando a
+  PME (outra pesquisa, seis regiões), o que pede dizer a emenda na tela.
 
 Pensados e fora (confiança baixa): a regra de Sahm (calibrada para os EUA, e a PNAD já é
 média de três meses), o impulso de crédito (segunda derivada, ruidosa mês a mês), o primário

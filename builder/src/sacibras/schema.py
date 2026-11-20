@@ -99,6 +99,14 @@ class Dispersao(Modelo):
     eixo_y: EixoDispersao
     pontos: list[PontoDispersao]
     correlacao: float | None = None
+    destaque: str = "BRA"
+    """A chave do ponto em verde. Com um ponto por ano (Phillips, Okun), o ano mais novo."""
+    nome_destaque: str = "Brasil"
+    nome_outros: str = "Outros países"
+    coluna: str = "País"
+    """O nome da primeira coluna da tabela (e a ordem: fora de "País", pela chave)."""
+    rotular_todos: bool = False
+    """Escreve o nome ao lado de cada ponto (poucos pontos: os anos)."""
 
 
 class VarianteGrafico(Modelo):

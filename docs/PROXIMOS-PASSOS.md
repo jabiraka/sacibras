@@ -23,25 +23,41 @@ ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PR
 
 **20/11/2026, indicadores clássicos** (Caio: *"veja se dá pra colocar, se não ficar muito
 poluído, gráficos ou variações de gráficos com as métricas que temos, alguns indicadores que
-economistas usam"*). Quatro gráficos novos, todos atrás de uma lista ou em parte com folga
-(nenhuma tela ganhou peça à vista além da de Inflação › Outros índices, que tinha um gráfico
-só); **falta o Caio olhar**:
+economistas usam"*; e depois: *"Pode incluir os outros também de média confiança, faça tudo e
+pode deploy"*). Dez gráficos novos, no `main`; nove ficam atrás de uma lista (nenhuma tela
+ganhou peça à vista, fora Inflação › Outros índices, que tinha um gráfico só). Olhados a 390
+e 1280 px com dados reais; **falta o Caio olhar**:
 - **Juros › Curva**, lista "Gráfico" › "Inclinação no tempo": o prefixado de 3 anos menos a
   Selic, mês a mês desde 2011 (`juros.inclinacao_no_tempo`). Abaixo de zero, curva invertida.
 - **Inflação › Outros índices e o Focus**: a inflação esperada para os 12 meses seguintes
   (Focus, a suavizada) contra o centro da meta do mesmo período (`inflacao.grafico_expectativa`;
   a meta de cada ano vem da série 13521 do SGS, a mesma do painel de alerta).
-- **Trabalho › Renda**, lista "Gráfico" da massa › "Emprego ou salário": a variação da massa
-  de rendimento em 12 meses repartida entre mais gente ocupada e o rendimento de cada um
+- **Trabalho › Renda**, lista da massa › "Emprego ou salário": a variação da massa de
+  rendimento em 12 meses repartida entre mais gente ocupada e o rendimento de cada um
   (`decomposicoes.massa_por_fator`; conta nossa, fecha com a massa do IBGE).
-- **Exterior › Dólar e bolsa**, lista do Ibovespa › "Descontada a inflação": o fechamento do
-  mês a preços de hoje, pelo IPCA (`mercados.ibovespa_real`).
-Verbetes novos no glossário ("inclinação da curva", "expectativas desancoradas") e sinônimos
-na busca. O que ficou em espera, com confiança média, está no [PROPOSTAS](PROPOSTAS.md),
-"Indicadores clássicos". Nenhum dos quatro entrou em pergunta, mas cada um responde a uma:
-a expectativa, "A inflação está sob controle?"; a massa por fator, "O emprego está bom
-mesmo?"; a inclinação e o Ibovespa real, "O que o mercado espera do Brasil?". Trocar um
-gráfico de lá por um destes é decisão do Caio.
+- **Exterior › Dólar e bolsa**, lista do Ibovespa › "Descontada a inflação" (`mercados.ibovespa_real`).
+- **Atividade › PIB**, lista › "Por habitante, ano a ano": o crescimento do PIB e o mesmo
+  descontada a população (`atividade.pib_por_habitante`).
+- **Trabalho › Desemprego**: atrás da desocupação, "Somada à inflação" (o índice de miséria
+  de Okun, com o nome "Desocupação mais inflação"); atrás de "Por que mudou", "Contra o PIB
+  (Okun)" e "Contra a inflação (Phillips)", um ponto por ano desde 2013, com a correlação
+  dita em palavras. O gráfico de pontos ganhou o destaque, os nomes da legenda e o rótulo em
+  todos os pontos como opção (`Dispersao` no `schema.py`, `web/src/dispersao.ts`).
+- **Longo prazo › Produtividade**, lista › "Contra o rendimento": o rendimento real e o PIB
+  por ocupado, os dois com 100 em 2012 (`produtividade.rendimento_e_produto`).
+- **Contas públicas › Receita e gasto**, lista › "Crescimento real da despesa": a despesa
+  total do Governo Central em 12 meses, acima da inflação, contra a faixa de 0,6 % a 2,5 % do
+  arcabouço (`leis.FAIXA_DA_DESPESA`, LC 200/2023 lida no Senado, com prazo em `leituras.py`).
+  **É a despesa total, não a sujeita ao limite**, e a nota diz isso.
+Verbetes novos no glossário (inclinação da curva, expectativas desancoradas, curva de
+Phillips, lei de Okun, arcabouço fiscal) e sinônimos na busca. Nenhum entrou em pergunta, mas
+cada um responde a uma: a expectativa, "A inflação está sob controle?"; a massa por fator,
+Okun e Phillips, "O emprego está bom mesmo?"; a inclinação e o Ibovespa real, "O que o mercado
+espera do Brasil?"; o PIB por habitante e o rendimento contra o produto, "Por que o Brasil
+cresce pouco?" e "Quem ficou com o crescimento?"; a despesa real, "Onde dá para cortar
+gasto?". Trocar um gráfico de lá por um destes é decisão do Caio. Da nuvem, o build completo
+não terminou em dez minutos (Riscos, Estados e Mundo são lentos daqui): as seções tocadas
+foram geradas uma a uma; conferir o primeiro build do Actions.
 
 **19/11/2026**, a pedido do Caio: as perguntas ficam recolhidas (no menu, "Perguntas" abre no toque e sozinho dentro de uma pergunta; no pé da pergunta, "Outras perguntas") e a vista aberta do painel de alerta sai como imagem (PNG e Copiar, `desenhoDosAlertas` em `alertas.ts`, nas quatro vistas). **Falta olhar a 390 e 1280 px com o site rodando** (a nuvem não abre as fontes para montar os dados).
 

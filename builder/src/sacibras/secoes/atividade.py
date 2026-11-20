@@ -5,9 +5,10 @@ from __future__ import annotations
 from datetime import date
 
 from sacibras import contas
-from sacibras.fontes import bcb_focus, fmi, ibge_sidra
+from sacibras.fontes import bcb_focus, fmi, ibge_projecao, ibge_sidra
 from sacibras.modelos import decomposicoes
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Secao, Tabela, VisaoTabela
+from sacibras.secoes import produtividade
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -438,6 +439,54 @@ def investimento_contra_paises(ctx: Contexto) -> tuple[list[Cartao], list[Grafic
     return cartoes, graficos
 
 
+def pib_por_habitante(
+    volume_anual: dict[int, float], populacao: dict[int, float], anos: int = 25
+) -> tuple[list[Ponto], list[Ponto]]:
+    """(crescimento do PIB, crescimento do PIB por habitante), % no ano, nos anos em que há
+    o volume do PIB e a população do ano e do anterior."""
+    pib: list[Ponto] = []
+    por_hab: list[Ponto] = []
+    for ano in sorted(volume_anual)[-anos:]:
+        if ano - 1 not in volume_anual or ano not in populacao or ano - 1 not in populacao:
+            continue
+        total = volume_anual[ano] / volume_anual[ano - 1]
+        gente = populacao[ano] / populacao[ano - 1]
+        pib.append((date(ano, 1, 1), (total - 1) * 100))
+        por_hab.append((date(ano, 1, 1), (total / gente - 1) * 100))
+    return pib, por_hab
+
+
+def grafico_pib_por_habitante() -> Grafico | None:
+    volume = ibge_sidra.serie(1620, 583, classificacao="c11255/90707", trimestral=True)
+    populacao = ibge_projecao.grupos()["BR"]["POP_T"]
+    pib, por_hab = pib_por_habitante(produtividade.anual(volume, media=True), populacao)
+    if not pib:
+        return None
+    ano = pib[-1][0].year
+    return grafico(
+        "pib-por-habitante",
+        "PIB e PIB por habitante: crescimento em cada ano",
+        [serie("pib", "PIB", pib), serie("por-habitante", "PIB por habitante", por_hab)],
+        unidade="% no ano",
+        casas=1,
+        periodicidade="A",
+        manchete=(
+            f"Em {ano}, o PIB cresceu {br(pib[-1][1])} % e o PIB por habitante, "
+            f"{br(por_hab[-1][1])} %."
+        ),
+        fonte=(
+            "IBGE, Contas Nacionais Trimestrais (SIDRA 1620, volume) e Projeções da População "
+            "(revisão 2024); conta nossa"
+        ),
+        nota=(
+            "O crescimento do PIB em volume (a média dos quatro trimestres do ano contra a do "
+            "ano anterior) e o mesmo descontado o crescimento da população. Quando a "
+            "população cresce, o país pode produzir mais sem que cada pessoa, na média, "
+            "fique com mais."
+        ),
+    )
+
+
 def montar(ctx: Contexto) -> Secao:
     cats = ",".join(COMPONENTES)
     pib_tt = ibge_sidra.series(
@@ -712,6 +761,12 @@ def montar(ctx: Contexto) -> Secao:
         graficos += g_fmi
     except Exception as erro:
         print(f"  aviso: atividade sem o investimento contra outros países: {str(erro)[:120]}")
+    try:
+        g_hab = grafico_pib_por_habitante()
+        if g_hab:
+            graficos.append(g_hab)
+    except Exception as erro:  # a conta a mais não derruba a seção
+        print(f"  aviso: atividade sem o PIB por habitante: {str(erro)[:120]}")
     resumo = (
         f"O PIB cresceu {br(tt[-1][1])} % no {trimestre} contra o trimestre anterior e "
         f"{br(aa[-1][1])} % contra um ano antes; em quatro trimestres acumula "

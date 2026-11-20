@@ -360,6 +360,8 @@ export function desenharDispersao(
       tickFormat: (d: number) => numero(d, Math.abs(d - Math.round(d)) < 1e-9 ? 0 : 1),
       nice: true,
     },
+    // Folga em cima: o nome do ponto mais alto não encosta no título do eixo.
+    insetTop: rotulados.length > 1 ? 16 : 0,
     marks: [
       zeroX ? Plot.ruleX([0], { stroke: v("--eixo") }) : null,
       zeroY ? Plot.ruleY([0], { stroke: v("--eixo") }) : null,
