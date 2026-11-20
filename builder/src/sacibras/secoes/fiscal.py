@@ -143,7 +143,8 @@ def despesa_contra_a_faixa(despesa: list[Ponto], ipca: list[Ponto], inicio: date
                 "ano, o limite da despesa desde 2024. Pagamento grande num mês só faz a linha "
                 "saltar, e de novo um ano depois, quando ele sai da conta. Não é a apuração "
                 "oficial: o limite deixa "
-                "despesas de fora (como o complemento da União ao Fundeb e os créditos extraordinários) e "
+                "despesas de fora (como o complemento da União ao Fundeb e os créditos "
+                "extraordinários) e "
                 "é corrigido pelo IPCA até junho do ano anterior; a despesa total pode sair da "
                 "faixa sem descumprir a lei."
             ),
