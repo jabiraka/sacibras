@@ -1005,7 +1005,7 @@ async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
   const alturaTitulo = titulo.length * 26 + (sub.length ? 4 + sub.length * 18 : 0);
   const alturaLegenda = fileiras.length ? 10 + fileiras.length * 20 : 0;
   const alturaNota = nota.length ? nota.length * 17 + 6 : 0;
-  const altura = margem + alturaTitulo + alturaLegenda + 12 + h + 14 + alturaNota + pe.length * 17 + margem;
+  const altura = margem + alturaTitulo + alturaLegenda + 12 + h + 14 + alturaNota + pe.length * 17 + 10 + 16 + margem;
 
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(largura * escala);
@@ -1113,9 +1113,18 @@ async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
     ctx.fillText(l, margem, y);
     y += 17;
   }
-  // A marca, no canto: o losango e o nome.
-  const xMarca = largura - margem - 70;
-  const yMarca = altura - margem - 12;
+  // O crédito, numa linha própria: a marca, o nome e o endereço do site.
+  y += 10;
+  ctx.strokeStyle = t.tinta3;
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(margem, y - 5);
+  ctx.lineTo(largura - margem, y - 5);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  const xMarca = margem;
+  const yMarca = y;
   ctx.fillStyle = "#ffd400";
   ctx.beginPath();
   ctx.moveTo(xMarca + 7, yMarca);
@@ -1128,9 +1137,14 @@ async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
   ctx.beginPath();
   ctx.arc(xMarca + 7, yMarca + 7, 3.5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = t.tinta2;
+  ctx.fillStyle = t.tinta;
   ctx.font = fonte(600, 12);
   ctx.fillText("sacibras", xMarca + 20, yMarca + 1);
+  const nomeLargura = ctx.measureText("sacibras").width;
+  const endereco = (location.host + location.pathname.replace(/[^/]*$/, "")).replace(/\/$/, "");
+  ctx.fillStyle = t.tinta2;
+  ctx.font = fonte(400, 12);
+  ctx.fillText(`· painel da economia brasileira · ${endereco}`, xMarca + 26 + nomeLargura, yMarca + 1);
 
   return new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/png"));
 }
