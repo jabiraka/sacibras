@@ -113,7 +113,7 @@ PARTES: dict[str, list[Parte]] = {
             "O rendimento médio e a massa de rendimento, já descontada a inflação, e o "
             "salário mínimo.",
             cartoes=["rendimento", "massa", "salario-minimo"],
-            graficos=["rendimento", "massa"],
+            graficos=["rendimento", "massa", "massa-fatores"],
             extras=["salario-minimo"],
         ),
         Parte(
@@ -171,7 +171,7 @@ PARTES: dict[str, list[Parte]] = {
             "Outros índices e o Focus",
             "O INPC ao lado do IPCA, e o que o mercado espera.",
             cartoes=["focus-ipca"],
-            graficos=["outros-indices"],
+            graficos=["outros-indices", "expectativa-meta"],
         ),
     ],
     "juros": [
@@ -672,8 +672,13 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             },
         ),
         "renda": Agrupar(
-            graficos={"rendimento": ["renda-trabalho-grupos"]},
-            rotulos={"rendimento": "Média", "renda-trabalho-grupos": "Por sexo e cor"},
+            graficos={"rendimento": ["renda-trabalho-grupos"], "massa": ["massa-fatores"]},
+            rotulos={
+                "rendimento": "Média",
+                "renda-trabalho-grupos": "Por sexo e cor",
+                "massa": "Em reais",
+                "massa-fatores": "Emprego ou salário",
+            },
         ),
         "linha-de-pobreza": Agrupar(
             graficos={
@@ -746,13 +751,14 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
         ),
         "curva": Agrupar(
             graficos={
-                "curva-prefixada": ["curva-real", "juro-titulos-focus"],
+                "curva-prefixada": ["curva-real", "juro-titulos-focus", "inclinacao"],
                 "inflacao-titulos-focus": ["inflacao-implicita"],
             },
             rotulos={
                 "curva-prefixada": "Prefixada",
                 "curva-real": "Juro real",
                 "juro-titulos-focus": "Contra a Selic do Focus",
+                "inclinacao": "Inclinação no tempo",
                 "inflacao-titulos-focus": "Contra o IPCA do Focus",
                 "inflacao-implicita": "No tempo",
             },
@@ -803,8 +809,12 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             },
         ),
         "cambio": Agrupar(
-            graficos={"ibovespa": ["ibovespa-dolar"]},
-            rotulos={"ibovespa": "Em pontos", "ibovespa-dolar": "Em dólares"},
+            graficos={"ibovespa": ["ibovespa-dolar", "ibovespa-real"]},
+            rotulos={
+                "ibovespa": "Em pontos",
+                "ibovespa-dolar": "Em dólares",
+                "ibovespa-real": "Descontada a inflação",
+            },
         ),
     },
     "fiscal": {

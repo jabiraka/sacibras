@@ -516,6 +516,24 @@ TERMOS: list[Termo] = [
         "#juros",
     ),
     Termo(
+        "inclinacao-da-curva",
+        "Inclinação da curva",
+        "A diferença entre o juro de um prazo longo e o de um prazo curto (aqui, o prefixado "
+        "de 3 anos menos a Selic). Quando o longo paga menos que o curto, a curva está "
+        "invertida: o mercado conta com juro menor à frente.",
+        ("inclinação da curva", "curva invertida", "curva está invertida"),
+        "#juros/curva",
+    ),
+    Termo(
+        "expectativas-desancoradas",
+        "Expectativas desancoradas",
+        "Quando o mercado espera, por muito tempo, inflação diferente da meta. Quem fixa "
+        "preço e salário passa a contar com a inflação esperada, não com a meta, e trazê-la "
+        "de volta custa mais juro.",
+        ("desancoradas", "desancoragem"),
+        "#inflacao/outros-indices",
+    ),
+    Termo(
         "prefixado",
         "Prefixado",
         "Título com o juro fixado na compra: quem compra sabe quanto vai receber no "

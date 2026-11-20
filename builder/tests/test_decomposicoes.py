@@ -245,3 +245,23 @@ def test_contribuicoes_do_pib_saem_pela_demanda_e_pela_oferta(
     ultimo = {s.id: s.pontos[-1][1] for s in demanda.series}
     # Tudo cresce 2 % com fatia de 100 %: quatro somam, as importações tiram, o resto fecha.
     assert ultimo["importacoes"] == -2.0 and ultimo["total"] == 2.0 and ultimo["resto"] == -4.0
+
+
+def test_massa_por_fator_fecha_com_a_variacao_da_massa() -> None:
+    # 13 meses: a massa sobe 10 %, com 4 % a mais de gente; o resto é rendimento.
+    massa = _meses(date(2025, 1, 1), [300.0] * 12 + [330.0])
+    ocupados = _meses(date(2025, 1, 1), [100.0] * 12 + [104.0])
+    total, gente, rendimento = dc.massa_por_fator(massa, ocupados)
+    assert [d for d, _ in total] == [date(2026, 1, 1)]
+    assert total[0][1] == pytest.approx(10.0)
+    assert gente[0][1] + rendimento[0][1] == pytest.approx(total[0][1])
+    assert 3.9 < gente[0][1] < 4.3
+    assert rendimento[0][1] > gente[0][1]
+
+
+def test_massa_por_fator_sem_mudanca_e_sem_o_mes_de_um_ano_antes() -> None:
+    massa = _meses(date(2025, 1, 1), [300.0] * 13)
+    ocupados = _meses(date(2025, 1, 1), [100.0] * 13)
+    total, gente, rendimento = dc.massa_por_fator(massa, ocupados)
+    assert (total[0][1], gente[0][1], rendimento[0][1]) == (0.0, 0.0, 0.0)
+    assert dc.massa_por_fator(massa[:12], ocupados[:12]) == ([], [], [])

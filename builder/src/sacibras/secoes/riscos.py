@@ -23,6 +23,7 @@ from datetime import date
 
 from sacibras import alertas, contas, curvas, leis, relatorios
 from sacibras.alertas import NO_PAINEL
+from sacibras.contas import meta_media, ultimo_de_cada_mes
 from sacibras.fontes import (
     banco_mundial,
     bcb_fiscal,
@@ -1228,27 +1229,6 @@ def _inflacao(ctx: Contexto) -> Bloco:
         ),
     ]
     return bloco
-
-
-def ultimo_de_cada_mes(pontos: list[Ponto]) -> list[Ponto]:
-    """O último ponto de cada mês, na data dele."""
-    saida: dict[tuple[int, int], Ponto] = {}
-    for d, v in sorted(pontos):
-        saida[(d.year, d.month)] = (d, v)
-    return list(saida.values())
-
-
-def meta_media(metas: dict[int, float], depois_de: date, meses: int) -> float:
-    """O centro da meta, em média, nos `meses` que seguem o mês de `depois_de` (cada ano
-    pesa pelos meses dele no prazo). Ano sem meta fixada ainda leva a última que há; ano
-    antes da primeira, a primeira."""
-    anos = sorted(metas)
-    soma = 0.0
-    for k in range(1, meses + 1):
-        ano = depois_de.year + (depois_de.month - 1 + k) // 12
-        fixadas = [a for a in anos if a <= ano]
-        soma += metas[fixadas[-1] if fixadas else anos[0]]
-    return soma / meses
 
 
 def acima_da_meta(pontos: list[Ponto], metas: dict[int, float], meses: int) -> list[Ponto]:

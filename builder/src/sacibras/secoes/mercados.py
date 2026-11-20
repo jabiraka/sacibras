@@ -254,6 +254,46 @@ def retornos_em_reais(ctx: Contexto, ibov: list[Ponto], fonte_ibov: str) -> Graf
     )
 
 
+def ibovespa_real(ibov: list[Ponto], ipca: list[Ponto]) -> tuple[list[Ponto], date | None]:
+    """O fechamento do Ibovespa no fim de cada mês, a preços do último mês com IPCA (o mês
+    seguinte a ele, que ainda não tem IPCA, entra sem correção), e esse mês."""
+    indice = contas.indice_de_precos(ipca)
+    if not indice or not ibov:
+        return [], None
+    base = max(indice)
+    mensal = [(d.replace(day=1), v) for d, v in contas.ultimo_de_cada_mes(ibov)]
+    saida = [
+        (d, v * indice[base] / indice[d] if d in indice else v)
+        for d, v in mensal
+        if d in indice or d > base
+    ]
+    return saida, base
+
+
+def grafico_ibovespa_real(
+    ibov: list[Ponto], ipca: list[Ponto], fonte_ibov: str, ctx: Contexto
+) -> Grafico | None:
+    pontos, base = ibovespa_real(ibov, ipca)
+    if not pontos or base is None:
+        return None
+    return grafico(
+        "ibovespa-real",
+        "Ibovespa descontada a inflação",
+        [serie("ibov-real", "Ibovespa a preços de hoje", pontos, casas=0)],
+        unidade=f"pontos, a preços de {periodo(base, 'M')}",
+        casas=0,
+        periodicidade="M",
+        janela_anos=10,
+        fonte=f"{fonte_ibov}; {ctx.fonte_sgs('IPCA')}; conta nossa",
+        nota=(
+            "O fechamento do fim de cada mês corrigido pelo IPCA até "
+            f"{periodo(base, 'M')}: o índice em pontos bate recorde também só porque os "
+            "preços sobem; este mostra quanto a bolsa andou acima da inflação. Não conta os "
+            "dividendos pagos no caminho."
+        ),
+    )
+
+
 def montar(ctx: Contexto) -> Secao:
     ano = ctx.hoje.year
     b3 = usar_b3()
@@ -421,6 +461,12 @@ def montar(ctx: Contexto) -> Secao:
             ),
         ),
     ]
+    try:
+        g_real = grafico_ibovespa_real(ibov, ctx.sgs("IPCA", anos=12), fonte_ibov, ctx)
+        if g_real:
+            graficos.append(g_real)
+    except Exception as erro:  # a conta a mais não derruba a seção
+        print(f"  aviso: mercados sem o Ibovespa descontada a inflação: {str(erro)[:120]}")
     if b3 and len(indices) > 1:
         base = date(ano - 1, 1, 1)
         comparados = [

@@ -110,6 +110,44 @@ def tabela_medidas(medidas: list[tuple[str, list[list[Ponto]], str]], fonte: str
     )
 
 
+def grafico_expectativa(
+    esperada: list[Ponto], metas: dict[int, float], inicio: date, fonte: str
+) -> Grafico | None:
+    """A inflação que o Focus espera para os 12 meses seguintes contra o centro da meta do
+    mesmo período (a meta de cada ano, pesada pelos meses dele no prazo)."""
+    mensal = [(d.replace(day=1), v) for d, v in contas.ultimo_de_cada_mes(esperada) if d >= inicio]
+    if not mensal or not metas:
+        return None
+    meta = [(d, contas.meta_media(metas, d, 12)) for d, _ in mensal]
+    quando, valor = mensal[-1]
+    distancia = valor - meta[-1][1]
+    lado = "acima" if distancia >= 0 else "abaixo"
+    return grafico(
+        "expectativa-meta",
+        "Inflação esperada para os 12 meses seguintes, contra a meta",
+        [
+            serie("esperada", "Esperada pelo mercado (Focus)", mensal),
+            serie("meta", "Centro da meta no mesmo período", meta, papel="referencia"),
+        ],
+        unidade="% em 12 meses",
+        casas=2,
+        periodicidade="M",
+        janela_anos=10,
+        manchete=(
+            f"{br(valor, 2)} % em {periodo(quando, 'M')}, {br(abs(distancia), 2)} pp {lado} do "
+            "centro da meta."
+        ),
+        fonte=fonte,
+        nota=(
+            "Mediana do Focus para o IPCA dos 12 meses seguintes (a suavizada, que o Banco "
+            "Central usa), no último dia de coleta de cada mês. O centro da meta é o de cada "
+            "ano, pesado pelos meses dele nos 12 seguintes. Quando a linha fica acima da meta "
+            "por muito tempo, diz-se que as expectativas estão desancoradas: quem fixa preço "
+            "e salário não conta com a inflação voltando à meta."
+        ),
+    )
+
+
 def _faixa_da_meta(ate: date) -> Faixa:
     meta = META_CONTINUA
     pontos = []
@@ -599,6 +637,19 @@ def montar(ctx: Contexto) -> Secao:
     itens = _grafico_itens(ipca12)
     if itens:
         graficos.append(itens)
+    try:
+        esperada = bcb_focus.inflacao_12_meses(date(2001, 1, 1))
+        metas = {d.year: v for d, v in ctx.sgs("META_INFLACAO", 30)}
+        g_esperada = grafico_expectativa(
+            esperada,
+            metas,
+            date(ctx.hoje.year - 15, 1, 1),
+            f"Banco Central, Focus (mediana); {ctx.fonte_sgs('META_INFLACAO')}; conta nossa",
+        )
+        if g_esperada:
+            graficos.append(g_esperada)
+    except Exception as erro:  # a conta a mais não derruba a seção
+        print(f"  aviso: inflação sem a expectativa contra a meta: {str(erro)[:120]}")
     fora = "acima do teto" if ipca12[-1][1] > teto else "dentro do intervalo"
     resumo = (
         f"O IPCA acumula {br(ipca12[-1][1], 2)} % em 12 meses até {periodo(ipca12[-1][0], 'M')}, "

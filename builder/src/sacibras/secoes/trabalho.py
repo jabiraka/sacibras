@@ -78,6 +78,38 @@ def grafico_fatores_da_desocupacao(
     )
 
 
+def grafico_fatores_da_massa(
+    massa: list[Ponto], ocupados: list[Ponto], inicio: date
+) -> Grafico | None:
+    """Por que a massa de rendimento mudou em 12 meses: mais gente ocupada ou cada um
+    ganhando mais."""
+    total, gente, rendimento = decomposicoes.massa_por_fator(massa, ocupados)
+    if not total:
+        return None
+    return grafico(
+        "massa-fatores",
+        "Por que a massa de rendimento mudou em 12 meses",
+        [
+            serie("gente", "Mais gente ocupada", gente, desde=inicio),
+            serie("rendimento", "Rendimento de cada ocupado", rendimento, desde=inicio),
+            serie("total", "Massa de rendimento", total, desde=inicio),
+        ],
+        tipo="empilhado",
+        total="total",
+        unidade="% em 12 meses, descontada a inflação",
+        casas=2,
+        periodicidade="M",
+        janela_anos=5,
+        fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6392 e 6318); conta nossa",
+        nota=(
+            "As barras somadas dão a variação da massa de rendimento real em 12 meses (a "
+            "linha). A massa é gente ocupada vezes o rendimento médio: a primeira barra é o "
+            "quanto veio de haver mais (ou menos) gente trabalhando; a segunda, de cada "
+            "ocupado ganhar mais (ou menos) acima da inflação."
+        ),
+    )
+
+
 PROCURA_LONGA = (1616, 4110, "c1965/101227")
 """Trimestre civil, não móvel: distribuição percentual das pessoas desocupadas (%) por tempo
 de procura de trabalho, categoria "2 anos ou mais" (classificação 1965, categoria 101227)."""
@@ -620,6 +652,9 @@ def montar(ctx: Contexto) -> Secao:
             graficos.append(fatores)
     except Exception as erro:  # a conta a mais não derruba a seção
         print(f"  aviso: trabalho sem os fatores da desocupação: {str(erro)[:120]}")
+    fatores_massa = grafico_fatores_da_massa(massa, ocupados, inicio)
+    if fatores_massa:
+        graficos.append(fatores_massa)
     tabelas = [tabela]
     comparador: ComparadorSalario | None = None
     try:

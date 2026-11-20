@@ -6,7 +6,7 @@ from contextlib import suppress
 from datetime import date, timedelta
 from itertools import pairwise
 
-from sacibras import curvas, leis, rede, relatorios
+from sacibras import contas, curvas, leis, rede, relatorios
 from sacibras.calendario import ultimo_dia_util
 from sacibras.catalogo import SGS
 from sacibras.config import usar_b3
@@ -69,6 +69,67 @@ def _interpolar(curva: list[Ponto], quando: date) -> float:
         if d0 <= quando <= d1:
             return v0 + (v1 - v0) * (quando - d0).days / (d1 - d0).days
     return curva[-1][1]
+
+
+PRAZO_DA_INCLINACAO = 3
+"""Anos do juro longo na inclinação: o Tesouro Direto tem prefixado sem cupom de 3 anos em
+quase todo dia desde 2011 (conferido em 20/11/2026; antes, o mais longo ia a 2 anos)."""
+
+
+def inclinacao_no_tempo(
+    pre: dict[date, list[Ponto]], selic: list[Ponto], anos: int = PRAZO_DA_INCLINACAO
+) -> list[Ponto]:
+    """O juro prefixado de `anos` anos menos a meta da Selic, em pontos, no último dia de
+    cada mês. O prefixado é interpolado entre os títulos sem cupom; dia em que a curva não
+    chega perto do prazo (falta mais de 90 dias) fica de fora, para não esticar a ponta."""
+    saida: list[Ponto] = []
+    vigente = sorted(selic)
+    i, meta = 0, None
+    for base, _ in contas.ultimo_de_cada_mes([(d, 0.0) for d in pre]):
+        while i < len(vigente) and vigente[i][0] <= base:
+            meta = vigente[i][1]
+            i += 1
+        curva = [p for p in pre[base] if (p[0] - base).days > 30]
+        alvo = base + timedelta(days=round(365.25 * anos))
+        if meta is None or not curva:
+            continue
+        if curva[0][0] > alvo or (alvo - curva[-1][0]).days > 90:
+            continue
+        saida.append((base.replace(day=1), _interpolar(curva, alvo) - meta))
+    return saida
+
+
+def _grafico_inclinacao(ctx: Contexto) -> Grafico | None:
+    pre = tesouro_direto.curvas(date(2011, 1, 1))[tesouro_direto.PREFIXADO]
+    pontos = inclinacao_no_tempo(pre, ctx.sgs("SELIC_META", anos=20))
+    if not pontos:
+        return None
+    quando, valor = pontos[-1]
+    lado = "acima" if valor >= 0 else "abaixo"
+    return grafico(
+        "inclinacao",
+        f"Inclinação da curva: o prefixado de {PRAZO_DA_INCLINACAO} anos menos a Selic",
+        [serie("inclinacao", "Prefixado de 3 anos menos a Selic", pontos)],
+        unidade="pontos percentuais",
+        casas=2,
+        periodicidade="M",
+        janela_anos=15,
+        linhas=[LinhaRef(valor=0, rotulo="curva plana (os dois iguais)")],
+        manchete=(
+            f"Em {periodo(quando, 'M')}, o prefixado de {PRAZO_DA_INCLINACAO} anos paga "
+            f"{br(abs(valor), 2)} pp {lado} da Selic."
+        ),
+        fonte=(
+            "Tesouro Nacional, Tesouro Direto (taxa média entre compra e venda, títulos sem "
+            f"cupom); {ctx.fonte_sgs('SELIC_META')}; conta nossa"
+        ),
+        nota=(
+            "O juro travado por 3 anos (interpolado entre os títulos prefixados) menos a meta "
+            "da Selic, no fim de cada mês. Abaixo de zero, a curva está invertida: o mercado "
+            "conta com a Selic caindo nos anos seguintes. Bem acima de zero, conta com alta "
+            "ou cobra mais para emprestar por mais tempo; o preço não separa as duas coisas."
+        ),
+    )
 
 
 def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
@@ -1334,6 +1395,9 @@ def montar(ctx: Contexto) -> Secao:
         cartoes_td, graficos_di, embutida = _tesouro(ctx)
         cartoes[2:2] = cartoes_td
         origem = "nos títulos prefixados do Tesouro"
+        g_inclinacao = _grafico_inclinacao(ctx)
+        if g_inclinacao:
+            graficos_di.append(g_inclinacao)
     except Exception as erro:
         print(f"    curva do Tesouro ficou de fora: {str(erro)[:120]}")
     frase_premio = ""

@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 19/11/2026 (por último, as ideias de crise e ajuste fiscal para o Laboratório).
+Última atualização: 20/11/2026 (por último, os indicadores clássicos que ficaram em espera).
 Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -176,6 +176,34 @@ pergunta da crise; o estudo dos anúncios fiscais foi feito e saiu). Ficou:
   em que os dois sobem juntos como sinal de prêmio de risco). É positiva quase sempre desde
   2013 (entre 0,2 e 0,7), sem marcar 2015 nem 2024 melhor que os outros anos, e custa 45 s
   de build (uma curva por dia). Não entra.
+
+## Indicadores clássicos (sessão de 20/11/2026)
+
+Caio: *"veja se dá pra colocar, se não ficar muito poluído, gráficos ou variações de gráficos
+com as métricas que temos, alguns indicadores que economistas usam [...] só os que vc tiver
+high ou medium confidente"*. Entraram quatro, todos atrás de uma lista (inclinação da curva,
+inflação esperada contra a meta, massa de rendimento por fator e Ibovespa descontada a
+inflação; ver o [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)). Ficaram, com confiança média, à
+espera do "sim":
+
+- **PIB por habitante** como opção da lista do PIB ("Ver em: por habitante"): o crescimento
+  descontado o da população (IBGE, projeção). Diz se a renda média cresce, e não só o país.
+- **Rendimento real contra a produtividade** (os dois em índice, mesma base; PNAD e PIB por
+  ocupado): se o salário anda junto com o que cada trabalhador produz. A PNAD começa em 2012.
+- **Desocupação mais inflação** (o "índice de miséria" de Okun), atrás da lista da
+  desocupação: simples e conhecido, mas soma duas coisas de natureza diferente, e o nome
+  pede outro na tela ("desocupação mais inflação").
+- **Curva de Phillips e lei de Okun** como "duas métricas no tempo" (já estavam em "Crescimento
+  e longo prazo", acima): um ponto por ano, a teoria em uma frase e o dado dizendo se ela
+  aparece. Pede o gráfico de pontos com o tempo marcado, que ainda não existe.
+- **Crescimento real da despesa contra o limite do arcabouço** (LC 200/2023: de 0,6 % a 2,5 %
+  ao ano): pede a lei lida (Senado ou Câmara) e a regra de correção, que tem exceções.
+
+Pensados e fora (confiança baixa): a regra de Sahm (calibrada para os EUA, e a PNAD já é
+média de três meses), o impulso de crédito (segunda derivada, ruidosa mês a mês), o primário
+estrutural (depende do hiato, que é do Laboratório), a curva de Beveridge (não há série
+oficial de vagas abertas) e os termos de troca (a fonte é a Funcex, privada, ou o MDIC, só
+do PC).
 
 ## Achados da revisão das telas (15/11/2026)
 

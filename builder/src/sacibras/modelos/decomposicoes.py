@@ -222,6 +222,39 @@ def desocupacao_por_fator(
     return mudanca, ocupacao, participacao
 
 
+# ------------------------------------------------------------------ massa de rendimento
+
+
+def massa_por_fator(
+    massa: Sequence[Ponto],
+    ocupados: Sequence[Ponto],
+    defasagem: int = 12,
+) -> tuple[list[Ponto], list[Ponto], list[Ponto]]:
+    """(variação da massa de rendimento em `defasagem` meses, a parte de mais gente ocupada, a
+    parte do rendimento de cada um), em %; as duas partes somam a variação.
+
+    A massa é gente ocupada × rendimento médio: em logaritmo, a variação da massa é a da
+    ocupação mais a do rendimento por ocupado (a massa dividida pelos ocupados, para a conta
+    fechar sem sobra). A média logarítmica leva de volta à variação em %.
+    """
+    m, e = dict(massa), dict(ocupados)
+    total: list[Ponto] = []
+    gente: list[Ponto] = []
+    rendimento: list[Ponto] = []
+    for t in sorted(m):
+        antes = _menos_meses(t, defasagem)
+        if any(x not in m or x not in e or m[x] <= 0 or e[x] <= 0 for x in (t, antes)):
+            continue
+        variacao = (m[t] / m[antes] - 1) * 100
+        log_massa = log(m[t] / m[antes])
+        escala = variacao / log_massa if abs(log_massa) > 1e-12 else 100.0
+        parte_gente = escala * log(e[t] / e[antes])
+        total.append((t, variacao))
+        gente.append((t, parte_gente))
+        rendimento.append((t, variacao - parte_gente))
+    return total, gente, rendimento
+
+
 # ------------------------------------------------------------------ carrego do PIB
 
 
