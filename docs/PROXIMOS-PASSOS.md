@@ -59,6 +59,8 @@ gasto?". Trocar um gráfico de lá por um destes é decisão do Caio. Da nuvem, 
 não terminou em dez minutos (Riscos, Estados e Mundo são lentos daqui): as seções tocadas
 foram geradas uma a uma; conferir o primeiro build do Actions.
 
+**20/11/2026**, a pedido do Caio (*"quando copiar imagem ou PNG, coloque algum indicativo que seja do sacibras para dar os créditos"*): toda imagem de gráfico (PNG e Copiar, `pngDaFigura` em `grafico.ts`) fecha com uma linha de crédito: o losango, "sacibras", "painel da economia brasileira" e o endereço do site (o endereço do GitHub Pages, de `ENDERECO` em `vite.config.ts`). Testada com um gráfico de exemplo; falta olhar o mapa, os rankings, a pirâmide e o painel de alerta.
+
 **19/11/2026**, a pedido do Caio: as perguntas ficam recolhidas (no menu, "Perguntas" abre no toque e sozinho dentro de uma pergunta; no pé da pergunta, "Outras perguntas") e a vista aberta do painel de alerta sai como imagem (PNG e Copiar, `desenhoDosAlertas` em `alertas.ts`, nas quatro vistas). **Falta olhar a 390 e 1280 px com o site rodando** (a nuvem não abre as fontes para montar os dados).
 
 **19/11/2026, servidores e estatais** (Caio: *"inclua a distribuição dos gastos por
@@ -347,7 +349,7 @@ As próximas:
   copiar o trecho para `licencas.B3` e `docs/FONTES.md`.
 - **FGV**: IGP-M e capacidade instalada saíram da tela (os termos vedam divulgar). Voltam
   com autorização por escrito da FGV ([PROPOSTAS](PROPOSTAS.md)).
-- **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
+- **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts` (também o crédito escrito nas imagens dos gráficos)
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.
 - **Previsões próprias** de IPCA, desocupação e o PIB agora com indústria, varejo e serviços:
