@@ -913,6 +913,8 @@ export function textoSemBotoes(no: HTMLElement): string {
   return (copia.textContent ?? "").replace(/\s+/g, " ").trim();
 }
 
+declare const __ENDERECO__: string;
+
 /** Os botões "PNG" e "Copiar" de um gráfico: a mesma imagem, baixada ou posta na área de
  *  transferência. O "Copiar" só aparece onde o navegador sabe copiar imagem. Quem chama
  *  decide se pode exportar (dado privado não pode: licencas.py). */
@@ -1141,10 +1143,9 @@ async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
   ctx.font = fonte(600, 12);
   ctx.fillText("sacibras", xMarca + 20, yMarca + 1);
   const nomeLargura = ctx.measureText("sacibras").width;
-  const endereco = (location.host + location.pathname.replace(/[^/]*$/, "")).replace(/\/$/, "");
   ctx.fillStyle = t.tinta2;
   ctx.font = fonte(400, 12);
-  ctx.fillText(`· painel da economia brasileira · ${endereco}`, xMarca + 26 + nomeLargura, yMarca + 1);
+  ctx.fillText(`· painel da economia brasileira · ${__ENDERECO__}`, xMarca + 26 + nomeLargura, yMarca + 1);
 
   return new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/png"));
 }

@@ -10,6 +10,8 @@ export default defineConfig({
   base: "./",
   build: { target: "es2022", chunkSizeWarningLimit: 900 },
   server: { port: 5173 },
+  // O mesmo endereço, sem o https://, no crédito escrito nas imagens dos gráficos.
+  define: { __ENDERECO__: JSON.stringify(ENDERECO.replace(/^https?:\/\//, "").replace(/\/$/, "")) },
   plugins: [
     {
       name: "endereco-do-site",

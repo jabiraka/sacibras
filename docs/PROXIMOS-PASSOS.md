@@ -311,7 +311,7 @@ As próximas:
   copiar o trecho para `licencas.B3` e `docs/FONTES.md`.
 - **FGV**: IGP-M e capacidade instalada saíram da tela (os termos vedam divulgar). Voltam
   com autorização por escrito da FGV ([PROPOSTAS](PROPOSTAS.md)).
-- **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts`
+- **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts` (também o crédito escrito nas imagens dos gráficos)
   (hoje `https://jabiraka.github.io/sacibras/`); com domínio novo, trocar ali e em
   `anterior.SITE`.
 - **Previsões próprias** de IPCA, desocupação e o PIB agora com indústria, varejo e serviços:
