@@ -5,7 +5,7 @@ virar código; o que fica pronto sai (a história está no git e no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md) da época). A ordem do que fazer agora fica no
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md).
 
-Última atualização: 20/11/2026 (por último, os indicadores clássicos que ficaram em espera).
+Última atualização: 20/11/2026 (por último, o teste do PIB mensal nosso).
 Na primeira sessão da nuvem de 15/11 entrou quase tudo o que estava aqui (PIB pela oferta e demanda privada, ciclos da Selic alinhados, riscos de mercado, dívida
 e jurídicos, estados com CAPAG, limites, previdência, exportações, RRF/Propag e capitais,
 séries novas em mercados, mundo, setor externo, trabalho, pobreza, demografia e impostos,
@@ -194,6 +194,41 @@ média de três meses), o impulso de crédito (segunda derivada, ruidosa mês a 
 estrutural (depende do hiato, que é do Laboratório), a curva de Beveridge (não há série
 oficial de vagas abertas) e os termos de troca (a fonte é a Funcex, privada, ou o MDIC, só
 do PC).
+
+## PIB mensal nosso, no lugar do Monitor do PIB da FGV (20/11/2026)
+
+Caio: *"Consegue ver se tem como fazer alguma estimativa do PIB? Sei que a FGV divulga, mas
+não podemos usar a deles, veja se é fazível ou se tem mta incerteza"*. Testado fora da
+amostra (desde 2012, sem 2020 e 2021, dados revisados de hoje; script não commitado), o PIB
+do trimestre contra o mesmo trimestre do ano anterior. Erro típico (raiz do erro quadrático):
+
+| Com o quê | Erro típico |
+|---|---|
+| IBC-Br, 1 mês do trimestre (~2 meses e meio antes do PIB) | 1,1 pp |
+| IBC-Br, 2 meses | 0,8 pp |
+| IBC-Br, 3 meses (o "PIB agora" de hoje) | 0,5 pp |
+| Indústria, varejo e serviços (PIM, PMC, PMS), 3 meses, desde 2016 | 0,8 pp |
+| IBC-Br + PIM + PMC + PMS, 3 meses, desde 2016 | 0,4 pp |
+| Focus na véspera do PIB, desde 2016 | 0,6 pp (0,35 nos últimos 12 trimestres) |
+
+- **O trimestre que ainda não saiu é fazível, mas não bate o Focus**: na véspera, o Focus já
+  sabe o IBC-Br, e o teste favorece a reta (estimada nos dados revisados) e desfavorece o
+  Focus (comparado com o PIB revisado, não com o primeiro). Sem as versões antigas do IBC-Br,
+  o erro de verdade, em tempo real, é maior que o da tabela, sem dar para dizer quanto. E um
+  erro de 0,5 pp é do tamanho do crescimento de um trimestre: a estimativa não diz com
+  segurança se o PIB cresceu ou caiu no trimestre. Melhoria barata: o "PIB agora" com PIM,
+  PMC e PMS (0,5 → 0,4 pp) e o erro dito pelo número de meses que já saíram. Estava em "Fora"
+  (15/11, *"sem próprias previsões"*); com as regras do Laboratório (16/11), pode voltar, com
+  o placar contra o Focus. **Decisão do Caio.**
+- **O PIB mês a mês dos trimestres que já saíram é conta nossa** (como o PIB dos estados): o
+  PIB trimestral do IBGE repartido nos três meses pelo IBC-Br (ou por PIM, PMC e PMS em cada
+  setor), Denton proporcional, a soma fecha com o IBGE. A forma dentro do trimestre não tem
+  como ser conferida (não existe PIB mensal oficial). Acrescenta pouco ao IBC-Br, que já é o
+  número mensal oficial; só valeria aberto por setor.
+- **Pela demanda (consumo, investimento, exportação), como a FGV faz**: cada componente erra
+  mais que o total (o consumo das famílias só tem o varejo e os serviços como sinal; o do
+  governo, quase nada). O investimento tem o Indicador Ipea de FBCF, mensal (licença e método
+  a ler). Não recomendado agora.
 
 ## Achados da revisão das telas (15/11/2026)
 

@@ -21,6 +21,11 @@ a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibov
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
 
+**20/11/2026, PIB mensal nosso (só o teste, nada no site)**: o Caio perguntou se dá para
+estimar o PIB sem a FGV. O resultado e as três saídas estão no [PROPOSTAS](PROPOSTAS.md)
+("PIB mensal nosso"). **Espera decisão do Caio**: pôr indústria, varejo e serviços no "PIB
+agora" (Laboratório), fazer o PIB mês a mês por Denton (conta nossa), ou deixar como está.
+
 **20/11/2026, indicadores clássicos** (Caio: *"veja se dá pra colocar, se não ficar muito
 poluído, gráficos ou variações de gráficos com as métricas que temos, alguns indicadores que
 economistas usam"*; e depois: *"Pode incluir os outros também de média confiança, faça tudo e
