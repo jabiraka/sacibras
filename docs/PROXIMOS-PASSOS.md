@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 20/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 24/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,15 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibovespa e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**24/11/2026, o site parou de atualizar** (Caio: *"faça com que o sacibras atualize todo dia
+[...] como o site era atualizado antes"*): desde 20/11 as cinco rodadas agendadas do Actions
+terminaram *canceladas*, porque o passo "Gerar os JSONs" passou dos 20 min do job e o site nunca
+chegou a ser montado (o no ar é o de 20/11). `build-deploy.yml` agora tem `timeout-minutes: 60`
+e as duas rodadas (9h40 e 19h) valem **todo dia**, não só de segunda a sexta. **Só vale depois
+de ir ao `main`** (o agendamento do GitHub só roda no branch padrão). Vale olhar o tempo do
+primeiro build: se passar de uns 40 min, o build pede corte ou paralelismo (Riscos, Estados e
+Mundo são as seções lentas).
 
 **20/11/2026, indicadores clássicos** (Caio: *"veja se dá pra colocar, se não ficar muito
 poluído, gráficos ou variações de gráficos com as métricas que temos, alguns indicadores que

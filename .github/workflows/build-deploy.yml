@@ -7,8 +7,8 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "40 12 * * 1-5" # 9h40: depois do IBGE (9h) e do Focus (segunda, 8h25)
-    - cron: "0 22 * * 1-5" # 19h: depois do fechamento do mercado
+    - cron: "40 12 * * *" # 9h40, todo dia: depois do IBGE (9h) e do Focus (segunda, 8h25)
+    - cron: "0 22 * * *" # 19h, todo dia: depois do fechamento do mercado
 
 permissions:
   contents: read
@@ -23,7 +23,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # O build completo passou de 20 min em 20/11/2026 e as rodadas agendadas foram canceladas
+    # (o site ficou sem atualizar). Com folga: o limite do GitHub para o job é 6 h.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
