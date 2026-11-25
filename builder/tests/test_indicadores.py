@@ -7,7 +7,7 @@ from datetime import date
 
 import pytest
 
-from sacibras.secoes import inflacao, juros, mercados
+from sacibras.secoes import inflacao, juros
 
 
 def test_inclinacao_e_o_prefixado_de_tres_anos_menos_a_selic() -> None:
@@ -43,24 +43,6 @@ def test_expectativa_contra_a_meta_do_mesmo_periodo() -> None:
     assert [v for _, v in g.series[1].pontos] == [3.0, 3.0]
     assert g.manchete == "4,40 % em out/2026, 1,40 pp acima do centro da meta."
     assert inflacao.grafico_expectativa([], {2024: 3.0}, date(2024, 1, 1), "f") is None
-
-
-def test_ibovespa_real_leva_o_passado_a_precos_do_ultimo_ipca() -> None:
-    ibov = [
-        (date(2026, 8, 14), 90_000.0),
-        (date(2026, 8, 31), 100_000.0),
-        (date(2026, 9, 30), 100_000.0),
-        (date(2026, 10, 20), 101_000.0),  # mês ainda sem IPCA: entra sem correção
-    ]
-    ipca = [(date(2026, 8, 1), 0.5), (date(2026, 9, 1), 1.0)]
-    pontos, base = mercados.ibovespa_real(ibov, ipca)
-    assert base == date(2026, 9, 1)
-    assert pontos == [
-        (date(2026, 8, 1), pytest.approx(101_000.0)),
-        (date(2026, 9, 1), pytest.approx(100_000.0)),
-        (date(2026, 10, 1), 101_000.0),
-    ]
-    assert mercados.ibovespa_real([], ipca) == ([], None)
 
 
 def test_pib_por_habitante_desconta_o_crescimento_da_populacao() -> None:

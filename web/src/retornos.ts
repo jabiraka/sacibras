@@ -14,7 +14,7 @@ import type { Grafico, Serie } from "./tipos";
 
 const DIA = 86_400_000;
 /** As que abrem no gráfico, e quantas cabem nele além da inflação. */
-const INICIAIS = ["cdi", "ibov"];
+const INICIAIS = ["cdi", "dolar"];
 const MAXIMO = 5;
 
 function iso(d: Date): string {

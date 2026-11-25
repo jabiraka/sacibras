@@ -205,9 +205,7 @@ tentativa seguinte). **Mas** a página do Boletim Diário do Mercado da B3 diz, 
 > inteligência artificial, para quaisquer finalidades, comerciais ou não, próprias ou de
 > terceiros.
 
-Por isso o builder **não lê o site da B3 por padrão**: o Ibovespa vem do IPEADATA, o câmbio do
-Banco Central e a curva de juros do Tesouro Direto. As fontes abaixo estão escritas e ligam com
-`SB_B3=1`, que **fica desligado** (Caio, 14/11/2026).
+Por isso **nada da B3 está no projeto** (Caio, 25/11/2026: *"retire qualquer que for informações da B3"*): o Ibovespa, os índices e os futuros saíram, e o código que lia o site foi apagado. As rotas abaixo ficam só como registro do que existe.
 
 | Rota | O que dá |
 |------|----------|

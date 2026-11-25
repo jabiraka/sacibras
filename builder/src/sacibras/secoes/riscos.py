@@ -3,7 +3,7 @@
 Sete blocos, cada um num `try` próprio (um que falha não derruba os outros):
 
 1. a dívida se sustenta? (juro da dívida contra crescimento, primário que a estabiliza, leque);
-2. o que o mercado cobra (volatilidade do dólar, queda da bolsa);
+2. o que o mercado cobra (volatilidade do dólar);
 3. câmbio e contas externas; 4. crédito e bancos; 5. inflação — estes três só no painel;
 6. testes de estresse: os choques de cada crise aplicados ao ponto de hoje;
 7. longo prazo: Previdência e envelhecimento; e energia (reservatórios).
@@ -32,7 +32,6 @@ from sacibras.fontes import (
     fmi,
     fred,
     ibge_projecao,
-    ipeadata,
     ons,
     tesouro_direto,
     tesouro_rtn,
@@ -91,7 +90,7 @@ class Episodio:
     nome: str
     inicio: date
     fim: date
-    """A janela em que se medem dólar, bolsa e Selic."""
+    """A janela em que se medem dólar e Selic."""
     anos: tuple[int, ...]
     """Os anos cujo desvio (PIB, primário, juro, inflação) entra na conta da dívida."""
 
@@ -714,13 +713,9 @@ def _leque(
 # ------------------------------------------------------------------ 2. o mercado
 
 
-def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto], list[Ponto]]:
+def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
     dolar = ctx.sgs("DOLAR", HIST + 2)
-    ibov = ipeadata.serie(ipeadata.IBOVESPA, date(1999, 1, 1))
-    fonte_ibov = ipeadata.FONTE_IBOVESPA
     vol_dolar = risco.volatilidade(dolar)
-    vol_ibov = risco.volatilidade(ibov)
-    queda = risco.queda_desde_o_pico(ibov)
     nota_vol = (
         "Desvio-padrão das variações diárias nos últimos 21 dias úteis, levado ao ano "
         "(× raiz de 252). Mede o quanto o preço balança, não para que lado vai."
@@ -740,19 +735,6 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto], list[Ponto]]:
             secao="riscos",
             mini=500,
         ),
-        cartao(
-            "queda-ibovespa",
-            "Ibovespa: distância do pico",
-            queda,
-            unidade="%",
-            periodicidade="D",
-            casas=1,
-            detalhe="abaixo do maior fechamento desde 1999",
-            fonte=f"{fonte_ibov}; cálculo próprio",
-            procedencia="calculado",
-            secao="riscos",
-            mini=500,
-        ),
     ]
     bloco.graficos += [
         grafico(
@@ -765,21 +747,6 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto], list[Ponto]]:
             janela_anos=10,
             fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
             nota=nota_vol + " Um ponto por semana.",
-        ),
-        grafico(
-            "queda-ibovespa",
-            "Ibovespa: quanto abaixo do pico",
-            [serie("queda", "Distância do maior fechamento até a data", semanal(queda), casas=1)],
-            tipo="area",
-            unidade="%",
-            casas=1,
-            periodicidade="D",
-            janela_anos=10,
-            fonte=f"{fonte_ibov}; cálculo próprio",
-            nota=(
-                "Em pontos do índice, sem descontar a inflação. Zero é recorde. Um ponto por "
-                "semana."
-            ),
         ),
     ]
     bloco.alertas += [
@@ -794,30 +761,8 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto], list[Ponto]]:
             fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
             procedencia="calculado",
         ),
-        alerta(
-            "vol-ibovespa",
-            MERCADO,
-            "Volatilidade do Ibovespa, 21 dias",
-            vol_ibov,
-            pior_quando="alto",
-            unidade="% a.a.",
-            periodicidade="D",
-            fonte=f"{fonte_ibov}; cálculo próprio",
-            procedencia="calculado",
-        ),
-        alerta(
-            "queda-ibovespa",
-            MERCADO,
-            "Ibovespa: distância do pico",
-            queda,
-            pior_quando="baixo",
-            unidade="%",
-            periodicidade="D",
-            fonte=f"{fonte_ibov}; cálculo próprio",
-            procedencia="calculado",
-        ),
     ]
-    return bloco, dolar, ibov
+    return bloco, dolar
 
 
 # ------------------------------------------------------------------ 3 a 5. só no painel
@@ -1452,7 +1397,6 @@ def _estresse(
     base: SimuladorDivida | None,
     anos: dict[int, risco.Choque],
     dolar: list[Ponto],
-    ibov: list[Ponto],
 ) -> Bloco:
     selic = ctx.sgs("SELIC_META", HIST + 2)
     pib = {d.year: v for d, v in ctx.sgs("PIB_VAR_ANUAL", 30)}
@@ -1471,23 +1415,18 @@ def _estresse(
     linha_de_base = divida.trajetoria(*hipoteses) if hipoteses else []
 
     altas: list[float | None] = []
-    quedas: list[float | None] = []
     juros: list[float | None] = []
     piores_pibs: list[float | None] = []
     dolar_hoje: list[float | None] = []
-    ibov_hoje: list[float | None] = []
     divida_a_mais: list[float | None] = []
     caminhos: list[tuple[Episodio, list[float]]] = []
     for ep in EPISODIOS:
         alta = risco.maior_alta(dolar, ep.inicio, ep.fim)
-        queda = risco.maior_queda(ibov, ep.inicio, ep.fim)
         altas.append(alta)
-        quedas.append(queda)
         juros.append(risco.maior_mudanca(selic, ep.inicio, ep.fim))
         do_episodio = [pib[a] for a in ep.anos if a in pib]
         piores_pibs.append(min(do_episodio) if do_episodio else None)
         dolar_hoje.append(dolar[-1][1] * (1 + alta / 100) if alta is not None else None)
-        ibov_hoje.append(ibov[-1][1] * (1 + queda / 100) if queda is not None else None)
         choques = risco.choques_do_episodio(anos, list(ep.anos))
         if hipoteses and choques and n >= 3:
             caminho = risco.repetir_episodio(*hipoteses, choques)
@@ -1500,7 +1439,6 @@ def _estresse(
     colunas = [ep.nome for ep in EPISODIOS]
     linhas = [
         LinhaTabela(rotulo="Dólar: maior alta na janela", valores=altas, unidade="%", casas=0),
-        LinhaTabela(rotulo="Ibovespa: maior queda na janela", valores=quedas, unidade="%", casas=0),
         LinhaTabela(rotulo="Selic: maior mudança na janela", valores=juros, unidade="pp", casas=2),
         LinhaTabela(
             rotulo="PIB no pior ano do episódio", valores=piores_pibs, unidade="%", casas=1
@@ -1510,12 +1448,6 @@ def _estresse(
             valores=dolar_hoje,
             unidade="R$",
             casas=2,
-        ),
-        LinhaTabela(
-            rotulo=f"O Ibovespa de hoje ({br(ibov[-1][1] / 1000, 0)} mil) com a mesma queda",
-            valores=[v / 1000 if v is not None else None for v in ibov_hoje],
-            unidade="mil pontos",
-            casas=0,
         ),
     ]
     if base and any(v is not None for v in divida_a_mais):
@@ -1535,15 +1467,11 @@ def _estresse(
             id="estresse-episodios",
             titulo="Se acontecesse de novo: cinco episódios",
             subtitulo=(
-                "O que cada crise fez com dólar, bolsa, juro e PIB, e o mesmo tranco aplicado "
-                "a hoje"
+                "O que cada crise fez com dólar, juro e PIB, e o mesmo tranco aplicado a hoje"
             ),
             colunas=colunas,
             linhas=linhas,
-            fonte=(
-                f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; "
-                "Ipeadata, Ibovespa IBVSP366; cálculo próprio"
-            ),
+            fonte=f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; cálculo próprio",
             nota=(
                 "Não é previsão: é o tamanho de trancos que já aconteceram, posto na escala de "
                 f"hoje. As janelas são escolha nossa ({janelas}). Alta e queda são do pior "
@@ -1654,7 +1582,7 @@ def _estresse(
             )
 
     # O mercado mês a mês: o caminho de cada crise desde o começo da janela, posto no nível
-    # de hoje (o dólar e o Ibovespa na mesma proporção; a Selic com a mesma mudança em pp).
+    # de hoje (o dólar na mesma proporção; a Selic com a mesma mudança em pp).
     hoje_mes = dolar[-1][0].replace(day=1)
 
     def meses_a_frente(k: int) -> date:
@@ -1668,16 +1596,6 @@ def _estresse(
     )
     for id_, rotulo, titulo, pontos, unidade, casas, escala, soma in (
         ("dolar", "Dólar", "O dólar se cada crise se repetisse agora", dolar, "R$", 2, 1.0, False),
-        (
-            "ibovespa",
-            "Ibovespa",
-            "O Ibovespa se cada crise se repetisse agora",
-            ibov,
-            "mil pontos",
-            0,
-            1000.0,
-            False,
-        ),
         ("selic", "Selic", "A Selic se cada crise se repetisse agora", selic, "%", 2, 1.0, True),
     ):
         hoje = pontos[-1][1] / escala
@@ -1732,7 +1650,7 @@ def _estresse(
                 linhas=v0.linhas,
                 fonte=(f"{base.fonte}; " if base else "")
                 + f"{ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL', 'DOLAR', 'SELIC_META')}; "
-                "Ipeadata, Ibovespa IBVSP366; cálculo próprio",
+                "cálculo próprio",
                 nota=v0.nota,
                 largura="inteira",
                 variantes=variantes,
@@ -2448,9 +2366,8 @@ def montar(ctx: Contexto) -> Secao:
     principal, frase, anos = _divida(ctx, base)
     blocos: list[Bloco] = [principal]
     dolar: list[Ponto] = []
-    ibov: list[Ponto] = []
     try:
-        mercado, dolar, ibov = _mercado(ctx)
+        mercado, dolar = _mercado(ctx)
         blocos.append(mercado)
     except Exception as erro:
         print(f"    riscos: mercado ficou de fora ({str(erro)[:100]})")
@@ -2463,7 +2380,7 @@ def montar(ctx: Contexto) -> Secao:
         ("liquidez e hiato de crédito", lambda: _liquidez_e_hiato(ctx)),
         (
             "estresse",
-            lambda: _estresse(ctx, base, anos, dolar, ibov) if dolar and ibov else Bloco(),
+            lambda: _estresse(ctx, base, anos, dolar) if dolar else Bloco(),
         ),
         ("previdência", lambda: _previdencia(ctx)),
         ("envelhecimento", lambda: _envelhecimento(ctx)),

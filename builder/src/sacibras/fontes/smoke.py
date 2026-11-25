@@ -12,9 +12,7 @@ from datetime import date, timedelta
 
 from sacibras import rede
 from sacibras.catalogo import SGS
-from sacibras.config import usar_b3
 from sacibras.fontes import (
-    b3_indices,
     bcb_copom,
     bcb_focus,
     bcb_secundario,
@@ -48,11 +46,6 @@ def _sidra() -> str:
 def _copom() -> str:
     ultima = bcb_copom.reunioes()[-1]
     return f"reunião {ultima.numero} em {ultima.data:%d/%m/%Y}: {ultima.meta}"
-
-
-def _b3() -> str:
-    pontos = b3_indices.ano("IBOV", date.today().year, corrente=True)
-    return f"Ibovespa {pontos[-1][1]:.0f} em {pontos[-1][0]:%d/%m/%Y}"
 
 
 def _fmi() -> str:
@@ -93,7 +86,7 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     ),
     (
         "IPEADATA",
-        _texto("https://www.ipeadata.gov.br/api/odata4/Metadados('GM366_IBVSP366')"),
+        _texto("https://www.ipeadata.gov.br/api/odata4/Metadados('PNADCA_TXPNUF')"),
     ),
     (
         "Penn World Table (Dataverse)",
@@ -180,21 +173,11 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
 ]
 
 
-# Só com SB_B3=1: o site da B3 veda coleta automatizada (ver `config.usar_b3`).
-FONTES_B3: list[tuple[str, Callable[[], str]]] = [
-    ("B3 índices", _b3),
-    (
-        "B3 derivativos (cotação)",
-        _texto("https://cotacao.b3.com.br/mds/api/v1/DerivativeQuotation/DI1"),
-    ),
-]
-
-
 def rodar(*, markdown: bool = False) -> int:
     rede.SEM_CACHE = True  # é teste de conexão: nada vem do disco
     rede.TENTATIVAS = 2
     linhas: list[tuple[str, bool, float, str]] = []
-    for nome, chamar in [*FONTES, *(FONTES_B3 if usar_b3() else [])]:
+    for nome, chamar in FONTES:
         inicio = time.monotonic()
         try:
             detalhe, ok = chamar(), True

@@ -259,10 +259,10 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "cambio",
-            "Dólar e bolsa",
-            "O dólar, o euro, o Ibovespa e quanto cada aplicação rendeu.",
-            cartoes=["dolar", "euro", "ibovespa", "ibovespa-dolar"],
-            graficos=["dolar", "ibovespa", "retornos-em-reais"],
+            "Câmbio e aplicações",
+            "O dólar, o euro e quanto cada aplicação rendeu.",
+            cartoes=["dolar", "euro"],
+            graficos=["dolar", "retornos-em-reais"],
             tabelas=["variacoes"],
         ),
     ],
@@ -580,7 +580,7 @@ PARTES: dict[str, list[Parte]] = {
             "custo",
             "Custo, rolagem e crises",
             "Quanto se paga de juros, quanto vence logo e o que cada crise faria hoje com a "
-            "dívida, o PIB, a inflação, o dólar, a bolsa e a Selic.",
+            "dívida, o PIB, a inflação, o dólar e a Selic.",
             cartoes=[
                 "juros-sobre-receita",
                 "vence-em-12-meses",
@@ -843,14 +843,6 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                 "importacoes-produtos": "Importações",
             },
         ),
-        "cambio": Agrupar(
-            graficos={"ibovespa": ["ibovespa-dolar", "ibovespa-real"]},
-            rotulos={
-                "ibovespa": "Em pontos",
-                "ibovespa-dolar": "Em dólares",
-                "ibovespa-real": "Descontada a inflação",
-            },
-        ),
     },
     "fiscal": {
         "divida": Agrupar(
@@ -973,7 +965,6 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                     "cambio-real",
                     "reservas-cobertura",
                     "vol-dolar",
-                    "queda-ibovespa",
                 ],
                 "basileia": ["credito-atrasos"],
             },
@@ -982,7 +973,6 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                 "cambio-real": "Câmbio real",
                 "reservas-cobertura": "Reservas e dívida curta",
                 "vol-dolar": "Quanto o dólar balança",
-                "queda-ibovespa": "Ibovespa abaixo do pico",
                 "basileia": "Capital dos bancos",
                 "credito-atrasos": "Atrasos do crédito",
             },

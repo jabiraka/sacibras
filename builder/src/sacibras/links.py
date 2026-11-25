@@ -139,11 +139,6 @@ REGRAS: list[Regra] = [
         url="https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/dados-abertos",
     ),
     Regra(
-        padrao=r"\bB3\b",
-        nome="B3",
-        url="https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
-    ),
-    Regra(
         padrao=r"SINISA",
         nome="SINISA",
         url="https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/saneamento/sinisa",

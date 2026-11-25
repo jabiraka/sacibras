@@ -1,4 +1,4 @@
-"""IPEADATA (OData v4), sem chave e com CORS aberto. Usado para o Ibovespa diário."""
+"""IPEADATA (OData v4), sem chave: pobreza, Gini e taxas por estado."""
 
 from __future__ import annotations
 
@@ -8,12 +8,6 @@ from sacibras.rede import baixar_json
 from sacibras.tipos import Ponto
 
 URL = "https://www.ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='{codigo}')"
-
-IBOVESPA = "GM366_IBVSP366"
-"""Ibovespa, fechamento diário (conferido no IPEADATA em 14/11/2026; sai com um dia de
-atraso em relação à B3)."""
-FONTE_IBOVESPA = "Ipeadata, Ibovespa (fechamento), série GM366_IBVSP366"
-"""O índice é da B3 mesmo vindo do IPEADATA: sem CSV nem PNG (`licencas.B3`)."""
 
 
 def serie(codigo: str, desde: date) -> list[Ponto]:

@@ -31,7 +31,6 @@ services:
       dockerfile: docker/builder.Dockerfile
     container_name: sb_builder
     environment:
-      SB_B3: ${SB_B3:-}
       SB_CACHE_HORAS: ${SB_CACHE_HORAS:-6}
     volumes:
       - sb_dados:/dados

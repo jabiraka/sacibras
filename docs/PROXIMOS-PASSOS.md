@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 25/11/2026 (de novo). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 25/11/2026 (a B3 saiu). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,15 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibovespa e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**25/11/2026, a B3 saiu do site** (Caio: *"não queremos correr esse risco, então retire
+qualquer que for informações da B3"*). Saíram: o Ibovespa (cartões, gráficos, a tabela de
+variações, o "descontada a inflação" e o "em dólares"), o Ibovespa do "Quanto rendeu R$ 100",
+os dois alertas da bolsa em Riscos (volatilidade e queda, eram dois dos 22 fora do painel) e
+a linha dele nos testes de estresse, e todo o código da B3 (`b3_indices.py`,
+`b3_derivativos.py`, `SB_B3`, a curva de DI e os futuros). Mercados ficou com o dólar, o euro
+e o "Quanto rendeu" (a parte "Dólar e bolsa" virou "Câmbio e aplicações"). `licencas.B3` tem
+`mostra=False`. Olhado em Mercados e em Riscos; **falta olhar o site inteiro no próximo build**.
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
@@ -119,7 +128,6 @@ e 1280 px com dados reais; **falta o Caio olhar**:
 - **Trabalho › Renda**, lista da massa › "Emprego ou salário": a variação da massa de
   rendimento em 12 meses repartida entre mais gente ocupada e o rendimento de cada um
   (`decomposicoes.massa_por_fator`; conta nossa, fecha com a massa do IBGE).
-- **Exterior › Dólar e bolsa**, lista do Ibovespa › "Descontada a inflação" (`mercados.ibovespa_real`).
 - **Atividade › PIB**, lista › "Por habitante, ano a ano": o crescimento do PIB e o mesmo
   descontada a população (`atividade.pib_por_habitante`).
 - **Trabalho › Desemprego**: atrás da desocupação, "Somada à inflação" (o índice de miséria
@@ -428,10 +436,6 @@ As próximas:
   ninguém. Falta o Caio criar o projeto (ou dizer para usar outro serviço).
 - **Os 22 alertas que saíram do painel**: a lista está em `alertas.NO_PAINEL`; se algum
   fizer falta, volta trocando por outro.
-- **Trecho da B3 sobre gráficos informativos**: o Ibovespa fica na tela por decisão do
-  Caio (15/11/2026, *"Os termos da B3 permitem gráficos informativos"*), mas a cláusula não
-  apareceu nos termos de uso nem na Política Comercial de Market Data 2027. Com o elo,
-  copiar o trecho para `licencas.B3` e `docs/FONTES.md`.
 - **FGV**: IGP-M e capacidade instalada saíram da tela (os termos vedam divulgar). Voltam
   com autorização por escrito da FGV ([PROPOSTAS](PROPOSTAS.md)).
 - **Domínio**: a imagem de compartilhamento (`og:image`) usa `ENDERECO` em `web/vite.config.ts` (também o crédito escrito nas imagens dos gráficos)

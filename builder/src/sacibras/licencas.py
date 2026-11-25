@@ -131,10 +131,11 @@ B3 = Licenca(
     ),
     lida_em=date(2026, 11, 15),
     exporta=False,
+    mostra=False,
     decisao=(
-        'Caio, 15/11/2026: "Os termos da B3 permitem gráficos informativos". O Ibovespa fica '
-        "na tela, sem download. A cláusula não foi achada nos dois textos lidos; registrar o "
-        "trecho quando o Caio indicar onde está."
+        'Caio, 25/11/2026: "retire qualquer que for informações da B3". Tirados o Ibovespa, '
+        "os índices e os futuros. Em 15/11 ele tinha deixado o Ibovespa na tela, sem download; "
+        "a cláusula que permitiria gráfico informativo nunca foi achada nos termos."
     ),
     # A fonte na tela aponta o Ipeadata (Caio, 25/11/2026: "só aponte pro ipeadata"); o dado
     # segue sendo o índice da B3, então a marca também acha a série e o "sem download" fica.

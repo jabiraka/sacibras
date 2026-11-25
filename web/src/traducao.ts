@@ -186,8 +186,6 @@ const NOMES_PROPRIOS = [
   "Novo Caged",
   "PNAD",
   "IBGE",
-  "Ibovespa",
-  "B3",
   "ICMS",
   "IBS",
   "CBS",

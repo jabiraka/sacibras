@@ -215,14 +215,6 @@ LEITURAS: list[Leitura] = [
         "fecomercio.com.br e o catálogo do BC (série 4393): ver se a Fecomercio publicou "
         "termo de uso dos dados. Uma vez por ano.",
     ),
-    Leitura(
-        "Licença dos dados da B3 (Ibovespa na tela, sem download)",
-        "licencas.B3",
-        date(2026, 11, 15),
-        date(2027, 11, 15),
-        "b3.com.br, termos de uso e Política Comercial de Market Data; registrar o trecho que "
-        "permite gráfico informativo (decisão do Caio, 15/11/2026). Uma vez por ano.",
-    ),
     # ------------------------------------------------------------- impostos
     Leitura(
         "Reforma do consumo, ano a ano (EC 132 e LC 214)",

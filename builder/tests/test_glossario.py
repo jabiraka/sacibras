@@ -12,7 +12,7 @@ INDICADORES = {
     *("conta-corrente", "cobertura-idp", "divida-externa-liquida", "divida-cambial"),
     *("swaps-cambiais", "ipca", "nucleos", "difusao", "inadimplencia", "inadimplencia-pf"),
     *("inadimplencia-pj", "atrasos", "spread", "comprometimento", "endividamento", "basileia"),
-    *("vol-dolar", "vol-ibovespa", "queda-ibovespa", "deficit-inss", "beneficios-inss"),
+    *("vol-dolar", "deficit-inss", "beneficios-inss"),
     *("reservatorios", "expectativa-12m", "implicita-longa", "hiato-credito", "liquidez"),
     *("liquidez-lcr", "juros-sobre-receita", "vence-em-12-meses"),
 }

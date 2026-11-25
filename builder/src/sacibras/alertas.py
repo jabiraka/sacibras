@@ -284,17 +284,6 @@ EXPLICACOES: dict[str, Explicacao] = {
         "Preços de importados e combustíveis mais instáveis, empresas adiando decisões e o "
         "Banco Central entrando no mercado.",
     ),
-    "vol-ibovespa": Explicacao(
-        "Quanto a bolsa balança de um dia para o outro, no último mês (21 dias úteis).",
-        "Bolsa nervosa mostra investidores sem saber o que esperar de lucros e da economia.",
-        "Empresas adiando investimentos e emissões de ações, e o patrimônio das pessoas oscilando.",
-    ),
-    "queda-ibovespa": Explicacao(
-        "Quanto a bolsa está abaixo do maior valor que já atingiu, em porcentagem.",
-        "Quedas grandes e longas costumam vir junto com expectativas piores para os lucros e "
-        "a economia.",
-        "Menos investimento e famílias se sentindo mais pobres.",
-    ),
     # ---------------------------------------------------------------- longo prazo e energia
     "deficit-inss": Explicacao(
         "Quanto os benefícios do INSS superam as contribuições, em 12 meses, em proporção do PIB.",

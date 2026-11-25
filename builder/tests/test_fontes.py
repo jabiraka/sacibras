@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from sacibras.catalogo import SGS
-from sacibras.fontes import b3_indices, bcb_focus, bcb_sgs, ibge_sidra
+from sacibras.fontes import bcb_focus, bcb_sgs, ibge_sidra
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def respostas(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
                 return resposta
         raise AssertionError(f"URL inesperada: {url}")
 
-    for modulo in (bcb_sgs, bcb_focus, ibge_sidra, b3_indices):
+    for modulo in (bcb_sgs, bcb_focus, ibge_sidra):
         monkeypatch.setattr(modulo, "baixar_json", falso)
     mapa["__pedidos__"] = pedidos
     return mapa
@@ -99,19 +99,6 @@ def test_sidra_trimestre_movel_e_mensal(respostas: dict[str, Any]) -> None:
         {"V": "5.2", "D2C": "4099", "D3C": "202609"},
     ]
     assert ibge_sidra.serie(6381, 4099) == [(date(2026, 9, 1), 5.2)]
-
-
-def test_indices_b3_leem_a_grade_dia_por_mes(respostas: dict[str, Any]) -> None:
-    respostas["GetPortfolioDay"] = {
-        "results": [
-            {"day": 12, "rateValue11": "171.324,31", "rateValue12": ""},
-            {"day": 13, "rateValue11": "172.457,76", "rateValue1": None},
-        ]
-    }
-    assert b3_indices.ano("IBOV", 2026, corrente=True) == [
-        (date(2026, 11, 12), 171324.31),
-        (date(2026, 11, 13), 172457.76),
-    ]
 
 
 def test_baixar_json_tenta_de_novo_quando_vem_html(monkeypatch: pytest.MonkeyPatch) -> None:

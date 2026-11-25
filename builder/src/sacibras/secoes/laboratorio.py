@@ -504,7 +504,7 @@ def _copom(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             f"com 90 % de confiança, fora 2020; com 2020, {br(reg_todos.coef[1] * 25)} pb, sem "
             "efeito que se distinga de zero (a pandemia mexeu tudo junto). O efeito é pequeno "
             "porque a medida da surpresa é pobre: a mediana do Focus fica até uma semana velha "
-            "e o mercado de juros futuros, que mede melhor, é da B3, fora daqui pela licença."
+            "e o mercado de juros futuros, que mede melhor, não entra aqui."
         ),
     )
     return cartoes, [], [tabela]

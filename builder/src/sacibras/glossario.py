@@ -803,14 +803,6 @@ TERMOS: list[Termo] = [
     ),
     # ---------------------------------------------------------------- mercados
     Termo(
-        "ibovespa",
-        "Ibovespa",
-        "O principal índice da bolsa brasileira: o valor de uma carteira com as ações mais "
-        "negociadas.",
-        ("Ibovespa",),
-        "#mercados",
-    ),
-    Termo(
         "volatilidade",
         "Volatilidade",
         "Quanto um preço balança, para cima e para baixo. Aqui, o desvio-padrão das variações "

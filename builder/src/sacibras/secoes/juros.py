@@ -9,9 +9,7 @@ from itertools import pairwise
 from sacibras import contas, curvas, leis, rede, relatorios
 from sacibras.calendario import ultimo_dia_util
 from sacibras.catalogo import SGS
-from sacibras.config import usar_b3
 from sacibras.fontes import (
-    b3_derivativos,
     bcb_copom,
     bcb_focus,
     bcb_secundario,
@@ -752,88 +750,6 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
     return cartoes, graficos, [] if bc_falhou and not curtos else [tabela]
 
 
-def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
-    """Os juros futuros (DI1 da B3): a curva, a inclinação e a Selic embutida nela."""
-    contratos = [c for c in b3_derivativos.futuros("DI1") if c.preco and c.em_aberto >= 10_000]
-    referencia = ultimo_dia_util(ctx.hoje)
-    limite = date(ctx.hoje.year + 10, 12, 31)
-    curva = [(c.vencimento, float(c.preco or 0)) for c in contratos if c.vencimento <= limite]
-    anterior = [
-        (c.vencimento, c.ajuste_anterior)
-        for c in contratos
-        if c.ajuste_anterior and c.vencimento <= limite
-    ]
-    ctx.memo["curva_di"] = curva
-
-    # A Selic embutida: taxa a termo entre os vencimentos líquidos, mais a distância de hoje
-    # entre a Selic meta e o CDI.
-    liquidos = [p for i, p in enumerate(curva) if i == 0 or p[0].month in MESES_LIQUIDOS]
-    cdi = ctx.sgs("CDI_ANUAL", anos=1)[-1][1]
-    distancia = selic - cdi
-    horizonte = date(ctx.hoje.year + 2, 12, 31)
-    termo = [(d, v + distancia) for d, v in a_termo(liquidos, referencia) if d <= horizonte]
-    if termo:
-        fim = next((p[0] for p in liquidos if p[0] > termo[-1][0]), termo[-1][0])
-        termo.append((fim, termo[-1][1]))
-        termo[0] = (ctx.hoje, termo[0][1])
-
-    um_ano = _mais_perto(curva, date(ctx.hoje.year + 1, ctx.hoje.month, 1))
-    dois = _mais_perto(curva, date(ctx.hoje.year + 2, 1, 1))
-    dez = _mais_perto(curva, date(ctx.hoje.year + 10, 1, 1))
-    fonte = "B3, futuro de DI de um dia (DI1), último negócio"
-    cartoes = [
-        cartao(
-            "di-1-ano",
-            f"Juro futuro para {periodo(um_ano[0], 'M')}",
-            [(referencia, um_ano[1])],
-            unidade="% a.a.",
-            periodicidade="D",
-            casas=2,
-            detalhe="taxa prefixada de hoje até lá (DI futuro)",
-            fonte=fonte,
-            procedencia="mercado",
-            secao="juros",
-        ),
-        cartao(
-            "inclinacao-di",
-            "Inclinação da curva de DI",
-            [(referencia, dez[1] - dois[1])],
-            unidade="pp",
-            periodicidade="D",
-            casas=2,
-            detalhe=(
-                f"DI {periodo(dez[0], 'M')} ({br(dez[1], 2)} %) menos "
-                f"DI {periodo(dois[0], 'M')} ({br(dois[1], 2)} %)"
-            ),
-            fonte=fonte,
-            procedencia="calculado",
-            secao="juros",
-        ),
-    ]
-    graficos = [
-        grafico(
-            "curva-di",
-            "Curva de juros: a taxa prefixada para cada prazo",
-            [
-                serie("hoje", f"Em {periodo(referencia, 'D')}", curva, casas=3),
-                serie(
-                    "anterior", "Ajuste do pregão anterior", anterior, casas=3, papel="referencia"
-                ),
-            ],
-            tipo="curva",
-            unidade="% a.a., por vencimento",
-            casas=2,
-            periodicidade="M",
-            fonte=fonte + "; vencimentos com mais de 10 mil contratos em aberto",
-            nota=(
-                "Cada ponto é o juro que o mercado trava hoje até aquela data. Curva subindo: "
-                "o mercado cobra mais para prazos longos."
-            ),
-        )
-    ]
-    return cartoes, graficos, termo
-
-
 PRIMEIRO_ANO_DOS_CICLOS = 2003
 
 
@@ -1386,8 +1302,7 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
 
-    # A curva de juros: sempre a dos títulos do Tesouro (dado aberto); com SB_B3=1, também
-    # a dos futuros de DI. Se uma faltar, a seção sai sem ela.
+    # A curva de juros: a dos títulos do Tesouro (dado aberto). Se faltar, a seção sai sem ela.
     graficos_di: list[Grafico] = []
     embutida: list[Ponto] = []
     origem = ""
@@ -1431,14 +1346,6 @@ def montar(ctx: Contexto) -> Secao:
         ciclos_alinhados = _ciclos_alinhados(ctx)
     except Exception as erro:
         print(f"    ciclos alinhados ficaram de fora: {str(erro)[:120]}")
-    if usar_b3():
-        try:
-            cartoes_di, graficos_b3, embutida = _curva_di(ctx, meta[-1][1])
-            cartoes.extend(cartoes_di)
-            graficos_di = [*graficos_b3, *graficos_di]
-            origem = "nos juros futuros (DI)"
-        except Exception as erro:
-            print(f"    juros futuros ficaram de fora: {str(erro)[:120]}")
 
     inicio = date(ctx.hoje.year - 20, 1, 1)
     trajetoria = [
@@ -1468,8 +1375,7 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=5,
             fonte=(
                 f"{ctx.fonte_sgs('SELIC_META')}; Focus de {periodo(edicao, 'D')} "
-                "(ExpectativasMercadoSelic)"
-                + ("; B3, DI1" if "DI" in origem else "; Tesouro Direto" if origem else "")
+                "(ExpectativasMercadoSelic)" + ("; Tesouro Direto" if origem else "")
             ),
             nota=nota_selic,
             largura="inteira",

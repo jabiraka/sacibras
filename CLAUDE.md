@@ -41,9 +41,11 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   anterior; seção que sai com fonte falhando recebe de volta o que faltou (`completar` em
   `construir.py`: só ids listados em `PARTES`, e só se uma URL falhou em `rede.FALHAS`). Cada
   peça mantida leva a data de referência dela, e a issue `fonte fora do ar` lista o que ficou.
-- **O site da B3 fica desligado** (`SB_B3`; Caio, 14/11/2026: *"deixar desligado"*): a B3 veda
-  coleta automatizada no texto do site (lido em 14/11/2026, [docs/FONTES.md](docs/FONTES.md)).
-  Não ligar no workflow nem no compose; o que depende dela fica fora.
+- **Nada da B3 no projeto** (Caio, 25/11/2026: *"não queremos correr esse risco, então
+  retire qualquer que for informações da B3"*): saíram o Ibovespa (que vinha do Ipeadata), os
+  índices, os futuros e o código que lia o site (`SB_B3`), e o Ibovespa dos alertas e dos testes
+  de estresse. `licencas.B3` tem `mostra=False`: peça que cite a B3 sai da tela sozinha. Dado
+  que a B3 licencia (índice, preço de ação, DI, futuros) não volta sem autorização por escrito.
 - **Norma se lê na fonte oficial, do PC** (o Planalto e o `servicodados` do IBGE recusam quem
   está fora do Brasil, como a nuvem e o Actions). Da nuvem, lei e emenda abrem em outras duas
   fontes oficiais: o Senado (`legis.senado.leg.br/norma/<id>/publicacao/<id>`) e a Câmara

@@ -14,7 +14,7 @@ repetido no PROXIMOS-PASSOS.
 
 ## Fora, por decisão do Caio
 
-- **B3**: o site veda coleta automatizada; `SB_B3` desligado. O que depende dela (IFIX, DI,
+- **B3**: tirada do projeto em 25/11/2026 (o código foi apagado). O que depende dela (IFIX, DI,
   probabilidade do Copom, cupom de IPCA curto, Ibovespa com dividendos, inflação implícita
   antes de mai/2029) fica fora.
 - **Desemprego de equilíbrio (NAIRU)** (14/11/2026): o BC não publica número oficial; só há
