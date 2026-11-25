@@ -125,7 +125,7 @@ def montar(ctx: Contexto) -> Secao:
             "IMOB_TAXA_MERCADO",
             "% a.a.",
             1,
-            f"taxa de mercado; com taxa regulada (SFH): {br(taxa_regulada[-1][1])} % a.a.",
+            f"mercado; regulada (SFH): {br(taxa_regulada[-1][1])} % a.a.",
         ),
         cartao(
             "imobiliario-concessoes",
@@ -191,7 +191,7 @@ def montar(ctx: Contexto) -> Secao:
             "Quanto custa o crédito",
             [
                 serie("taxa", "Juro médio", taxa, desde=inicio),
-                serie("spread", "Spread (juro menos custo de captação)", spread, desde=inicio),
+                serie("spread", "Spread", spread, desde=inicio),
             ],
             unidade="% a.a. e pontos percentuais",
             casas=1,
@@ -213,12 +213,10 @@ def montar(ctx: Contexto) -> Secao:
             "familias",
             "O peso da dívida nas famílias",
             [
-                serie(
-                    "endividamento", "Dívida sobre a renda de 12 meses", endividamento, desde=inicio
-                ),
+                serie("endividamento", "Dívida / renda de 12 meses", endividamento, desde=inicio),
                 serie(
                     "comprometimento",
-                    "Parcelas sobre a renda do mês",
+                    "Parcelas / renda do mês",
                     comprometimento,
                     desde=inicio,
                 ),
@@ -242,8 +240,8 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=10,
             fonte=ctx.fonte_sgs("IMOB_TAXA_MERCADO", "IMOB_TAXA_REGULADA"),
             nota=(
-                "Taxa média das novas operações com pessoas físicas, ponderada pelo valor "
-                "concedido. A regulada é a do SFH, com dinheiro da poupança e do FGTS."
+                "Média das novas operações com pessoas físicas. A regulada é a do SFH, com "
+                "dinheiro da poupança e do FGTS."
             ),
         ),
         grafico(
@@ -256,7 +254,7 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=10,
             fonte=ctx.fonte_sgs("IMOB_CONCESSOES"),
-            nota="Soma de 12 meses das concessões mensais, em reais correntes, feita por nós.",
+            nota="Soma de 12 meses, em reais correntes: conta nossa.",
         ),
         grafico(
             "ivgr",
@@ -271,9 +269,8 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=10,
             fonte=ctx.fonte_sgs("IVGR", "IPCA_12M"),
             nota=(
-                "O IVG-R acompanha o valor de avaliação dos imóveis dados em garantia de "
-                "financiamento residencial em 13 regiões metropolitanas; a variação em 12 "
-                "meses é conta nossa sobre o índice."
+                "IVG-R: avaliação dos imóveis financiados em 13 regiões metropolitanas. A "
+                "variação em 12 meses é conta nossa."
             ),
         ),
         grafico(
@@ -292,10 +289,10 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "familias-sem-casa",
-            "Dívida das famílias com e sem o financiamento imobiliário",
+            "Dívida das famílias, com e sem a casa própria",
             [
                 serie("total", "Toda a dívida", endividamento, desde=inicio),
-                serie("sem-casa", "Sem o financiamento imobiliário", sem_casa, desde=inicio),
+                serie("sem-casa", "Sem o imobiliário", sem_casa, desde=inicio),
             ],
             unidade="% da renda de 12 meses",
             casas=1,
@@ -313,8 +310,7 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=10,
             fonte=ctx.fonte_sgs(*(chave for _, _, chave in MODALIDADES_PF)),
             nota=(
-                "Taxa média de juros das operações com recursos livres, ao ano. O rotativo é o "
-                "juro de quem paga só parte da fatura do cartão; o parcelado, o de quem divide "
+                "Recursos livres. Rotativo: quem paga só parte da fatura; parcelado: quem divide "
                 "a fatura ou a compra com juros."
             ),
         ),

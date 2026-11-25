@@ -108,13 +108,13 @@ def _grafico_inclinacao(ctx: Contexto) -> Grafico | None:
     lado = "acima" if valor >= 0 else "abaixo"
     return grafico(
         "inclinacao",
-        f"Inclinação da curva: o prefixado de {PRAZO_DA_INCLINACAO} anos menos a Selic",
+        "Inclinação da curva de juros",
         [serie("inclinacao", "Prefixado de 3 anos menos a Selic", pontos)],
         unidade="pontos percentuais",
         casas=2,
         periodicidade="M",
         janela_anos=15,
-        linhas=[LinhaRef(valor=0, rotulo="curva plana (os dois iguais)")],
+        linhas=[LinhaRef(valor=0, rotulo="curva plana")],
         manchete=(
             f"Em {periodo(quando, 'M')}, o prefixado de {PRAZO_DA_INCLINACAO} anos paga "
             f"{br(abs(valor), 2)} pp {lado} da Selic."
@@ -123,11 +123,11 @@ def _grafico_inclinacao(ctx: Contexto) -> Grafico | None:
             "Tesouro Nacional, Tesouro Direto (taxa média entre compra e venda, títulos sem "
             f"cupom); {ctx.fonte_sgs('SELIC_META')}; conta nossa"
         ),
+        # O prefixado de 3 anos sai interpolado entre os títulos sem cupom, no fim do mês.
         nota=(
-            "O juro travado por 3 anos (interpolado entre os títulos prefixados) menos a meta "
-            "da Selic, no fim de cada mês. Abaixo de zero, a curva está invertida: o mercado "
-            "conta com a Selic caindo nos anos seguintes. Bem acima de zero, conta com alta "
-            "ou cobra mais para emprestar por mais tempo; o preço não separa as duas coisas."
+            "Prefixado de 3 anos menos a meta da Selic, no fim de cada mês. Abaixo de zero, o "
+            "mercado conta com Selic em queda; acima, com alta ou prêmio de prazo, que o preço "
+            "não separa."
         ),
     )
 
@@ -219,7 +219,7 @@ def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
     graficos = [
         grafico(
             "curva-prefixada",
-            "Curva prefixada: o juro travado para cada prazo",
+            "Curva prefixada",
             tres_datas(pre, "pre"),
             tipo="curva",
             unidade="% a.a., por vencimento",
@@ -230,7 +230,7 @@ def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
         ),
         grafico(
             "curva-real",
-            "Curva de juro real: quanto o Tesouro paga acima da inflação",
+            "Curva de juro real (acima do IPCA)",
             tres_datas(real, "real"),
             tipo="curva",
             unidade="% a.a. acima do IPCA, por vencimento",
@@ -271,9 +271,8 @@ def _tesouro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Ponto]]:
                 periodicidade="D",
                 fonte=fonte.replace("títulos sem cupom", "Prefixado e IPCA+ sem cupom"),
                 nota=(
-                    "(1 + taxa prefixada) / (1 + taxa do IPCA+) − 1, com a prefixada "
-                    "interpolada para o vencimento do IPCA+. Inclui prêmio de risco: não é "
-                    "previsão pura de inflação."
+                    "(1 + prefixado) / (1 + IPCA+) − 1 no vencimento do IPCA+. Inclui prêmio "
+                    "de risco: não é previsão pura de inflação."
                 ),
             )
         )
@@ -354,11 +353,7 @@ def _mercado_x_focus(
         "Tesouro Direto (taxa média, curva zero com os títulos com cupom por bootstrap); "
         f"Focus de {periodo(dia, 'D')}"
     )
-    nota_alem = (
-        f" Vai até {periodo(horizonte, 'M')}, o fim do que o Focus projeta. A diferença junta "
-        "duas coisas que o preço não separa: o mercado esperar uma Selic (ou uma inflação) "
-        "diferente da dos economistas e o prêmio por prender o dinheiro por mais tempo."
-    )
+    ate_quando = periodo(horizonte, "M")
     alvo = date(ctx.hoje.year + 2, 1, 1)
     titulo_alvo = dict(juro_titulos).get(alvo)
     focus_alvo = dict(juro_focus).get(alvo)
@@ -374,10 +369,7 @@ def _mercado_x_focus(
                 unidade="pp",
                 periodicidade="D",
                 casas=2,
-                detalhe=(
-                    f"títulos {br(titulo_alvo, 2)} % a.a.; o CDI da Selic do Focus, "
-                    f"{br(focus_alvo, 2)} %"
-                ),
+                detalhe=f"títulos {br(titulo_alvo, 2)} %; Focus {br(focus_alvo, 2)} %",
                 fonte=fonte,
                 procedencia="calculado",
                 secao="juros",
@@ -385,10 +377,9 @@ def _mercado_x_focus(
         )
         palavra = "ponto" if round(premio, 1) == 1 else "pontos"
         frase = (
-            f" Os títulos prefixados até {periodo(alvo, 'M')} pagam {br(titulo_alvo, 1)} % ao "
-            f"ano, {br(premio, 1)} {palavra} acima do que renderia a Selic que o Focus espera no "
-            "mesmo prazo: além da Selic esperada, o preço carrega o prêmio pelo risco de "
-            "emprestar ao governo por mais tempo."
+            f" Os prefixados até {periodo(alvo, 'M')} pagam {br(titulo_alvo, 1)} % ao ano, "
+            f"{br(premio, 1)} {palavra} acima da Selic do Focus no mesmo prazo: o prêmio de "
+            "prazo e de risco."
         )
     if inflacao:
         p = inflacao[0]
@@ -401,10 +392,7 @@ def _mercado_x_focus(
                 unidade="pp",
                 periodicidade="D",
                 casas=2,
-                detalhe=(
-                    f"títulos {br(p.implicita, 2)} % a.a.; IPCA do Focus no prazo, "
-                    f"{br(focus_p, 2)} %"
-                ),
+                detalhe=f"títulos {br(p.implicita, 2)} %; Focus {br(focus_p, 2)} %",
                 fonte=fonte,
                 procedencia="calculado",
                 secao="juros",
@@ -413,12 +401,12 @@ def _mercado_x_focus(
     graficos = [
         grafico(
             "juro-titulos-focus",
-            "Juro dos títulos × Selic do Focus, prazo a prazo",
+            "Juro dos títulos × Selic do Focus",
             [
-                serie("titulos", "Títulos prefixados (curva zero)", juro_titulos, casas=2),
+                serie("titulos", "Títulos prefixados", juro_titulos, casas=2),
                 serie(
                     "focus",
-                    "CDI pela Selic do Focus",
+                    "Focus",
                     juro_focus,
                     casas=2,
                     papel="consenso",
@@ -429,11 +417,12 @@ def _mercado_x_focus(
             casas=2,
             periodicidade="M",
             fonte=fonte,
+            # Focus: o CDI médio, em dias úteis, de hoje ao vencimento, com a Selic de cada
+            # reunião e depois a de cada ano; só até onde o Focus projeta.
             nota=(
-                "Para cada vencimento, a taxa da curva zero do Tesouro e a taxa média que o CDI "
-                "teria de hoje até lá se a Selic seguisse o Focus (a de cada reunião, depois a "
-                "de cada ano), em dias úteis. A distância é o prêmio de prazo e de risco."
-                + nota_alem
+                "Curva zero do Tesouro contra o CDI que a Selic do Focus daria até cada "
+                f"vencimento, até {ate_quando}. A distância junta Selic esperada diferente e "
+                "prêmio de prazo, que o preço não separa."
             ),
         ),
     ]
@@ -441,12 +430,12 @@ def _mercado_x_focus(
         graficos.append(
             grafico(
                 "inflacao-titulos-focus",
-                "Inflação implícita × IPCA do Focus, prazo a prazo",
+                "Inflação implícita × IPCA do Focus",
                 [
-                    serie("titulos", "Implícita nos títulos", infl_titulos, casas=2),
+                    serie("titulos", "Títulos", infl_titulos, casas=2),
                     serie(
                         "focus",
-                        "IPCA do Focus no mesmo prazo",
+                        "Focus",
                         infl_focus,
                         casas=2,
                         papel="consenso",
@@ -458,11 +447,12 @@ def _mercado_x_focus(
                 periodicidade="M",
                 linhas=[LinhaRef(valor=leis.META_CONTINUA.centro, rotulo="meta")],
                 fonte=fonte,
+                # Implícita: (1 + nominal) / (1 + real) − 1 na curva zero; Focus: o IPCA de
+                # cada ano acumulado de hoje ao vencimento.
                 nota=(
-                    "Implícita: (1 + juro nominal) / (1 + juro real) − 1, as duas da curva zero "
-                    "no mesmo vencimento. Focus: o IPCA "
-                    "de cada ano acumulado de hoje até o vencimento. A implícita inclui o "
-                    "prêmio pelo risco de inflação." + nota_alem
+                    "Implícita na curva zero contra o IPCA do Focus acumulado até cada "
+                    f"vencimento, até {ate_quando}. A distância junta prêmio de risco de "
+                    "inflação e inflação esperada diferente, que o preço não separa."
                 ),
             )
         )
@@ -641,7 +631,7 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
             "Prefixado",
             "IPCA+ (juro real)",
             "Inflação implícita",
-            "IPCA do Focus no prazo",
+            "IPCA do Focus",
             "Implícita menos Focus (pp)",
             "Implícita há 1 ano",
         ],
@@ -655,26 +645,15 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
             if curtos
             else ""
         ),
+        # Fora da tela (25/11/2026, texto curto): a implícita é (1 + prefixado) / (1 + IPCA+)
+        # − 1 no mesmo prazo; o Focus vale só até onde projeta. O Tesouro Direto não vende
+        # IPCA+ curto: nos prazos curtos o juro real vem das NTN-B do mercado secundário (preço
+        # médio dos negócios no BC, na mesma curva; sem negócio no dia, a taxa do último dia
+        # com negócio), ditas na fonte; sem elas, o juro real curto fica em branco.
         nota=(
-            "Cada prazo é contado de hoje. A implícita é (1 + prefixado) / (1 + IPCA+) − 1 no "
-            "mesmo prazo e carrega o prêmio pelo risco de inflação. A linha a termo é o que a "
-            f"curva cobra de {meio} a {longo} anos daqui, sem os anos até lá: a inflação "
-            "esperada para o longo prazo, a medida que os bancos centrais acompanham. O IPCA "
-            "do Focus é o de cada ano acumulado de hoje até o prazo, só até onde o Focus "
-            "projeta. O que a implícita tem a mais junta o prêmio pelo risco de inflação, o "
-            "mercado esperar inflação diferente da dos economistas e a diferença de liquidez "
-            "entre os títulos; o preço não separa os três."
-            + (
-                " O Tesouro Direto não vende IPCA+ que vença antes de "
-                f"{min(v for v, _ in td[tesouro_direto.IPCA][dia]).year}: nos prazos curtos, o "
-                "juro real vem das NTN-B que vencem em "
-                f"{' e '.join(periodo(v, 'M') for v, _ in usados)}, pelo preço médio dos "
-                "negócios registrados no Banco Central, postas na mesma curva. Título sem "
-                "negócio no dia fica com a taxa do último dia em que teve."
-                if curtos
-                else " Sem IPCA+ curto no Tesouro Direto, o juro real dos prazos curtos fica "
-                "em branco."
-            )
+            f"Prazos contados de hoje; a linha a termo é a inflação de {meio} a {longo} anos "
+            "daqui, a que os bancos centrais acompanham. A implícita menos o Focus junta prêmio "
+            "de risco, inflação esperada diferente e liquidez, que o preço não separa."
         ),
     )
 
@@ -721,10 +700,8 @@ def _titulos_por_prazo(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list
                 linhas=[LinhaRef(valor=leis.META_CONTINUA.centro, rotulo="meta")],
                 fonte=fonte,
                 nota=(
-                    f"Um ponto por semana, sempre {prazo_grafico} anos à frente da data. O "
-                    "prefixado sobe quando sobe o juro real (o custo do dinheiro acima da "
-                    "inflação) ou a "
-                    "inflação implícita (a inflação que o preço embute, com prêmio de risco)."
+                    f"Um ponto por semana, sempre {prazo_grafico} anos à frente. A implícita "
+                    "inclui prêmio de risco."
                 ),
             )
         )
@@ -813,7 +790,7 @@ def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico],
     graficos = [
         grafico(
             "curva-di",
-            "Curva de juros: a taxa prefixada para cada prazo",
+            "Curva de juros futuros (DI)",
             [
                 serie("hoje", f"Em {periodo(referencia, 'D')}", curva, casas=3),
                 serie(
@@ -825,10 +802,7 @@ def _curva_di(ctx: Contexto, selic: float) -> tuple[list[Cartao], list[Grafico],
             casas=2,
             periodicidade="M",
             fonte=fonte + "; vencimentos com mais de 10 mil contratos em aberto",
-            nota=(
-                "Cada ponto é o juro que o mercado trava hoje até aquela data. Curva subindo: "
-                "o mercado cobra mais para prazos longos."
-            ),
+            nota="Cada ponto é o juro travado hoje até aquela data.",
         )
     ]
     return cartoes, graficos, termo
@@ -865,15 +839,14 @@ def _ciclos_alinhados(ctx: Contexto) -> list[Grafico]:
     antes, depois = 6, 36
     fonte = f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M')}; cálculo próprio"
     como_ler = (
-        "Cada linha é um ciclo de corte, com o mês do primeiro corte no zero: à esquerda, os "
-        "seis meses antes; à direita, até três anos depois. É o que aconteceu, não o que a "
-        "Selic causou (o Copom corta quando espera inflação em queda)."
+        "Um ciclo por linha, do sexto mês antes do primeiro corte a três anos depois. É o que "
+        "aconteceu, não o que a Selic causou."
     )
     nomes = {c.inicio: f"{c.rotulo} (de {_br(c.selic_antes, 2)} %)" for c in cortes}
     return [
         grafico(
             "selic-ciclos-alinhados",
-            "Selic em cada ciclo de corte, do primeiro corte em diante",
+            "Selic em cada ciclo de corte",
             [
                 serie(
                     f"c{c.inicio.year}",
@@ -885,7 +858,7 @@ def _ciclos_alinhados(ctx: Contexto) -> list[Grafico]:
             tipo="degrau",
             eixo="meses",
             marco="mês do primeiro corte",
-            subtitulo="no eixo, meses desde o primeiro corte",
+            subtitulo="meses desde o primeiro corte",
             unidade="% a.a., no fim do mês",
             casas=2,
             periodicidade="M",
@@ -894,7 +867,7 @@ def _ciclos_alinhados(ctx: Contexto) -> list[Grafico]:
         ),
         grafico(
             "ipca-ciclos-alinhados",
-            "IPCA em 12 meses em cada ciclo de corte da Selic",
+            "IPCA em cada ciclo de corte da Selic",
             [
                 serie(
                     f"c{c.inicio.year}",
@@ -905,7 +878,7 @@ def _ciclos_alinhados(ctx: Contexto) -> list[Grafico]:
             ],
             eixo="meses",
             marco="mês do primeiro corte",
-            subtitulo="no eixo, meses desde o primeiro corte",
+            subtitulo="meses desde o primeiro corte",
             unidade="% em 12 meses",
             casas=1,
             periodicidade="M",
@@ -985,26 +958,21 @@ def _ciclos_da_selic(ctx: Contexto) -> list[Tabela]:
             Tabela(
                 id=f"selic-ciclos-{sentido}",
                 titulo=titulo,
-                subtitulo=(
-                    f"O que a inflação, o dólar e a dívida fizeram quando o Copom começou a {verbo}"
-                ),
+                subtitulo=f"Inflação, dólar e dívida desde que o Copom passou a {verbo}",
                 colunas=[c.rotulo for c in deste],
                 linhas=linhas,
                 fonte=(
                     f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M', 'DOLAR', 'DBGG')}; cálculo próprio"
                 ),
+                # Fora da tela (25/11/2026, texto curto): o Copom age pelo que espera da
+                # inflação, e no mesmo período vieram safra, petróleo, crise de fora e contas
+                # públicas; o efeito da Selic sozinha está no simulador. Um e dois anos contam
+                # do mês da primeira mudança; o IPCA é o de 12 meses; o último ciclo pode não
+                # ter acabado; a dívida bruta na metodologia atual começa em dez/2006.
                 nota=(
-                    "Como ler: é o que aconteceu, não o que a Selic causou. O Copom corta quando "
-                    "espera inflação em queda e sobe quando espera alta, e no mesmo período "
-                    "vieram safra, preço do petróleo, crise de fora e contas públicas. Para o "
-                    "efeito da Selic sozinha, vale a estimativa do Banco Central, no simulador "
-                    "desta tela.\n\n"
-                    "Ciclo: mudanças seguidas no mesmo sentido; uma pausa não encerra o ciclo, "
-                    f"mas um ano parado sim ({quando}). O último pode não ter acabado. Um ano e "
-                    "dois anos contam do mês da primeira mudança da Selic; o IPCA é o acumulado "
-                    'em 12 meses; "–" é o que '
-                    "ainda não aconteceu ou o que a série não cobre (a dívida bruta na "
-                    "metodologia atual começa em dez/2006)."
+                    "É o que aconteceu, não o que a Selic causou: no mesmo período vieram "
+                    "outros choques. Ciclo: mudanças no mesmo sentido até um ano parado "
+                    f'({quando}); "–" é o que ainda não aconteceu ou a série não cobre.'
                 ),
             )
         )
@@ -1066,7 +1034,7 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
         ),
     ]
 
-    ordinal = "º trimestre"
+    ordinal = "º tri"
     pico_2021 = min(range(len(r.IPCA_MODELO_2021)), key=lambda i: r.IPCA_MODELO_2021[i])
 
     def linha(
@@ -1083,27 +1051,27 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
         return LinhaTabela(rotulo=rotulo, valores=[valor, *pontas], unidade=unidade, casas=casas)
 
     linhas = [
-        linha(f"IPCA, modelo agregado de 2024 (o máximo, no {pico}{ordinal})", ipca, "pp"),
-        linha(f"IPCA, modelo desagregado de 2024 (o máximo, no {pico}{ordinal})", ipca_outro, "pp"),
+        linha(f"IPCA, modelo agregado de 2024 (máximo, {pico}{ordinal})", ipca, "pp"),
+        linha(f"IPCA, modelo desagregado de 2024 (máximo, {pico}{ordinal})", ipca_outro, "pp"),
         linha(
-            f"IPCA, versão de {versao_da_faixa} do modelo, no {pico}{ordinal}",
+            f"IPCA, versão de {versao_da_faixa}, {pico}{ordinal}",
             r.IPCA_MODELO_2021[pico],
             "pp",
             (menos, mais),
         ),
         linha(
-            f"IPCA, versão de {versao_da_faixa} (o máximo, no {pico_2021}{ordinal})",
+            f"IPCA, versão de {versao_da_faixa} (máximo, {pico_2021}{ordinal})",
             r.IPCA_MODELO_2021[pico_2021],
             "pp",
             (r.IPCA_FAIXA_90_MENOR[pico_2021], r.IPCA_FAIXA_90_MAIOR[pico_2021]),
         ),
         *[
-            linha(f"IPCA, versão de {versao} (o máximo)", valor, "pp")
+            linha(f"IPCA, versão de {versao} (máximo)", valor, "pp")
             for versao, valor in r.IPCA_NAS_VERSOES
             if not versao.startswith(versao_da_faixa)
         ],
         *[
-            linha(f"{g.grupo}, 2024 (o máximo, no {g.trimestre}{ordinal})", g.maximo, "pp")
+            linha(f"{g.grupo}, 2024 (máximo, {g.trimestre}{ordinal})", g.maximo, "pp")
             for g in r.IPCA_POR_GRUPO
         ],
         linha(
@@ -1115,13 +1083,13 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
         linha("Dívida bruta do governo geral, em 12 meses", bruta, "pp do PIB"),
         linha("Dívida líquida do setor público, em 12 meses", liquida, "pp do PIB"),
         linha(
-            "Para comparar: dólar 10 % mais caro, no IPCA dos 12 meses seguintes",
+            "Comparação: dólar 10 % mais caro, IPCA em 12 meses",
             r.IPCA_POR_10_DE_DOLAR_12M,
             "pp",
             casas=1,
         ),
         linha(
-            "Para comparar: dólar 10 % mais caro, no IPCA dos 24 meses seguintes",
+            "Comparação: dólar 10 % mais caro, IPCA em 24 meses",
             r.IPCA_POR_10_DE_DOLAR_24M,
             "pp",
             casas=1,
@@ -1129,28 +1097,23 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
     ]
     tabela = Tabela(
         id="selic-contas-bc",
-        titulo="Selic 1 pp mais alta por um ano: as contas do Banco Central",
-        subtitulo="A estimativa e a faixa de erro que o BC publica, conta a conta",
+        titulo="Selic 1 pp mais alta por um ano: as contas do BC",
+        subtitulo="A estimativa e a faixa de 90 % que o BC publica",
         colunas=["Estimativa", "Faixa de 90 %: de", "a"],
         linhas=linhas,
         fonte=(
             f"{r.FONTE_EFEITO_SELIC}; {r.FONTE_FAIXA_DO_IPCA}; Relatórios de Inflação de "
             f"set/2020 e mar/2021; {r.FONTE_REPASSE_CAMBIAL}; {fonte_divida}"
         ),
+        # Fora da tela (25/11/2026, texto curto): as estimativas das quatro versões cabem na
+        # faixa de 2021; a dívida é conta de estoque (quanto dela segue a Selic), sem faixa.
+        # Modelos estimados desde 2003; depois de um ano a Selic volta aos poucos; o efeito
+        # no IPCA já inclui o que passa pelo dólar. Números lidos à mão em 14/11/2026.
         nota=(
-            "Como ler: cada linha é quanto o número fica diferente do que seria com a Selic 1 "
-            "ponto mais alta durante um ano e o resto igual; com a Selic 1 ponto mais baixa, o "
-            "sinal troca. A estimativa é o meio; a faixa de 90 % diz que, pela conta do BC, em "
-            "9 de cada 10 casos o efeito fica entre as duas pontas. No IPCA, a ponta de mais "
-            "efeito é o triplo da de menos: sabe-se o sentido, não o tamanho.\n\n"
-            "A faixa do IPCA é a que o BC publicou na versão de "
-            f"{versao_da_faixa} do modelo; a de {periodo(r.EFEITO_SELIC_EM, 'M')}, a vigente, "
-            "saiu sem faixa, e as estimativas das quatro versões cabem todas nela. O traço é "
-            "onde o BC não publicou faixa (a dívida é conta de estoque: quanto dela segue a "
-            "Selic). Modelos estimados com dados desde 2003; depois de um ano, a Selic volta "
-            "aos poucos, como o BC costuma reagir. O efeito no IPCA já inclui o que passa pelo "
-            f"dólar. Dívida: com os dados de {periodo(r.ELASTICIDADES_EM, 'M')}. Números lidos "
-            "à mão nos relatórios em 14/11/2026."
+            "Diferença com a Selic 1 ponto mais alta por um ano e o resto igual (mais baixa, "
+            "sinal trocado); em 9 de cada 10 casos, o efeito fica entre as pontas da faixa. "
+            f"A faixa do IPCA é a da versão de {versao_da_faixa} (a de "
+            f'{periodo(r.EFEITO_SELIC_EM, "M")} saiu sem); "–" é onde o BC não publicou faixa.'
         ),
     )
 
@@ -1181,15 +1144,8 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
     erro_divida = erro_do_focus("Dívida bruta do governo geral", de_dezembro("DBGG"))
     medidos = [e for e in (erro_ipca, erro_dolar, erro_divida) if e]
     desde = min(min(e.anos) for e in medidos) if medidos else None
-    desde_do_erro = ""
-    if erro_ipca:
-        desde_do_erro = f" (IPCA desde {min(erro_ipca.anos)}"
-        if erro_divida:
-            desde_do_erro += (
-                f"; dívida desde {min(erro_divida.anos)}, e nela parte do erro é o PIB "
-                "revisado depois"
-            )
-        desde_do_erro += ")"
+    # O erro do Focus é a média de quanto a mediana desta época do ano errou o ano seguinte;
+    # na dívida, parte do erro é o PIB revisado depois.
 
     focus_selic = focus("Selic")
 
@@ -1218,7 +1174,7 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
         ipca_desagregado=r.IPCA_MODELO_DESAGREGADO,
         ipca_faixa_menor=r.IPCA_FAIXA_90_MENOR,
         ipca_faixa_maior=r.IPCA_FAIXA_90_MAIOR,
-        faixa_do_ipca=f"faixa de 90 % do BC, da versão de {versao_da_faixa} do modelo",
+        faixa_do_ipca=f"faixa de 90 % do BC ({versao_da_faixa})",
         dolar_por_pp=r.DOLAR_POR_PP_DE_SELIC,
         dolar_por_pp_faixa=r.DOLAR_POR_PP_DE_SELIC_FAIXA,
         divida_por_pp_de_selic=bruta,
@@ -1234,40 +1190,22 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
             f"{periodo(bcb_focus.data_da_ultima_edicao(), 'D')}; soma das parcelas da dívida: "
             "cálculo próprio"
         ),
+        # Fora da tela (25/11/2026, texto curto): inflação é a resposta do IPCA em quatro
+        # trimestres, já com o que passa pelo dólar e pela expectativa; dólar é o coeficiente
+        # da equação de câmbio, com o juro dos EUA e o risco-país parados; dívida, as
+        # elasticidades da nota fiscal do BC. A faixa da dívida soma as pontas do dólar e da
+        # inflação (larga de propósito); a parcela dos juros não tem faixa. Depois do ano, a
+        # Selic volta aos poucos. A dívida longa sente menos em um ano do que sentirá depois.
         como_ler=(
-            "Como ler: não é previsão do que vai acontecer. É quanto cada número se afasta do "
-            f"que o Focus espera para {ano} se a Selic ficar diferente durante o ano inteiro e "
-            "todo o resto ficar igual. O número grande é a estimativa do meio; logo abaixo vem "
-            "a faixa de 90 % do Banco Central: pela conta dele, em 9 de cada 10 casos o efeito "
-            "fica entre as pontas, e na inflação a ponta de cima é o triplo da de baixo. Na "
-            "régua, o traço de cima é o Focus com o quanto ele costuma errar nesta época do "
-            "ano, e o de baixo é onde o número iria parar com a mudança. Sabe-se melhor o "
-            "sentido do efeito do que o tamanho."
+            f"Não é previsão: é quanto cada número se afasta do Focus para {ano} com a Selic "
+            "diferente o ano todo e o resto igual. O número grande é o meio, com a faixa de "
+            "90 % do BC (na inflação, a ponta de cima é o triplo da de baixo); na régua, o "
+            "Focus com o erro típico dele e onde o número iria parar."
         ),
         nota=(
-            "Conta: cada número é uma estimativa publicada pelo Banco Central para 1 ponto de "
-            "Selic, multiplicada pela mudança escolhida (os modelos dele são lineares: o dobro "
-            "da mudança dá o dobro do efeito, e corte e alta têm o mesmo tamanho com o sinal "
-            "trocado). Inflação: a resposta do IPCA de quatro trimestres a uma Selic diferente "
-            "por um ano; já inclui o que passa pelo dólar e pela inflação esperada. Dólar: o "
-            f"coeficiente da equação de câmbio do mesmo modelo ({br(-r.DOLAR_POR_PP_DE_SELIC, 2)} "
-            "% por ponto), com o juro dos Estados Unidos e o risco do país parados. Dívida: as "
-            f"elasticidades da nota de estatísticas fiscais do BC ({br(bruta, 2)} pp do PIB por "
-            f"ponto de Selic em 12 meses, {br(r.ELASTICIDADE_DOLAR.bruta, 2)} por 1 % de dólar e "
-            f"{br(r.ELASTICIDADE_PRECOS.bruta, 2)} por ponto de inflação); somar as três é conta "
-            "nossa. Depois do ano, a Selic volta aos poucos, como o BC costuma reagir.\n\n"
-            "Faixas: a da inflação é a de 90 % que o BC publicou na versão de "
-            f"{versao_da_faixa} do modelo (a vigente, de {periodo(r.EFEITO_SELIC_EM, 'M')}, "
-            "saiu sem faixa; as estimativas das quatro versões, de 0,24 a 0,33 por ponto, cabem "
-            "nela). A do dólar é a de 90 % do coeficiente. Na dívida, a parcela dos juros é "
-            "conta de estoque, sem faixa; a faixa soma as pontas do dólar e da inflação, o que "
-            "a deixa larga de propósito. O erro do Focus é a média de quanto a mediana desta "
-            "época do ano errou o ano seguinte" + desde_do_erro + ".\n\n"
-            "O que nenhuma faixa cobre: se um corte for lido como descuido com a inflação, o "
-            "risco do país e a inflação esperada sobem mais do que o modelo supõe, e o dólar e "
-            "os preços respondem mais. Mudança grande sai da região em que o modelo foi "
-            "estimado. E a dívida de prazo mais longo sente menos em um ano do que sentirá "
-            "depois."
+            "Estimativas do BC para 1 ponto de Selic, vezes a mudança; somar as parcelas da "
+            "dívida é conta nossa. Nenhuma faixa cobre um corte lido como descuido com a "
+            "inflação nem mudança grande, fora do que o modelo viu."
         ),
     )
     return cartoes, [tabela], simulador
@@ -1323,8 +1261,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="D",
             casas=2,
             detalhe=(
-                f"neste nível desde {periodo(desde_quando, 'D')}"
-                + (f"; próxima decisão em {periodo(proxima, 'D')}" if proxima else "")
+                f"desde {periodo(desde_quando, 'D')}"
+                + (f"; próximo Copom em {periodo(proxima, 'D')}" if proxima else "")
             ),
             fonte=ctx.fonte_sgs("SELIC_META"),
             secao="juros",
@@ -1394,7 +1332,7 @@ def montar(ctx: Contexto) -> Secao:
     try:
         cartoes_td, graficos_di, embutida = _tesouro(ctx)
         cartoes[2:2] = cartoes_td
-        origem = "nos títulos prefixados do Tesouro"
+        origem = "nos títulos do Tesouro"
         g_inclinacao = _grafico_inclinacao(ctx)
         if g_inclinacao:
             graficos_di.append(g_inclinacao)
@@ -1443,18 +1381,16 @@ def montar(ctx: Contexto) -> Secao:
     inicio = date(ctx.hoje.year - 20, 1, 1)
     trajetoria = [
         serie("meta", "Selic meta", _mudancas(meta), desde=inicio),
-        serie("focus", "Focus, por reunião (mediana)", esperada, papel="consenso"),
+        serie("focus", "Focus (mediana)", esperada, papel="consenso"),
     ]
-    nota_selic = (
-        "O Focus pergunta a Selic de cada reunião do Copom. As reuniões futuras estão "
-        "no mês em que caiu a reunião de mesma ordem no último calendário conhecido."
-    )
+    # Reunião futura vai no mês da de mesma ordem no último calendário conhecido. A embutida
+    # é a taxa a termo entre vencimentos (dias úteis, base 252) mais a distância de hoje
+    # entre a Selic meta e o CDI.
+    nota_selic = "Focus: a mediana para cada reunião do Copom."
     if embutida:
         trajetoria.append(serie("curva", f"Embutida {origem}", embutida, papel="previsao"))
         nota_selic += (
-            f" Embutida {origem}: taxa a termo entre vencimentos consecutivos (dias úteis, "
-            "base 252), somada a distância de hoje entre a Selic meta e o CDI; carrega prêmio "
-            "de risco, e por isso costuma ficar acima do que os economistas projetam."
+            f" A embutida {origem} carrega prêmio de risco e costuma ficar acima do Focus."
         )
     graficos = [
         grafico(
