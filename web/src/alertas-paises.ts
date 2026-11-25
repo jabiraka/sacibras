@@ -27,16 +27,16 @@ export const PARES: Record<string, Par> = {
     nome: "Dívida bruta do governo geral",
     pior_quando: "alto",
     conceito:
-      "Conceito do FMI, que soma os títulos do Tesouro na carteira do Banco Central: para o " +
-      "Brasil dá mais que a DBGG do painel, mas é a mesma régua para todos os países.",
+      "Conceito do FMI, com os títulos na carteira do Banco Central: dá mais que a DBGG do " +
+      "painel, mas é a mesma régua para todos.",
   },
   primario: {
     metrica: "primario",
     nome: "Resultado primário",
     pior_quando: "baixo",
     conceito:
-      "Governo geral no conceito do FMI (receitas menos despesas, sem estatais nem o Banco " +
-      "Central); o número do painel é o do Banco Central, para o setor público consolidado.",
+      "Governo geral, pelo FMI (sem estatais nem o Banco Central); o painel usa o setor " +
+      "público consolidado, do Banco Central.",
   },
   juros: {
     metrica: "juros",
@@ -65,9 +65,8 @@ export const PARES: Record<string, Par> = {
     pior_quando: "baixo",
     unidade: "meses",
     conceito:
-      "Pelo FMI, para todos: reservas no fim do ano (o ouro a preço de mercado) sobre a " +
-      "importação de bens e serviços do ano. O número do painel é o do Banco Central, sobre a " +
-      "importação só de bens, por isso dá mais meses.",
+      "Pelo FMI: reservas no fim do ano sobre a importação de bens e serviços. O painel " +
+      "(Banco Central) usa só bens, por isso dá mais meses.",
   },
   "vol-dolar": {
     metrica: "vol_cambio",
@@ -75,8 +74,8 @@ export const PARES: Record<string, Par> = {
     pior_quando: "alto",
     unidade: "% a.a.",
     conceito:
-      "O mesmo cálculo do painel (21 dias úteis, levado ao ano) sobre o câmbio diário do BIS " +
-      "para todos; os países do euro têm todos o euro, e os EUA ficam de fora.",
+      "O cálculo do painel (21 dias úteis, levado ao ano) sobre o câmbio diário do BIS; " +
+      "a zona do euro conta como uma moeda, e os EUA ficam de fora.",
   },
   "hiato-credito": {
     metrica: "hiato_credito",
@@ -109,7 +108,7 @@ export const EXTRAS: (Par & { id: string; explica: string })[] = [
     pior_quando: "alto",
     conceito:
       "Juros e amortizações de famílias e empresas sobre a renda (BIS). O painel mede só as " +
-      "famílias, pelo Banco Central; o BIS não separa as famílias para o Brasil.",
+      "famílias (Banco Central), que o BIS não separa para o Brasil.",
     explica: "Quanto mais da renda vai para pagar dívida, menos sobra para gastar e investir.",
   },
   {

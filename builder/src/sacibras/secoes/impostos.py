@@ -226,10 +226,11 @@ def _arrecadacao(
             casas=0,
             periodicidade="M",
             fonte=fonte,
+            # A série começa em 2013: antes, o arquivo da Receita não traz a previdência por
+            # estado.
             nota=(
-                "Soma dos 12 meses de tudo o que a Receita arrecada (impostos, contribuições "
-                "e a previdência do INSS), cada mês levado a preços de hoje pelo IPCA. A série "
-                "começa em 2013: antes, o arquivo da Receita não traz a previdência por estado."
+                "Tudo o que a Receita arrecada, INSS incluído, a preços de hoje pelo IPCA. "
+                "Começa em 2013, quando o arquivo passa a trazer o INSS."
             ),
         )
     ]
@@ -245,10 +246,7 @@ def _arrecadacao(
                     [serie("total", "Arrecadação federal", total_pib, casas=2)],
                     unidade="% do PIB",
                     periodicidade="M",
-                    nota=(
-                        "Soma dos 12 meses de tudo o que a Receita arrecada sobre o PIB dos "
-                        "mesmos 12 meses."
-                    ),
+                    nota="Soma de 12 meses sobre o PIB dos mesmos meses.",
                     fonte=fonte_pib,
                 )
             ]
@@ -262,10 +260,7 @@ def _arrecadacao(
             [serie("total", "Arrecadação federal", cresc, casas=2)],
             unidade="% em 12 meses",
             periodicidade="M",
-            nota=(
-                "Os 12 meses contra os 12 anteriores, os dois a preços de hoje pelo IPCA. "
-                "Negativo é queda real."
-            ),
+            nota="12 meses contra os 12 anteriores, a preços de hoje. Negativo é queda real.",
         ),
     )
     graficos += [
@@ -289,10 +284,7 @@ def _arrecadacao(
             casas=1,
             periodicidade="M",
             fonte=fonte_pib,
-            nota=(
-                "Imposto de Renda junta pessoa física, empresas e o retido na fonte. A "
-                "contribuição ao INSS é a de empresas e trabalhadores ao Regime Geral."
-            ),
+            nota="IR: pessoas, empresas e retido na fonte. INSS: empresas e trabalhadores.",
         ),
     ]
     graficos[-1] = com_variantes(
@@ -318,10 +310,7 @@ def _arrecadacao(
             unidade=f"R$ bilhões de {quando}, em 12 meses",
             casas=0,
             periodicidade="M",
-            nota=(
-                "Soma de 12 meses, cada mês levado a preços de hoje pelo IPCA. Imposto de "
-                "Renda junta pessoa física, empresas e o retido na fonte."
-            ),
+            nota="Soma de 12 meses, a preços de hoje pelo IPCA. IR inclui o retido na fonte.",
             fonte=fonte,
         ),
     )
@@ -370,10 +359,7 @@ def _arrecadacao(
             colunas=[f"R$ bi de {quando}", "% do PIB", "crescimento real, %"],
             linhas=linhas,
             fonte=fonte_pib,
-            nota=(
-                "O % do PIB usa o PIB de 12 meses até o último mês com PIB no Banco Central; "
-                "o crescimento real compara os 12 meses com os 12 anteriores."
-            ),
+            nota="Crescimento real: 12 meses contra os 12 anteriores.",
         )
     ]
     frase = (
@@ -382,7 +368,7 @@ def _arrecadacao(
     )
     if cresc:
         frase += f", {br(abs(cresc[-1][1]))} % {'a mais' if cresc[-1][1] >= 0 else 'a menos'}"
-        frase += " que nos 12 meses anteriores, descontada a inflação"
+        frase += " que nos 12 anteriores, sem a inflação"
     return cartoes, graficos, tabelas, frase + "."
 
 
@@ -422,12 +408,11 @@ def _por_estado(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela
             f"{receita_arrecadacao.FONTE}; população: Tesouro Nacional, cadastro de entes do "
             "SICONFI (estimativa do IBGE)"
         ),
+        # O DF (órgãos federais e estatais), SP e RJ (sedes de empresas e bancos) aparecem
+        # com mais do que a economia local explicaria.
         nota=(
-            "O imposto conta para o estado do endereço fiscal de quem paga, não para onde a "
-            "venda ou o trabalho aconteceu: o Distrito Federal (órgãos federais e estatais) e "
-            "São Paulo e Rio de Janeiro (sedes de empresas e bancos) aparecem com mais do que "
-            "a economia local explicaria. O ICMS de cada estado, por habitante, está em "
-            "Estados."
+            "Conta no estado do endereço fiscal de quem paga, o que infla DF, SP e RJ. O ICMS "
+            "por habitante está em Estados."
         ),
     )
     return [], [], [tabela], ""
@@ -489,9 +474,8 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
             periodicidade="A",
             fonte=fonte,
             nota=(
-                "Tributos e contribuições sociais de todo o governo, no método da OCDE (o "
-                "mesmo para todos os países). O número da Receita Federal para o Brasil sai "
-                "um pouco diferente, por outro método."
+                "Todo o governo, no método da OCDE, igual para todos os países. O número da "
+                "Receita sai um pouco diferente."
             ),
         ),
         grafico(
@@ -506,12 +490,11 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
             casas=1,
             periodicidade="A",
             fonte=fonte,
+            # A OCDE põe o IPVA em bens e serviços; o imposto de importação também está lá.
             nota=(
-                "Bens e serviços: ICMS, ISS, IPI, Cofins, PIS, imposto de importação. Renda e "
-                "lucro: Imposto de Renda e CSLL. Contribuições sociais: INSS de empresas e "
-                "trabalhadores e a previdência dos servidores. Folha: salário-educação e o "
-                "Sistema S. Patrimônio: IPTU, ITCMD, ITBI, ITR e o IOF (a OCDE põe o IPVA em "
-                "bens e serviços)."
+                "Bens e serviços: ICMS, ISS, IPI, PIS e Cofins; renda: IR e CSLL; "
+                "contribuições: INSS e previdência dos servidores. Folha: salário-educação e "
+                "Sistema S; patrimônio: IPTU, ITBI, ITCMD, ITR e IOF."
             ),
         ),
         grafico(
@@ -523,10 +506,7 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
             casas=1,
             periodicidade="A",
             fonte=fonte,
-            nota=(
-                'Na OCDE, a contribuição ao INSS conta à parte, como "previdência" (fundos '
-                "de seguridade social), e não na União."
-            ),
+            nota='Na OCDE, o INSS conta à parte, como "previdência", e não na União.',
         ),
     ]
 
@@ -560,7 +540,7 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
         Tabela(
             id="carga-paises",
             titulo="A carga e a composição, Brasil e outros países",
-            subtitulo=f"{ano}; a carga em % do PIB e cada base em % da carga",
+            subtitulo=f"{ano}; carga em % do PIB, bases em % da carga",
             colunas=[
                 "carga, % do PIB",
                 "bens e serviços, %",
@@ -571,10 +551,9 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
             linhas=linhas,
             fonte=fonte,
             nota=(
-                'As bases somam perto de 100 % (o resto é "outros"). Os estudos que ligam '
-                "imposto e crescimento olham mais para esta composição do que para o total: "
-                "tributo sobre renda de empresas e sobre salário tende a pesar mais no "
-                "investimento e no emprego do que tributo sobre consumo e propriedade."
+                'As bases somam perto de 100 % (o resto é "outros"). Para o crescimento, os '
+                "estudos olham mais a composição: imposto sobre lucro e salário tende a pesar "
+                "mais que sobre consumo e patrimônio."
             ),
         )
     ]
@@ -661,19 +640,16 @@ def _bases_paises(ctx: Contexto) -> Pecas:
     ]
     tabela = Tabela(
         id="carga-bases-paises",
-        titulo="Imposto de renda, consumo e salário: o Brasil e outros países",
+        titulo="IR, consumo e salário: Brasil e outros países",
         subtitulo=f"{ano}; % do PIB",
         colunas=list(BASES_DETALHADAS.values()),
         linhas=linhas,
         fonte=fonte,
+        # IR das pessoas inclui o retido na fonte; mesmo método para todos os países.
         nota=(
-            "IR das pessoas: o Imposto de Renda de quem trabalha, se aposenta ou investe, "
-            "inclusive o retido na fonte. Consumo em geral: os tributos sobre quase tudo o que "
-            "se vende (no Brasil, ICMS, IPI, PIS, Cofins e ISS; lá fora, o IVA). Produtos "
-            "específicos: os que pesam só sobre alguns bens, como combustível, bebida e "
-            "cigarro, e o imposto de importação. Sobre o salário: contribuições à previdência "
-            "de quem trabalha e de quem emprega e as contribuições sobre a folha (no Brasil, "
-            "salário-educação e Sistema S). Mesmo método para todos os países."
+            "Consumo em geral: ICMS, IPI, PIS, Cofins e ISS (lá fora, o IVA); produtos "
+            "específicos: combustível, bebida, cigarro e importação. Salário: previdência de "
+            "quem trabalha e de quem emprega e a folha (salário-educação e Sistema S)."
         ),
     )
     return cartoes, [], [tabela], ""
@@ -708,7 +684,6 @@ def _crescimento(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
         )
     r = correlacao([p.x for p in pontos], [p.y for p in pontos])
     periodo_txt = f"{anos[0]} a {anos[-1]}"
-    brasil = next((p for p in pontos if p.chave == "BRA"), None)
     fonte = f"{ocde_receita.FONTE}; FMI, World Economic Outlook (PIB real por habitante)"
     graficos = [
         Grafico(
@@ -723,22 +698,15 @@ def _crescimento(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
             dispersao=Dispersao(
                 eixo_x=EixoDispersao(nome="Carga tributária média", unidade="% do PIB", casas=1),
                 eixo_y=EixoDispersao(
-                    nome="Crescimento médio do PIB por habitante", unidade="% ao ano", casas=1
+                    nome="Crescimento do PIB por habitante", unidade="% ao ano", casas=1
                 ),
                 pontos=pontos,
                 correlacao=round(r, 2),
             ),
+            # País que cresce também pode passar a cobrar mais; o Brasil é um ponto do gráfico.
             nota=(
-                f"{len(pontos)} países com carga na OCDE e PIB no FMI. Correlação de "
-                f"{br(r, 2)}: {em_palavras(r)}. Andar junto não quer dizer que um cause o "
-                "outro: país rico tende a cobrar mais e a crescer menos, por já ter "
-                "crescido; e país que cresce pode cobrar mais."
-                + (
-                    f" Brasil: carga de {br(brasil.x)} % e crescimento de "
-                    f"{br(brasil.y)} % ao ano por habitante."
-                    if brasil
-                    else ""
-                )
+                f"{len(pontos)} países; correlação de {br(r, 2)} ({em_palavras(r)}). Andar "
+                "junto não é causa: país rico tende a cobrar mais e a crescer menos."
             ),
         )
     ]
@@ -783,7 +751,7 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
                     [
                         serie(
                             "ploa",
-                            "Previsto no projeto de orçamento",
+                            "Previsto no orçamento",
                             [(date(p.ano, 1, 1), p.pct_pib) for p in previstos],
                             papel="previsao",
                         )
@@ -797,14 +765,14 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
             casas=1,
             periodicidade="A",
             fonte=fonte + (f"; {receita_gastos.FONTE_PLOA}" if previstos else ""),
+            # Realizado: as "bases efetivas" da Receita. Previsto: o que a Receita estimou ao
+            # mandar o projeto de orçamento de cada ano ao Congresso.
             nota=(
-                "Isenções, reduções de alíquota e regimes especiais dos tributos federais, no "
-                'valor realizado ("bases efetivas") que a Receita publica com uns dois anos '
-                "de atraso. Não entram os benefícios de ICMS e ISS dos estados e municípios."
+                "Isenções e regimes especiais federais, sem os de ICMS e ISS; o realizado sai "
+                "com dois anos de atraso."
                 + (
-                    " A linha tracejada é o que a Receita previu ao mandar o orçamento de cada "
-                    f"ano ao Congresso; para {previstos[-1].ano}, "
-                    f"R$ {br(previstos[-1].total / 1e9, 0)} bi."
+                    f" Tracejado: o previsto no orçamento (para {previstos[-1].ano}, "
+                    f"R$ {br(previstos[-1].total / 1e9, 0)} bi)."
                     if previstos
                     else ""
                 )
@@ -830,8 +798,8 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
             linhas=linhas,
             fonte=fonte,
             nota=(
-                "Agricultura e agroindústria inclui a cesta básica sem Cofins e PIS. Simples "
-                "Nacional é o quanto o regime cobra a menos do que as regras gerais cobrariam."
+                "Agricultura inclui a cesta básica sem PIS e Cofins. Simples: o que o regime "
+                "cobra a menos que as regras gerais."
             ),
         )
     ]
@@ -853,10 +821,7 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
                     for nome, v in sorted(nova.regioes.items(), key=lambda x: -x[1])
                 ],
                 fonte=fonte,
-                nota=(
-                    "A região é a de quem deixou de pagar (a sede da empresa ou o endereço da "
-                    "pessoa), pela divisão que a própria Receita faz."
-                ),
+                nota="Região de quem deixou de pagar (sede da empresa ou endereço da pessoa).",
             )
         )
     frase = (
@@ -896,7 +861,7 @@ def _simulador_da_reforma(
         ),
         cartao(
             "reforma-aliquota-cheia",
-            "IBS + CBS em 2033: alíquota cheia estimada",
+            "Alíquota cheia de 2033 (IBS + CBS)",
             [(r.ALIQUOTA_COMITE_GESTOR_EM, r.ALIQUOTA_COMITE_GESTOR)],
             unidade="%",
             periodicidade="D",
@@ -922,7 +887,7 @@ def _simulador_da_reforma(
     estimativas = Tabela(
         id="reforma-aliquota",
         titulo="A alíquota cheia de 2033: as contas oficiais",
-        subtitulo="IBS mais CBS, para o que não tem desconto; ninguém sabe ainda o número",
+        subtitulo="IBS mais CBS sem desconto; o número final ainda não existe",
         colunas=["Estimativa"],
         linhas=[
             LinhaTabela(
@@ -932,13 +897,13 @@ def _simulador_da_reforma(
                 casas=2,
             ),
             LinhaTabela(
-                rotulo="IBS do Comitê Gestor mais a CBS do TCU para 2027",
+                rotulo="IBS do Comitê Gestor + CBS do TCU",
                 valores=[round(soma_recente, 2)],
                 unidade="%",
                 casas=2,
             ),
             LinhaTabela(
-                rotulo="Teto da lei: acima dele, o governo propõe cortar descontos",
+                rotulo="Teto da lei",
                 valores=[leis.TETO_IBS_CBS],
                 unidade="%",
                 casas=2,
@@ -948,17 +913,15 @@ def _simulador_da_reforma(
             f"{r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; {leis.TETO_IBS_CBS_NORMA}; "
             "somas: cálculo próprio"
         ),
+        # O Comitê Gestor refaz a conta todo ano; o número definitivo só sai no fim da
+        # transição. A CBS do TCU para 2027 ficou acima da estimativa anterior
+        # (relatorios.CBS_ESTIMATIVA_ANTERIOR), e a CBS de 2033 pode ser outra. O teto vale
+        # pela estimativa de 2030 para 2033.
         nota=(
-            "Como ler: a alíquota cheia é a que repõe a arrecadação dos impostos que saem. "
-            "Quanto mais coisa tem desconto, mais alta ela fica para o resto. O número "
-            "definitivo só se conhece no fim da transição; o Comitê Gestor refaz a conta todo "
-            "ano.\n\n"
-            f"A CBS que o TCU calculou para 2027 ({br(r.CBS_REFERENCIA_2027, 1)} %) ficou acima "
-            f"dos {br(r.CBS_ESTIMATIVA_ANTERIOR, 2)} % esperados; somá-la ao IBS do Comitê Gestor "
-            f"({br(r.IBS_COMITE_GESTOR, 1)} %) é conta nossa, e a CBS de 2033 pode ser outra. O "
-            f"teto de {br(leis.TETO_IBS_CBS, 1)} % não trava a alíquota sozinho: se a estimativa "
-            "de 2030 para 2033 passar dele, o governo tem de mandar ao Congresso um projeto que "
-            "a traga de volta."
+            "A alíquota cheia repõe a arrecadação que sai: quanto mais desconto, mais alta "
+            f"para o resto. Somar a CBS do TCU ({br(r.CBS_REFERENCIA_2027, 1)} %) ao IBS do "
+            f"Comitê ({br(r.IBS_COMITE_GESTOR, 1)} %) é conta nossa; acima do teto, o governo "
+            "tem de propor ao Congresso como voltar a ele."
         ),
     )
 
@@ -966,7 +929,7 @@ def _simulador_da_reforma(
         TipoDeCompra(
             id="cheia",
             rotulo="Compra comum, sem desconto",
-            descricao="A maioria das compras e dos serviços paga a alíquota cheia",
+            descricao="A maioria das compras e serviços",
             paga=100.0,
             volta_cbs=leis.DEVOLUCAO_GERAL,
             volta_ibs=leis.DEVOLUCAO_GERAL,
@@ -975,10 +938,7 @@ def _simulador_da_reforma(
         TipoDeCompra(
             id="contas",
             rotulo="Conta de luz, água, gás, telefone",
-            descricao=(
-                "Luz, água, esgoto, gás encanado, botijão e telefone pagam a alíquota cheia; a "
-                "devolução à baixa renda é maior"
-            ),
+            descricao="Luz, água, esgoto, gás e telefone",
             paga=100.0,
             volta_cbs=leis.DEVOLUCAO_CBS_CONTAS_DE_CASA,
             volta_ibs=leis.DEVOLUCAO_IBS_CONTAS_DE_CASA,
@@ -987,10 +947,7 @@ def _simulador_da_reforma(
         TipoDeCompra(
             id="menos-60",
             rotulo="Saúde, educação, alimento (−60 %)",
-            descricao=(
-                "60 % de desconto para saúde, educação, remédios, alimentos e higiene das "
-                "listas da lei"
-            ),
+            descricao="Saúde, educação, remédio, alimento e higiene das listas",
             paga=100.0 - leis.REDUCAO_SAUDE_EDUCACAO_ALIMENTOS,
             volta_cbs=leis.DEVOLUCAO_GERAL,
             volta_ibs=leis.DEVOLUCAO_GERAL,
@@ -999,10 +956,7 @@ def _simulador_da_reforma(
         TipoDeCompra(
             id="menos-30",
             rotulo="Advogado, engenheiro… (−30 %)",
-            descricao=(
-                "30 % de desconto para serviços de dezoito profissões com conselho, como "
-                "advogado, engenheiro e contador"
-            ),
+            descricao="18 profissões com conselho, como advogado e contador",
             paga=100.0 - leis.REDUCAO_PROFISSIONAIS,
             volta_cbs=leis.DEVOLUCAO_GERAL,
             volta_ibs=leis.DEVOLUCAO_GERAL,
@@ -1011,7 +965,7 @@ def _simulador_da_reforma(
         TipoDeCompra(
             id="cesta",
             rotulo="Cesta básica (alíquota zero)",
-            descricao="Alimentos da Cesta Básica Nacional, na lista da lei, não pagam IBS nem CBS",
+            descricao="Cesta Básica Nacional, na lista da lei",
             paga=0.0,
             volta_cbs=0.0,
             volta_ibs=0.0,
@@ -1021,7 +975,7 @@ def _simulador_da_reforma(
     descontos = Tabela(
         id="reforma-descontos",
         titulo="Quem paga menos que a alíquota cheia",
-        subtitulo="Os descontos da lei e o que volta para a família de baixa renda",
+        subtitulo="Descontos da lei e devolução à baixa renda",
         colunas=["Paga da alíquota cheia", "Volta da CBS", "Volta do IBS"],
         linhas=[
             LinhaTabela(
@@ -1030,15 +984,12 @@ def _simulador_da_reforma(
             for t in tipos
         ],
         fonte=leis.REFORMA_NORMAS,
+        # União, estados e municípios podem devolver mais que o mínimo da lei. Combustíveis,
+        # bancos, planos de saúde, imóveis, bares e restaurantes estão na tabela dos regimes.
         nota=(
-            "Como ler: a primeira coluna é quanto da alíquota cheia cada tipo de compra paga. As "
-            "outras duas são o imposto devolvido à família inscrita no Cadastro Único com renda "
-            "de até meio salário mínimo por pessoa (o cashback): a CBS volta para o que for "
-            f"consumido de 2027 em diante, e o IBS, de {leis.DEVOLUCAO_DO_IBS_DESDE}. União, "
-            "estados e municípios podem devolver mais.\n\n"
-            "O desconto vale para o que está nas listas da lei, não para tudo o que o nome "
-            "sugere (nem todo alimento, nem todo remédio). Combustíveis, bancos, planos de saúde, "
-            "imóveis, bares e restaurantes têm regras próprias, na tabela dos regimes."
+            "Devolução: à família do Cadastro Único com até meio salário mínimo por pessoa, a "
+            f"CBS desde 2027 e o IBS desde {leis.DEVOLUCAO_DO_IBS_DESDE}. O desconto vale só "
+            "para as listas da lei, não para todo alimento ou remédio."
         ),
     )
 
@@ -1052,9 +1003,8 @@ def _simulador_da_reforma(
                 ibs=leis.IBS_2027_2028,
                 devolve_ibs=False,
                 aviso=(
-                    "Nestes dois anos o ICMS e o ISS continuam inteiros, e este simulador não os "
-                    "calcula: mudam de estado para estado e de produto para produto. A CBS é o "
-                    "cálculo do TCU; o Senado ainda fixa a alíquota de 2027."
+                    "ICMS e ISS seguem inteiros e ficam fora da conta. CBS do TCU; o Senado "
+                    "ainda fixa a de 2027."
                 ),
             ),
             EtapaDaReforma(
@@ -1063,10 +1013,7 @@ def _simulador_da_reforma(
                 cbs=None,
                 ibs=None,
                 devolve_ibs=True,
-                aviso=(
-                    "ICMS, ISS, PIS, Cofins e IPI já saíram: no preço ficam só o IBS e a CBS "
-                    "(e o Imposto Seletivo em cigarro, bebida, carro e outros, fora desta conta)."
-                ),
+                aviso="Só IBS e CBS no preço; o Imposto Seletivo fica fora da conta.",
             ),
         ],
         etapa_inicial="2033",
@@ -1086,25 +1033,18 @@ def _simulador_da_reforma(
             "multiplicações: cálculo próprio"
         ),
         como_ler=(
-            "Como ler: o valor que você digita é o preço sem IBS nem CBS; o imposto é cobrado "
-            "em cima dele. O número grande usa a alíquota do controle; a faixa logo abaixo vai "
-            f"do teto que a lei manda perseguir ({br(leis.TETO_IBS_CBS, 1)} %) à soma das contas "
-            f"oficiais mais recentes ({br(soma_recente, 1)} %). A alíquota de 2033 ainda não "
-            "existe: o que se sabe é mais ou menos onde ela cai, não o número."
+            "O valor digitado é o preço sem IBS nem CBS. A faixa vai do teto da lei "
+            f"({br(leis.TETO_IBS_CBS, 1)} %) à soma das contas oficiais "
+            f"({br(soma_recente, 1)} %): a alíquota de 2033 ainda não existe."
         ),
+        # A parte que cada compra paga é 100, 70, 40 ou zero % pela lei. Não há número oficial
+        # do imposto de hoje por produto (ICMS, ISS, PIS e Cofins se somam de jeitos diferentes
+        # em cada estado e cadeia); a reforma foi desenhada para arrecadar o mesmo no total.
         nota=(
-            "Conta: imposto = valor × alíquota cheia × a parte que o tipo de compra paga (100 "
-            "%, 70 %, 40 % ou zero, pela lei). A devolução à família de baixa renda é o "
-            "percentual da lei sobre o imposto pago; em 2033, para separar a CBS do IBS, usa-se "
-            f"a divisão da conta do Comitê Gestor ({br(r.IBS_COMITE_GESTOR, 1)} de IBS em "
-            f"{br(r.ALIQUOTA_COMITE_GESTOR, 2)}).\n\n"
-            "O que a conta não diz: quanto de imposto há hoje na mesma compra. Não existe "
-            "número oficial por produto (ICMS, ISS, PIS e Cofins se somam de jeitos diferentes "
-            "em cada estado e em cada cadeia), então o simulador não compara o antes com o "
-            "depois. A reforma foi desenhada para arrecadar o mesmo no total; o que muda é "
-            "quanto cada coisa paga. Também ficam de fora os regimes próprios (combustíveis, "
-            "bancos, planos de saúde, imóveis, bares e restaurantes), o Simples Nacional e o "
-            "Imposto Seletivo (as regras dos dois estão na tabela logo abaixo)."
+            "Imposto = valor × alíquota × a parte que a compra paga; em 2033, o IBS é "
+            f"{br(r.IBS_COMITE_GESTOR, 1)} de {br(r.ALIQUOTA_COMITE_GESTOR, 2)} pontos, pela "
+            "conta do Comitê Gestor. Não compara com o imposto de hoje (não há número oficial "
+            "por produto) e deixa fora os regimes próprios, o Simples e o Seletivo."
         ),
     )
     return cartoes, [estimativas, descontos], simulador
@@ -1136,14 +1076,13 @@ def _por_setor(ctx: Contexto) -> Pecas:
         colunas=["R$ bi", "% do total"],
         linhas=linhas,
         fonte="Receita Federal, arrecadação por seção da CNAE (dados abertos)",
+        # A administração pública aparece pelo imposto retido dos servidores e pela
+        # previdência. Setores com menos de 0,5 % do total ficam fora. Em 2026 a Receita
+        # parece ter mudado grandes empresas de setor: por isso só o último ano fechado.
         nota=(
-            "O setor é o da atividade principal de quem recolhe o imposto, não o de quem "
-            "arca com ele: a indústria e o comércio recolhem tributos que vão no preço ao "
-            "consumidor, e os bancos, o imposto retido das aplicações dos clientes. A "
-            "administração pública aparece pelo imposto retido dos servidores e pela "
-            "contribuição à previdência. Setores com menos de 0,5 % do total ficam de fora. "
-            f"Mostra-se o último ano fechado ({ano}): em 2026 a Receita parece ter mudado "
-            "grandes empresas de setor, e os meses de 2026 não se comparam com os de antes."
+            "O setor é o de quem recolhe, não o de quem arca: a indústria recolhe o que vai no "
+            "preço, e o banco, o retido dos clientes. Último ano fechado; em 2026 a Receita "
+            "mudou empresas de setor."
         ),
     )
     return [], [], [tabela], ""
@@ -1197,13 +1136,12 @@ def _previsto(ctx: Contexto) -> Pecas:
             "Relatório de Avaliação de Receitas e Despesas Primárias (orçamento e previsão); "
             "Tesouro Nacional, Resultado do Tesouro Nacional, tabela 1.1 (realizado)"
         ),
+        # A previsão desconta incentivos fiscais; o realizado do Tesouro pode ter pequena
+        # diferença de conceito. A Receita divulga cada mês entre os dias 21 e 30 do mês
+        # seguinte, sem calendário publicado.
         nota=(
-            "A cada dois meses o governo refaz a conta de quanto espera arrecadar no ano. A "
-            "última coluna diz quanto do total do ano passado já tinha entrado nos mesmos "
-            'meses: se o "% da previsão" está perto dela, a arrecadação anda no ritmo '
-            "previsto. A previsão desconta incentivos fiscais; o realizado do Tesouro pode "
-            "ter pequena diferença de conceito. A Receita divulga a arrecadação de cada mês "
-            "entre os dias 21 e 30 do mês seguinte, sem calendário publicado."
+            'O governo refaz a previsão a cada dois meses. Se o "% da previsão" está perto '
+            "da última coluna, a arrecadação anda no ritmo previsto."
         ),
     )
     return [], [], [tabela], ""
@@ -1222,8 +1160,7 @@ def _divida_ativa(ctx: Contexto) -> Pecas:
             casas=2,
             periodicidade="A",
             detalhe=(
-                f"imposto e outras dívidas não pagas; {br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % "
-                "tido como perda"
+                f"dívidas não pagas; {br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % tido como perda"
             ),
             fonte=relatorios.FONTE_DIVIDA_ATIVA,
             secao="impostos",
@@ -1236,7 +1173,7 @@ def _divida_ativa(ctx: Contexto) -> Pecas:
         colunas=[str(a) for a in anos],
         linhas=[
             LinhaTabela(
-                rotulo="Dívida ativa (o que está em cobrança)",
+                rotulo="Dívida ativa (em cobrança)",
                 valores=[estoque[a] for a in anos],
                 unidade="",
                 casas=1,
@@ -1258,13 +1195,11 @@ def _divida_ativa(ctx: Contexto) -> Pecas:
             ),
         ],
         fonte=relatorios.FONTE_DIVIDA_ATIVA,
+        # A perda é de empresas falidas ou sem bens.
         nota=(
-            "Dívida ativa é o imposto (e outras dívidas com a União) que não foi pago no "
-            "prazo e passou à cobrança da Procuradoria da Fazenda. O número é grande, mas a "
-            f"maior parte não volta: de {ano}, o próprio governo conta "
-            f"{br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % como perda (empresas falidas ou sem "
-            f"bens) e espera recuperar R$ {br(relatorios.DIVIDA_ATIVA_A_RECUPERAR, 0)} bi em "
-            "15 anos."
+            "Dívida com a União não paga no prazo, cobrada pela Procuradoria da Fazenda. De "
+            f"{ano}, o governo conta {br(relatorios.DIVIDA_ATIVA_PERDA, 0)} % como perda e "
+            f"espera recuperar R$ {br(relatorios.DIVIDA_ATIVA_A_RECUPERAR, 0)} bi em 15 anos."
         ),
     )
     return cartoes, [], [tabela], ""
@@ -1280,8 +1215,8 @@ def _quem_paga(ctx: Contexto) -> Pecas:
         tabelas.append(
             Tabela(
                 id="quem-paga-irpf",
-                titulo="Imposto de Renda por faixa de renda de quem declara",
-                subtitulo=f"declarações de {ano + 1}, renda de {ano}; faixas em salários mínimos",
+                titulo="Imposto de Renda por faixa de renda",
+                subtitulo=f"declarações de {ano + 1}, renda de {ano}; em salários mínimos",
                 colunas=[
                     "declarantes, mil",
                     "renda total, R$ bi",
@@ -1303,24 +1238,19 @@ def _quem_paga(ctx: Contexto) -> Pecas:
                     for f in faixas
                 ],
                 fonte=f"{receita_irpf.FONTE}, ano-calendário {ano} (tabela 8)",
+                # A faixa de até meio salário mínimo tem imposto por rendimentos atrasados
+                # recebidos de uma vez. O imposto é o da tabela progressiva da declaração.
                 nota=(
-                    f'O imposto pesa mais na faixa "{maior.nome.lower()}" salários mínimos '
-                    f"({br(maior.aliquota)} % da renda) e cai daí para cima: na faixa mais alta, "
-                    f"{br(topo.isentos / topo.renda * 100, 0)} % da renda é isenta (boa parte, "
-                    "lucros e dividendos) e o imposto fica em "
-                    f"{br(topo.aliquota)} %.\n\nO imposto aqui é o da declaração (tabela "
-                    "progressiva). Falta o retido na fonte sobre 13º, aplicações e ganho de "
-                    "capital, que a planilha não traz: no topo, onde esses rendimentos pesam, "
-                    "a conta sai menor do que o que a pessoa pagou. Só entra quem declara "
-                    f"({br(sum(f.declarantes for f in faixas) / 1e6)} milhões de pessoas). "
-                    "A faixa de até meio salário mínimo tem "
-                    "imposto por rendimentos atrasados recebidos de uma vez."
+                    f"No topo, {br(topo.isentos / topo.renda * 100, 0)} % da renda é isenta "
+                    "(boa parte, lucros e dividendos). Imposto da declaração, sem o retido "
+                    "sobre 13º, aplicações e ganho de capital, o que diminui a conta no topo; "
+                    f"só quem declara ({br(sum(f.declarantes for f in faixas) / 1e6)} milhões)."
                 ),
             )
         )
         frase = (
-            f"No Imposto de Renda de {ano}, quem declarou mais de 320 salários mínimos pagou "
-            f"{br(topo.aliquota)} % da renda na declaração, menos que a faixa de "
+            f"No IR de {ano}, quem declarou mais de 320 salários mínimos pagou "
+            f"{br(topo.aliquota)} % da renda, menos que a faixa de "
             f"{maior.nome.lower().removeprefix('de ')} ({br(maior.aliquota)} %)"
         )
     except Exception as erro:
@@ -1386,7 +1316,7 @@ def _aliquotas(ctx: Contexto) -> Pecas:
     graficos = [
         grafico(
             "imposto-lucro",
-            "Imposto sobre o lucro das empresas: Brasil e o mundo",
+            "Imposto sobre o lucro: Brasil e o mundo",
             [
                 serie("bra", "Brasil", _pontos_anuais(por_pais["BRA"])),
                 serie("mediana", "Mediana dos países", medianas),
@@ -1396,10 +1326,8 @@ def _aliquotas(ctx: Contexto) -> Pecas:
             periodicidade="A",
             fonte=fonte,
             nota=(
-                "A alíquota cheia da lei para uma empresa grande, somando todas as esferas de "
-                "governo. Não é o que as empresas pagam de fato: deduções, incentivos e "
-                "regimes como o Simples e o lucro presumido fazem a conta efetiva ser outra. "
-                "Mediana: metade dos países cobra mais, metade cobra menos."
+                "Alíquota da lei para empresa grande, todas as esferas. Não é o que se paga de "
+                "fato (deduções, incentivos, Simples, lucro presumido)."
             ),
         )
     ]
@@ -1411,11 +1339,7 @@ def _aliquotas(ctx: Contexto) -> Pecas:
             colunas=["alíquota, %"],
             linhas=linhas,
             fonte=fonte,
-            nota=(
-                "A OCDE só publica com o Brasil o imposto sobre o lucro das empresas. Para o "
-                "Imposto de Renda da pessoa física, o imposto sobre o consumo e o que pesa "
-                "sobre o salário, as bases comparáveis da OCDE não trazem o Brasil."
-            ),
+            nota="Das alíquotas da lei que a OCDE compara, só esta traz o Brasil.",
         )
     ]
     return cartoes, graficos, tabelas, ""
@@ -1435,13 +1359,12 @@ def _reforma(ctx: Contexto) -> Pecas:
             "Emenda Constitucional nº 132/2023 (arts. 124 a 133 do ADCT) e Lei Complementar "
             "nº 214/2025, lidas no Senado Federal (publicação original)"
         ),
+        # Para 2027, o TCU calculou a CBS (tabela da alíquota cheia). A emenda foi lida na
+        # publicação original; a lei complementar, também no texto atualizado.
         nota=(
-            "A reforma troca cinco tributos sobre o consumo (PIS, Cofins e IPI, federais; "
-            "ICMS, estadual; ISS, municipal) por dois de mesma base, a CBS (federal) e o IBS "
-            "(de estados e municípios), mais o Imposto Seletivo. As alíquotas cheias ainda "
-            "não existem: o Senado as fixa no ano anterior a cada uma (para 2027, o TCU "
-            "calculou a da CBS; as contas estão na tabela da alíquota cheia). A emenda foi "
-            "lida na publicação original; a lei complementar, também no texto atualizado."
+            "PIS, Cofins, IPI, ICMS e ISS viram a CBS (federal) e o IBS (de estados e "
+            "municípios), mais o Imposto Seletivo. As alíquotas cheias ainda não existem: o "
+            "Senado fixa cada uma no ano anterior."
         ),
     )
     return [], [], [tabela], ""
@@ -1520,18 +1443,14 @@ def _transferencias(ctx: Contexto) -> Pecas:
         ],
         linhas=[linha for _, linha in linhas],
         fonte=fonte,
+        # Valores que chegam ao ente, já sem os 20 % do Fundeb (metadado do Tesouro). Última
+        # coluna: FPE e FPM sobre a arrecadação federal no estado (todos os tributos), que
+        # conta no endereço fiscal de quem paga e infla DF, SP e RJ.
         nota=(
-            f"FPE e FPM somados (no país, R$ {br(total_fpe / 1e9, 0)} bi de FPE e "
-            f"R$ {br(total_fpm / 1e9, 0)} bi de FPM). "
-            "O FPE vai ao governo do estado e o FPM, às prefeituras; os dois saem do Imposto "
-            "de Renda e do IPI arrecadados pela União e são repartidos com mais peso para os "
-            "estados e municípios mais pobres e menores. Os valores são os que chegam ao ente, "
-            "já sem os 20 % que vão para o Fundeb (metadado do Tesouro). A última coluna "
-            "divide o FPE e o FPM pela arrecadação federal no estado (todos os tributos, 12 "
-            f"meses até {periodo(ate_receita, 'M')}): acima de 100, o estado recebe nesses "
-            "dois fundos mais do que a Receita arrecada nele. A arrecadação conta para o "
-            "endereço fiscal de quem paga, o que infla o Distrito Federal, São Paulo e o Rio de "
-            "Janeiro."
+            "O FPE vai ao estado e o FPM às prefeituras, já sem o Fundeb; saem do IR e do IPI, "
+            "com mais peso para os mais pobres. Acima de 100 na última coluna (arrecadação "
+            f"até {periodo(ate_receita, 'M')}), o estado recebe mais do que a Receita arrecada "
+            "nele."
         ),
     )
     return cartoes, [], [tabela], ""
@@ -1540,7 +1459,6 @@ def _transferencias(ctx: Contexto) -> Pecas:
 def _quem_paga_retido(ctx: Contexto) -> Pecas:
     """O imposto pago antes da declaração (retido na fonte, carnê-leão) e o acerto, por faixa."""
     ano, faixas = receita_irpf.grandes_numeros()
-    pago = sum(f.pago for f in faixas)
     restituir = sum(f.a_restituir for f in faixas)
     a_pagar = sum(f.a_pagar for f in faixas)
     tabela = Tabela(
@@ -1562,17 +1480,12 @@ def _quem_paga_retido(ctx: Contexto) -> Pecas:
             for f in faixas
         ],
         fonte=f"{receita_irpf.FONTE}, ano-calendário {ano} (tabela 8)",
+        # O retido em definitivo (13º, aplicações, ganho de capital, participação nos lucros)
+        # não passa pelo acerto e fica fora; a renda, no denominador, inclui tudo.
         nota=(
-            "Pago antes: o imposto retido na fonte (no salário, na aposentadoria, no aluguel "
-            "pago por empresa), o carnê-leão e o que foi pago no exterior, durante o ano. "
-            "Devido: o que a declaração calcula. Se o pago antes passa do devido, a Receita "
-            "devolve a diferença; se fica abaixo, a pessoa paga no acerto. O saldo é o pago no "
-            "acerto menos o devolvido: negativo, a faixa recebeu mais de volta. No total, "
-            f"R$ {br(pago / 1e9, 0)} bi foram pagos antes, R$ {br(restituir / 1e9, 0)} bi "
-            f"voltaram como restituição e R$ {br(a_pagar / 1e9, 0)} bi foram pagos na "
-            "declaração. Não entra o imposto retido sobre 13º, aplicações, ganho de capital e "
-            "participação nos lucros, que é definitivo e não passa pelo acerto; a renda, no "
-            "denominador, inclui tudo."
+            "Pago antes: retido na fonte, carnê-leão e pago no exterior; saldo negativo, a "
+            f"faixa recebeu mais de volta. No total, R$ {br(restituir / 1e9, 0)} bi "
+            f"restituídos e R$ {br(a_pagar / 1e9, 0)} bi pagos no acerto."
         ),
     )
     return [], [], [tabela], ""
@@ -1605,13 +1518,11 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
         casas=0,
         periodicidade="A",
         fonte="Emenda Constitucional nº 132/2023 (ADCT, arts. 126, 128 e 129)",
+        # O IPI vai a zero em 2027, menos no que a Zona Franca fabrica; os benefícios fiscais
+        # do ICMS e do ISS caem na mesma proporção; o IBS sobe no lugar.
         nota=(
-            "Quanto da alíquota de hoje cada imposto ainda cobra em cada ano. PIS e Cofins "
-            "acabam em 2027, quando entra a CBS (o IPI vai a zero no mesmo ano, menos no que a "
-            "Zona Franca de Manaus fabrica). O ICMS e o ISS ficam inteiros até 2028, caem para "
-            "9/10 em 2029, 8/10 em 2030, 7/10 em 2031, 6/10 em 2032 e acabam em 2033; os "
-            "benefícios fiscais deles caem na mesma proporção. O IBS sobe no lugar, na "
-            "alíquota que o Senado fixar a cada ano."
+            "PIS e Cofins acabam em 2027, quando entra a CBS. ICMS e ISS caem um décimo por "
+            "ano de 2029 a 2032 e acabam em 2033."
         ),
     )
     retido = leis.IBS_PELA_RECEITA_ANTIGA
@@ -1623,13 +1534,13 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
         [
             serie(
                 "antes",
-                "Pela receita de ICMS e ISS de antes",
+                "Pela receita antiga",
                 [(date(a, 1, 1), retido[a]) for a in anos_destino],
                 casas=1,
             ),
             serie(
                 "destino",
-                "Pelo destino (onde se consome)",
+                "Pelo destino",
                 [(date(a, 1, 1), (100 - retido[a]) * (1 - seguro)) for a in anos_destino],
                 casas=1,
             ),
@@ -1645,22 +1556,19 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
         casas=1,
         periodicidade="A",
         fonte=f"{leis.IBS_DESTINO_NORMA}; a conta ano a ano: cálculo próprio",
+        # De 2029 a 2032, 80 % do IBS vai pela receita média antiga de ICMS e ISS; em 2033,
+        # 90 %; depois, cai 1/45 por ano até acabar em 2078. Do resto, 5 % vão aos que mais
+        # perdem e 95 % pelo destino.
         nota=(
-            "Como o IBS de estados e municípios é repartido. Hoje o ICMS fica, em boa parte, "
-            "com o estado onde a mercadoria é feita (a origem); o IBS vai para onde ela é "
-            "consumida (o destino). A troca é lenta: de 2029 a 2032, 80 % do IBS é repartido "
-            "pela receita média de ICMS e ISS que cada um tinha; em 2033, 90 %; depois, essa "
-            "parte cai 1/45 por ano até acabar em 2078. Do resto, 5 % vão aos que mais perdem "
-            "com a troca e 95 %, pelo destino. A conta de cada ano é nossa, a partir do texto "
-            "da emenda. Quanto cada estado ganha ou perde não tem número oficial publicado: "
-            "depende do consumo e das alíquotas de cada um."
+            "Conta nossa, ano a ano, sobre o texto da emenda: a parte pela receita antiga "
+            "some até 2078. Quanto cada estado ganha ou perde não tem número oficial."
         ),
         largura="inteira",
     )
     regras = Tabela(
         id="reforma-seletivo-simples",
         titulo="Imposto Seletivo e Simples Nacional",
-        subtitulo="o que a lei complementar diz; as alíquotas do Seletivo ficam para outra lei",
+        subtitulo="as alíquotas do Seletivo ficam para outra lei",
         colunas=["O que a lei diz", "Onde está"],
         linhas=[
             LinhaTabela(rotulo=r.tema, valores=[], unidade="", textos=[r.diz, r.norma])
@@ -1671,18 +1579,15 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
             "Câmara dos Deputados; Emenda Constitucional nº 132/2023"
         ),
         nota=(
-            "O Imposto Seletivo é federal e cobra a mais sobre o que faz mal à saúde ou ao meio "
-            "ambiente; não dá crédito a quem compra depois. A lei complementar diz sobre o que "
-            "ele incide e deixa as alíquotas para uma lei ordinária (as tabelas por produto não "
-            "estão na lei complementar). No Simples, a empresa pequena continua com a guia "
-            "única, mas quem compra dela abate menos imposto: por isso a lei deixa que ela "
-            "pague o IBS e a CBS por fora."
+            "O Seletivo é federal, cobra a mais sobre o que faz mal à saúde ou ao meio ambiente "
+            "e não dá crédito. No Simples, quem compra abate menos imposto; por isso a empresa "
+            "pode pagar IBS e CBS por fora."
         ),
     )
     regimes = Tabela(
         id="reforma-regimes",
         titulo="Quem tem regra própria na reforma",
-        subtitulo="combustíveis, bancos, planos de saúde, imóveis e os outros regimes da lei",
+        subtitulo="combustíveis, bancos, planos de saúde, imóveis e outros",
         colunas=["O que muda", "Onde está"],
         linhas=[
             LinhaTabela(rotulo=r.tema, valores=[], unidade="", textos=[r.diz, r.norma])
@@ -1692,12 +1597,11 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
             "Lei Complementar nº 214/2025, em texto atualizado (com a LC nº 227/2026), lida na "
             "Câmara dos Deputados (Títulos IV e V do Livro I)"
         ),
+        # Os descontos são sobre a alíquota cheia do IBS e da CBS.
         nota=(
-            "Regime específico é o setor em que a conta do imposto é outra: a base (só a "
-            "margem, nos bancos e nos planos de saúde), a alíquota (em reais por litro, nos "
-            "combustíveis) ou o crédito de quem compra. Os descontos são sobre a alíquota "
-            "cheia do IBS e da CBS. Sem crédito para quem compra quer dizer que a empresa que "
-            "paga o restaurante ou o hotel não abate esse imposto do que deve."
+            "Muda a base (só a margem, em bancos e planos), a alíquota (por litro, nos "
+            "combustíveis) ou o crédito. Sem crédito: a empresa que paga o hotel ou o "
+            "restaurante não abate o imposto."
         ),
     )
     return [], [transicao, destino], [regras, regimes], ""
@@ -1822,12 +1726,12 @@ def _esferas(ctx: Contexto) -> Pecas:
                     "FMI, Government Finance Statistics (COFOG), União (governo central), "
                     f"estados e municípios, {ano}"
                 ),
+                # FPE, FPM e a cota do ICMS dos municípios estão em repasses; o repasse com
+                # destino certo (SUS, Fundeb) fica na função dele. Na União, a proteção social
+                # é quase toda o INSS.
                 nota=(
-                    "Cada esfera conta o que paga, inclusive o que repassa às outras: o FPE, "
-                    "o FPM e a cota do ICMS dos municípios estão em repasses; o repasse com "
-                    "destino certo (o SUS, o Fundeb) fica na função dele. Por isso as três "
-                    "despesas somadas passam da do governo geral. Na União, a proteção social "
-                    "é quase toda o INSS. Cada estado, um por um, em Estados › Mapa e ranking."
+                    "Cada esfera conta o que paga, repasses inclusive; por isso a soma passa "
+                    "da do governo geral. Cada estado em Estados › Mapa e ranking."
                 ),
             )
         )

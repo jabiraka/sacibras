@@ -142,7 +142,7 @@ export function ligarTraducao(): void {
     caixa.append(rotulo, lista);
     if (alvo !== ORIGINAL) {
       caixa.append(
-        el("p", "idioma-aviso", "Tradução automática do português (Google Tradutor). Os números e as fontes são os do original."),
+        el("p", "idioma-aviso", "Tradução automática (Google Tradutor). Números e fontes são os do original."),
       );
       caixa.lastElementChild?.setAttribute("id", "idioma-aviso");
     }

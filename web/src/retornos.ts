@@ -61,7 +61,7 @@ export function montarRetornos(g: Grafico): HTMLElement {
   const titulos = el("div");
   titulos.append(
     el("h3", "", g.titulo),
-    el("p", "sub", "Retorno no período, em %, antes de imposto · toque numa aplicação para pô-la no gráfico"),
+    el("p", "sub", "Retorno no período, em %, antes de imposto · toque numa aplicação para vê-la no gráfico"),
   );
   cabeca.append(titulos);
   const barra = el("div", "barra-controles");

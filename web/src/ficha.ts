@@ -221,8 +221,8 @@ function montarPiramideDoEstado(c: ContasEstado, p: Piramide): HTMLElement {
     janela_anos: null,
     fonte: c.fonte_piramide ?? "IBGE, Projeções da População",
     nota:
-      `Homens à esquerda, mulheres à direita, em % da população do estado no ano. O contorno é ${p.ano_contorno}. ` +
-      `Até ${p.primeiro_ano_projetado - 1}, dado ajustado aos Censos; depois, projeção do IBGE, que conta também quem muda de estado.`,
+      `Homens à esquerda, mulheres à direita, em % da população do estado; contorno: ${p.ano_contorno}. ` +
+      `Até ${p.primeiro_ano_projetado - 1}, ajustado aos Censos; depois, projeção do IBGE (com quem muda de estado).`,
     largura: "inteira",
     piramide: p,
   };

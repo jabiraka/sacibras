@@ -125,6 +125,32 @@ DETALHE_MAXIMO = 60
 resultado, escreva só o essencial, sem muitos detalhes e contextos"). O resto vai na nota do
 gráfico ou no glossário."""
 
+NOTA_FRASES = 2
+NOTA_MAXIMA = 240
+"""Nota em até duas frases: o método e a ressalva que muda a leitura (Caio, 25/11/2026:
+"Diminua os textos [...] só informações relevantes nos textos"). O detalhe fica no código."""
+
+_FIM_DE_FRASE = re.compile(r"[.!?](?:\s+|$)")
+
+
+def frases(texto: str) -> int:
+    """Quantas frases tem o texto (conta o ponto seguido de espaço ou do fim)."""
+    return len([f for f in _FIM_DE_FRASE.split(texto.strip()) if f.strip()])
+
+
+def textos_longos(secao: Secao) -> list[str]:
+    """As notas que passam de duas frases ou de `NOTA_MAXIMA` letras, para o aviso do build."""
+    pecas: list[tuple[str, str]] = []
+    for g in achatar_graficos(secao.graficos):
+        pecas.append((g.id, g.nota))
+        pecas.extend((f"{g.id}/{v.id}", v.nota) for v in g.variantes)
+    pecas.extend((t.id, t.nota) for t in achatar_tabelas(secao.tabelas))
+    return [
+        f"{id} ({frases(nota)} frases, {len(nota)} letras)"
+        for id, nota in pecas
+        if nota and (frases(nota) > NOTA_FRASES or len(nota) > NOTA_MAXIMA)
+    ]
+
 
 def _partes(dados: object) -> list[ItemSubcategoria]:
     """As subcategorias de uma seção (modelo ou JSON antigo), só id e título, para o menu."""
@@ -282,6 +308,9 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 for c in secao.cartoes:
                     if len(c.detalhe) > DETALHE_MAXIMO:
                         print(f"  aviso: {id}: detalhe longo em {c.id} ({len(c.detalhe)} letras)")
+                longas = textos_longos(secao)
+                if longas:
+                    print(f"  aviso: {id}: nota longa em " + ", ".join(longas))
             _gravar(saida, arquivo, secao)
             extra = ctx.memo.pop(f"{id}_paises", None)  # o arquivo à parte da seção, se houver
             if extra is not None:

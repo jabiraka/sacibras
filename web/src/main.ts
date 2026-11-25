@@ -286,7 +286,7 @@ function montarPeca(g: Grafico): HTMLElement {
 function caixaDoSimuladorSelic(sim: SimuladorSelic): HTMLElement {
   const caixa = guardar(
     "E se a Selic mudar?",
-    "Corte ou suba a taxa e veja o que o Banco Central estima para a inflação, o dólar e a dívida",
+    "Mude a taxa e veja o que o Banco Central estima para inflação, dólar e dívida",
     () => montarSimuladorSelic(sim),
   );
   caixa.id = "simulador-selic";
@@ -297,7 +297,7 @@ function caixaDoSimuladorSelic(sim: SimuladorSelic): HTMLElement {
 function caixaDoSalarioMinimo(c: ComparadorSalario): HTMLElement {
   const caixa = guardar(
     "Salário mínimo contra a inflação",
-    "Escolha o período e compare o reajuste do mínimo com o IPCA",
+    "O reajuste do mínimo contra o IPCA, no período escolhido",
     () => montarComparadorSalario(c),
   );
   caixa.id = "salario-minimo-comparador";
@@ -308,7 +308,7 @@ function caixaDoSalarioMinimo(c: ComparadorSalario): HTMLElement {
 function caixaDoSimuladorReforma(sim: SimuladorReforma): HTMLElement {
   const caixa = guardar(
     "Quanto de imposto vai numa compra?",
-    "Escolha o valor, o tipo de compra e o ano, e veja o IBS e a CBS da reforma",
+    "O IBS e a CBS por valor, tipo de compra e ano",
     () => montarSimuladorReforma(sim),
   );
   caixa.id = "simulador-reforma";
@@ -361,7 +361,7 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
     alvo.append(
       guardar(
         "Simule a dívida pública",
-        "Mexa no juro, no crescimento, na inflação e no primário e veja para onde ela vai",
+        "Mude juro, crescimento, inflação e primário e veja aonde ela vai",
         () => montarSimulador(simulador),
       ),
     );
@@ -383,7 +383,7 @@ function preencherEssencial(item: HTMLElement, c: Cartao, aoVivo: boolean): void
   item.replaceChildren();
   item.title =
     `${c.detalhe && !aoVivo ? `${c.detalhe}. ` : ""}Fonte: ${c.fonte}` +
-    (aoVivo ? ". Lido agora, direto da fonte, mais novo que a última rodada do painel." : "");
+    (aoVivo ? ". Lido agora, direto da fonte." : "");
   const valor = el("strong");
   valorComUnidade(c, valor);
   item.append(valor, el("span", "rotulo", c.rotulo));
@@ -614,7 +614,7 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
   const lema = el(
     "p",
     "lema entra",
-    "As perguntas que mais se fazem sobre a economia, respondidas com o dado oficial, a data e a fonte.",
+    "As perguntas mais comuns sobre a economia, com o dado oficial, a data e a fonte.",
   );
   lema.style.setProperty("--i", "2");
   heroi.append(selo, titulo, lema);
@@ -740,7 +740,7 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   if (p.extras.includes("simulador") && simulador) {
     const caixa = guardar(
       "Simule a dívida pública",
-      "Mexa no juro, no crescimento, na inflação e no primário e veja para onde ela vai",
+      "Mude juro, crescimento, inflação e primário e veja aonde ela vai",
       () => montarSimulador(simulador),
     );
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;

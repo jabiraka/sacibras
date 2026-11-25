@@ -341,7 +341,7 @@ export function montarMundo(m: Mundo): HTMLElement {
           "p",
           "posicao",
           conjunto === MEDIAS
-            ? "A fonte desta métrica não publica médias de grupos: escolha os países principais ou um grupo para ver os países dele."
+            ? "Esta fonte não publica médias de grupos: escolha os países principais ou um grupo."
             : `Sem ${metrica.nome.toLowerCase()} em ${ano} para estes países.`,
         ),
       );
@@ -507,7 +507,7 @@ export function montarMundo(m: Mundo): HTMLElement {
           `Verde: Brasil. Cinza: os outros países. ` +
             (grupo ? `Pontos menores: os países de ${grupo.nome}. ` : "") +
             (pontos.some((p) => p.marca === "grupo") ? "Losangos: as médias dos grupos do FMI. " : "") +
-            `Ano: ${ano}${projetado(eixoX, ano) || projetado(eixoY, ano) ? " (projeção do FMI em ao menos uma das métricas)" : ""}. `,
+            `Ano: ${ano}${projetado(eixoX, ano) || projetado(eixoY, ano) ? " (com projeção do FMI)" : ""}. `,
         ),
       );
       if (fora.length || comExtremos) {
@@ -524,7 +524,7 @@ export function montarMundo(m: Mundo): HTMLElement {
         if (fora.length) {
           notaDispersao.append(
             document.createTextNode(
-              `Fora do desenho, por estarem muito longe dos outros: ${lista}${fora.length > 6 ? ` e mais ${fora.length - 6}` : ""}. `,
+              `Fora do desenho, longe demais dos outros: ${lista}${fora.length > 6 ? ` e mais ${fora.length - 6}` : ""}. `,
             ),
           );
         }

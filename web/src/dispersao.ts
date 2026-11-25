@@ -105,7 +105,7 @@ export function montarDispersao(g: Grafico, d: Dispersao): HTMLElement {
           .join(", ");
         aviso.append(
           document.createTextNode(
-            `Fora do desenho, por estarem muito longe dos outros: ${lista}${fora.length > 6 ? ` e mais ${fora.length - 6}` : ""}. `,
+            `Fora do desenho, longe demais dos outros: ${lista}${fora.length > 6 ? ` e mais ${fora.length - 6}` : ""}. `,
           ),
         );
       }
