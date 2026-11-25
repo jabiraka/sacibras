@@ -1019,18 +1019,25 @@ ANUNCIOS_FISCAIS: list[AnuncioFiscal] = [
 
 @dataclass(frozen=True)
 class AnoDoPLDO:
-    """Um ano do Anexo de Metas Fiscais do projeto, em % do PIB (o PIB, em % ao ano)."""
+    """Um ano do Anexo de Metas Fiscais do projeto: resultados e dívida em % do PIB, taxas e
+    crescimento em % ao ano."""
 
     meta: float | None
-    """Meta de primário do Governo Central; de 2028 em diante, indicativa."""
+    """Meta de primário do Governo Central; de 2028 a 2030, indicativa; depois, não há."""
     primario: float
-    """O primário projetado antes dos descontos que a apuração da meta admite."""
+    """O primário do Governo Central projetado antes dos descontos que a meta admite."""
+    regionais: float
+    """O primário projetado dos estados e municípios."""
     divida: float
     """Dívida bruta do governo geral no fim do ano."""
+    implicita: float
+    """Taxa de juros implícita nominal da dívida bruta."""
     pib: float
     """Crescimento real do PIB que o governo supõe."""
+    deflator: float
+    """Variação do deflator do PIB que o governo supõe."""
     selic: float
-    """Selic média do ano que o governo supõe, % ao ano."""
+    """Selic média do ano que o governo supõe."""
 
 
 PLDO_2027_LIDO_EM = date(2026, 11, 25)
@@ -1043,20 +1050,32 @@ PLDO_2027_META_BI = 73.216092959
 PLDO_2027_FAIXA_BI = (36.60804648, 109.824139439)
 PLDO_2027_ESTABILIZA = 2.2
 """O primário que estabilizaria a dívida bruta em 2027, pelo próprio anexo (% do PIB)."""
+# Anexo IV.3, Tabela 1 (dívida, primário "GC" e "GR": "2031 87,0 1,31 0,05" ... "2036 83,4
+# 1,50 0,02"), Tabela 2, "Taxa Implícita de Juros da DBGG", coluna "Nominal" ("2026 11,8";
+# "2027 9,8"; ... "2036 7,2") e Tabela 3, "Parâmetros Macroeconômicos", colunas "Média" da
+# Selic, "PIB real" e "Deflator" ("2027 9,7 10,6 3,0 2,6 4,9 5,5"; "2036 6,4 6,4 3,0 3,0 3,8
+# 5,9"; "Grade de Parâmetros de longo prazo da SPE de 06/03/2026").
 PLDO_2027: dict[int, AnoDoPLDO] = {
-    2026: AnoDoPLDO(None, -0.44, 83.6, 2.3, 13.6),
-    2027: AnoDoPLDO(0.50, 0.05, 86.0, 2.6, 10.6),
-    2028: AnoDoPLDO(1.00, 0.62, 87.3, 2.6, 9.3),
-    2029: AnoDoPLDO(1.25, 0.93, 87.8, 2.6, 8.3),
-    2030: AnoDoPLDO(1.50, 1.26, 87.5, 2.7, 7.3),
+    2026: AnoDoPLDO(None, -0.44, 0.24, 83.6, 11.8, 2.3, 4.4, 13.6),
+    2027: AnoDoPLDO(0.50, 0.05, 0.04, 86.0, 9.8, 2.6, 4.9, 10.6),
+    2028: AnoDoPLDO(1.00, 0.62, 0.03, 87.3, 9.1, 2.6, 4.7, 9.3),
+    2029: AnoDoPLDO(1.25, 0.93, 0.04, 87.8, 8.5, 2.6, 4.7, 8.3),
+    2030: AnoDoPLDO(1.50, 1.26, 0.05, 87.5, 8.0, 2.7, 4.7, 7.3),
+    2031: AnoDoPLDO(None, 1.31, 0.05, 87.0, 7.5, 2.7, 4.4, 6.5),
+    2032: AnoDoPLDO(None, 1.38, 0.04, 86.4, 7.3, 2.8, 4.2, 6.4),
+    2033: AnoDoPLDO(None, 1.41, 0.03, 85.7, 7.3, 2.9, 4.0, 6.4),
+    2034: AnoDoPLDO(None, 1.45, 0.02, 84.9, 7.2, 3.0, 3.9, 6.4),
+    2035: AnoDoPLDO(None, 1.47, 0.01, 84.1, 7.2, 3.0, 3.9, 6.4),
+    2036: AnoDoPLDO(None, 1.50, 0.02, 83.4, 7.2, 3.0, 3.8, 6.4),
 }
-PLDO_2027_DIVIDA_ATE_2036: dict[int, float] = {
-    2031: 87.0,
-    2032: 86.4,
-    2033: 85.7,
-    2034: 84.9,
-    2035: 84.1,
-    2036: 83.4,
+# Mesmo projeto, Anexo V (Riscos Fiscais), Tabela 13, "Sensibilidade da Dívida/PIB aos Juros,
+# ao Crescimento Real do PIB e ao Resultado Primário", colunas da DBGG de 2026 a 2030,
+# "Diferença em relação ao Cenário PLDO, em pontos do PIB" (STN/MF): "PIB –1 p.p. [...] 0,9%
+# 1,8% 2,7% 3,7% 4,6%"; "Primário/PIB –1 p.p. [...] 1,1% 2,2% 3,2% 4,3% 5,4%". O choque é
+# "persistente" e começa em maio de 2026. Serve de conferência da nossa conta da dívida.
+PLDO_2027_SENSIBILIDADE: dict[str, dict[int, float]] = {
+    "pib": {2026: 0.9, 2027: 1.8, 2028: 2.7, 2029: 3.7, 2030: 4.6},
+    "primario": {2026: 1.1, 2027: 2.2, 2028: 3.2, 2029: 4.3, 2030: 5.4},
 }
 FONTE_PLDO_2027 = (
     "Projeto da LDO 2027 (PLN nº 2/2026, Congresso Nacional), art. 2º e Anexo IV.3 (Metas "

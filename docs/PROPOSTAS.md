@@ -177,6 +177,21 @@ pergunta da crise; o estudo dos anúncios fiscais foi feito e saiu). Ficou:
   2013 (entre 0,2 e 0,7), sem marcar 2015 nem 2024 melhor que os outros anos, e custa 45 s
   de build (uma curva por dia). Não entra.
 
+## A LDO 2027 e a conta da dívida (sessão de 25/11/2026)
+
+Entraram o projeto da LDO 2027 e a conta nossa da dívida por cenário (ver o
+[PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)). Ficou:
+
+- **Botões no simulador da dívida** que carregam "governo", "Focus" e "história" nos quatro
+  controles (hoje a pessoa digita).
+- **O erro da meta conforme a antecedência**: a conta usa o mesmo erro (0,6 pp) em todos os
+  anos, mas as metas de 2028 a 2030 são indicativas e costumam ser revistas; medir pede ler
+  as metas indicativas de cada LDO desde 2024 (antes eram de três anos, nos anexos).
+- **O juro pela Selic do Focus**, no lugar do que fecha com a dívida do Focus: pede o quanto
+  da dívida acompanha a Selic (a tabela 13 do Anexo V dá a sensibilidade do Tesouro) e uma
+  hipótese para depois de 2030.
+- **A mesma peça a cada PLDO** (abril) e a cada LDO sancionada: hoje os nomes dizem 2027.
+
 ## Indicadores clássicos (sessão de 20/11/2026)
 
 Caio: *"veja se dá pra colocar, se não ficar muito poluído, gráficos ou variações de gráficos

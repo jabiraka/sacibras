@@ -87,7 +87,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   algo muda até a sanção"*): o número vem do texto do projeto no Senado, em `relatorios.py`,
   e a tela diz "projeto, não é lei" e onde ele está. O projeto entra em
   `tramitacao.PROJETOS`; o `sacibras tramitacao` abre a issue `tramitação` quando ele anda.
-  Sancionada a lei, o número passa para `leis.py` e o projeto sai da lista.
+  Sancionada a lei, o número passa para `leis.py` e o projeto sai da lista. Junto vai a
+  conta nossa da dívida por cenário (Caio, mesmo dia: *"podemos trazer um cenário mais
+  realista do que a estimativa do governo"*; `modelos/ajuste.py`): primeiro refaz a linha
+  do governo e a sensibilidade que o Tesouro publica, e diz na tela a sobra; depois troca
+  uma hipótese por vez pelas do Focus e roda as metas com o erro que as LDOs já tiveram, em
+  faixa. Sem efeito do ajuste sobre o PIB nem da dívida sobre o juro.
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 

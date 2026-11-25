@@ -249,3 +249,100 @@ def corridas(valores: Mapping[int, float], minimo: float = 1.0) -> list[tuple[in
 
 def ultimo_de_cada_ano(pontos: Sequence[Ponto], mes: int = 12) -> dict[int, float]:
     return {d.year: v for d, v in pontos if d.month == mes}
+
+
+# ------------------------------------------------------------------ a dívida por cenário
+
+# Caio, 25/11/2026: *"podemos trazer um cenário mais realista do que a estimativa do governo
+# aqui"*. A conta é a de sempre, ano a ano, tudo em % do PIB:
+#     dívida = dívida anterior × (1 + juro) ÷ (1 + crescimento nominal) − primário + sobra
+# A sobra é o que falta para a conta, com os números do governo, chegar à dívida que o
+# próprio governo projeta (emissões que não passam pelo primário); fica igual em todo cenário.
+
+
+@dataclass(frozen=True)
+class AnoDaDivida:
+    """As entradas de um ano: juro implícito e crescimento nominal em % ao ano, primário em
+    % do PIB."""
+
+    juro: float
+    nominal: float
+    primario: float
+
+
+def nominal(real: float, deflator: float) -> float:
+    return ((1 + real / 100) * (1 + deflator / 100) - 1) * 100
+
+
+def um_ano(anterior: float, ano: AnoDaDivida, sobra: float = 0.0) -> float:
+    return anterior * (1 + ano.juro / 100) / (1 + ano.nominal / 100) - ano.primario + sobra
+
+
+def sobras(
+    partida: float, cenario: Mapping[int, AnoDaDivida], divida: Mapping[int, float]
+) -> dict[int, float]:
+    """A dívida publicada menos a que a conta dá, ano a ano, partindo sempre da publicada."""
+    saida = {}
+    anterior = partida
+    for a in sorted(cenario):
+        saida[a] = divida[a] - um_ano(anterior, cenario[a])
+        anterior = divida[a]
+    return saida
+
+
+def caminho(
+    partida: float, cenario: Mapping[int, AnoDaDivida], sobra: Mapping[int, float]
+) -> dict[int, float]:
+    saida = {}
+    anterior = partida
+    for a in sorted(cenario):
+        anterior = saida[a] = um_ano(anterior, cenario[a], sobra.get(a, 0.0))
+    return saida
+
+
+def juro_que_fecha(
+    anterior: float, alvo: float, nominal: float, primario: float, sobra: float
+) -> float:
+    """O juro implícito com que a conta sai de `anterior` e chega a `alvo`."""
+    return ((alvo + primario - sobra) * (1 + nominal / 100) / anterior - 1) * 100
+
+
+FATORES = ("crescimento", "juro", "primario")
+
+
+def trocar(
+    base: Mapping[int, AnoDaDivida], outro: Mapping[int, AnoDaDivida], quais: Sequence[str]
+) -> dict[int, AnoDaDivida]:
+    """`base` com os fatores de `quais` vindos de `outro`, nos anos que os dois têm."""
+    return {
+        a: AnoDaDivida(
+            juro=outro[a].juro if "juro" in quais else x.juro,
+            nominal=outro[a].nominal if "crescimento" in quais else x.nominal,
+            primario=outro[a].primario if "primario" in quais else x.primario,
+        )
+        for a, x in base.items()
+        if a in outro
+    }
+
+
+def repartir_a_diferenca(
+    partida: float,
+    base: Mapping[int, AnoDaDivida],
+    outro: Mapping[int, AnoDaDivida],
+    sobra: Mapping[int, float],
+    ano: int,
+) -> dict[str, float]:
+    """Quanto da diferença entre a dívida de `outro` e a de `base`, em `ano`, vem de cada
+    fator: a média do efeito de trocar o fator em todas as ordens possíveis (as parcelas
+    somam a diferença inteira, sem resto)."""
+    from itertools import permutations
+
+    def divida(quais: Sequence[str]) -> float:
+        return caminho(partida, trocar(base, outro, quais), sobra)[ano]
+
+    ordens = list(permutations(FATORES))
+    saida = dict.fromkeys(FATORES, 0.0)
+    for ordem in ordens:
+        for i, fator in enumerate(ordem):
+            saida[fator] += (divida(ordem[: i + 1]) - divida(ordem[:i])) / len(ordens)
+    return saida

@@ -58,4 +58,4 @@ def test_o_projeto_da_ldo_fecha_com_o_que_foi_lido() -> None:
     assert all(x.primario < x.meta for x in proj.values() if x.meta is not None)
     # o que estabilizaria em 2027 é bem mais que a meta
     assert (proj[2027].meta or 0) < relatorios.PLDO_2027_ESTABILIZA
-    assert min(relatorios.PLDO_2027_DIVIDA_ATE_2036) == max(proj) + 1
+    assert sorted(proj) == list(range(2026, 2037))

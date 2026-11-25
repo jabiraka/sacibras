@@ -35,6 +35,19 @@ abre a issue `tramitação` quando a situação muda ou sai informe novo. A cada
 parecer ou o autógrafo, conferir a meta e os anexos e atualizar o que foi visto em
 `tramitacao.py`. **Sancionada a lei**: a meta de 2027 vai para `leis.METAS_DAS_LDOS` e
 `META_PRIMARIA_2027`, a peça deixa de dizer "projeto" e o projeto sai de `tramitacao.PROJETOS`.
+No mesmo dia entrou a **conta nossa da dívida** (Caio: *"podemos trazer um cenário mais
+realista do que a estimativa do governo aqui"* e *"veja oq é melhor [...] depois vai pro
+main"*), no mesmo gráfico e na tabela "A dívida bruta, cenário a cenário": a identidade da
+dívida (`modelos/ajuste.py`, "a dívida por cenário") refaz a linha do governo com uma sobra
+de 0,6 pp por ano e repete a sensibilidade do Tesouro (Anexo V, tabela 13) a até 0,3 pp;
+depois troca uma hipótese por vez pelas do Focus e roda as metas do projeto com o erro que as
+LDOs já tiveram (0,6 pp; faixa de 0,1 a 1,2), com crescimento e juro do Focus. Em 25/11: o
+governo vê 84,1 % do PIB em 2035, o Focus 103,0 %, a conta 100,0 % (de 94,9 a 105,0 %); da
+diferença de 18,9 pp entre o Focus e o governo, 8,8 vêm do primário, 7,6 do crescimento e 2,5
+do juro. **Depois de 2030** o Focus não colhe PIB nem Selic, mas colhe primário e dívida até
+2035: o crescimento fica na última mediana e o juro é o que fecha a conta com a dívida do
+próprio Focus. Testado e fora: manter a diferença de 2030 entre a Selic do Focus e a do
+governo levava a dívida a 112 % em 2035, 9 pp acima do que o Focus espera.
 Olhada a 390 e 1280 px; **falta o Caio olhar**.
 
 **24/11/2026, o site parou de atualizar** (Caio: *"faça com que o sacibras atualize todo dia

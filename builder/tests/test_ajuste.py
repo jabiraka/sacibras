@@ -123,3 +123,54 @@ def test_meta_da_ldo_em_pct_do_pib() -> None:
     assert janela_do_anuncio(date(2016, 6, 14), True) == (date(2016, 6, 14), date(2016, 6, 16))
     # Sexta à noite: o primeiro pregão que vê é o de segunda.
     assert janela_do_anuncio(date(2016, 6, 17), True) == (date(2016, 6, 17), date(2016, 6, 21))
+
+
+def _governo() -> tuple[float, dict[int, ajuste.AnoDaDivida], dict[int, float]]:
+    from sacibras import relatorios
+
+    proj = relatorios.PLDO_2027
+    partida = proj[2026].divida
+    governo = {
+        a: ajuste.AnoDaDivida(
+            x.implicita, ajuste.nominal(x.pib, x.deflator), x.primario + x.regionais
+        )
+        for a, x in proj.items()
+        if a > 2026
+    }
+    return partida, governo, {a: proj[a].divida for a in governo}
+
+
+def test_a_conta_da_divida_chega_a_do_governo_com_sobra_pequena_e_estavel() -> None:
+    partida, governo, divida = _governo()
+    sobra = ajuste.sobras(partida, governo, divida)
+    assert all(0.3 < v < 1.0 for v in sobra.values())
+    refeita = ajuste.caminho(partida, governo, sobra)
+    assert all(abs(refeita[a] - divida[a]) < 1e-9 for a in divida)
+
+
+def test_a_conta_repete_a_sensibilidade_do_tesouro() -> None:
+    from sacibras import relatorios
+    from sacibras.secoes.laboratorio_ajuste import _conferencia_com_o_tesouro
+
+    partida, governo, divida = _governo()
+    sobra = ajuste.sobras(partida, governo, divida)
+    assert _conferencia_com_o_tesouro(partida, governo, sobra) < 0.4
+    assert set(relatorios.PLDO_2027_SENSIBILIDADE) == {"pib", "primario"}
+
+
+def test_juro_que_fecha_e_reparticao_que_soma() -> None:
+    partida, governo, divida = _governo()
+    sobra = ajuste.sobras(partida, governo, divida)
+    outro = {
+        a: ajuste.AnoDaDivida(x.juro + 0.5, x.nominal - 0.8, x.primario - 1.0)
+        for a, x in governo.items()
+        if a <= 2035
+    }
+    alvo = ajuste.caminho(partida, outro, sobra)
+    x = outro[2027]
+    juro = ajuste.juro_que_fecha(partida, alvo[2027], x.nominal, x.primario, sobra[2027])
+    assert abs(juro - x.juro) < 1e-9
+    partes = ajuste.repartir_a_diferenca(partida, governo, outro, sobra, 2035)
+    assert abs(sum(partes.values()) - (alvo[2035] - divida[2035])) < 1e-9
+    assert all(v > 0 for v in partes.values())
+    assert ajuste.trocar(governo, outro, ()) == {a: governo[a] for a in outro}
