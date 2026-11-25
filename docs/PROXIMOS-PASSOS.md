@@ -30,8 +30,15 @@ contra ele. Em 2025 (juro de 12,7 %): 11 das 27 acima, uns 60 % do patrimônio; 
 abaixo; a Petrobras ficou abaixo em 2024. A resposta: "Não todas, e talvez nem a maioria";
 a conclusão diz que manter as 44 não se sustenta e que vender as grandes depende do preço,
 que estes dados não medem. **Os números da resposta são fixos no texto** (11 de 27, R$ 8,5 bi
-dos Correios): reler quando sair a edição de 2027 da Sest. Olhado a 390 e 1280 px; **falta o
-Caio olhar**.
+dos Correios): reler quando sair a edição de 2027 da Sest. **Depois, o que daria aplicar no
+lugar** (Caio: *"Compare com oq poderia ser investido ao invés delas"*): `estatais-alternativas`
+(gráfico "Ou aplicar no lugar" e tabela atrás da do retorno, e uma explicação nova na
+pergunta). R$ 100 de 2021 a 2025: R$ 260 nas não dependentes somadas (R$ 199 sem a
+Petrobras), R$ 168 no CDI, R$ 166 abatendo dívida, R$ 146 no Tesouro IPCA+, R$ 135 a
+inflação; em 2025, sem a Petrobras, 10,3 % contra 14,3 % do CDI. Réguas diferentes (lucro
+contábil contra preço de mercado), dito na nota; sem bolsa (B3 fora). Os Tesouros são os de
+"Quanto rendeu" (`mercados.carteira_rolada`), começando em dez/2019. Olhado a 390 e 1280 px;
+**falta o Caio olhar**.
 
 **25/11/2026, uma estatal por dentro** (Caio: *"Na aba das estatais, abra por estatal um
 dashboard com informações mais relevantes, principalmente histórico de performance, receita ou

@@ -7,10 +7,10 @@ Aqui tudo vira RESULTADO: superávit positivo, déficit negativo.
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import date
+from datetime import date, timedelta
 
 from sacibras import contas, leis
-from sacibras.fontes import bcb_fiscal, bcb_focus, fmi, sest, tesouro_rtn
+from sacibras.fontes import bcb_fiscal, bcb_focus, fmi, sest, tesouro_direto, tesouro_rtn
 from sacibras.modelos import decomposicoes
 from sacibras.schema import (
     Cartao,
@@ -23,7 +23,7 @@ from sacibras.schema import (
     Secao,
     Tabela,
 )
-from sacibras.secoes import estatais, gasto, servidores
+from sacibras.secoes import estatais, gasto, mercados, servidores
 from sacibras.secoes.base import (
     Contexto,
     br,
@@ -319,6 +319,49 @@ def fatores_da_divida(ctx: Contexto, anos: int, inicio: date) -> Grafico:
             "As barras somadas dão a variação da dívida em 12 meses (a linha). O resto é o que "
             "juros, PIB e primário não explicam: caixa, reservas, câmbio."
         ),
+    )
+
+
+def _por_ano(niveis: list[Ponto]) -> dict[int, float]:
+    """O retorno de cada ano civil fechado, em %, de um índice (o último ponto de cada ano)."""
+    fim: dict[int, float] = {}
+    for d, v in niveis:
+        fim[d.year] = v
+    fechados = [a for a in fim if a - 1 in fim and a < max(fim)]
+    return {a: (fim[a] / fim[a - 1] - 1) * 100 for a in fechados}
+
+
+def _aplicacoes(ctx: Contexto, juro: dict[int, float]) -> dict[str, estatais.Alternativa]:
+    """O que o dinheiro das estatais teria rendido em outro lugar (Caio, 25/11/2026: "Compare
+    com oq poderia ser investido ao invés delas"), com as contas de "Quanto rendeu R$ 100"."""
+    inicio = date(ctx.hoje.year - 7, 12, 1)
+    opcoes: dict[str, estatais.Alternativa] = {
+        "divida": ("Abater dívida", juro, "realizado"),
+        "cdi": (
+            "CDI",
+            _por_ano(mercados.acumular_diario(ctx.sgs("CDI_DIA", anos=8))),
+            "realizado",
+        ),
+    }
+    for chave, tipo, nome in (
+        ("tesouro-pre", tesouro_direto.PREFIXADO, "Tesouro Prefixado"),
+        ("tesouro-ipca", tesouro_direto.IPCA, "Tesouro IPCA+"),
+    ):
+        precos = tesouro_direto.precos(tipo, inicio - timedelta(days=10))
+        carteira = mercados.carteira_rolada(precos, inicio, mercados.PRAZO_DO_TESOURO)
+        opcoes[chave] = (nome, _por_ano(carteira), "realizado")
+    opcoes["ipca"] = (
+        "Inflação (IPCA)",
+        _por_ano(mercados.acumular_mensal(ctx.sgs("IPCA", anos=8))),
+        "referencia",
+    )
+    return opcoes
+
+
+def _fonte_aplicacoes(ctx: Contexto) -> str:
+    return (
+        f"juro: {bcb_fiscal.FONTE_TAXA}; {ctx.fonte_sgs('CDI_DIA', 'IPCA')}; "
+        "Tesouro Nacional, preços do Tesouro Direto"
     )
 
 
@@ -835,6 +878,12 @@ def montar(ctx: Contexto) -> Secao:
                 )
                 graficos += g_ret
                 tabelas += t_ret
+                juro = {d.year: v for d, v in taxa if d.month == 12}
+                _, g_alt, t_alt = estatais.alternativas(
+                    fonte_sest, linhas_sest, _aplicacoes(ctx, juro), _fonte_aplicacoes(ctx)
+                )
+                graficos += g_alt
+                tabelas += t_alt
         except Exception as erro:
             print(f"    estatais: o retorno contra o juro ficou de fora: {str(erro)[:120]}")
     except Exception as erro:

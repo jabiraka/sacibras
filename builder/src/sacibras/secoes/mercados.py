@@ -36,7 +36,7 @@ def _amostrar(pontos: list[Ponto], diario_desde: date) -> list[Ponto]:
     return saida
 
 
-def _acumular_diario(taxas: list[Ponto]) -> list[Ponto]:
+def acumular_diario(taxas: list[Ponto]) -> list[Ponto]:
     """Índice a partir de taxas % ao dia: o rendimento do dia entra no dia seguinte."""
     nivel, saida = 100.0, []
     for d, v in taxas:
@@ -45,7 +45,7 @@ def _acumular_diario(taxas: list[Ponto]) -> list[Ponto]:
     return saida
 
 
-def _acumular_mensal(taxas: list[Ponto]) -> list[Ponto]:
+def acumular_mensal(taxas: list[Ponto]) -> list[Ponto]:
     """Índice a partir de taxas % no mês (datadas no 1º dia do mês): o do mês entra no dia
     1º do seguinte."""
     if not taxas:
@@ -121,8 +121,8 @@ def retornos_em_reais(ctx: Contexto) -> Grafico:
     niveis = {
         "dolar": ("Dólar", ctx.sgs("DOLAR", anos=10), "realizado"),
         "euro": ("Euro", ctx.sgs("EURO", anos=10), "realizado"),
-        "cdi": ("CDI", _acumular_diario(ctx.sgs("CDI_DIA", anos=10)), "realizado"),
-        "poupanca": ("Poupança", _acumular_mensal(poupanca), "realizado"),
+        "cdi": ("CDI", acumular_diario(ctx.sgs("CDI_DIA", anos=10)), "realizado"),
+        "poupanca": ("Poupança", acumular_mensal(poupanca), "realizado"),
     }
     fontes = [ctx.fonte_sgs("DOLAR", "EURO", "CDI_DIA", "POUPANCA", "IPCA")]
     # Fora da tela (25/11/2026, texto curto): dólar e euro na cotação de venda do BC; o CDI
@@ -155,7 +155,7 @@ def retornos_em_reais(ctx: Contexto) -> Grafico:
         print(f"    retornos: ouro ficou de fora: {str(erro)[:120]}")
     niveis["ipca"] = (
         "Inflação (IPCA)",
-        _acumular_mensal(ctx.sgs("IPCA", anos=10)),
+        acumular_mensal(ctx.sgs("IPCA", anos=10)),
         "referencia",
     )
     comum = max(pontos[0][0] for _, pontos, _ in niveis.values())

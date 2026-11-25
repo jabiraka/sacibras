@@ -144,3 +144,18 @@ def test_retorno_contra_o_juro_da_divida() -> None:
     primeira = tabela.linhas[0]
     assert primeira.grupo.startswith("Renderam acima do juro em 2025")
     assert primeira.valores[2] == 2.0  # 15 % contra 13 %
+
+
+def test_estatais_contra_aplicacoes() -> None:
+    opcoes = {
+        "cdi": ("CDI", {2024: 10.0, 2025: 10.0}, "realizado"),
+        "ipca": ("Inflação (IPCA)", {2024: 5.0, 2025: 5.0}, "referencia"),
+    }
+    _, [desenho], [tabela] = estatais.alternativas(FONTE, sest.empresas(_planilha()), opcoes, "BC")
+    cdi = next(s for s in desenho.series if s.id == "cdi")
+    assert [v for _, v in cdi.pontos] == [100.0, 110.0, 121.0]
+    linhas = {li.rotulo: li for li in tabela.linhas}
+    assert linhas["CDI"].valores == [10.0, 10.0, 21.0]
+    assert linhas["CDI"].grupo == "No lugar delas"
+    assert linhas["Inflação (IPCA)"].grupo == "Referência"
+    assert "Sem a Petrobras" in linhas and linhas["Estatais não dependentes"].valores[0] > 0

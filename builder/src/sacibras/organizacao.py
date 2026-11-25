@@ -342,6 +342,7 @@ PARTES: dict[str, list[Parte]] = {
                 "estatais-subvencoes",
                 "estatais-lucro",
                 "estatais-retorno",
+                "estatais-alternativas",
             ],
             # Caio, 25/11/2026: "abra por estatal um dashboard". As fichas vêm num arquivo à
             # parte (`Secao.arquivo_estatais`), uma de cada vez, escolhida numa lista.
@@ -860,11 +861,14 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
         ),
         # O retorno contra o juro (Caio, 25/11/2026, "Vale manter as estatais?") atrás da
         # conta do caixa: as duas medem o que a União ganha com elas.
+        # E o que o mesmo dinheiro teria rendido aplicado (Caio, 25/11/2026).
         "estatais": Agrupar(
-            graficos={"estatais-conta": ["estatais-retorno"]},
+            graficos={"estatais-conta": ["estatais-retorno", "estatais-alternativas"]},
+            tabelas={"estatais-retorno": ["estatais-alternativas"]},
             rotulos={
                 "estatais-conta": "O caixa da União",
                 "estatais-retorno": "Retorno contra o juro",
+                "estatais-alternativas": "Ou aplicar no lugar",
             },
         ),
         "gasto": Agrupar(

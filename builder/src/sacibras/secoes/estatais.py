@@ -966,3 +966,126 @@ def retorno(
         ),
     )
     return [], [desenho], [tabela]
+
+
+# ------------------------------------------------------------------ ou aplicar no lugar?
+#
+# Caio, 25/11/2026: "Compare com oq poderia ser investido ao invés delas". O retorno de cada
+# ano das estatais (lucro sobre o patrimônio, contábil) contra o que o mesmo dinheiro rendeu
+# no ano civil em CDI, Tesouro Prefixado e Tesouro IPCA+ (os de "Quanto rendeu R$ 100", em
+# Mercados, títulos de uns cinco anos rolados) e abatendo dívida (o juro médio da dívida
+# bruta em dezembro), com o IPCA de referência. Sem bolsa: a B3 saiu do projeto.
+
+Alternativa = tuple[str, dict[int, float], str]
+"""(nome, retorno % em cada ano, papel da série)."""
+
+
+def _somadas(linhas: list[EstatalNoAno], ano: int, sem: str = "") -> float | None:
+    """Lucro sobre patrimônio das não dependentes, todas juntas (sem a `sem`, se dada)."""
+    x = [y for y in linhas if y.ano == ano and not y.dependente and y.sigla != sem]
+    return _razao(sum(y["lucro"] or 0.0 for y in x), sum(y["patrimonio"] or 0.0 for y in x), True)
+
+
+def alternativas(
+    fonte_sest: str,
+    linhas: list[EstatalNoAno],
+    opcoes: dict[str, Alternativa],
+    fonte_opcoes: str,
+) -> Pecas:
+    """R$ 100 nas estatais ou numa aplicação, de ano a ano e acumulado."""
+    anos_comuns = {x.ano for x in linhas}
+    for _, retornos, _ in opcoes.values():
+        anos_comuns &= set(retornos)
+    anos = sorted(anos_comuns)
+    por = {(x.sigla, x.ano): x for x in linhas}
+    estatais: dict[str, Alternativa] = {
+        "somadas": (
+            "Estatais não dependentes",
+            {a: v for a in anos if (v := _somadas(linhas, a)) is not None},
+            "realizado",
+        ),
+        # A Petrobras faz a maior parte do lucro: sem ela, o resto conta outra história.
+        "sem-petrobras": (
+            "Sem a Petrobras",
+            {a: v for a in anos if (v := _somadas(linhas, a, sem="PETROBRAS (Grupo)")) is not None},
+            "realizado",
+        ),
+    }
+    for sigla, nome in GRANDES.items():
+        rs = {a: r for a in anos if (x := por.get((sigla, a))) and (r := _roe(x)) is not None}
+        if len(rs) == len(anos):
+            estatais[_id(sigla)] = (nome, rs, "realizado")
+    todas = {**estatais, **opcoes}
+
+    def acumulado(r: dict[int, float]) -> float:
+        nivel = 100.0
+        for a in anos:
+            nivel *= 1 + r[a] / 100
+        return nivel
+
+    def nivel(r: dict[int, float]) -> list[tuple[date, float | None]]:
+        saida: list[tuple[date, float | None]] = [(date(anos[0] - 1, 1, 1), 100.0)]
+        v = 100.0
+        for a in anos:
+            v *= 1 + r[a] / 100
+            saida.append((date(a, 1, 1), round(v, 1)))
+        return saida
+
+    no_grafico = ("somadas", "sem-petrobras", "petrobras", "cdi", "divida", "ipca")
+    series = [
+        Serie(id=k, nome=todas[k][0], pontos=nivel(todas[k][1]), papel=todas[k][2])  # type: ignore[arg-type]
+        for k in no_grafico
+        if k in todas
+    ]
+    fonte = f"{fonte_sest}; {fonte_opcoes}"
+    s, sem, cdi = (acumulado(todas[k][1]) for k in ("somadas", "sem-petrobras", "cdi"))
+    desenho = grafico(
+        "estatais-alternativas",
+        f"R$ 100 nas estatais ou aplicados, de {anos[0]} a {anos[-1]}",
+        series,
+        unidade="R$",
+        casas=0,
+        periodicidade="A",
+        fonte=fonte,
+        rotulo_opcao="Ou aplicar no lugar",
+        manchete=(
+            f"Viraram R$ {br(s, 0)} nas não dependentes, R$ {br(sem, 0)} sem a Petrobras e "
+            f"R$ {br(cdi, 0)} no CDI."
+        ),
+        nota=(
+            "Estatal: lucro sobre o patrimônio, como se ficasse na empresa (contábil). "
+            "Aplicação: preço de mercado, antes de imposto; não é a mesma régua."
+        ),
+    )
+
+    def linha(chave: str, grupo: str) -> LinhaTabela:
+        nome, r, _ = todas[chave]
+        return LinhaTabela(
+            rotulo=nome,
+            valores=[*(round(r[a], 1) for a in anos), round(acumulado(r) - 100, 1)],
+            unidade="%",
+            casas=1,
+            grupo=grupo,
+        )
+
+    tabela = Tabela(
+        id="estatais-alternativas",
+        titulo="O retorno das estatais e o das aplicações, ano a ano",
+        subtitulo="% no ano; acumulado de todos os anos",
+        colunas=[*(str(a) for a in anos), "Acumulado"],
+        linhas=[
+            *(linha(k, "Estatais: lucro sobre o patrimônio") for k in estatais),
+            *(
+                linha(k, "No lugar delas")
+                for k, (_, _, papel) in opcoes.items()
+                if papel != "referencia"
+            ),
+            *(linha(k, "Referência") for k, (_, _, p) in opcoes.items() if p == "referencia"),
+        ],
+        fonte=fonte,
+        nota=(
+            "Abater dívida: o juro médio da dívida bruta em dezembro. Tesouro: o título de uns "
+            "cinco anos, trocado no vencimento."
+        ),
+    )
+    return [], [desenho], [tabela]

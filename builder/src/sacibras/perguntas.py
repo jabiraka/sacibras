@@ -578,12 +578,16 @@ PERGUNTAS: tuple[Definicao, ...] = (
     # Finep, Porto de Santos, Serpro, Dataprev, Infraero, NAV, PPSA), cerca de 60 % do
     # patrimônio delas; BB (9,3 %) e Caixa (10,7 %) ficaram abaixo; a Petrobras ficou abaixo
     # em 2024 (10,1 % contra 10,7 %). O preço de venda não está no painel (viria da bolsa).
+    # Depois (mesmo dia: "Compare com oq poderia ser investido ao invés delas"): de 2021 a
+    # 2025, R$ 100 viraram R$ 260 nas não dependentes somadas (R$ 199 sem a Petrobras),
+    # R$ 168 no CDI, R$ 166 abatendo dívida e R$ 146 no Tesouro IPCA+; em 2025, sem a
+    # Petrobras, 10,3 % contra 14,3 % do CDI.
     Definicao(
         "manter-estatais",
         "Vale manter as estatais?",
-        "Não todas, e talvez nem a maioria: das 44, 17 vivem do orçamento, os Correios "
-        "afundam e só 11 das outras 27 renderam mais que o juro da dívida em 2025. Mas essas "
-        "11 são as maiores, a Petrobras à frente.",
+        "Não todas: 17 vivem do orçamento, os Correios afundam e só 11 das outras 27 "
+        "renderam mais que o juro da dívida em 2025. Mas, somadas, as que vendem renderam "
+        "mais que CDI ou Tesouro desde 2021, puxadas pela Petrobras.",
         (
             ("fiscal", "estatais-saldo"),
             ("fiscal", "estatais-subvencao"),
@@ -597,6 +601,15 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 ("fiscal", "estatais-retorno"),
                 (("fiscal", "juro-implicito"),),
                 ("fiscal", "estatais-retorno"),
+            ),
+            Bloco(
+                "E se o dinheiro fosse aplicado?",
+                "Pelo lucro contábil, as que vendem renderam mais que CDI, Tesouro ou abater "
+                "dívida de 2021 a 2025, mesmo sem a Petrobras. Em 2025, sem ela, ficaram "
+                "abaixo.",
+                ("fiscal", "estatais-alternativas"),
+                (),
+                ("fiscal", "estatais-alternativas"),
             ),
             Bloco(
                 "A favor de manter: poucas pagam a conta",
@@ -632,10 +645,10 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "estatal dá lucro",
         ),
         conclusao=(
-            "Pelos números, manter as 44 não se sustenta: a maioria rende menos que o juro da "
-            "dívida, dá prejuízo ou vive do orçamento. O argumento para manter se apoia em "
-            "poucas grandes, e vendê-las só compensa se o preço pagar mais que os dividendos, "
-            "o que estes dados não medem."
+            "Manter as 44 não se sustenta: muitas rendem menos que o juro da dívida, dão "
+            "prejuízo ou vivem do orçamento. As grandes renderam mais do que o dinheiro "
+            "aplicado, pelo lucro contábil; vendê-las só compensa se o preço pagar mais que "
+            "isso, e estes dados não o medem."
         ),
     ),
     Definicao(
