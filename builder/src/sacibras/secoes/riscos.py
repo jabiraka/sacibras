@@ -105,6 +105,11 @@ EPISODIOS = [
 ]
 
 
+ONS_SIN = "ONS, energia armazenada do SIN"
+"""O ONS publica o número do SIN no painel do histórico da operação; o builder lê o CSV dos
+subsistemas e soma, que é a mesma definição (energia armazenada sobre a capacidade máxima)."""
+
+
 def alerta(
     id: str,
     grupo: str,
@@ -1733,8 +1738,7 @@ def _energia(ctx: Contexto) -> Bloco:
                 f"média de {meses[mes - 1]} desde {mesmo_mes[0][0].year}: "
                 f"{br(sum(v for _, v in mesmo_mes[:-1]) / max(1, len(mesmo_mes) - 1))} %"
             ),
-            fonte=f"{ons.FONTE}; soma dos quatro subsistemas",
-            procedencia="calculado",
+            fonte=f"{ONS_SIN}; {ons.FONTE}",
             secao="riscos",
             mini=730,
         )
@@ -1748,7 +1752,7 @@ def _energia(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="D",
             janela_anos=10,
-            fonte=f"{ons.FONTE}; cálculo próprio",
+            fonte=f"{ONS_SIN}; {ons.FONTE}",
             # Somados os quatro subsistemas (Sudeste/Centro-Oeste, Sul, Nordeste e Norte).
             # Reservatório baixo liga térmicas e encarece a luz: racionamento em 2001,
             # bandeira de escassez hídrica em 2021.
@@ -1767,8 +1771,7 @@ def _energia(ctx: Contexto) -> Bloco:
             pior_quando="baixo",
             unidade="% da capacidade",
             periodicidade="M",
-            fonte=f"{ons.FONTE}; média do mês",
-            procedencia="calculado",
+            fonte=f"{ONS_SIN}; {ons.FONTE}; média do mês",
         )
     )
     return bloco

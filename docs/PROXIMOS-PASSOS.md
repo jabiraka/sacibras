@@ -55,8 +55,9 @@ somam meses (balança, dividendos, resultado das estatais, crédito imobiliário
 gráficos do Focus no Laboratório e na expectativa contra a meta, a fonte diz que só o erro
 médio ou a meta do prazo é cálculo próprio; a tabela da LDO 2027 passou a dizê-lo na coluna do
 primário que estabiliza pelo Focus. O SGS 20704 é o imobiliário inteiro (o BC o classifica
-como direcionado); o catálogo diz isso agora. O que ficou está no [PROPOSTAS](PROPOSTAS.md),
-"Rótulo de cálculo próprio".
+como direcionado); o catálogo diz isso agora. Onde o órgão publica e o builder não lê, a peça é oficial com o link para a página do
+número (reservatórios: painel do ONS; vagas do Caged: MTE; saldo das estatais: Sest; regras
+em `links.py`). O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
