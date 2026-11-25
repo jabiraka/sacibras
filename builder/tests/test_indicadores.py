@@ -1,5 +1,4 @@
-"""Indicadores de 20/11/2026: a inclinação da curva, a inflação esperada contra a meta e o
-Ibovespa descontada a inflação."""
+"""Indicadores de 20/11/2026: a inclinação da curva e a inflação esperada contra a meta."""
 
 from __future__ import annotations
 
