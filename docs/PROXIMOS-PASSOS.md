@@ -58,7 +58,13 @@ primário que estabiliza pelo Focus. O SGS 20704 é o imobiliário inteiro (o BC
 como direcionado); o catálogo diz isso agora. Onde o órgão publica e o builder não lê, a peça é oficial com o link para a página do
 número (reservatórios: painel do ONS; vagas do Caged: MTE; saldo das estatais: Sest; regras
 em `links.py`), e o aviso na nota onde o número pode diferir do publicado (o aporte das estatais,
-que a p. 86 do relatório dá maior; o Caged contra o saldo do MTE). **A conferir do PC**: "Só do PC", abaixo. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
+que a p. 86 do relatório dá maior; o Caged contra o saldo do MTE). **A conferir do PC**: "Só do PC", abaixo. **As estatais se atualizam sozinhas** (Caio: *"se for atualizar no
+próximo ano esses PDFs com números, pode botar o builder pra ler o mais atualizado?"*): o
+builder abre a página da transparência da Sest, pega a planilha do anexo I de edição mais alta
+(o ano está no nome do arquivo) e refaz a conta, a lista das subvenções e o lucro das maiores
+(`fontes/sest.py`); a edição 2026 dá os mesmos números que estavam escritos à mão, que ficam de
+reserva em `relatorios.py`. Os outros números lidos em PDF (`relatorios.py`, `leis.py`) seguem
+com prazo de releitura em `leituras.py`: cada um pede ver se a fonte tem planilha ou série. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
@@ -431,8 +437,8 @@ As próximas:
     fotos usaram um calendário fabricado; conferir do PC que a caixa abre com o de verdade.
 - **Números que a tela dá como oficiais e se conferem na fonte** (25/11/2026; a peça leva o
   aviso até a conferência; ao conferir, tirar o aviso e anotar a data no comentário):
-  - **Aporte das estatais** (`relatorios.ESTATAIS_POR_ANO`): a tela usa a soma das empresas
-    na planilha do anexo I, que dá o retorno de 2025 da p. 17 (R$ 13,1 bi); a tabela-resumo da
+  - **Aporte das estatais** (`fontes/sest.py`, que lê sozinho a planilha do anexo I da
+    edição mais nova): a tela usa a soma das empresas na planilha, que dá o retorno de 2025 da p. 17 (R$ 13,1 bi); a tabela-resumo da
     p. 86 traz aporte maior em todos os anos (2025: 3.418,3 contra 1.709,1), e a nota diz isso.
     Perguntar à Sest (ou ver o relatório de 2025, ano-base 2024, que não está na página) qual
     vale. O de 2024 não publica retorno.
