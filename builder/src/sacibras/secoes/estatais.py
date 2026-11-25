@@ -202,9 +202,14 @@ def conta_do_ano() -> Pecas:
         casas=1,
         periodicidade="A",
         fonte=fonte,
+        # Os dividendos vêm de quatro empresas; a subvenção vai às dependentes (hospitais,
+        # pesquisa, obras). O retorno de {ultimo} é o que a Sest publica (p. 17); antes, a soma
+        # das linhas do relatório, que em 2025 traz outro aporte na p. 86 (3.418,3 contra
+        # 1.709,1). Conferir no PC com o relatório de cada ano (docs/PROXIMOS-PASSOS.md).
         nota=(
-            "Os dividendos vêm de quatro empresas; a subvenção vai às dependentes (hospitais, "
-            "pesquisa, obras). Valores da época, sem descontar a inflação."
+            "Valores da época, sem descontar a inflação. Antes de "
+            f"{ultimo}, o saldo soma as linhas do relatório e pode diferir do retorno que a "
+            "Sest publicou no ano."
         ),
         manchete=(
             f"Em {ultimo}, a União recebeu R$ {br(x.dividendos_uniao / 1000)} bi e pôs "
@@ -249,8 +254,8 @@ def conta_do_ano() -> Pecas:
         # das ações. O prejuízo de uma não dependente (os Correios) não sai do Tesouro no ano:
         # vira dívida ou perda de patrimônio da empresa, e pode virar aporte depois.
         nota=(
-            "O saldo é a conta do caixa, a mesma da Sest: não é o lucro das empresas nem o "
-            "valor delas. Prejuízo de não dependente (os Correios) não sai do Tesouro no ano."
+            "O saldo é a conta do caixa, a mesma da Sest: não é o lucro nem o valor das "
+            f"empresas. Antes de {ultimo}, pode diferir do retorno que a Sest publicou no ano."
         ),
     )
     subvencoes = Tabela(

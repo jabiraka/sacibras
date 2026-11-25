@@ -375,8 +375,8 @@ def _caged_por_setor(ctx: Contexto, total: list[Ponto], inicio: date) -> tuple[G
     )
     # Vagas em 12 meses: o estoque contra o mesmo mês do ano anterior.
     nota = (
-        "Estoque do Novo Caged (Banco Central), sem ajuste sazonal; vagas em 12 meses: o "
-        "estoque contra o de um ano antes."
+        "Estoque no Banco Central, sem ajuste sazonal; vagas em 12 meses: o estoque contra o "
+        "de um ano antes. Pode diferir do saldo do MTE, que soma as declarações fora do prazo."
     )
     grandes = [
         serie(
@@ -662,9 +662,11 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=5,
             fonte=f"{MTE_CAGED}; {ctx.fonte_sgs('EMPREGO_FORMAL')}",
+            # O MTE soma ao saldo as declarações entregues fora do prazo; a diferença do
+            # estoque no SGS não as tem. Conferir no PC (docs/PROXIMOS-PASSOS.md).
             nota=(
-                "Diferença mês a mês do estoque do Novo Caged (Banco Central); a linha é a "
-                "média de 3 meses."
+                "Diferença mês a mês do estoque no Banco Central; a linha é a média de 3 meses. "
+                "Pode diferir do saldo do MTE, que soma as declarações fora do prazo."
             ),
         ),
         grafico(

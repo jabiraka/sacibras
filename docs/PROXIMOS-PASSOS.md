@@ -57,7 +57,8 @@ médio ou a meta do prazo é cálculo próprio; a tabela da LDO 2027 passou a di
 primário que estabiliza pelo Focus. O SGS 20704 é o imobiliário inteiro (o BC o classifica
 como direcionado); o catálogo diz isso agora. Onde o órgão publica e o builder não lê, a peça é oficial com o link para a página do
 número (reservatórios: painel do ONS; vagas do Caged: MTE; saldo das estatais: Sest; regras
-em `links.py`). O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
+em `links.py`), e o aviso na nota onde o número pode diferir do publicado (estatais antes de
+2025; Caged contra o saldo do MTE). **A conferir do PC**: "Só do PC", abaixo. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
@@ -428,6 +429,25 @@ As próximas:
   - ICMS modal por estado (o Confaz não respondeu; sem tabela oficial, são 27 leis).
   - O calendário do IBGE na caixa "O que sai esta semana" da entrada: a nuvem é recusada e as
     fotos usaram um calendário fabricado; conferir do PC que a caixa abre com o de verdade.
+- **Números que a tela dá como oficiais e se conferem na fonte** (25/11/2026; a peça leva o
+  aviso até a conferência; ao conferir, tirar o aviso e anotar a data no comentário):
+  - **Saldo das estatais antes de 2025** (`estatais.py`, `relatorios.ESTATAIS_*`): abrir
+    `gov.br/gestao/pt-br/central-de-conteudo/relatorios-das-estatais`, o relatório de cada ano
+    (2024 para 2023 etc.), e copiar o "retorno financeiro" para a União. Se bater com a soma
+    das linhas, sai o aviso; se não, entra o número da Sest. Em 2025 a p. 86 traz outro aporte
+    (3.418,3 contra 1.709,1 no retorno da p. 17): ver qual vale.
+  - **Vagas do Caged** (`trabalho.py`): na página do Novo Caged no MTE (`gov.br/trabalho-e-emprego`
+    › Estatísticas › Novo Caged, que abre no mês mais novo), o "Sumário executivo.pdf" traz o
+    saldo do mês e de 12 meses; comparar com o painel. As tabelas (Tabelas.xlsx) estão numa
+    pasta do Google Drive, que o builder não lê. Se a diferença for pequena, o aviso fica curto;
+    se houver série estável em xlsx ou API, trocar pelo saldo do MTE.
+  - **Reservatórios** (`riscos.py`): o painel de energia armazenada do ONS
+    (`ons.org.br/Paginas/resultados-da-operacao/historico-da-operacao/energia_armazenada.aspx`),
+    "SIN", contra o cartão do painel no mesmo dia.
+  - **Razão 10/40 (Palma)** (`pobreza.py`): o IBGE publica o índice na Síntese de Indicadores
+    Sociais (`ibge.gov.br/estatisticas/sociais/trabalho/9221-sintese-de-indicadores-sociais.html`,
+    403 da nuvem). Se a planilha trouxer o número, pôr a regra em `links.py`, marcar oficial e
+    conferir contra a conta do painel.
 
 ## Espera o Caio
 
