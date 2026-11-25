@@ -105,7 +105,7 @@ def ponte(ctx: Contexto) -> Tabela:
             rotulo=rotulo, valores=[round(valor, 1)], unidade="", casas=1, grupo=grupo
         )
 
-    muda = "O que muda até a conta do governo (pp do PIB)"
+    muda = "Até a conta do governo (pp do PIB)"
     linhas = [
         linha(f"Com o juro e o PIB de hoje ({periodo(h.quando, 'M')})", degraus[0]),
         linha(
@@ -123,15 +123,15 @@ def ponte(ctx: Contexto) -> Tabela:
             degraus[3],
             muda,
         ),
-        linha("Emissões que não são déficit e outros ajustes", resto, muda),
+        linha("Emissões fora do déficit e outros", resto, muda),
         linha(f"Governo, para {ANO} (projeto da LDO)", governo, f"Para {ANO} (% do PIB)"),
     ]
     if focus is not None:
         linhas.append(linha(f"Focus, para {ANO}", focus, f"Para {ANO} (% do PIB)"))
     return Tabela(
         id="primario-estabiliza-ponte",
-        titulo="Primário que estabiliza a dívida: de hoje ao que o governo supõe",
-        subtitulo="% do PIB; a mesma conta, trocando uma hipótese por vez",
+        titulo="Primário que estabiliza a dívida: de hoje ao governo",
+        subtitulo="A mesma conta, uma hipótese por vez",
         colunas=["% ou pp do PIB"],
         linhas=linhas,
         fonte=(

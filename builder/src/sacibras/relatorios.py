@@ -167,12 +167,13 @@ FONTE_ELASTICIDADES = (
 # "No cenário de recessão aguda, a necessidade atinge 1,7% do PR". Nota 45: "realizados com
 # 106 instituições, que representam 97,31% do ativo total do sistema".
 # LER DE NOVO a cada edição (duas por ano: maio e outubro).
+# Relatório de Estabilidade Financeira de out/2026, p. 50: no pior cenário (crise de
+# confiança) a necessidade de capital chega a 3,5 % do patrimônio de referência do sistema,
+# e instituições com 81,9 % dos ativos seguem acima do mínimo de 10,5 %; na recessão aguda,
+# 1,7 %. O teste sai duas vezes por ano.
 ESTRESSE_DOS_BANCOS = (
-    "O Banco Central faz o teste dos bancos duas vezes por ano. No Relatório de Estabilidade "
-    "Financeira de outubro de 2026 (p. 50), no pior cenário, o de crise de confiança, a "
-    "necessidade de capital chega a 3,5 % do patrimônio de referência do sistema, e "
-    "instituições com 81,9 % dos ativos seguem acima do mínimo regulamentar de 10,5 %; no "
-    "de recessão aguda, 1,7 %."
+    "No teste do Banco Central (out/2026), o pior cenário pede capital de 3,5 % do "
+    "patrimônio dos bancos; 81,9 % dos ativos seguem acima do mínimo de 10,5 %."
 )
 BASILEIA_MINIMO = 10.5
 BASILEIA_MINIMO_FONTE = (

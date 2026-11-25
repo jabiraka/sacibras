@@ -59,100 +59,84 @@ um continua no assunto dele; a explicação fica em `EXPLICACOES`, para voltar s
 EXPLICACOES: dict[str, Explicacao] = {
     # ---------------------------------------------------------------- contas públicas
     "dbgg": Explicacao(
-        "Quanto União, estados e municípios devem, somando tudo, em proporção de tudo o que o "
-        "país produz num ano.",
-        "Quanto maior a dívida, mais o governo gasta com juros e menos espaço tem para reagir "
-        "a uma crise.",
-        "Juros mais altos para todos (quem empresta a um devedor grande cobra mais), dólar "
-        "mais caro e, no limite, aumento de impostos ou corte de gastos às pressas.",
+        "Quanto União, estados e municípios devem, em proporção do PIB.",
+        "Quanto maior a dívida, mais juros e menos espaço para reagir a uma crise.",
+        "Juros mais altos para todos, dólar mais caro e, no limite, imposto maior ou corte de "
+        "gastos às pressas.",
     ),
     "primario": Explicacao(
-        "Receitas menos despesas do setor público nos últimos 12 meses, sem contar os juros.",
-        "Déficit quer dizer que o governo gasta mais do que arrecada mesmo antes de pagar os "
-        "juros: a diferença vira dívida nova.",
-        "Dívida crescendo mais rápido que a economia e o mercado cobrando juro maior para "
-        "financiar o governo.",
+        "Receitas menos despesas do setor público em 12 meses, sem contar os juros.",
+        "Déficit é gastar mais do que arrecada antes dos juros: a diferença vira dívida nova.",
+        "Dívida crescendo mais rápido que a economia e juro maior para financiar o governo.",
     ),
     "juros": Explicacao(
-        "O que o setor público pagou de juros sobre a dívida em 12 meses, em proporção do PIB.",
-        "É dinheiro que não vai para saúde, educação ou investimento, e que faz a dívida "
-        "crescer sozinha quando não há superávit para cobri-lo.",
+        "O que o setor público pagou de juros sobre a dívida em 12 meses, em % do PIB.",
+        "É dinheiro que não vai para saúde, educação ou investimento, e faz a dívida crescer "
+        "sozinha sem superávit.",
         "Mais dívida mesmo com as outras contas em ordem e pressão por ajuste fiscal.",
     ),
     "nominal": Explicacao(
-        "O resultado primário menos os juros: quanto o governo precisou tomar emprestado em "
-        "12 meses.",
-        "Um déficit nominal grande quer dizer muitos títulos novos para o mercado comprar a "
-        "cada ano.",
-        "Juros mais altos para o governo rolar a dívida e dívida subindo em proporção do PIB.",
+        "O primário menos os juros: quanto o governo tomou emprestado em 12 meses.",
+        "Déficit nominal grande quer dizer muitos títulos novos a cada ano.",
+        "Juro maior para rolar a dívida e dívida subindo em % do PIB.",
     ),
     "juro-menos-crescimento": Explicacao(
         "A diferença entre o juro real que a dívida paga e o crescimento real da economia.",
-        "Quando o juro passa do crescimento, a dívida sobe em proporção do PIB sozinha, a "
-        "menos que o governo faça superávit primário.",
-        "A necessidade de um superávit maior a cada ano só para a dívida não subir.",
+        "Com o juro acima do crescimento, a dívida sobe em % do PIB sozinha, a menos que haja "
+        "superávit primário.",
+        "Um superávit maior a cada ano só para a dívida não subir.",
     ),
     "primario-que-falta": Explicacao(
-        "A distância entre o resultado primário que deixaria a dívida parada e o resultado de "
-        "hoje, em pontos do PIB.",
-        "Mostra o tamanho do ajuste que faltaria nas contas para a dívida parar de subir.",
-        "Quanto maior a distância, mais difícil o ajuste e mais tempo a dívida segue subindo.",
+        "A distância entre o primário que deixaria a dívida parada e o de hoje, em pontos do PIB.",
+        "É o tamanho do ajuste que falta para a dívida parar de subir.",
+        "Quanto maior, mais difícil o ajuste e mais tempo a dívida segue subindo.",
     ),
     "divida-selic": Explicacao(
         "A parte da dívida em títulos cujo juro acompanha a Selic (o Tesouro Selic).",
-        "Quando o Banco Central sobe a Selic para conter a inflação, o custo dessa parte da "
-        "dívida sobe no mesmo dia.",
+        "Quando o Banco Central sobe a Selic, o custo dessa parte sobe no mesmo dia.",
         "Conta de juros do governo crescendo rápido justamente quando os juros sobem.",
     ),
     "prazo-da-divida": Explicacao(
         "Quanto tempo, em média, falta para os títulos da dívida vencerem.",
-        "Prazo curto quer dizer que o governo precisa refinanciar muito em pouco tempo, aos "
-        "juros do momento.",
-        "Numa crise, refinanciar fica caro ou difícil (o chamado risco de rolagem).",
+        "Prazo curto é muito a refinanciar em pouco tempo, ao juro do momento.",
+        "Numa crise, refinanciar fica caro ou difícil (o risco de rolagem).",
     ),
     "juros-sobre-receita": Explicacao(
-        "Quanto da receita líquida do governo federal, em 12 meses, vai para pagar os juros da "
-        "dívida.",
-        "Cada real que vai para juros não paga saúde, educação ou investimento; e, quando a "
-        "Selic sobe, essa parte cresce mesmo sem o governo gastar mais.",
-        "Orçamento cada vez mais preso aos juros, pressão para cortar outros gastos ou subir "
-        "impostos e agências de risco rebaixando a nota do país.",
+        "Quanto da receita líquida da União, em 12 meses, vai para os juros da dívida.",
+        "Cada real em juros não paga saúde, educação ou investimento; e essa parte cresce quando a"
+        " Selic sobe.",
+        "Orçamento preso aos juros, pressão para cortar gastos ou subir impostos e nota de crédito"
+        " rebaixada.",
     ),
     "vence-em-12-meses": Explicacao(
-        "A parte da dívida bruta do governo que vence nos próximos 12 meses e precisa ser "
-        "paga ou trocada por dívida nova.",
-        "Quanto mais vence de uma vez, mais o governo depende de achar quem compre títulos "
-        "novos, ao juro do momento, num prazo curto.",
-        "Numa crise de confiança, refinanciar fica caro ou difícil: o governo paga juro mais "
-        "alto ou encurta ainda mais a dívida, como em 2002.",
+        "A parte da dívida bruta que vence nos próximos 12 meses e precisa ser paga ou trocada por"
+        " nova.",
+        "Quanto mais vence de uma vez, mais o governo depende de quem compre títulos novos, ao "
+        "juro do momento.",
+        "Numa crise de confiança, refinanciar fica caro ou difícil, como em 2002.",
     ),
     # ---------------------------------------------------------------- câmbio e contas externas
     "reservas-cobertura": Explicacao(
-        "Quantas vezes as reservas internacionais do Banco Central cobrem a dívida externa "
-        "que vence em até um ano.",
-        "As reservas são o colchão para pagar compromissos em dólar se o crédito de fora "
-        "secar de repente.",
-        "Com cobertura baixa, uma fuga de capitais pode fazer faltar dólar e o câmbio "
-        "disparar, como nas crises de 1999 e 2002.",
+        "Quantas vezes as reservas do Banco Central cobrem a dívida externa que vence em até um "
+        "ano.",
+        "As reservas são o colchão em dólar se o crédito de fora secar de repente.",
+        "Com cobertura baixa, uma fuga de capitais pode fazer faltar dólar, como em 1999 e 2002.",
     ),
     "reservas-importacoes": Explicacao(
         "Por quantos meses as reservas pagariam tudo o que o país importa.",
         "É a medida clássica do tamanho do colchão em moeda forte.",
-        "Com reservas curtas, um choque externo obriga a cortar importações ou a deixar o "
-        "dólar subir muito.",
+        "Com reservas curtas, um choque externo obriga a cortar importações ou a deixar o dólar "
+        "subir muito.",
     ),
     "conta-corrente": Explicacao(
-        "O saldo de tudo o que o país compra, vende, paga e recebe do exterior em bens, "
-        "serviços, lucros e juros, em 12 meses.",
-        "Déficit grande quer dizer que o país depende de dinheiro de fora para fechar as contas.",
-        "Se o dinheiro de fora parar de entrar, o dólar sobe e a economia precisa se ajustar "
-        "às pressas.",
+        "O saldo de tudo o que o país compra, vende, paga e recebe do exterior, em 12 meses.",
+        "Déficit grande quer dizer depender de dinheiro de fora para fechar as contas.",
+        "Se esse dinheiro parar de entrar, o dólar sobe e a economia se ajusta às pressas.",
     ),
     "cobertura-idp": Explicacao(
-        "O investimento direto que entra (estrangeiros abrindo ou comprando empresas aqui) "
-        "menos o déficit externo.",
-        "O investimento direto é o financiamento mais estável; se ele não cobre o déficit, o "
-        "resto vem de dinheiro que sai com facilidade.",
+        "O investimento direto que entra (estrangeiros abrindo ou comprando empresas aqui) menos o"
+        " déficit externo.",
+        "É o financiamento mais estável; se não cobre o déficit, o resto é dinheiro que sai fácil.",
         "Mais exposição a uma saída rápida de capitais e a saltos do dólar.",
     ),
     "divida-externa-liquida": Explicacao(
@@ -168,24 +152,23 @@ EXPLICACOES: dict[str, Explicacao] = {
     ),
     "swaps-cambiais": Explicacao(
         "Contratos em que o Banco Central paga a variação do dólar a quem quer proteção, sem "
-        "gastar as reservas.",
-        "Um estoque grande mostra que o BC precisou segurar o câmbio, e o expõe a perdas se o "
-        "dólar subir.",
-        "Prejuízo do Banco Central, que acaba nas contas do Tesouro, numa alta forte do dólar.",
+        "gastar reservas.",
+        "Estoque grande mostra o BC segurando o câmbio, exposto a perdas se o dólar subir.",
+        "Prejuízo do Banco Central, que cai nas contas do Tesouro, numa alta forte do dólar.",
     ),
     # ---------------------------------------------------------------- inflação
     "ipca": Explicacao(
         "A inflação oficial dos últimos 12 meses.",
         "Acima do teto da meta, o Banco Central tende a manter ou subir os juros, e o salário "
         "compra menos.",
-        "Juros altos por mais tempo, crescimento menor e perda de poder de compra, mais forte "
-        "para quem ganha menos.",
+        "Juros altos por mais tempo, crescimento menor e perda de poder de compra, maior para quem"
+        " ganha menos.",
     ),
     "nucleos": Explicacao(
-        "A inflação sem os preços que sobem e descem por motivos passageiros: a média das "
-        "medidas de núcleo do Banco Central.",
-        "Núcleo alto quer dizer inflação enraizada, mais difícil de baixar que um choque de "
-        "alimento ou combustível.",
+        "A inflação sem os preços que oscilam por motivos passageiros: a média dos núcleos do "
+        "Banco Central.",
+        "Núcleo alto é inflação enraizada, mais difícil de baixar que um choque de alimento ou "
+        "combustível.",
         "Juros altos por mais tempo para trazer a inflação de volta à meta.",
     ),
     "difusao": Explicacao(
@@ -194,19 +177,18 @@ EXPLICACOES: dict[str, Explicacao] = {
         "Inflação mais persistente, que custa mais juros para cair.",
     ),
     "expectativa-12m": Explicacao(
-        "Quanto o mercado espera de inflação para os próximos 12 meses (a mediana do Focus) "
-        "menos a meta desses meses, em pontos percentuais.",
-        "Se as pessoas passam a esperar inflação acima da meta, reajustam preços e salários "
-        "por ela, e a inflação vem mesmo.",
+        "A inflação que o mercado espera para os próximos 12 meses (mediana do Focus) menos a "
+        "meta, em pontos.",
+        "Quem espera inflação acima da meta reajusta preços e salários por ela, e a inflação vem "
+        "mesmo.",
         "Juros altos por mais tempo para trazer as expectativas de volta à meta.",
     ),
     "implicita-longa": Explicacao(
-        "A inflação média por ano dos próximos 8 anos que o preço dos títulos do Tesouro "
-        "embute (prefixado contra IPCA+) menos a meta desses anos.",
-        "Mostra se quem empresta ao governo por muitos anos acredita que a meta será "
-        "cumprida; inclui um prêmio pelo risco de errar.",
-        "Juro longo mais alto para o governo, as empresas e o crédito imobiliário, e menos "
-        "força do Banco Central para baixar a inflação.",
+        "A inflação média dos próximos 8 anos embutida nos títulos do Tesouro (prefixado contra "
+        "IPCA+) menos a meta.",
+        "Mostra se quem empresta por muitos anos acredita na meta; inclui um prêmio pelo risco de "
+        "errar.",
+        "Juro longo mais alto para governo, empresas e crédito imobiliário.",
     ),
     # ---------------------------------------------------------------- crédito e bancos
     "inadimplencia": Explicacao(
@@ -231,15 +213,13 @@ EXPLICACOES: dict[str, Explicacao] = {
         "Inadimplência maior nos meses seguintes.",
     ),
     "spread": Explicacao(
-        "A diferença entre o juro que os bancos cobram nos empréstimos e o que pagam para "
-        "conseguir o dinheiro.",
-        "Spread em alta quer dizer, em boa parte, que os bancos veem mais risco de calote.",
-        "Crédito mais caro para quem pega emprestado, o que freia consumo e investimento.",
+        "A diferença entre o juro que os bancos cobram e o que pagam para conseguir o dinheiro.",
+        "Spread em alta quer dizer, em boa parte, mais risco de calote visto pelos bancos.",
+        "Crédito mais caro, o que freia consumo e investimento.",
     ),
     "comprometimento": Explicacao(
         "A parte da renda mensal das famílias que vai para as parcelas das dívidas.",
-        "Quanto mais da renda vai para dívida, menos sobra para o resto, e mais difícil fica "
-        "pagar se a renda cair.",
+        "Mais renda em dívida deixa menos para o resto e dificulta pagar se a renda cair.",
         "Consumo mais fraco e mais atrasos.",
     ),
     "endividamento": Explicacao(
@@ -248,71 +228,64 @@ EXPLICACOES: dict[str, Explicacao] = {
         "Menos consumo por anos, enquanto as famílias pagam o que devem.",
     ),
     "basileia": Explicacao(
-        "O capital próprio dos bancos em proporção do que emprestaram e aplicaram, pesado "
-        "pelo risco.",
+        "O capital próprio dos bancos sobre o que emprestaram e aplicaram, pesado pelo risco.",
         "É o colchão que absorve os prejuízos; perto do mínimo, o banco tem pouca folga.",
         "Bancos cortando crédito para se proteger e, no limite, risco de quebra.",
     ),
     "hiato-credito": Explicacao(
-        "Quanto o crédito a famílias e empresas, em proporção do PIB, está acima ou abaixo da "
-        "tendência de longo prazo, pela conta do BIS.",
-        "Crédito crescendo muito acima da tendência quer dizer gente e empresas se "
-        "endividando mais rápido do que a economia aguenta.",
-        "No mundo, hiatos altos costumam vir antes de crises bancárias: calotes em série, "
-        "bancos cortando crédito e recessão.",
+        "Quanto o crédito a famílias e empresas, em % do PIB, está acima ou abaixo da tendência, "
+        "pela conta do BIS.",
+        "Crédito muito acima da tendência é endividamento mais rápido do que a economia aguenta.",
+        "No mundo, hiatos altos costumam vir antes de crises bancárias e recessão.",
     ),
     "liquidez": Explicacao(
-        "Quanto dinheiro de pronto os bancos têm (caixa e títulos fáceis de vender) sobre o "
-        "que poderiam perder em 30 dias de corrida aos saques, pela conta do Banco Central. "
-        "Acima de 1, sobra.",
-        "Banco com pouco dinheiro de pronto pode não conseguir pagar os saques numa "
-        "desconfiança, mesmo tendo capital.",
-        "Bancos vendendo ativos às pressas, crédito cortado e, no limite, o Banco Central "
-        "socorrendo bancos.",
+        "O dinheiro de pronto dos bancos sobre o que poderiam perder em 30 dias de saques, pela "
+        "conta do Banco Central. Acima de 1, sobra.",
+        "Com pouco dinheiro de pronto, o banco pode não pagar os saques numa desconfiança, mesmo "
+        "com capital.",
+        "Bancos vendendo ativos às pressas, crédito cortado e, no limite, socorro do Banco "
+        "Central.",
     ),
     "liquidez-lcr": Explicacao(
-        "A mesma ideia do Índice de Liquidez, na regra internacional de Basileia (LCR): ativos "
-        "líquidos sobre as saídas de 30 dias de estresse, em %.",
+        "A mesma ideia do Índice de Liquidez na regra de Basileia (LCR): ativos líquidos sobre 30 "
+        "dias de saídas no estresse, em %.",
         "Abaixo de 100 %, o banco não aguentaria sozinho 30 dias de saques fortes.",
-        "Bancos segurando crédito para guardar caixa e mais dependência do Banco Central "
-        "numa crise.",
+        "Bancos segurando crédito para guardar caixa e mais dependência do Banco Central numa "
+        "crise.",
     ),
     # ---------------------------------------------------------------- mercado
     "vol-dolar": Explicacao(
         "Quanto o dólar balança de um dia para o outro, no último mês (21 dias úteis).",
         "Oscilação forte é sinal de incerteza e de investidores mudando de posição às pressas.",
-        "Preços de importados e combustíveis mais instáveis, empresas adiando decisões e o "
-        "Banco Central entrando no mercado.",
+        "Preço de importados e combustíveis instável, empresas adiando decisões e o Banco Central "
+        "no mercado.",
     ),
     "vol-ibovespa": Explicacao(
         "Quanto a bolsa balança de um dia para o outro, no último mês (21 dias úteis).",
         "Bolsa nervosa mostra investidores sem saber o que esperar de lucros e da economia.",
-        "Empresas adiando investimentos e emissões de ações, e o patrimônio das pessoas oscilando.",
+        "Empresas adiando investimentos e emissões, e o patrimônio das pessoas oscilando.",
     ),
     "queda-ibovespa": Explicacao(
-        "Quanto a bolsa está abaixo do maior valor que já atingiu, em porcentagem.",
-        "Quedas grandes e longas costumam vir junto com expectativas piores para os lucros e "
-        "a economia.",
+        "Quanto a bolsa está abaixo do maior valor que já atingiu, em %.",
+        "Quedas grandes e longas costumam vir com expectativas piores para lucros e economia.",
         "Menos investimento e famílias se sentindo mais pobres.",
     ),
     # ---------------------------------------------------------------- longo prazo e energia
     "deficit-inss": Explicacao(
-        "Quanto os benefícios do INSS superam as contribuições, em 12 meses, em proporção do PIB.",
+        "Quanto os benefícios do INSS superam as contribuições, em 12 meses, em % do PIB.",
         "Com a população envelhecendo, mais gente recebe e proporcionalmente menos contribui.",
         "Mais pressão sobre as contas públicas e novas reformas da previdência.",
     ),
     "beneficios-inss": Explicacao(
-        "Quanto o INSS paga em aposentadorias, pensões e outros benefícios em 12 meses, em "
-        "proporção do PIB.",
-        "É a maior despesa do governo federal, e cresce com o envelhecimento e com o salário "
-        "mínimo.",
+        "O que o INSS paga em aposentadorias, pensões e outros benefícios em 12 meses, em % do "
+        "PIB.",
+        "É a maior despesa federal, e cresce com o envelhecimento e com o salário mínimo.",
         "Menos espaço no orçamento para o resto e déficit da previdência maior.",
     ),
     "reservatorios": Explicacao(
-        "Quanta água há nos reservatórios das hidrelétricas, comparada com o mesmo mês dos "
-        "outros anos.",
+        "A água nos reservatórios das hidrelétricas, contra o mesmo mês dos outros anos.",
         "Reservatório baixo obriga a ligar as térmicas, que geram energia mais cara.",
-        "Conta de luz mais cara (as bandeiras tarifárias), mais inflação e, num caso extremo, "
+        "Conta de luz mais cara (as bandeiras tarifárias), mais inflação e, num extremo, "
         "racionamento, como em 2001.",
     ),
 }
