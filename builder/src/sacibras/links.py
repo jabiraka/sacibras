@@ -61,7 +61,7 @@ REGRAS: list[Regra] = [
     Regra(
         padrao=r"\bRTN\b|Resultado do Tesouro",
         nome="RTN",
-        url="https://www.tesourotransparente.gov.br/publicacoes/resultado-do-tesouro-nacional-rtn",
+        url="https://www.tesourotransparente.gov.br/ckan/dataset/resultado-do-tesouro-nacional",
     ),
     Regra(
         padrao=r"SICONFI|Siconfi|\bRGF\b|\bRREO\b|\bDCA\b",
