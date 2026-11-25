@@ -96,8 +96,8 @@ def tabela_balanco(
         id="balanco-pagamentos",
         titulo="Balanço de pagamentos em 12 meses",
         subtitulo=(
-            f"Soma de 12 meses até {agora_txt} e até {antes_txt}. Na conta financeira, "
-            "positivo é dinheiro que entrou no país; negativo, que saiu"
+            f"Soma de 12 meses até {agora_txt} e até {antes_txt}; na conta financeira, "
+            "positivo é entrada"
         ),
         colunas=[
             f"Até {agora_txt} (US$ bi)",
@@ -107,12 +107,13 @@ def tabela_balanco(
         ],
         linhas=saida,
         fonte=fonte,
+        # Na conta financeira o BCB lança ativos menos passivos. O % do PIB usa o PIB em
+        # dólares do próprio BCB: a conta corrente em 12 meses dividida pela mesma conta em %
+        # do PIB (SGS 24419 e 23079).
         nota=(
-            "Somas de 12 meses dos fluxos mensais (BPM6) feitas por nós. Na conta financeira o "
-            "BCB lança ativos menos passivos; aqui o sinal vem trocado, para ler como entrada. "
-            "O % do PIB usa o PIB em dólares do próprio BCB, tirado da conta corrente em 12 "
-            "meses dividida pela mesma conta em % do PIB (SGS 24419 e 23079). A diferença "
-            "entre conta corrente e conta financeira são a conta capital e os erros e omissões."
+            "Somas de 12 meses (BPM6) feitas por nós; na conta financeira, o sinal do BCB vem "
+            "trocado. Entre conta corrente e financeira ficam a conta capital e os erros e "
+            "omissões."
         ),
     )
 
@@ -159,22 +160,22 @@ def tabela_servicos(
         colunas=[f"Até {agora_txt} (US$ bi)", f"Até {antes_txt} (US$ bi)"],
         linhas=[linha(r, p) for r, p in ordem] + [linha("Serviços, total", total)],
         fonte=fonte,
+        # Transportes: o frete das importações e as passagens.
         nota=(
-            "Receita menos despesa de cada tipo de serviço no balanço de pagamentos (BPM6), "
-            "somas de 12 meses feitas por nós. Aluguel de equipamentos inclui o de "
-            "plataformas e navios de petróleo; transportes, o frete das importações e as "
-            "passagens; viagens, o que brasileiros gastam fora menos o que estrangeiros "
-            "gastam aqui."
+            "Receita menos despesa, somas de 12 meses feitas por nós. Aluguel inclui plataformas "
+            "e navios de petróleo; viagens, o que brasileiros gastam fora menos o que "
+            "estrangeiros gastam aqui."
         ),
     )
 
 
 # ---------------------------------------------------------------- comércio por setor e produto
 FONTE_COMEX = f"{comexstat.FONTE}, valores em US$ FOB"
+# O Comex Stat registra a mercadoria quando passa pela alfândega; o balanço de pagamentos do
+# Banco Central segue outro critério.
 NOTA_FOB = (
-    "Valores FOB: o preço da mercadoria embarcada, sem frete nem seguro. O Comex Stat registra "
-    "a mercadoria quando passa pela alfândega; o balanço de pagamentos do Banco Central (o "
-    "saldo das outras partes) segue outro critério, e os totais não batem exatamente."
+    "Valores FOB (sem frete nem seguro), pela alfândega; não batem exatamente com o balanço "
+    "de pagamentos."
 )
 
 
@@ -284,11 +285,8 @@ def tabela_parceiros(
         ],
         linhas=linhas,
         fonte=FONTE_COMEX,
-        nota=(
-            "Saldo positivo: o Brasil vendeu ao país mais do que comprou dele. O país de "
-            "destino é o declarado no embarque; o de origem, o de onde a mercadoria veio. "
-            + NOTA_FOB
-        ),
+        # O país de destino é o declarado no embarque; o de origem, o de onde a mercadoria veio.
+        nota="Saldo positivo: o Brasil vendeu ao país mais do que comprou. " + NOTA_FOB,
     )
 
 
@@ -347,12 +345,9 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
             ultimo.year,
         )
 
-    nota_setor = (
-        "Setor pela divisão da ISIC, a classificação de atividades da ONU (a mesma base da "
-        "CNAE): o setor é o que produz a mercadoria, não a empresa que exporta. A soja em grão "
-        "conta na agropecuária; o farelo, a carne e o açúcar, na fabricação de alimentos. "
-        + NOTA_FOB
-    )
+    # ISIC: a classificação de atividades da ONU (a mesma base da CNAE). A soja em grão conta
+    # na agropecuária; o farelo, a carne e o açúcar, na fabricação de alimentos.
+    nota_setor = "Setor pela ISIC da ONU: quem produz a mercadoria, não quem exporta. " + NOTA_FOB
     tabelas: list[Tabela] = []
     produtos: dict[str, dict[Item, float]] = {}
     fluxos: list[tuple[comexstat.Fluxo, str]] = [("export", "exporta"), ("import", "importa")]
@@ -382,10 +377,8 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
                 nome=comexstat.nome_curto,
                 demais="Demais produtos",
                 fonte=FONTE_COMEX,
-                nota=(
-                    "Produto pela posição do Sistema Harmonizado (os quatro primeiros dígitos "
-                    "da NCM), com nome de todo dia no lugar do oficial. " + NOTA_FOB
-                ),
+                # Posição do SH: os quatro primeiros dígitos da NCM.
+                nota="Produto pelo Sistema Harmonizado, com nome de todo dia. " + NOTA_FOB,
                 acumulado=acumulado,
             )
         )
@@ -396,11 +389,9 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
     graficos: list[Grafico] = []
     try:
         ano, acumulado = consulta("import", "BECLevel1")
-        nota_uso = (
-            "Categoria de uso pela CGCE, a classificação do IBGE e do MDIC que separa o que "
-            "vira investimento (bens de capital), o que entra na produção (intermediários), o "
-            "que vai às famílias (consumo) e os combustíveis. " + NOTA_FOB
-        )
+        # CGCE: a classificação do IBGE e do MDIC que separa investimento (bens de capital),
+        # produção (intermediários), famílias (consumo) e combustíveis.
+        nota_uso = "Categoria de uso pela CGCE, do IBGE e do MDIC. " + NOTA_FOB
         tabelas.append(
             tabela_ranking(
                 "importacoes-uso",
@@ -437,8 +428,7 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
                 fonte=FONTE_COMEX,
                 nota=(
                     "Bens de capital sobem quando as empresas investem; intermediários, com a "
-                    "produção; combustíveis, com o preço do petróleo. Pela CGCE, a "
-                    "classificação por uso do IBGE; valores FOB, sem frete nem seguro."
+                    "produção; combustíveis, com o petróleo. Valores FOB, pela CGCE."
                 ),
                 largura="inteira",
             )
@@ -465,11 +455,11 @@ def comercio_detalhado(ctx: Contexto) -> Pecas:
             casas=1,
             periodicidade="A",
             fonte=f"{FONTE_COMEX}; grupos da UNCTAD (ONU)",
+            # Classificação aplicada por nós aos grupos da CUCI do Comex Stat. O farelo e a carne
+            # contam como alimento; o aço, como manufaturado.
             nota=(
-                "Grupos de produtos da UNCTAD, a agência da ONU para comércio: commodities são "
-                "alimentos, combustíveis, minérios e metais e matérias-primas agrícolas, "
-                "processados ou não (o farelo e a carne contam como alimento; o aço, como "
-                "manufaturado). Classificação aplicada por nós aos grupos da CUCI do Comex Stat."
+                "Grupos da UNCTAD (ONU), aplicados por nós. Commodities: alimentos, combustíveis, "
+                "minérios e metais e matérias-primas agrícolas, processados ou não."
             ),
             largura="inteira",
         ),
@@ -660,10 +650,7 @@ def montar(ctx: Contexto) -> Secao:
             unidade="US$ bilhões, em 12 meses",
             casas=0,
             periodicidade="M",
-            nota=(
-                "Soma de 12 meses, em dólares correntes (o investimento direto somado por nós "
-                "a partir da série mensal do Banco Central)."
-            ),
+            nota="Soma de 12 meses, em dólares correntes (a do investimento direto, nossa).",
             fonte=ctx.fonte_sgs("TC_12M", "IDP"),
         ),
     )
@@ -749,9 +736,8 @@ def montar(ctx: Contexto) -> Secao:
                 "BALANCA_COMERCIAL", "BP_SERVICOS", "BP_RENDA_PRIMARIA", "BP_RENDA_SECUNDARIA"
             ),
             nota=(
-                "Somas de 12 meses dos saldos mensais do balanço de pagamentos (BPM6), feitas "
-                "por nós. As barras somadas dão o saldo em conta corrente; renda primária é o "
-                "que se paga e recebe de juros, lucros e dividendos."
+                "Somas de 12 meses feitas por nós; as barras somadas dão a conta corrente. Renda "
+                "primária: juros, lucros e dividendos."
             ),
         )
     )
@@ -784,9 +770,8 @@ def montar(ctx: Contexto) -> Secao:
                 janela_anos=10,
                 fonte=fonte_servicos,
                 nota=(
-                    "Receita menos despesa de cada tipo de serviço, em 12 meses; abaixo de zero, "
-                    "o país paga mais do que recebe. As seis maiores partes; todas estão na "
-                    "tabela."
+                    "Receita menos despesa em 12 meses; abaixo de zero, o país paga mais. As seis "
+                    "maiores; todas estão na tabela."
                 ),
             )
         )

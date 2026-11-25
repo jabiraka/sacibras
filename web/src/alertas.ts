@@ -207,11 +207,9 @@ function vistaHistoria(alertas: Alerta[]): HTMLElement[] {
     el(
       "p",
       "nota",
-      "Cada linha põe o valor mais recente na régua de tudo o que o indicador já marcou " +
-        `(desde ${Math.min(...primeiros)}, ou desde que a série existe). "Aceso" (▲) é estar pior ` +
-        "que 80 % da própria história. Não é previsão de crise nem nota de risco: um " +
-        "indicador pode estar no pior da história dele e ainda assim longe de um nível perigoso, " +
-        "e o contrário. Onde há limite oficial, ele aparece como traço amarelo.",
+      `O valor de hoje na régua da história do indicador (desde ${Math.min(...primeiros)}); ` +
+        "▲ aceso é pior que 80 % dela, e o traço amarelo, o limite oficial. " +
+        "Não é previsão de crise: o pior da história pode estar longe de um nível perigoso.",
     ),
   );
   return partes;
@@ -303,10 +301,8 @@ function vistaTendencia(alertas: Alerta[]): HTMLElement[] {
     el(
       "p",
       "nota",
-      "Compara o valor de hoje com o de um ano antes (o ponto mais perto de 12 meses atrás), " +
-        "os dois na régua da história do próprio indicador. Andou 5 pontos ou mais para o lado " +
-        "ruim: piorou; para o lado bom: melhorou. Serve para ver o rumo: um indicador pode estar " +
-        "num nível bom e piorando depressa, ou num nível ruim e melhorando.",
+      "Hoje contra um ano antes, na régua da história do indicador: 5 pontos ou mais para o " +
+        "lado ruim é piorou; para o bom, melhorou. Um nível bom pode piorar depressa, e um ruim, melhorar.",
     ),
   );
   return partes;
@@ -436,15 +432,12 @@ function vistaPaises(alertas: Alerta[], d: Dados, grupo: string): HTMLElement[] 
     el(
       "p",
       "nota",
-      "Cada linha põe o Brasil entre os outros países no mesmo número, da mesma fonte e do " +
-        "mesmo ano (o último que o FMI já dá como realizado; o juro, no último mês do BIS; o " +
-        "crédito privado, no último trimestre que o BIS publicou de cada país; o câmbio, nos " +
-        "últimos 21 dias úteis do BIS). " +
-        "\"Pior que 97 %\" quer dizer que 97 % dos países do grupo estão melhor que o Brasil; " +
-        "▲ a partir de 80 %. A régua vai do 5º ao 95º percentil dos " +
-        "países, para um caso extremo não esconder o resto.\n\n" +
+      "O Brasil contra os outros países no mesmo número, fonte e ano (o último realizado do " +
+        "FMI; no BIS, o último mês, trimestre ou 21 dias úteis). " +
+        "\"Pior que 97 %\": 97 % dos países do grupo estão melhor; ▲ a partir de 80 %; a " +
+        "régua vai do 5º ao 95º percentil.\n\n" +
         `Os outros ${fora.length} indicadores do painel (${[...new Set(fora.map((a) => a.grupo.toLowerCase()))].join(", ")}) ` +
-        "ainda não têm comparação internacional em fonte aberta e oficial: ficam só nas outras vistas.",
+        "ainda não têm comparação em fonte aberta e oficial.",
     ),
   );
   return partes;
@@ -501,12 +494,9 @@ function vistaResumo(alertas: Alerta[], d: Dados | null, grupo: string): HTMLEle
     el(
       "p",
       "nota",
-      "As três formas de ver, lado a lado. História: em quantos % dos meses (ou dias) da " +
-        "própria história o indicador esteve melhor que hoje. Países: quantos % dos países do " +
-        "grupo estão melhor que o Brasil. ▲ a partir de 80 %. " +
-        "Um ano: ▲ piorou, ▼ melhorou ou = ficou quase igual (andou menos de 5 pontos na régua " +
-        "da própria história). Traço: " +
-        "sem par internacional em fonte aberta, ou sem o dado de um ano antes.",
+      "História: % da própria história melhor que hoje. Países: % dos países do grupo melhor " +
+        "que o Brasil. ▲ a partir de 80 %. Um ano: ▲ piorou, ▼ melhorou, = quase igual " +
+        "(menos de 5 pontos). Traço: sem o dado.",
     ),
   ];
 }
@@ -520,22 +510,22 @@ const VISTAS: { valor: Vista; rotulo: string; explica: string }[] = [
     valor: "historia",
     rotulo: "Contra a própria história",
     explica:
-      "Cada indicador na régua de tudo o que ele já marcou: está num nível comum para ele, ou no " +
-      "pior que já se viu? Abra um grupo e toque num indicador para saber o que ele é.",
+      "Cada indicador na régua da própria história: nível comum ou o pior já visto? Toque num " +
+      "indicador para saber o que ele é.",
   },
   {
     valor: "paises",
     rotulo: "Contra outros países",
     explica:
-      "O Brasil entre países parecidos (emergentes, América Latina) ou entre os ricos, no mesmo " +
-      "número e na mesma fonte para todos. Só os indicadores que têm comparação em fonte oficial.",
+      "O Brasil entre países parecidos (emergentes, América Latina) ou entre os ricos, com o " +
+      "mesmo número e a mesma fonte. Só onde há fonte oficial.",
   },
   {
     valor: "tendencia",
     rotulo: "O que mudou em um ano",
     explica:
-      "Se cada indicador melhorou ou piorou de um ano para cá. Um nível ruim que melhora preocupa " +
-      "menos que um nível bom que piora depressa.",
+      "Se cada indicador melhorou ou piorou em um ano. Nível ruim melhorando preocupa menos " +
+      "que nível bom piorando depressa.",
   },
   {
     valor: "resumo",

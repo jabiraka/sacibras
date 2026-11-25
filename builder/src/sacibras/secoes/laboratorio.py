@@ -133,10 +133,12 @@ def neutro_da_curva(td: tesouro_direto.Curvas, trimestres: list[date]) -> list[P
     return saida
 
 
+# Focus: juro real esperado para daqui a 3 anos; títulos IPCA+: juro real a termo de 5 a 10
+# anos; média: os últimos 10 anos do juro real esperado.
 METODOS_NEUTRO = {
-    "focus": "Focus: juro real esperado para daqui a 3 anos",
-    "curva": "Títulos IPCA+: juro real a termo de 5 a 10 anos",
-    "media": "Média de 10 anos do juro real esperado",
+    "focus": "Focus, a 3 anos",
+    "curva": "Títulos IPCA+, 5 a 10 anos",
+    "media": "Média de 10 anos",
 }
 
 
@@ -262,20 +264,18 @@ def _juro_neutro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
             casas=1,
             periodicidade="T",
             fonte=fonte_neutro,
+            # Focus: a Selic esperada para o fim do ano daqui a três anos, menos o IPCA do mesmo
+            # ano. Títulos: juro real a termo de 5 a 10 anos (inclui prêmio por prazo). Média:
+            # Selic menos o IPCA esperado em 12 meses, média dos dez anos anteriores. A
+            # estimativa do BC (Relatório de Política Monetária) ainda não entrou.
             nota=(
-                "Juro neutro é o juro real que nem acelera nem freia a economia; ninguém o "
-                "observa, só estima. Focus: a Selic que os analistas esperam para o fim do "
-                "ano daqui a três anos, descontado o IPCA do mesmo ano. Títulos: o juro "
-                "acima da inflação que o Tesouro paga entre 5 e 10 anos à frente, a termo, "
-                "que inclui um prêmio por prazo. Média: o juro real esperado (Selic menos o "
-                "IPCA esperado em 12 meses) na média dos dez anos anteriores. O Banco Central "
-                "publica a estimativa dele no Relatório de Política Monetária; ainda não "
-                "entrou aqui."
+                "Estimativa nossa por três métodos do juro real que nem acelera nem freia a "
+                "economia. Ninguém o observa; o dos títulos inclui um prêmio por prazo."
             ),
         ),
         grafico(
             "hiato",
-            "Hiato do produto: a economia acima ou abaixo do potencial",
+            "Hiato do produto",
             [
                 serie("hp", "Filtro HP", gaps["hp"], desde=INICIO),
                 serie("hamilton", "Filtro de Hamilton", gaps["hamilton"], desde=INICIO),
@@ -284,19 +284,18 @@ def _juro_neutro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
             casas=1,
             periodicidade="T",
             fonte=fonte_pib,
+            # HP: distância do PIB para uma tendência suave (λ = 1600). Hamilton: o erro de
+            # prever o PIB de hoje com o de dois anos antes. Os dois podem divergir por pontos.
             nota=(
-                "Positivo: a economia produz acima do que conseguiria sem pressionar preços. "
-                "HP: a distância do PIB para uma tendência suave (λ = 1600). Hamilton: o erro "
-                "de prever o PIB de hoje com o de dois anos antes. Os dois erram mais no fim "
-                "da série, justamente no trimestre que interessa: o HP muda quando sai o "
-                "dado novo, e os dois podem divergir por pontos, como agora."
+                "Positivo: a economia acima do que produz sem pressionar preços (filtros HP e "
+                "de Hamilton). Os dois erram mais no fim da série, e o HP muda com dado novo."
             ),
         ),
         grafico(
             "regra-de-taylor",
             "A Selic e a regra de Taylor",
             [
-                serie("selic", "Selic meta (fim do trimestre)", selic_tri, desde=INICIO),
+                serie("selic", "Selic meta", selic_tri, desde=INICIO),
                 serie("taylor", "Regra de Taylor (mediana)", [(d, m) for d, m, _, _ in taylor]),
             ],
             unidade="% a.a.",
@@ -307,13 +306,12 @@ def _juro_neutro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
                 nome="faixa entre os métodos",
                 pontos=[(d, round(lo, 2), round(hi, 2)) for d, _, lo, hi in taylor],
             ),
+            # Taylor (1993) com a inflação esperada: uma conta para cada juro neutro (três) e
+            # cada hiato (dois); Selic acima da faixa é aperto maior do que a regra pede.
             nota=(
-                "Regra de Taylor (1993), com a inflação esperada: juro neutro + IPCA esperado "
-                "em 12 meses + metade da distância da expectativa para a meta + metade do "
-                "hiato. Uma conta para cada juro neutro (três) e cada hiato (dois); a linha é "
-                "a mediana das seis e a faixa vai da menor à maior. Não é o que o Banco "
-                "Central faz, e sim uma régua: Selic acima da faixa é aperto maior do que a "
-                "regra pede."
+                "Juro neutro + IPCA esperado + metade da distância para a meta + metade do "
+                "hiato; linha na mediana de seis contas, faixa da menor à maior. É uma régua, "
+                "não o que o Banco Central faz."
             ),
         ),
     ]
@@ -347,10 +345,7 @@ def _juro_neutro(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
         ],
         linhas=linhas,
         fonte=fonte_neutro,
-        nota=(
-            "A distância entre os métodos é a medida honesta da incerteza: ninguém sabe o juro "
-            "neutro com precisão de décimos."
-        ),
+        nota="A distância entre os métodos é a incerteza da estimativa.",
     )
     ctx.memo["laboratorio_hiato_hp"] = gaps["hp"]
     ctx.memo["laboratorio_neutro"] = (faixa_hoje[0], central, faixa_hoje[1])
@@ -452,7 +447,7 @@ def _copom(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
         ),
         Cartao(
             id="copom-dias",
-            rotulo="Quanto o juro de 2 anos mexe no dia seguinte ao Copom",
+            rotulo="Juro de 2 anos no dia seguinte ao Copom",
             valor=round(media_copom, 2),
             unidade="pb",
             casas=1,
@@ -495,16 +490,15 @@ def _copom(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             for d, meta, focus, surpresa, mov, dol in reversed(com_surpresa)
         ],
         fonte=fonte,
+        # Estudo de evento: a surpresa é a decisão menos a última mediana do Focus nos sete
+        # dias antes; o movimento vai do dia da reunião ao dia útil seguinte (o Copom anuncia
+        # depois do fechamento). Juro de 2 anos: curva zero dos prefixados do Tesouro Direto.
+        # Reta por mínimos quadrados com erro de Newey-West, fora 2020. A surpresa medida
+        # pelo Focus é pobre; os juros futuros, que medem melhor, não entram aqui.
         nota=(
-            "Estudo de evento: a surpresa é a decisão menos a última mediana do Focus nos sete "
-            "dias antes da reunião; o movimento vai do dia da reunião ao dia útil seguinte "
-            "(o Copom anuncia depois do fechamento). Juro de 2 anos: a curva zero dos títulos "
-            "prefixados do Tesouro Direto. Uma reta pelos pontos (mínimos quadrados, erro de "
-            f"Newey-West) dá {br(efeito)} pb a cada 0,25 pp de surpresa, de {br(lo)} a {br(hi)} "
-            f"com 90 % de confiança, fora 2020; com 2020, {br(reg_todos.coef[1] * 25)} pb, sem "
-            "efeito que se distinga de zero (a pandemia mexeu tudo junto). O efeito é pequeno "
-            "porque a medida da surpresa é pobre: a mediana do Focus fica até uma semana velha "
-            "e o mercado de juros futuros, que mede melhor, não entra aqui."
+            "Surpresa: a decisão menos o Focus da semana anterior; movimento até o dia útil "
+            f"seguinte. Resultado fraco: com 2020, {br(reg_todos.coef[1] * 25)} pb, que não se "
+            "distingue de zero, e o Focus mede mal a surpresa."
         ),
     )
     return cartoes, [], [tabela]
@@ -589,12 +583,12 @@ def _reacao(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             casas=1,
             periodicidade="A",
             fonte=fonte,
+            # Teste de Bohn (1998): primário do ano contra a dívida líquida do fim do ano
+            # anterior, descontado o hiato (filtro HP). Coeficiente positivo basta para a
+            # dívida não explodir.
             nota=(
-                "Teste de Bohn (1998): primário do ano contra a dívida líquida do fim do ano "
-                "anterior, descontado o ciclo (o hiato do produto, filtro HP). Se o coeficiente "
-                "da dívida é positivo, o governo aperta quando a dívida sobe, e isso basta para "
-                "ela não explodir. Com um ponto por ano, são poucos pontos: o intervalo é "
-                "largo."
+                "Teste de Bohn: o primário reage à dívida do ano anterior, descontado o ciclo? "
+                "Um ponto por ano: o intervalo é largo."
             ),
         )
     ]
@@ -616,14 +610,13 @@ def _reacao(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
     tabela = Tabela(
         id="reacao-fiscal-amostras",
         titulo="A reação do primário à dívida, em dois períodos",
-        subtitulo="pp de primário a mais para cada 10 pp de dívida líquida a mais no ano anterior",
+        subtitulo="pp de primário a mais por 10 pp de dívida no ano anterior",
         colunas=["Reação", "90 %: de", "até", "Anos"],
         linhas=linhas,
         fonte=fonte,
         nota=(
-            "Mínimos quadrados com erro de Newey-West. Dividir a amostra deixa cada pedaço com "
-            "uma dúzia de anos: a diferença entre os períodos só vale se os intervalos não se "
-            "cruzam."
+            "Mínimos quadrados com erro de Newey-West. Uma dúzia de anos por período: a "
+            "diferença só vale se os intervalos não se cruzam."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -726,11 +719,12 @@ def _crescimento(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
             casas=0,
             periodicidade="A",
             fonte=fonte,
+            # PIB pela despesa a paridade de poder de compra (o que a Penn World Table indica
+            # para comparar padrão de vida) dividido pela população. Ficar parado é crescer no
+            # mesmo ritmo dos EUA.
             nota=(
-                "PIB pela despesa a paridade de poder de compra (o que a Penn World Table "
-                "indica para comparar padrão de vida entre países) dividido pela população, "
-                "contra o mesmo número dos EUA no mesmo ano. Subir é encostar nos EUA; ficar "
-                "parado é crescer no mesmo ritmo deles."
+                "PIB por habitante a paridade de poder de compra, contra o dos EUA no mesmo ano. "
+                "Subir é encostar nos EUA."
             ),
         )
     ]
@@ -741,11 +735,11 @@ def _crescimento(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
         colunas=["PIB por habitante", "Produto por ocupado", "Ocupados por habitante"],
         linhas=linhas,
         fonte=fonte,
+        # Uma parte maior da população trabalha: mais gente em idade de trabalhar, mais
+        # mulheres no mercado. Essa fonte tem limite; a produtividade, não.
         nota=(
-            "Conta nossa sobre a Penn World Table: o PIB por habitante cresce porque cada "
-            "ocupado produz mais ou porque uma parte maior da população trabalha (mais gente "
-            "em idade de trabalhar, mais mulheres no mercado). A segunda fonte tem limite; a "
-            "primeira, não. Taxas em logaritmo, por isso somam."
+            "Conta nossa: cresce porque cada ocupado produz mais ou porque mais gente trabalha, "
+            "e só a segunda tem limite. Taxas em logaritmo, por isso somam."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -789,10 +783,9 @@ def montar(ctx: Contexto) -> Secao:
     resumo = "Estimativas nossas, cada uma com o método e a faixa de erro."
     if neutro and taylor:
         resumo = (
-            f"O juro neutro sai em torno de {br(neutro.valor)} % ao ano acima da inflação "
-            f"({neutro.detalhe.removesuffix(', conforme o método')}, conforme o método), e a "
-            f"regra de Taylor põe a Selic em {br(taylor.valor)} %. Estimativas nossas, cada "
-            "uma com o método e a faixa de erro."
+            f"Juro neutro perto de {br(neutro.valor)} % acima da inflação "
+            f"({neutro.detalhe.removesuffix(', conforme o método')}); Taylor põe a Selic em "
+            f"{br(taylor.valor)} %. Estimativas nossas, com a faixa de erro."
         )
     return Secao(
         id="laboratorio",

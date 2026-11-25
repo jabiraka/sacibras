@@ -117,3 +117,13 @@ def test_despesa_real_contra_a_faixa_do_arcabouco() -> None:
     assert g.faixa is not None and g.faixa.pontos[0] == (date(2024, 12, 1), 0.6, 2.5)
     assert "dentro da faixa de 0,6 % a 2,5 %" in g.manchete
     assert fiscal.despesa_contra_a_faixa(despesa[:12], ipca, date(2024, 1, 1)) == []
+
+
+def test_pib_por_habitante_usa_o_ibge_e_so_completa_depois() -> None:
+    from sacibras.secoes import atividade
+
+    oficial = [(date(2023, 1, 1), 3.2), (date(2024, 1, 1), 3.4)]
+    conta = [(date(2023, 1, 1), 3.1), (date(2024, 1, 1), 3.5), (date(2025, 1, 1), 2.3)]
+    junta, extra = atividade.com_a_conta_depois(oficial, conta)
+    assert junta == [(date(2023, 1, 1), 3.2), (date(2024, 1, 1), 3.4), (date(2025, 1, 1), 2.3)]
+    assert extra == 1

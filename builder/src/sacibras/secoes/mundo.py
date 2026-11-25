@@ -122,9 +122,8 @@ WEO: list[tuple[str, str, str, str, str, int, bool | None]] = [
         "divida",
         "GGXWDG_NGDP",
         "Dívida bruta do governo",
-        "Dívida bruta do governo geral no conceito do FMI, que inclui os títulos do Tesouro "
-        "na carteira do Banco Central — por isso o número do Brasil é maior que a DBGG "
-        "divulgada pelo Banco Central.",
+        "Dívida bruta do governo geral no conceito do FMI, com os títulos do Tesouro na "
+        "carteira do Banco Central: por isso a do Brasil passa da DBGG do Banco Central.",
         "% do PIB",
         1,
         False,
@@ -133,11 +132,9 @@ WEO: list[tuple[str, str, str, str, str, int, bool | None]] = [
         "primario",
         "GGXONLB_NGDP",
         "Resultado primário",
-        "Receitas menos despesas do governo geral, sem os juros. Negativo é déficit. Para o "
-        "Brasil, não é o mesmo número de Contas públicas: o FMI mede só União, estados e "
-        "municípios, por receitas e despesas; o Banco Central soma as estatais e o próprio "
-        "BC, pela variação da dívida. A tabela lado a lado está em Contas públicas › Primário "
-        "e juros.",
+        # A tabela lado a lado (FMI e BC) está em Contas públicas › Primário e juros.
+        "Receitas menos despesas do governo geral, sem juros; negativo é déficit. No Brasil "
+        "difere do Banco Central, que soma as estatais e mede pela variação da dívida.",
         "% do PIB",
         1,
         True,
@@ -146,9 +143,8 @@ WEO: list[tuple[str, str, str, str, str, int, bool | None]] = [
         "nominal",
         "GGXCNL_NGDP",
         "Resultado nominal",
-        "Receitas menos despesas do governo geral, com os juros. Negativo é déficit. Para o "
-        "Brasil, difere do resultado nominal do Banco Central (Contas públicas) pela mesma "
-        "razão do primário: outro conjunto de governo e outra forma de medir.",
+        "Receitas menos despesas do governo geral, com juros; negativo é déficit. No Brasil "
+        "difere do Banco Central pela mesma razão do primário.",
         "% do PIB",
         1,
         True,
@@ -489,10 +485,9 @@ def _metricas_mensais(
                 id="cambio",
                 nome="Moeda contra o dólar",
                 descricao=(
-                    "Quanto a moeda do país ganhou (positivo) ou perdeu (negativo) de valor "
-                    "contra o dólar no ano: a cotação do fim do ano contra a do fim do ano "
-                    f"anterior; em {ano}, até {_mes_ano(ultimo)}. Os EUA ficam de fora (a moeda "
-                    "é o dólar); os países do euro têm todos o número do euro."
+                    "Variação da moeda contra o dólar, de fim de ano a fim de ano (em "
+                    f"{ano}, até {_mes_ano(ultimo)}); positivo é alta da moeda. Sem os EUA; "
+                    "os países do euro têm o número do euro."
                 ),
                 unidade="% no ano",
                 casas=1,
@@ -511,10 +506,10 @@ def _metricas_mensais(
                 id="juro_10a",
                 nome="Juro de 10 anos",
                 descricao=(
-                    "Taxa dos títulos do governo de 10 anos, média de dezembro de cada ano; em "
-                    f"{ano}, do último mês ({_mes_ano(ultimo)}). Brasil: o Tesouro Prefixado "
-                    "com Juros Semestrais de vencimento mais perto de 10 anos (a OCDE traz a "
-                    "TJLP, que não é título de 10 anos). Fora da OCDE, só alguns países."
+                    # Brasil fora da OCDE: ela traz a TJLP, que não é título de 10 anos.
+                    "Título do governo de 10 anos, média de dezembro (em "
+                    f"{ano}, de {_mes_ano(ultimo)}). Brasil: o Prefixado com Juros Semestrais "
+                    "mais perto de 10 anos; fora da OCDE, só alguns países."
                 ),
                 unidade="% a.a.",
                 casas=2,
@@ -554,9 +549,8 @@ METRICAS_PWT: list[
     (
         "ptf",
         "PTF contra a dos EUA",
-        "Produtividade total dos fatores: o que o país produz além do que explicam as máquinas "
-        "e prédios, as horas e o estudo de quem trabalha, em % da dos EUA no mesmo ano, com os "
-        "preços convertidos pela paridade do poder de compra.",
+        "Produtividade total dos fatores: o que se produz além do que explicam capital, horas "
+        "e estudo, em % da dos EUA no mesmo ano (paridade do poder de compra).",
         "% da dos EUA",
         0,
         True,
@@ -605,10 +599,8 @@ METRICAS_PWT: list[
     (
         "parte_trabalho",
         "Parte do trabalho na renda",
-        "A parte da renda do país que fica com quem trabalha: salários e a renda do trabalho de "
-        "autônomos, que a Penn World Table estima. Para parte dos países e anos a própria PWT "
-        "completa o dado que falta (o do Brasil de 2021 se repete em 2022 e 2023): compare "
-        "com cuidado.",
+        "A parte da renda que fica com quem trabalha, com a dos autônomos estimada pela PWT; "
+        "onde falta dado, a própria PWT completa (o Brasil de 2021 se repete até 2023).",
         "% da renda",
         1,
         None,
@@ -691,10 +683,8 @@ def _metrica_da_carga(
         id="carga",
         nome="Carga tributária",
         descricao=(
-            "Impostos e contribuições sociais de todo o governo (no Brasil: União, estados, "
-            "municípios e INSS), no método da OCDE, igual para todos os países. Sai com atraso: "
-            f"o último ano é {ultimo}, e para parte dos países, {ultimo - 1}. Os detalhes estão "
-            "em Impostos."
+            "Impostos e contribuições de todo o governo, no método da OCDE, igual para todos. "
+            f"O último ano é {ultimo} ({ultimo - 1} para parte dos países)."
         ),
         unidade="% do PIB",
         casas=1,
@@ -787,7 +777,7 @@ def _metricas_de_risco(ctx: Contexto, ano: int, manter: set[str]) -> list[Metric
                 maior_e_melhor=True,
                 fonte=(
                     "FMI, International Liquidity (reservas) e Balance of Payments "
-                    "(importação de bens e serviços); cálculo próprio"
+                    "(importação de bens e serviços); conta nossa"
                 ),
                 anos=anos_r,
                 valores={iso: v for iso, v in sorted(meses.items()) if iso in manter},
@@ -809,7 +799,7 @@ def _metricas_de_risco(ctx: Contexto, ano: int, manter: set[str]) -> list[Metric
                 unidade="% a.a.",
                 casas=1,
                 maior_e_melhor=False,
-                fonte="BIS, câmbio diário contra o dólar (WS_XRU); cálculo próprio",
+                fonte="BIS, câmbio diário contra o dólar (WS_XRU); conta nossa",
                 anos=[ano],
                 valores={iso: [v] for iso, v in sorted(vol.items()) if iso in manter},
             )
@@ -1005,8 +995,7 @@ def montar(ctx: Contexto) -> Mundo:
         resumo += f" e de {br(mundo)} % para o mundo"
     resumo += (
         f". Abaixo, o Brasil ao lado de {len([p for p in PAISES if p[3] != 'agregado']) - 1} "
-        "países em crescimento, inflação, juros, contas públicas, contas externas e "
-        f"produtividade, com as projeções do FMI até {fim}."
+        f"países, com as projeções do FMI até {fim}."
     )
     mundo_obj = Mundo(
         titulo="Brasil no mundo",

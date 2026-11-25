@@ -92,7 +92,7 @@ def grafico_rendimento_e_produto(por_ocupado: list[Ponto]) -> Grafico | None:
     quando = produto[-1][0]
     return grafico(
         "rendimento-produtividade",
-        "O rendimento do trabalho e o produto por pessoa ocupada",
+        "Rendimento do trabalho e produto por ocupado",
         [
             serie("produto", "PIB por ocupado", produto, casas=1),
             serie("rendimento", "Rendimento real do trabalho", renda, casas=1),
@@ -108,12 +108,11 @@ def grafico_rendimento_e_produto(por_ocupado: list[Ponto]) -> Grafico | None:
             f"IBGE, Contas Nacionais Trimestrais (SIDRA {PIB_VOLUME[0]}) e PNAD Contínua "
             f"(SIDRA {OCUPADOS[0]} e {RENDIMENTO[0]}); conta nossa"
         ),
+        # O rendimento é o habitual de todos os trabalhos, descontada a inflação pelo IBGE. No
+        # longo prazo, o salário só cresce de forma duradoura se cada trabalhador produz mais.
         nota=(
-            "Médias de quatro trimestres, as duas com 100 em 2012 (a PNAD começa aí). O "
-            "rendimento é o habitual de todos os trabalhos, descontada a inflação pelo IBGE. "
-            "No longo prazo, o salário só cresce de forma duradoura se cada trabalhador "
-            "produz mais; em prazos curtos os dois se afastam (o rendimento médio sobe, por "
-            "exemplo, quando quem ganha menos perde o emprego, como em 2020)."
+            "Médias de quatro trimestres, 100 em 2012 (início da PNAD). Em prazos curtos os dois "
+            "se afastam: em 2020, a média subiu porque quem ganhava menos perdeu o emprego."
         ),
     )
 
@@ -484,14 +483,14 @@ def pecas() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             casas=1,
             periodicidade="T",
             fonte=fonte_hora if hora else fonte_prod,
+            # Somas de quatro trimestres: o PIB em volume e a média de ocupados. Por hora: o PIB
+            # dividido pelas horas da média de quatro trimestres, cada uma os ocupados vezes as
+            # horas que costumam trabalhar por semana (conta nossa).
             nota=(
-                "Somas de quatro trimestres: o PIB em volume e a média de ocupados. A PNAD "
-                "começa em 2012. "
+                "Quatro trimestres, 100 em 2012 (início da PNAD). "
                 + (
-                    "Por hora: o PIB dividido pelas horas da média de quatro trimestres, cada "
-                    "uma os ocupados vezes as horas que costumam trabalhar por semana (conta "
-                    "nossa). São as horas habituais, não as feitas de fato: férias, faltas e "
-                    "hora extra não entram."
+                    "Por hora, conta nossa com as horas habituais: férias, faltas e hora extra "
+                    "não entram."
                     if hora
                     else "É produto por pessoa, não por hora trabalhada."
                 )
@@ -526,11 +525,11 @@ def pecas() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
                 casas=1,
                 periodicidade="A",
                 fonte=fonte_prod,
+                # PIB em volume, média anual de ocupados; repartição pelos logaritmos. Na
+                # pandemia, quem perdeu o trabalho saiu da conta e voltou depois.
                 nota=(
-                    "As duas partes somam o crescimento do PIB no ano (PIB em volume, média "
-                    "anual de ocupados; repartição pelos logaritmos, conta nossa). De 2020 a "
-                    "2022 a pandemia distorce a conta: quem perdeu o trabalho saiu dela e "
-                    "voltou depois."
+                    "As duas partes somam o crescimento do PIB no ano (conta nossa). De 2020 a "
+                    "2022 a pandemia distorce a conta."
                 ),
             )
         )
@@ -589,7 +588,7 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
     fonte_rel = f"{pwt.FONTE}: ctfp, PTF a paridade de poder de compra"
     fonte_conta = f"{pwt.FONTE}: rgdpna, rnna, emp, avh, hc e labsh; conta nossa pelo método da PWT"
     decadas = periodos(parcelas)
-    diferenca = max(abs(m.ptf - m.ptf_pwt) for _, m in decadas)
+    # A PTF daqui contra a da PWT, nas médias de cada período: max(abs(m.ptf - m.ptf_pwt)).
     repetidos = anos_repetidos(brasil, "labsh")
     aviso_labsh = (
         f" A PWT repete a parte do trabalho na renda de {repetidos[0] - 1} em "
@@ -600,7 +599,7 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
 
     estendida = estender_ptf(brasil, insumos) if insumos else []
     if estendida:
-        erro, vies, desde = conferir_ptf(brasil, insumos)  # type: ignore[arg-type]
+        erro, _vies, _desde = conferir_ptf(brasil, insumos)  # type: ignore[arg-type]
         fim_est = estendida[-1].ano
         fonte_ibge = (
             f"IBGE: Contas Trimestrais (SIDRA {PIB_VOLUME[0]}, PIB e FBCF) e PNAD Contínua "
@@ -608,14 +607,15 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
             f"{ESTUDO[0]}, anos de estudo); conta nossa"
         )
         fonte_est = f"{fonte_ibge}, emendada na {pwt.FONTE.split(' (')[0]} de {ultimo}"
+        # A estimativa é a mesma conta da PWT com os números do IBGE (PIB, investimento,
+        # ocupados, horas efetivas e anos de estudo da PNAD), emendada no último ano da PWT.
+        # Feita nos anos em que a PWT existe, repete a PTF dela desde `_desde` com o erro médio
+        # `erro`; o estudo da PNAD sobe mais devagar que o da PWT, e com ele a PTF sai em média
+        # `_vies` pp por ano mais alta. A barra vai até a PTF com o capital humano no ritmo dos
+        # últimos cinco anos da PWT.
         nota_est = (
-            f" De {ultimo + 1} a {fim_est}, estimativa nossa: a mesma conta da PWT com os "
-            "números do IBGE (PIB, investimento, ocupados, horas efetivas e anos de estudo da "
-            "PNAD), emendada no último ano da PWT. Feita nos anos em que a PWT existe, a conta "
-            f"repete a PTF dela desde {desde} com erro médio de {br(erro, 1)} pp por ano, mas "
-            f"o estudo da PNAD sobe mais devagar que o da PWT, e com ele a PTF sai em média "
-            f"{br(vies, 1)} pp por ano mais alta. A barra vai até a PTF com o capital humano "
-            "no ritmo dos últimos cinco anos da PWT."
+            f" De {ultimo + 1} a {fim_est}, estimativa nossa com o IBGE, que nos anos da PWT "
+            f"erra em média {br(erro, 1)} pp por ano."
         )
     cartoes = [
         cartao(
@@ -699,12 +699,12 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
             fonte=f"{fonte_ptf}"
             + (f"; {ultimo + 1} a {fim_est}: {fonte_ibge}" if estendida else ""),
             intervalos=intervalos,
+            # A PTF é o que o país produz além do que explicam as máquinas e prédios, as horas
+            # trabalhadas e o estudo: tecnologia, organização, alocação. A PWT sai a cada dois
+            # anos, mais ou menos.
             nota=(
-                "A produtividade total dos fatores é o que o país produz além do que explicam "
-                "as máquinas e prédios, as horas trabalhadas e o estudo de quem trabalha: "
-                "tecnologia, organização, alocação. A PWT a calcula como o resto da conta, "
-                f"então ela carrega o ciclo. Atualizada a cada dois anos, mais ou menos; vai "
-                f"até {ultimo}." + (nota_est if estendida else "")
+                "O que o país produz além de capital, horas e estudo; como é o resto da conta, "
+                "carrega o ciclo." + (nota_est if estendida else "")
             ),
         ),
         grafico(
@@ -719,10 +719,11 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
             casas=0,
             periodicidade="A",
             fonte=fonte_rel,
+            # Os outros países estão em Brasil no mundo; para a trajetória do Brasil, o certo é o
+            # índice de PTF (rtfpna).
             nota=(
-                "O nível da PTF do Brasil em % da dos EUA no mesmo ano, com os preços "
-                "convertidos pela paridade do poder de compra. Para a trajetória do Brasil, o "
-                "índice de PTF (rtfpna) é o certo. Os outros países estão em Brasil no mundo."
+                "Nível da PTF do Brasil em % da dos EUA, a paridade de poder de compra. Para a "
+                "trajetória, veja o índice de PTF."
             ),
         ),
     ]
@@ -758,14 +759,12 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
             else []
         ),
         fonte=fonte_conta + (f"; {ultimo + 1} a {fim_est}: {fonte_ibge}" if estendida else ""),
+        # Capital humano é o índice da PWT (anos de estudo e o retorno de cada ano). A PTF da
+        # própria PWT difere da daqui nas médias de cada período (ver o comentário acima).
+        # Depois de 2020 as horas sobem com a volta da pandemia.
         nota=(
-            "Capital, horas trabalhadas e capital humano somam o crescimento que as máquinas e "
-            "prédios, o trabalho e o estudo explicam, cada um pesado pela sua parte na renda; "
-            "a PTF é o que sobra, e as quatro somam o PIB (em log). Capital humano é o índice "
-            "da PWT "
-            "(anos de estudo e o retorno de cada ano). A PTF da própria PWT difere da daqui em "
-            f"até {br(diferenca, 1)} pp por ano nas médias. Depois de 2020 as horas sobem com "
-            "a volta da pandemia." + aviso_labsh
+            "Cada fator pesado pela sua parte na renda; a PTF é o que sobra, e as quatro somam "
+            "o PIB (em log)." + aviso_labsh
         ),
     )
     return cartoes, graficos, tabela

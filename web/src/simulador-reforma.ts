@@ -92,7 +92,7 @@ export function montarSimuladorReforma(s: SimuladorReforma): HTMLElement[] {
 
   const linhaAliquota = el("label", "controle");
   const textoAliquota = el("span", "controle-rotulo", "Alíquota cheia (IBS + CBS)");
-  textoAliquota.append(el("small", "", "ainda não existe: escolha dentro das contas oficiais"));
+  textoAliquota.append(el("small", "", "ainda não fixada: escolha entre as contas oficiais"));
   const entradaAliquota = el("input");
   entradaAliquota.type = "range";
   entradaAliquota.id = "ref-aliquota";
@@ -180,7 +180,7 @@ export function montarSimuladorReforma(s: SimuladorReforma): HTMLElement[] {
       ? ""
       : `faixa: de ${reais(valor + baixo.imposto)} a ${reais(valor + alto.imposto)}`;
     preco.detalhe.textContent = fixa
-      ? "Só com o IBS e a CBS: falta somar o ICMS ou o ISS, que seguem valendo."
+      ? "Sem o ICMS ou o ISS, que seguem valendo."
       : final > 0
         ? `Do que se paga, ${numero((meio.imposto / final) * 100, 1)} % é imposto.`
         : "";
@@ -196,7 +196,7 @@ export function montarSimuladorReforma(s: SimuladorReforma): HTMLElement[] {
       volta.detalhe.textContent =
         meio.imposto === 0
           ? "Nada a devolver: a compra não paga IBS nem CBS."
-          : `${numero(tipo.volta_cbs, 0)} % da CBS e ${doIbs}. No fim, a família paga ${reais(meio.imposto - meio.devolucao)} de imposto.`;
+          : `${numero(tipo.volta_cbs, 0)} % da CBS e ${doIbs}. Imposto no fim: ${reais(meio.imposto - meio.devolucao)}.`;
     }
     aviso.textContent = etapa.aviso;
   }

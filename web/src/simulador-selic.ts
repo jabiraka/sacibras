@@ -56,11 +56,11 @@ export function efeito(s: SimuladorSelic, pp: number): EfeitoDaSelic {
   };
 }
 
-/** "dentro do intervalo da meta (1,5 % a 4,5 %)", "acima do teto da meta (4,5 %)"… */
+/** "Dentro do intervalo da meta (1,5 % a 4,5 %)", "Acima do teto da meta (4,5 %)"… */
 function contraAMeta(valor: number, meta: NonNullable<SimuladorSelic["meta"]>): string {
-  if (valor > meta.superior) return `acima do teto da meta (${numero(meta.superior, 1)} %)`;
-  if (valor < meta.inferior) return `abaixo do piso da meta (${numero(meta.inferior, 1)} %)`;
-  return `dentro do intervalo da meta (${numero(meta.inferior, 1)} % a ${numero(meta.superior, 1)} %)`;
+  if (valor > meta.superior) return `Acima do teto da meta (${numero(meta.superior, 1)} %)`;
+  if (valor < meta.inferior) return `Abaixo do piso da meta (${numero(meta.inferior, 1)} %)`;
+  return `Dentro do intervalo da meta (${numero(meta.inferior, 1)} % a ${numero(meta.superior, 1)} %)`;
 }
 
 interface Quadro {
@@ -160,11 +160,11 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
   /** "Maior que o efeito" ou "menor": o erro do Focus contra o tamanho do que se simula. */
   function contraOErro(efeitoAbs: number, erro: number | null, unidade: string, casas: number): string {
     if (erro === null) return "";
-    const base = `O Focus desta época costuma errar ${numero(erro, casas)} ${unidade}`;
+    const base = `O Focus costuma errar ${numero(erro, casas)} ${unidade}`;
     if (pp === 0) return `${base}.`;
     return efeitoAbs < erro
-      ? `${base}: mais do que este efeito.`
-      : `${base}: menos do que este efeito.`;
+      ? `${base}, mais que este efeito.`
+      : `${base}, menos que este efeito.`;
   }
 
   let pendente = 0;
@@ -177,16 +177,16 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
         ? "igual ao Focus"
         : s.focus_selic === null
           ? `${tamanho} do Focus`
-          : `${tamanho} do Focus, na média de ${s.ano} (o Focus espera ${numero(s.focus_selic, 2)} % no fim do ano)`;
+          : `${tamanho} do Focus na média de ${s.ano} (Focus: ${numero(s.focus_selic, 2)} % no fim do ano)`;
     frase.replaceChildren(
       document.createTextNode(
         pp === 0
-          ? `Com a Selic no caminho que o Focus espera para ${s.ano}, nada muda. Mexa no controle: `
-          : `Com a Selic ${tamanho} do que o Focus espera durante ${s.ano}`,
+          ? `Com a Selic do Focus, nada muda. `
+          : `Selic ${tamanho} do Focus em ${s.ano}`,
       ),
       pp === 0
-        ? el("b", "", "para a esquerda é corte, para a direita é alta.")
-        : el("b", "", ", pela conta do Banco Central, um ano depois (estimativa e faixa de 90 %):"),
+        ? el("b", "", "Esquerda: corte; direita: alta.")
+        : el("b", "", ": efeito um ano depois, pela conta do Banco Central (faixa de 90 %)"),
     );
 
     // ------------------------------------------------------------ inflação
@@ -194,7 +194,7 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
     inflacao.faixa.textContent =
       pp === 0
         ? ""
-        : `faixa de 90 % do BC: de ${sinal(e.ipcaFaixa[0], 2)} a ${sinal(e.ipcaFaixa[1], 2)} pp`;
+        : `faixa de 90 % do BC: ${sinal(e.ipcaFaixa[0], 2)} a ${sinal(e.ipcaFaixa[1], 2)} pp`;
     if (s.focus_ipca === null) {
       inflacao.regua.replaceChildren();
       inflacao.detalhe.textContent = "em relação ao que seria.";
@@ -218,7 +218,7 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
           classe: "simulado",
         },
       ]);
-      const meta = s.meta ? `A estimativa fica ${contraAMeta(f + e.ipca, s.meta)}. ` : "";
+      const meta = s.meta ? `${contraAMeta(f + e.ipca, s.meta)}. ` : "";
       inflacao.detalhe.textContent = `${meta}${contraOErro(Math.abs(e.ipca), erro, "pp", 2)}`;
     }
 
@@ -227,7 +227,7 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
     dolar.faixa.textContent =
       pp === 0
         ? ""
-        : `faixa de 90 % do BC: de ${sinal(e.dolarFaixa[0], 1)} a ${sinal(e.dolarFaixa[1], 1)} %`;
+        : `faixa de 90 % do BC: ${sinal(e.dolarFaixa[0], 1)} a ${sinal(e.dolarFaixa[1], 1)} %`;
     if (s.focus_dolar === null) {
       dolar.regua.replaceChildren();
       dolar.detalhe.textContent = "em relação ao que seria.";
@@ -260,11 +260,11 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
     divida.faixa.textContent =
       pp === 0
         ? ""
-        : `faixa: de ${sinal(e.dividaFaixa[0], 2)} a ${sinal(e.dividaFaixa[1], 2)} pp do PIB`;
+        : `faixa: ${sinal(e.dividaFaixa[0], 2)} a ${sinal(e.dividaFaixa[1], 2)} pp do PIB`;
     const reais =
       s.pib_em_reais === null || pp === 0
         ? ""
-        : `Cerca de ${dinheiro(Math.abs((e.divida / 100) * s.pib_em_reais * 1e9))} a ${e.divida < 0 ? "menos" : "mais"}: `;
+        : `≈ ${dinheiro(Math.abs((e.divida / 100) * s.pib_em_reais * 1e9))} a ${e.divida < 0 ? "menos" : "mais"}: `;
     const partes =
       pp === 0
         ? ""
@@ -310,16 +310,16 @@ export function montarSimuladorSelic(s: SimuladorSelic): HTMLElement[] {
             });
       const g: Grafico = {
         id: "simulador-selic",
-        titulo: "A Selic simulada e o que muda no IPCA, trimestre a trimestre",
-        subtitulo: "Diferença em relação ao que seria sem a mudança; IPCA acumulado em 12 meses",
+        titulo: "Selic simulada e o efeito no IPCA, por trimestre",
+        subtitulo: "Diferença contra o caminho sem mudança; IPCA em 12 meses",
         tipo: "linha",
         unidade: "pp",
         casas: 2,
         periodicidade: "T",
         series: [
-          { id: "selic", nome: "Selic (a mudança simulada)", papel: "realizado", tracejado_desde: null, pontos: caminho(s.selic_caminho) },
-          { id: "ipca-agregado", nome: "IPCA, modelo agregado do BC", papel: "previsao", tracejado_desde: null, pontos: caminho(s.ipca_agregado) },
-          { id: "ipca-desagregado", nome: "IPCA, modelo desagregado do BC", papel: "previsao", tracejado_desde: null, pontos: caminho(s.ipca_desagregado) },
+          { id: "selic", nome: "Selic (mudança)", papel: "realizado", tracejado_desde: null, pontos: caminho(s.selic_caminho) },
+          { id: "ipca-agregado", nome: "IPCA, modelo agregado", papel: "previsao", tracejado_desde: null, pontos: caminho(s.ipca_agregado) },
+          { id: "ipca-desagregado", nome: "IPCA, modelo desagregado", papel: "previsao", tracejado_desde: null, pontos: caminho(s.ipca_desagregado) },
         ],
         faixa: null,
         intervalos: faixa.length

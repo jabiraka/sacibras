@@ -89,8 +89,8 @@ export function vistaGlossario(conteudo: HTMLElement, termo = ""): void {
         el(
           "p",
           "secao-resumo",
-          `As ${lista.length} palavras do painel que alguém poderia não saber, em até três ` +
-            "frases cada. Na tela, a palavra sublinhada ou o “?” abre a mesma definição.",
+          `As ${lista.length} palavras do painel que alguém poderia não saber. ` +
+            "Na tela, a palavra sublinhada ou o “?” abre a definição.",
         ),
         montar(lista),
       );

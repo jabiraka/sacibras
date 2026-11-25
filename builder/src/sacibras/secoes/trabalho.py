@@ -80,12 +80,11 @@ def grafico_fatores_da_desocupacao(
         periodicidade="M",
         janela_anos=5,
         fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6318); conta nossa",
+        # Gente ocupada: a fatia da população que trabalha cresce, a taxa cai (barra para
+        # baixo). Gente na força de trabalho: mais gente trabalhando ou procurando, a taxa sobe.
         nota=(
-            "As barras somadas dão a mudança da taxa de desocupação em 12 meses (a linha). Gente "
-            "ocupada: quando a fatia da população que trabalha cresce, a taxa cai (barra para "
-            "baixo). Gente na força de trabalho: quando mais gente passa a trabalhar ou a "
-            "procurar, a taxa sobe (barra para cima); quando gente desiste de procurar, a "
-            "taxa cai sem que haja mais emprego."
+            "As barras somam a mudança da taxa (a linha). Quando gente desiste de procurar, a "
+            "taxa cai sem haver mais emprego."
         ),
     )
 
@@ -113,12 +112,9 @@ def grafico_fatores_da_massa(
         periodicidade="M",
         janela_anos=5,
         fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6392 e 6318); conta nossa",
-        nota=(
-            "As barras somadas dão a variação da massa de rendimento real em 12 meses (a "
-            "linha). A massa é gente ocupada vezes o rendimento médio: a primeira barra é o "
-            "quanto veio de haver mais (ou menos) gente trabalhando; a segunda, de cada "
-            "ocupado ganhar mais (ou menos) acima da inflação."
-        ),
+        # A massa é gente ocupada vezes o rendimento médio: a primeira barra vem de haver mais
+        # (ou menos) gente trabalhando; a segunda, de cada um ganhar mais acima da inflação.
+        nota="As barras somam a variação da massa (a linha): mais gente ou mais renda por pessoa.",
     )
 
 
@@ -150,12 +146,11 @@ def grafico_desocupacao_mais_inflacao(
             f"{br(ipca[quando])} % de inflação."
         ),
         fonte=fonte,
+        # Proposto por Arthur Okun nos anos 1970; as duas linhas de baixo mostram de onde vem
+        # cada mudança.
         nota=(
-            "A soma da taxa de desocupação com a inflação de 12 meses, que o economista Arthur "
-            'Okun propôs nos anos 1970 e ficou conhecida como "índice de miséria": junta num '
-            "número só os dois males que mais pesam no dia a dia. É uma soma simples: dá o "
-            "mesmo peso a um ponto de desemprego e a um ponto de inflação, e as duas linhas "
-            "de baixo mostram de onde vem cada mudança."
+            'O "índice de miséria" de Okun. Soma simples: um ponto de desemprego pesa o mesmo '
+            "que um de inflação."
         ),
     )
 
@@ -243,12 +238,12 @@ def grafico_phillips(
             veio = "nestes anos os dois andaram no mesmo sentido, o contrário do que ela diz"
         else:
             veio = "nestes anos ela mal aparece"
+        # A curva diz que, com pouca gente sem trabalho, os salários sobem e os preços vão
+        # atrás, sobretudo os de serviços, que são quase só salário (o glossário explica).
+        # A inflação também responde ao dólar, às expectativas e a choques como o de 2021.
         return (
-            "A curva de Phillips diz que, com pouca gente sem trabalho, os salários sobem e os "
-            "preços vão atrás, sobretudo os de serviços, que são quase só salário. "
-            f"Correlação de {br(r, 2)} em {n} anos ({_forca(r)}): {veio}. São poucos pontos, "
-            "e a inflação também responde ao dólar, às expectativas e a choques como o de "
-            "2021: andar junto não mede o quanto um causa o outro."
+            f"Correlação de {br(r, 2)} em {n} anos ({_forca(r)}): {veio}. Poucos pontos, e "
+            "andar junto não mede o quanto um causa o outro."
         )
 
     return _pontos_por_ano(
@@ -276,16 +271,16 @@ def grafico_okun(
             veio = "nestes anos os dois andaram no mesmo sentido, o contrário do que ela diz"
         else:
             veio = "nestes anos ela mal aparece"
+        # A lei diz que a desocupação cai quando a economia cresce acima do ritmo normal e
+        # sobe quando cresce abaixo (o glossário explica).
         return (
-            "A lei de Okun diz que a desocupação cai quando a economia cresce acima do seu "
-            f"ritmo normal e sobe quando cresce abaixo. Correlação de {br(r, 2)} em {n} anos "
-            f"({_forca(r)}): {veio}. A taxa também muda quando mais ou menos gente procura "
-            'trabalho (o gráfico "Por que mudou" separa as duas coisas).'
+            f"Correlação de {br(r, 2)} em {n} anos ({_forca(r)}): {veio}. A taxa também muda "
+            "com quanta gente procura trabalho."
         )
 
     return _pontos_por_ano(
         "okun",
-        "Crescimento do PIB e mudança da desocupação (lei de Okun)",
+        "PIB e desocupação (lei de Okun)",
         pib,
         mudanca,
         EixoDispersao(nome="Crescimento do PIB no ano", unidade="%", casas=1),
@@ -372,10 +367,9 @@ def _caged_por_setor(ctx: Contexto, total: list[Ponto], inicio: date) -> tuple[G
         total,
     )
     fonte = ctx.fonte_sgs(*(c for c, _ in SETORES_CAGED), "EMPREGO_SERVICOS", "EMPREGO_FORMAL")
+    # Vagas em 12 meses: o estoque contra o mesmo mês do ano anterior.
     nota = (
-        "Estoque de empregos com carteira (Novo Caged), sem ajuste sazonal, publicado pelo "
-        "Banco Central; as vagas em 12 meses são a diferença do estoque contra o mesmo mês do "
-        "ano anterior, conta nossa."
+        "Estoque do Novo Caged (Banco Central), sem ajuste sazonal; vagas em 12 meses: conta nossa."
     )
     grandes = [
         serie(
@@ -407,10 +401,7 @@ def _caged_por_setor(ctx: Contexto, total: list[Ponto], inicio: date) -> tuple[G
         colunas=["Empregos (mil)", "Vagas em 12 meses (mil)", "Em 12 meses (%)"],
         linhas=linhas,
         fonte=fonte,
-        nota=(
-            nota + ' Os serviços vêm abertos nas partes que o SGS publica; "Demais serviços" '
-            "é o total dos serviços menos essas partes."
-        ),
+        nota=nota + ' "Demais serviços": o total dos serviços menos as partes que o SGS abre.',
     )
     return grafico_setores, tabela
 
@@ -519,12 +510,11 @@ def salario_minimo(ctx: Contexto) -> tuple[Cartao, ComparadorSalario]:
         meses=[(d, v, round(indice[d], 8)) for d, v in minimo if d in indice],
         prazos=PRAZOS_SALARIO_MINIMO,
         fonte=f"{fonte}; IPCA: {ctx.fonte_sgs('IPCA')}",
+        # Acima da inflação: (1 + alta do mínimo) ÷ (1 + IPCA) − 1; o IPCA do período vai do
+        # fim do mês de início ao fim do mês final. Desde 1995, o primeiro ano inteiro do real.
         nota=(
-            "O mínimo do início corrigido pelo IPCA é o que ele valeria se só tivesse "
-            "acompanhado a inflação; a distância até a outra linha é o ganho (ou a perda) "
-            "acima dela. Acima da inflação: (1 + alta do mínimo) ÷ (1 + IPCA) − 1. O IPCA do "
-            "período vai do fim do mês de início ao fim do mês final. Conta nossa, desde "
-            f"{SALARIO_MINIMO_DESDE.year}, o primeiro ano inteiro do real."
+            f"Conta nossa, desde {SALARIO_MINIMO_DESDE.year}. O mínimo corrigido pelo IPCA é o "
+            "que ele valeria só acompanhando a inflação; a distância até ele é o ganho real."
         ),
     )
     return c, comparador
@@ -667,8 +657,8 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=5,
             fonte=ctx.fonte_sgs("EMPREGO_FORMAL"),
             nota=(
-                "Diferença, mês a mês, do estoque de empregos formais publicado pelo Banco "
-                "Central (dados do Novo Caged); a linha é a média dos três últimos meses."
+                "Diferença mês a mês do estoque do Novo Caged (Banco Central); a linha é a "
+                "média de 3 meses."
             ),
         ),
         grafico(
@@ -718,11 +708,10 @@ def montar(ctx: Contexto) -> Secao:
                 f"{PNAD}, trimestre móvel (SIDRA 6381, 6439, 6440 e 6441, variáveis 4099, "
                 "4114, 4116 e 4118)"
             ),
+            # A taxa composta é sobre a força de trabalho ampliada.
             nota=(
-                "As quatro medidas do IBGE, da mais estreita à mais larga: a taxa composta "
-                "junta aos desocupados quem trabalha menos horas do que queria e quem queria "
-                "trabalhar mas não procurou ou não podia começar, sobre a força de trabalho "
-                "ampliada."
+                "Da medida mais estreita à mais larga: a composta soma quem queria trabalhar "
+                "mais horas e quem queria trabalhar mas não procurou."
             ),
         ),
         grafico(
@@ -752,9 +741,8 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=10,
             fonte=f"{PNAD}, trimestre móvel (SIDRA 8513, variável 12466)",
             nota=(
-                "Ocupados sem carteira (empregados do setor privado e domésticos), por conta "
-                "própria e empregadores sem CNPJ e quem ajuda a família sem salário, sobre "
-                "todos os ocupados (definição do IBGE)."
+                "Sem carteira, por conta própria e empregadores sem CNPJ e quem ajuda a família "
+                "sem salário, sobre todos os ocupados (IBGE)."
             ),
         ),
         grafico(
@@ -783,10 +771,7 @@ def montar(ctx: Contexto) -> Secao:
                 f"{PNAD}, trimestre civil (SIDRA 1616, variável 4110, tempo de procura "
                 "2 anos ou mais)"
             ),
-            nota=(
-                "Parcela dos desocupados que procura trabalho há 2 anos ou mais; o IBGE "
-                "publica o tempo de procura por trimestre civil, não móvel."
-            ),
+            nota="O IBGE publica o tempo de procura por trimestre civil, não móvel.",
         ),
     ]
 
@@ -818,11 +803,11 @@ def montar(ctx: Contexto) -> Secao:
         colunas=[f"Trimestre até {periodo(ref, 'M')}", "Três meses antes", "Um ano antes"],
         linhas=linhas,
         fonte=(f"{PNAD} (SIDRA 6381, 6439, 6440, 6441, 5944, 6379, 8513, 6807, 6438, 6318 e 1616)"),
+        # Exceções: participação e nível sobre a população de 14 anos ou mais; informalidade
+        # sobre os ocupados; desalentados sobre a força de trabalho mais os desalentados.
         nota=(
-            "Taxas em % da força de trabalho, salvo: participação e nível de ocupação sobre a "
-            "população de 14 anos ou mais; informalidade sobre os ocupados; desalentados sobre "
-            "a força de trabalho mais os desalentados. O tempo de procura sai por trimestre "
-            "civil: nas colunas, o trimestre anterior e o do ano anterior."
+            "Taxas sobre a força de trabalho, salvo participação, nível, informalidade e "
+            "desalento. O tempo de procura sai por trimestre civil."
         ),
     )
 
@@ -838,12 +823,13 @@ def montar(ctx: Contexto) -> Secao:
     except Exception as erro:  # a conta a mais não derruba a seção
         print(f"  aviso: trabalho sem os fatores da desocupação: {str(erro)[:120]}")
     try:
-        ipca_mes = ctx.sgs("IPCA")
+        # O IPCA de 12 meses é o que o IBGE publica (SGS 13522); só a soma é nossa.
         g_soma = grafico_desocupacao_mais_inflacao(
             desocupacao,
-            contas.acumulado(ipca_mes, 12),
+            ctx.sgs("IPCA_12M"),
             inicio,
-            f"IBGE, PNAD Contínua (SIDRA 6381); IPCA: {ctx.fonte_sgs('IPCA')}; conta nossa",
+            f"IBGE, PNAD Contínua (SIDRA 6381); IPCA: {ctx.fonte_sgs('IPCA_12M')}; "
+            "soma: conta nossa",
         )
         if g_soma:
             graficos.append(g_soma)

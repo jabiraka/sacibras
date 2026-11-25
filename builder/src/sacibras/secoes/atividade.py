@@ -34,12 +34,13 @@ FONTE_INVESTIMENTO = "IBGE, Contas Nacionais Trimestrais (SIDRA 6727 e 6726)"
 # investimento na demanda privada. Conferido na API do SIDRA em 15/11/2026: consumo das
 # famílias R$ 2.112.893 mi e FBCF R$ 552.092 mi no 2º tri/2026.
 FONTE_DEMANDA_PRIVADA = "IBGE, Contas Nacionais Trimestrais (SIDRA 5932 e 1846); conta nossa"
+# Demanda privada: consumo das famílias + FBCF, sem governo, estoques e exterior. Cada parte
+# entra com a variação em um ano, pesada pelo valor em reais correntes dela no mesmo trimestre
+# do ano anterior. É a ideia da "real final sales to private domestic purchasers" que o
+# Econvitals mostra para os EUA.
 NOTA_DEMANDA_PRIVADA = (
-    "Demanda privada é o consumo das famílias somado ao investimento (FBCF), sem governo, "
-    "estoques e exterior: mostra a força do gasto de famílias e empresas. Conta nossa: a "
-    "variação em um ano de cada parte, pesada pelo tamanho dela em reais no mesmo trimestre "
-    'do ano anterior (preços correntes do IBGE). É a ideia da "real final sales to private '
-    'domestic purchasers" que o Econvitals mostra para os EUA.'
+    "Consumo das famílias mais investimento, sem governo nem exterior. Conta nossa: cada "
+    "parte pesada pelo seu valor em reais um ano antes."
 )
 
 
@@ -84,10 +85,9 @@ OFERTA: dict[str, tuple[str, str, int]] = {
     "90706": ("impostos", "Impostos sobre produtos", 1),
 }
 FONTE_CONTRIBUICOES = "IBGE, Contas Nacionais Trimestrais (SIDRA 1620 e 1846); conta nossa"
-NOTA_IMPORTACOES = (
-    "As importações entram com o sinal trocado não porque tirem do PIB, mas para não contar "
-    "duas vezes: o que veio de fora já está no consumo, no investimento e nas exportações."
-)
+# As importações entram com o sinal trocado não porque tirem do PIB, mas para não contar duas
+# vezes: o que veio de fora já está no consumo, no investimento e nas exportações.
+NOTA_IMPORTACOES = "Importações entram com o sinal trocado, para não contar duas vezes."
 FONTE_CARREGO = "IBGE, Contas Nacionais Trimestrais (SIDRA 1621, com ajuste sazonal); conta nossa"
 
 
@@ -148,10 +148,10 @@ def graficos_das_contribuicoes(
             OFERTA,
             oferta,
             "",
-            "Quantos pontos do crescimento do PIB, contra o mesmo trimestre do ano anterior, "
-            "vieram de cada setor: a fatia dele no PIB um ano antes vezes o quanto cresceu. "
-            "As barras somadas dão o crescimento do PIB (a linha); a diferença do encadeamento de "
-            "preços (em média, 0,1 ponto) foi repartida pela fatia. Conta nossa.",
+            # Contra o mesmo trimestre do ano anterior. A diferença do encadeamento de preços
+            # (em média, 0,1 ponto) foi repartida pela fatia de cada setor.
+            "Conta nossa: a fatia de cada setor no PIB um ano antes vezes o quanto cresceu. "
+            "Somadas, as barras dão o PIB (a linha).",
         ),
         (
             "pib-contribuicoes-demanda",
@@ -159,12 +159,10 @@ def graficos_das_contribuicoes(
             DEMANDA,
             demanda,
             "Estoques e ajuste",
-            "Quantos pontos do crescimento do PIB, contra o mesmo trimestre do ano anterior, "
-            "vieram de cada gasto: a fatia dele no PIB um ano antes vezes o quanto cresceu. "
-            "As barras somadas dão o crescimento do PIB (a linha). O IBGE publica o quanto cada "
-            "componente cresceu, não a contribuição: a conta é nossa. Estoques e ajuste: o "
-            "que sobra, a variação dos estoques mais a diferença do encadeamento de preços. "
-            + NOTA_IMPORTACOES,
+            # O IBGE publica o quanto cada componente cresceu, não a contribuição. Estoques e
+            # ajuste: o que sobra, a variação dos estoques mais a diferença do encadeamento.
+            "Conta nossa: a fatia de cada gasto no PIB um ano antes vezes o quanto cresceu; "
+            "somadas, as barras dão o PIB (a linha). " + NOTA_IMPORTACOES,
         ),
     ):
         series = [
@@ -200,13 +198,14 @@ def contribuicoes_do_pib(inicio: date) -> list[Grafico]:
 
 TRIMESTRES_NA_TABELA = 20
 ANOS_NA_TABELA = 15
+# Taxas: o quanto cada parte cresceu sozinha; não se somam (cada uma pesa diferente, e demanda
+# e oferta são duas medidas do mesmo PIB). Pontos do PIB: a taxa vezes a fatia da parte no PIB
+# do ano anterior; os de quem comprou somam o PIB, e os de quem produziu também (a menos do
+# arredondamento). Estoques e ajuste: a variação dos estoques, que o IBGE não publica em
+# volume, mais a diferença do encadeamento de preços.
 NOTA_COMPONENTES = (
-    "Taxas: o quanto cada parte cresceu sozinha. Não se somam: cada uma pesa diferente no PIB, "
-    "e demanda e oferta são duas maneiras de medir o mesmo PIB. Pontos do PIB: a taxa vezes a "
-    "fatia da parte no PIB do ano anterior (conta nossa); estes somam: os de quem comprou dão "
-    "o PIB, e os de quem produziu também (a menos do arredondamento). Estoques e ajuste: a "
-    "variação dos estoques, que o IBGE não publica em volume, mais a diferença do "
-    "encadeamento de preços. " + NOTA_IMPORTACOES
+    "Taxas não se somam; pontos do PIB somam (conta nossa: a taxa vezes a fatia no ano "
+    "anterior). " + NOTA_IMPORTACOES
 )
 
 
@@ -276,7 +275,7 @@ def tabela_componentes(
             VisaoTabela(
                 rotulo=periodo(t, "T"),
                 grupo="Trimestres",
-                subtitulo=f"{periodo(t, 'T')}: quanto cada parte cresceu e quanto somou ao PIB",
+                subtitulo=f"{periodo(t, 'T')}: crescimento e pontos do PIB",
                 colunas=[
                     "Contra o trimestre anterior (%)",
                     "Contra um ano antes (%)",
@@ -293,8 +292,7 @@ def tabela_componentes(
             VisaoTabela(
                 rotulo=str(d.year),
                 grupo="Anos",
-                subtitulo=f"{d.year}, o ano inteiro: quanto cada parte cresceu e quanto somou ao "
-                "PIB",
+                subtitulo=f"{d.year}, o ano inteiro: crescimento e pontos do PIB",
                 colunas=["No ano (%)", "Pontos do PIB no ano"],
                 linhas=linhas(t, [anual], ano),
             )
@@ -303,7 +301,7 @@ def tabela_componentes(
     return Tabela(
         id="pib-componentes",
         titulo="PIB por componente",
-        subtitulo="Escolha o trimestre ou o ano: quanto cada parte cresceu e quanto somou ao PIB",
+        subtitulo="Escolha o trimestre ou o ano",
         colunas=primeira.colunas,
         linhas=primeira.linhas,
         visoes=visoes,
@@ -410,7 +408,7 @@ def investimento_contra_paises(ctx: Contexto) -> tuple[list[Cartao], list[Grafic
         cartoes.append(
             cartao(
                 f"{id}-brasil-fmi",
-                f"{nome} do Brasil, pela conta do FMI",
+                f"{nome} do Brasil (FMI)",
                 brasil,
                 unidade="% do PIB",
                 periodicidade="A",
@@ -423,16 +421,15 @@ def investimento_contra_paises(ctx: Contexto) -> tuple[list[Cartao], list[Grafic
         graficos.append(
             grafico(
                 f"{id}-paises",
-                f"Quanto o Brasil {o_que}, contra outros países",
+                f"Quanto o Brasil {o_que}, contra os outros",
                 [serie(g.lower(), GRUPOS_FMI[g], linhas[g], casas=1) for g in GRUPOS_FMI],
                 unidade="% do PIB",
                 casas=1,
                 periodicidade="A",
                 fonte=fonte,
                 nota=(
-                    f"{nome} em % do PIB, na mesma conta para todos (FMI). Os grupos são a "
-                    "média dos países de cada um, pesada pelo tamanho da economia; a China "
-                    "puxa a dos emergentes para cima. O último ano pode ser estimativa do FMI."
+                    "Grupos pesados pelo tamanho da economia; a China puxa os emergentes para "
+                    "cima. O último ano pode ser estimativa do FMI."
                 ),
             )
         )
@@ -456,16 +453,44 @@ def pib_por_habitante(
     return pib, por_hab
 
 
+def com_a_conta_depois(oficial: list[Ponto], conta: list[Ponto]) -> tuple[list[Ponto], int]:
+    """O número publicado em todos os anos que ele cobre e a conta nossa só depois do último
+    (as Contas Nacionais anuais saem com atraso). Devolve também quantos anos são da conta."""
+    ultimo = max((d for d, _ in oficial), default=date(1, 1, 1))
+    depois = [(d, v) for d, v in conta if d > ultimo]
+    return sorted(oficial) + depois, len(depois)
+
+
 def grafico_pib_por_habitante() -> Grafico | None:
+    # O IBGE publica as duas variações prontas na tabela 6784 (Contas Nacionais anuais, que
+    # saem com cerca de dois anos de atraso). Os anos depois do último publicado são conta
+    # nossa: o volume das Trimestrais (1620, média do ano) e a projeção da população.
+    oficial_pib = ibge_sidra.serie(6784, 9810)
+    oficial_hab = ibge_sidra.serie(6784, 9814)
     volume = ibge_sidra.serie(1620, 583, classificacao="c11255/90707", trimestral=True)
     populacao = ibge_projecao.grupos()["BR"]["POP_T"]
-    pib, por_hab = pib_por_habitante(produtividade.anual(volume, media=True), populacao)
-    if not pib:
+    conta_pib, conta_hab = pib_por_habitante(produtividade.anual(volume, media=True), populacao)
+    pib, extra = com_a_conta_depois(oficial_pib[-25:], conta_pib)
+    por_hab, _ = com_a_conta_depois(oficial_hab[-25:], conta_hab)
+    if not pib or not por_hab:
         return None
     ano = pib[-1][0].year
+    fonte = "IBGE, Contas Nacionais (SIDRA 6784)"
+    nota = ""
+    if extra:
+        anos = [d.year for d, _ in pib[-extra:]]
+        quais = anos[0] if len(anos) == 1 else f"{anos[0]} a {anos[-1]}"
+        fonte += (
+            f"; {quais}: conta nossa com as Contas Trimestrais (SIDRA 1620) e as Projeções da "
+            "População (revisão 2024)"
+        )
+        nota = (
+            f"{quais}: conta nossa, até o IBGE publicar o ano (PIB em volume, média do ano; "
+            "descontada a população projetada)."
+        )
     return grafico(
         "pib-por-habitante",
-        "PIB e PIB por habitante: crescimento em cada ano",
+        "PIB e PIB por habitante",
         [serie("pib", "PIB", pib), serie("por-habitante", "PIB por habitante", por_hab)],
         unidade="% no ano",
         casas=1,
@@ -474,16 +499,10 @@ def grafico_pib_por_habitante() -> Grafico | None:
             f"Em {ano}, o PIB cresceu {br(pib[-1][1])} % e o PIB por habitante, "
             f"{br(por_hab[-1][1])} %."
         ),
-        fonte=(
-            "IBGE, Contas Nacionais Trimestrais (SIDRA 1620, volume) e Projeções da População "
-            "(revisão 2024); conta nossa"
-        ),
-        nota=(
-            "O crescimento do PIB em volume (a média dos quatro trimestres do ano contra a do "
-            "ano anterior) e o mesmo descontado o crescimento da população. Quando a "
-            "população cresce, o país pode produzir mais sem que cada pessoa, na média, "
-            "fique com mais."
-        ),
+        fonte=fonte,
+        # Quando a população cresce, o país pode produzir mais sem que cada pessoa, na média,
+        # fique com mais.
+        nota=nota,
     )
 
 
@@ -622,7 +641,7 @@ def montar(ctx: Contexto) -> Secao:
             "PIB: crescimento a cada trimestre",
             [
                 serie("tt", "Contra o trimestre anterior (com ajuste sazonal)", tt, desde=inicio),
-                serie("aa", "Contra o mesmo trimestre do ano anterior", aa, desde=inicio),
+                serie("aa", "Contra um ano antes", aa, desde=inicio),
             ],
             tipo="barras",
             unidade="%",
@@ -633,7 +652,7 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "pib-demanda",
-            "PIB pela demanda: consumo, investimento e comércio exterior",
+            "PIB pela demanda",
             [
                 serie("familias", "Consumo das famílias", pib_aa["93404"], desde=inicio),
                 serie("fbcf", "Investimento (FBCF)", pib_aa["93406"], desde=inicio),
@@ -649,7 +668,7 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "pib-oferta",
-            "PIB pela oferta: agropecuária, indústria e serviços",
+            "PIB pela oferta",
             [
                 serie("agro", "Agropecuária", pib_aa["90687"], desde=inicio),
                 serie("industria", "Indústria", pib_aa["90691"], desde=inicio),
@@ -668,9 +687,9 @@ def montar(ctx: Contexto) -> Secao:
         ),
         grafico(
             "demanda-privada",
-            "Demanda privada: o gasto de famílias e empresas",
+            "Demanda privada",
             [
-                serie("privada", "Demanda privada (consumo + investimento)", privada, desde=inicio),
+                serie("privada", "Demanda privada", privada, desde=inicio),
                 serie("pib", "PIB", aa, desde=inicio),
             ],
             unidade="% em um ano",
@@ -714,20 +733,19 @@ def montar(ctx: Contexto) -> Secao:
             "investimento-poupanca",
             "Quanto o país investe e quanto poupa",
             [
-                serie("investimento", "Taxa de investimento (FBCF / PIB)", investimento),
-                serie("poupanca", "Taxa de poupança (poupança bruta / PIB)", poupanca),
+                serie("investimento", "Investimento (FBCF)", investimento),
+                serie("poupanca", "Poupança bruta", poupanca),
             ],
             unidade="% do PIB no trimestre",
             casas=1,
             periodicidade="T",
             janela_anos=15,
             fonte=FONTE_INVESTIMENTO,
+            # Investimento: máquinas, construções e infraestrutura; poupança: a parte da renda
+            # do país que não vira consumo.
             nota=(
-                "Investimento é o que se gasta em máquinas, construções e infraestrutura; "
-                "poupança, a parte da renda do país que não vira consumo. Quando o país investe "
-                "mais do que poupa, a diferença vem de fora (é o déficit em transações "
-                "correntes). Números do trimestre, sem ajuste sazonal: compare com o mesmo "
-                "trimestre de outros anos."
+                "Quando o país investe mais do que poupa, a diferença vem de fora (déficit em "
+                "transações correntes). Sem ajuste sazonal: compare com o mesmo trimestre."
             ),
         ),
         grafico(

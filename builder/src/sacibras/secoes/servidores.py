@@ -87,7 +87,7 @@ def rendimento(
     graficos = [
         grafico(
             "rendimento-publico-privado",
-            "Quanto ganha quem trabalha para o governo e quem trabalha para empresa",
+            "Quanto ganha o servidor e o empregado privado",
             [
                 serie(f"p{codigo}", POSICOES[codigo][0], por_posicao[codigo], desde=inicio, casas=0)
                 for codigo in NO_GRAFICO
@@ -98,12 +98,11 @@ def rendimento(
             periodicidade="M",
             janela_anos=10,
             fonte=f"{FONTE_PNAD}, a preços do último mês",
+            # Rendimento médio habitual do trabalho principal. Estatutário: o servidor
+            # concursado, com estabilidade; inclui os militares e as três esferas.
             nota=(
-                "Rendimento médio habitual do trabalho principal, por mês, já descontada a "
-                "inflação. Estatutário: o servidor concursado, com estabilidade; inclui os "
-                "militares e as três esferas (União, estados e municípios). É comparação de "
-                "médias: o servidor tem, em média, mais escola e mais idade que o empregado do "
-                "setor privado, e estes dados não separam quanto da diferença vem disso."
+                "Rendimento médio por mês, sem a inflação. É comparação de médias: o servidor "
+                "tem mais escola e idade, e estes dados não separam o peso disso."
             ),
         )
     ]
@@ -138,12 +137,12 @@ def rendimento(
                 valores=[valor, None, round(valor / base * 100)],
                 unidade="",
                 casas=0,
-                grupo="Por escolaridade (todos os ocupados, público e privado)",
+                grupo="Por escolaridade (todos os ocupados)",
             )
         )
     tabela = Tabela(
         id="rendimento-por-posicao",
-        titulo="O rendimento do trabalho, do servidor ao trabalhador sem carteira",
+        titulo="Rendimento do trabalho, por posição",
         subtitulo=subtitulo,
         colunas=[
             "Rendimento médio (R$ por mês)",
@@ -152,14 +151,14 @@ def rendimento(
         ],
         linhas=linhas,
         fonte=f"{FONTE_PNAD}; por escolaridade: SIDRA {TABELA_INSTRUCAO}",
+        # Boa parte dos servidores tem ensino superior (professores, médicos, juízes). Sem o
+        # cruzamento de posição com escolaridade, não dá para dizer quanto o mesmo profissional
+        # ganharia a mais ou a menos no governo. O empregado com carteira tem FGTS e
+        # seguro-desemprego.
         nota=(
-            "As linhas por escolaridade estão aqui para dar a medida: boa parte dos servidores "
-            "tem ensino superior (professores, médicos, juízes), e quem tem ensino superior "
-            "ganha mais em qualquer setor. A pesquisa do IBGE publicada em tabela não cruza a "
-            "posição com a escolaridade; sem esse cruzamento, não dá para dizer quanto o mesmo "
-            "profissional ganharia a mais ou a menos no governo. Fora do contracheque, o "
-            "estatutário tem estabilidade e não tem FGTS; o empregado com carteira tem FGTS e "
-            "seguro-desemprego."
+            "Quem tem ensino superior ganha mais em qualquer setor, e o IBGE não cruza posição "
+            "com escolaridade. Fora do contracheque, o estatutário tem estabilidade e não tem "
+            "FGTS."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -233,7 +232,7 @@ def folha_da_uniao(
     graficos = [
         grafico(
             "folha-uniao",
-            "A folha da União: quem está na ativa e quem se aposentou",
+            "A folha da União: ativos e aposentados",
             [
                 serie(nome, rotulo, contas.em_pct_do_pib(det[nome], pib), desde=inicio)
                 for nome, rotulo in TIPOS.items()
@@ -289,7 +288,7 @@ def por_poder(ano: int, gasto_do_poder: dict[str, tuple[float, int]]) -> list[Ta
     gasto_tabela = Tabela(
         id="folha-por-poder",
         titulo="A folha da União, por poder",
-        subtitulo=f"Despesa bruta com pessoal em {ano}, ativos, aposentados e pensionistas",
+        subtitulo=f"Despesa bruta com pessoal em {ano}, ativos e inativos",
         colunas=["R$ bilhões", "% do total"],
         linhas=[
             LinhaTabela(
@@ -301,13 +300,11 @@ def por_poder(ano: int, gasto_do_poder: dict[str, tuple[float, int]]) -> list[Ta
             for poder, (v, _) in sorted(gasto_do_poder.items(), key=lambda x: -x[1][0])
         ],
         fonte=fonte_rgf,
+        # No Executivo entram os militares e o pessoal que a União paga do Distrito Federal,
+        # do Amapá e de Roraima. A Defensoria informa só a despesa líquida.
         nota=(
-            "Cada órgão publica o seu Relatório de Gestão Fiscal; aqui eles estão somados por "
-            "poder. No Executivo entram os militares e o que a União paga de pessoal do "
-            "Distrito Federal, do Amapá e de Roraima. O conceito é o da Lei de "
-            "Responsabilidade Fiscal (despesa bruta, por competência), um pouco diferente do "
-            "valor pago que o Tesouro publica todo mês. A Defensoria informa só a despesa "
-            "líquida."
+            "Relatórios de Gestão Fiscal dos órgãos, somados por poder. Conceito da LRF (por "
+            "competência), um pouco diferente do valor pago que o Tesouro publica."
         ),
     )
     civis = relatorios.SERVIDORES_POR_PODER
@@ -369,7 +366,7 @@ def por_poder(ano: int, gasto_do_poder: dict[str, tuple[float, int]]) -> list[Ta
         )
     remuneracao_tabela = Tabela(
         id="remuneracao-por-poder",
-        titulo="Quanto ganha, em média, o servidor da União de cada poder",
+        titulo="Ganho médio do servidor da União, por poder",
         subtitulo=(
             f"R$ por mês; civis em {periodo(relatorios.SERVIDORES_EM, 'M')}, militares em 2025"
         ),
@@ -382,13 +379,12 @@ def por_poder(ano: int, gasto_do_poder: dict[str, tuple[float, int]]) -> list[Ta
         ],
         linhas=linhas,
         fonte=f"{relatorios.FONTE_SERVIDORES}; {relatorios.FONTE_MILITARES}",
+        # Lido nas avaliações atuariais do PLDO, uma vez por ano. Num mesmo poder há carreiras
+        # de salário muito diferente (no Judiciário, o juiz e o técnico). Os temporários são a
+        # maioria (recrutas); a aposentadoria dos militares junta todos os oficiais e praças.
         nota=(
-            "Lido nas avaliações atuariais que acompanham o projeto da lei de diretrizes "
-            "orçamentárias, uma vez por ano. Média de todos os cargos de cada poder: num mesmo "
-            "poder há carreiras de salário muito diferente (no Judiciário, o juiz e o técnico), "
-            "e a média não mostra essa distância. Dos militares aparecem os de carreira; os "
-            "temporários (a maioria, recrutas) ganham bem menos. A aposentadoria dos militares "
-            "inativos junta todos os oficiais e todos os praças."
+            "Média de todos os cargos de cada poder, que esconde a distância entre carreiras. "
+            "Dos militares, só os de carreira; os temporários ganham bem menos."
         ),
     )
     return [gasto_tabela, remuneracao_tabela]
@@ -468,13 +464,12 @@ def aposentadoria() -> tuple[list[Cartao], list[Tabela]]:
         colunas=["Valor médio (R$ por mês)", "Aposentados (mil)"],
         linhas=linhas,
         fonte=fonte,
+        # Mais da metade das aposentadorias do INSS é por idade, com valor médio perto do
+        # salário mínimo.
         nota=(
-            "As regras não são as mesmas, e a diferença não é só de generosidade: o servidor "
-            "ganha mais na ativa e os mais antigos contribuíram sobre o salário inteiro, "
-            "enquanto no INSS a contribuição e o benefício param no teto. Mais da metade "
-            "das aposentadorias do INSS é por idade, com valor médio perto do salário mínimo. "
-            "Os servidores dos estados e dos municípios têm regimes próprios, que não "
-            "estão aqui."
+            "Regras diferentes: o servidor ganha mais na ativa e os mais antigos contribuíram "
+            "sobre o salário inteiro; no INSS, tudo para no teto. Estados e municípios têm "
+            "regimes próprios, fora daqui."
         ),
     )
     return [card], [tabela]
@@ -531,16 +526,15 @@ def por_esfera(valores: fmi_pessoal.Valores) -> tuple[list[Grafico], list[Tabela
     )
     tabela = Tabela(
         id="folha-quem-fica",
-        titulo="Quem fica com o gasto com servidores: União, estados e municípios",
+        titulo="Gasto com servidores: União, estados e municípios",
         subtitulo=f"{ano}, governo geral",
         colunas=["R$ bilhões", "% do total", "% do PIB"],
         linhas=linhas,
         fonte=fonte,
         nota=(
-            "Na ativa: salários mais a contribuição do governo como patrão. Aposentadorias e "
-            "pensões: as dos regimes próprios dos servidores, sem descontar o que eles "
-            "contribuem. Estados e municípios pagam a maior parte porque é deles a maior parte "
-            "dos professores, policiais, médicos e enfermeiros."
+            "Na ativa, com a contribuição patronal; aposentadorias sem descontar o que o "
+            "servidor contribui. Estados e municípios têm a maior parte dos professores, "
+            "policiais e médicos."
         ),
     )
 
@@ -590,8 +584,8 @@ def contra_os_paises(
         id="folha-paises",
         titulo="O gasto com servidores: o Brasil e os outros países",
         subtitulo=(
-            f"% do PIB, governo geral; Brasil em {ano}; os outros, o ano mais novo de cada um "
-            f"entre {ano - gasto.ANOS_DE_FOLGA} e {ano}"
+            f"% do PIB, governo geral; Brasil em {ano}, os outros entre "
+            f"{ano - gasto.ANOS_DE_FOLGA} e {ano}"
         ),
         colunas=colunas,
         linhas=[
@@ -607,13 +601,12 @@ def contra_os_paises(
             for indicador, nome in INDICADORES.items()
         ],
         fonte=fonte,
+        # Nas aposentadorias, menos países informam, e quem informa zero fica fora: em muitos
+        # o servidor se aposenta pelo regime geral, e a despesa aparece em outra linha.
         nota=(
-            "Grupos: a mediana dos países de cada grupo do FMI que publicam o dado (entre "
-            "parênteses, quantos têm a folha da ativa). Nas aposentadorias, menos países "
-            "informam, e quem informa zero fica fora: em muitos deles o servidor se aposenta "
-            "pelo regime geral, e a despesa aparece em outra linha. Gastar mais que os outros "
-            "pode vir de ter mais servidores, de pagar mais a cada um ou de o Estado fazer "
-            "mais coisas (saúde e escola públicas para todos): estes dados não separam."
+            "Mediana dos países de cada grupo do FMI (entre parênteses, quantos). Gastar mais "
+            "pode vir de mais servidores, salário maior ou mais serviço público: estes dados "
+            "não separam."
         ),
     )
     emergentes = medianas["G200"][fmi_pessoal.ATIVOS]

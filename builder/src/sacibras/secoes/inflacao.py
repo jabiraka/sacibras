@@ -44,10 +44,11 @@ MEDIDAS: list[tuple[str, list[str]]] = [
     ("Administrados", ["IPCA_ADMINISTRADOS"]),
 ]
 
+# O Banco Central não publica essas medidas dessazonalizadas no SGS; por isso o anualizado de
+# 3 meses sobe e desce com a época do ano, com alimentos e serviços. Anualizado: a variação
+# composta dos 3 meses levada a 12, (1 + v)⁴ − 1.
 SEM_AJUSTE = (
-    "O anualizado de 3 meses é sem ajuste sazonal (o Banco Central não publica essas "
-    "medidas dessazonalizadas no SGS) e por isso sobe e desce com a época do ano, com "
-    "alimentos e serviços: compare com o mesmo período do ano anterior, e não só com a meta."
+    "O de 3 meses é anualizado e sem ajuste sazonal: compare com um ano antes, não só com a meta."
 )
 
 
@@ -102,11 +103,7 @@ def tabela_medidas(medidas: list[tuple[str, list[list[Ponto]], str]], fonte: str
         ],
         linhas=linhas,
         fonte=fonte,
-        nota=(
-            "Anualizado: a variação composta dos 3 meses levada a 12, (1 + v)⁴ − 1. "
-            "Média dos núcleos: a média simples de EX0, EX3, MS, DP e P55, conta nossa. "
-            + SEM_AJUSTE
-        ),
+        nota="Média dos núcleos: média simples dos cinco, conta nossa. " + SEM_AJUSTE,
     )
 
 
@@ -124,10 +121,10 @@ def grafico_expectativa(
     lado = "acima" if distancia >= 0 else "abaixo"
     return grafico(
         "expectativa-meta",
-        "Inflação esperada para os 12 meses seguintes, contra a meta",
+        "Inflação esperada em 12 meses e a meta",
         [
-            serie("esperada", "Esperada pelo mercado (Focus)", mensal),
-            serie("meta", "Centro da meta no mesmo período", meta, papel="referencia"),
+            serie("esperada", "Focus", mensal),
+            serie("meta", "Centro da meta", meta, papel="referencia"),
         ],
         unidade="% em 12 meses",
         casas=2,
@@ -138,12 +135,11 @@ def grafico_expectativa(
             "centro da meta."
         ),
         fonte=fonte,
+        # Mediana suavizada (a que o Banco Central usa). Desancoradas: quem fixa preço e salário
+        # não conta com a inflação voltando à meta.
         nota=(
-            "Mediana do Focus para o IPCA dos 12 meses seguintes (a suavizada, que o Banco "
-            "Central usa), no último dia de coleta de cada mês. O centro da meta é o de cada "
-            "ano, pesado pelos meses dele nos 12 seguintes. Quando a linha fica acima da meta "
-            "por muito tempo, diz-se que as expectativas estão desancoradas: quem fixa preço "
-            "e salário não conta com a inflação voltando à meta."
+            "Mediana do Focus no último dia de coleta do mês; a meta de cada ano pesa pelos "
+            "meses no prazo. Acima da meta por muito tempo, as expectativas estão desancoradas."
         ),
     )
 
@@ -203,12 +199,10 @@ def grafico_contribuicoes(contribuicoes: dict[str, list[Ponto]], inicio: date) -
         janela_anos=3,
         linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
         fonte=f"{FONTE_GRUPOS}; conta nossa",
+        # O IBGE publica o impacto de cada grupo só no mês; a soma dos 12 é conta nossa.
         nota=(
-            "Quantos pontos do IPCA de 12 meses vieram de cada grupo: o peso do grupo vezes "
-            "o quanto ele subiu, mês a mês. As barras somadas dão o IPCA de 12 meses (a "
-            "linha). O IBGE publica o impacto de cada grupo só no mês; a soma dos 12 é conta "
-            "nossa. "
-            f"Demais grupos: {DEMAIS_GRUPOS.lower()}."
+            "Conta nossa: o peso de cada grupo vezes a alta, mês a mês; somadas, as barras dão "
+            f"o IPCA (a linha). Demais grupos: {DEMAIS_GRUPOS.lower()}."
         ),
     )
 
@@ -328,10 +322,7 @@ def _tabela_itens() -> Tabela | None:
         colunas=["No mês (%)", "Em 12 meses (%)", "Peso no índice (%)"],
         linhas=[LinhaTabela(rotulo=r, valores=v, unidade="", casas=2) for r, v in itens],
         fonte="IBGE, SIDRA tabela 7060 (variáveis 63, 2265 e 66, subitens)",
-        nota=(
-            "Subitem é o nível mais fino do IPCA. O peso é a parte do gasto das famílias "
-            "que o subitem representa; a soma de todos os subitens dá 100 %."
-        ),
+        nota="Subitem é o nível mais fino do IPCA; o peso é a parte do gasto das famílias.",
     )
 
 
@@ -516,7 +507,7 @@ def montar(ctx: Contexto) -> Secao:
     graficos: list[Grafico] = [
         grafico(
             "ipca-12m",
-            "IPCA em 12 meses, a meta e o que o mercado espera",
+            "IPCA em 12 meses, meta e Focus",
             [
                 serie("ipca", "IPCA", ipca12, desde=inicio),
                 serie("nucleos", "Média dos núcleos", nucleos12, desde=inicio),
@@ -528,11 +519,13 @@ def montar(ctx: Contexto) -> Secao:
             faixa=_faixa_da_meta(caminho[-1][0]),
             linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
             janela_anos=5,
-            fonte=f"{ctx.fonte_sgs('IPCA_12M', *NUCLEOS)}; Focus de {periodo(edicao, 'D')}",
+            fonte=(
+                f"{ctx.fonte_sgs('IPCA_12M', *NUCLEOS)}; Focus de {periodo(edicao, 'D')}; "
+                f"meta: {meta.referencia}"
+            ),
             nota=(
-                "Tracejado: o IPCA em 12 meses que resulta das medianas mensais do Focus. "
-                f"Meta: {meta.referencia}. A faixa aparece a partir de jan/2025, quando a meta "
-                "passou a ser contínua."
+                "Tracejado: o IPCA em 12 meses das medianas mensais do Focus. A faixa começa "
+                "em jan/2025, quando a meta passou a ser contínua."
             ),
             largura="inteira",
         ),
@@ -591,15 +584,15 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=5,
             fonte=ctx.fonte_sgs("IPCA_12M", "IPCA15", "INPC"),
+            # IPCA-15 e INPC: acumulado em 12 meses composto a partir da variação mensal.
             nota=(
-                "O IPCA-15 é o mesmo índice com preços de meados do mês anterior a meados do "
-                "mês de referência: sai antes do IPCA e serve de prévia. IPCA-15 e INPC: "
-                "acumulado em 12 meses composto a partir da variação mensal."
+                "O IPCA-15 vai de meados do mês anterior a meados do mês e sai antes, como "
+                "prévia do IPCA."
             ),
         ),
         grafico(
             "nucleos-ritmo",
-            "Média dos núcleos: o ritmo de 3 meses e de 12 meses",
+            "Média dos núcleos: 3 e 12 meses",
             [
                 serie("doze", "12 meses", nucleos12, desde=inicio),
                 serie("tres", "3 meses, anualizado", nucleos3, desde=inicio),
@@ -609,12 +602,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
             janela_anos=5,
-            fonte=ctx.fonte_sgs(*NUCLEOS),
-            nota=(
-                "Média simples dos cinco núcleos (EX0, EX3, MS, DP e P55), conta nossa. "
-                "Anualizado: a variação composta dos 3 meses levada a 12, (1 + v)⁴ − 1. "
-                f"Meta: {meta.referencia}. " + SEM_AJUSTE
-            ),
+            fonte=f"{ctx.fonte_sgs(*NUCLEOS)}; meta: {meta.referencia}",
+            nota="Média simples dos cinco núcleos, conta nossa. " + SEM_AJUSTE,
         ),
     ]
 
@@ -644,7 +633,8 @@ def montar(ctx: Contexto) -> Secao:
             esperada,
             metas,
             date(ctx.hoje.year - 15, 1, 1),
-            f"Banco Central, Focus (mediana); {ctx.fonte_sgs('META_INFLACAO')}; conta nossa",
+            f"Banco Central, Focus (mediana); {ctx.fonte_sgs('META_INFLACAO')}; "
+            "meta no prazo: conta nossa",
         )
         if g_esperada:
             graficos.append(g_esperada)

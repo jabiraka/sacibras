@@ -119,12 +119,12 @@ function naJanela(m: MetricaEstados, todas: MetricaEstados[]): MetricaEstados {
   const comPrevia = !!m.ano_previsto && ate >= m.ano_previsto;
   const previa = comPrevia ? todas.find((x) => x.id === "ibcr_ano") : undefined;
   const periodo = anos === 1 ? `em ${ate} sobre ${de}` : `por ano, em média, de ${de} a ${ate}`;
-  let descricao = `Quanto a economia do estado cresceu ${periodo}, sem o efeito dos preços.`;
+  let descricao = `Crescimento da economia do estado ${periodo}, sem o efeito dos preços.`;
   descricao += comPrevia
-    ? ` ${m.ano_previsto} ainda não tem número do IBGE: entra a prévia nossa pelo IBC-R do Banco Central (o do estado ou, para quem não tem, o da região), que é previsão e erra.`
-    : " É o número oficial do IBGE (Contas Regionais), que sai com quase dois anos de atraso.";
+    ? ` ${m.ano_previsto}: prévia nossa pelo IBC-R do Banco Central (do estado ou da região), que é previsão e erra.`
+    : " Número oficial do IBGE, com quase dois anos de atraso.";
   if (anos === 1 && !comPrevia && m.ano_previsto) {
-    descricao += ` Para um sinal mais novo, escolha ${m.ano_previsto} (prévia) em "até".`;
+    descricao += ` Mais novo: ${m.ano_previsto} (prévia), em "até".`;
   }
   const sozinha = anos === 1 && previa !== undefined;
   return {
@@ -174,7 +174,7 @@ function noPeriodo(m: MetricaEstados): MetricaEstados {
     estimados: p.estimados ?? m.estimados,
     // Ano que o IBGE já publicou: a soma do ano fecha com o oficial e não há faixa a mostrar.
     como_ler: semFaixa
-      ? "Neste trimestre, a soma do ano já fecha com o PIB oficial do estado (IBGE); só a divisão entre os trimestres é estimada. Ponto vazado: estado sem IBC-R, repartido pelo índice da região."
+      ? "A soma do ano fecha com o PIB oficial do estado (IBGE); só a divisão entre trimestres é estimada. Ponto vazado: sem IBC-R, repartido pelo da região."
       : m.como_ler,
   };
 }
@@ -898,10 +898,10 @@ function limitesDosEstados(e: Estados): HTMLElement {
     el(
       "p",
       "nota",
-      `Limites da lei, em % da receita corrente líquida. Pessoal do Poder Executivo: ${limitesEmTexto(pessoal)}. ` +
+      `Limites da lei, em % da receita corrente líquida. Pessoal do Executivo: ${limitesEmTexto(pessoal)}. ` +
         `Dívida: ${limitesEmTexto(divida)}.` +
         (acordo
-          ? ` Acordo: RRF é o Regime de Recuperação Fiscal; Propag, o programa de 2025 que refinancia a dívida em 30 anos (${acordo.referencia}).`
+          ? ` RRF: Regime de Recuperação Fiscal; Propag: programa de 2025 que refinancia a dívida em 30 anos (${acordo.referencia}).`
           : "") +
         (e.arquivo_contas ? " Toque no nome para abrir as contas do estado." : ""),
     ),
@@ -964,9 +964,9 @@ function limitesDasCapitais(e: Estados): HTMLElement {
     el(
       "p",
       "nota",
-      `Limites da lei para os municípios, em % da receita corrente líquida. Pessoal do Poder Executivo: ${limitesEmTexto(pessoal)}. ` +
-        `Dívida: ${limitesEmTexto(divida)}. Primário: receitas menos despesas sem os juros, no ano até o bimestre; negativo é déficit. ` +
-        "Brasília fica de fora: o Distrito Federal presta contas como estado.",
+      `Limites da lei para municípios, em % da receita corrente líquida. Pessoal do Executivo: ${limitesEmTexto(pessoal)}. ` +
+        `Dívida: ${limitesEmTexto(divida)}. Primário: receitas menos despesas sem juros, no ano até o bimestre (negativo é déficit). ` +
+        "Brasília fica de fora: o DF presta contas como estado.",
     ),
   );
   return caixa;

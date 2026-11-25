@@ -17,7 +17,7 @@ mandou juntar (*"junte no main e pode fazer oq recomendar"*). Tudo no `main`. De
 Produtividade e Eficiência (PTF) saíram de Demografia para Atividade (`secoes/produtividade.py`),
 a PTF contra a dos EUA ficou só com o Brasil, os gráficos do PIB ficaram em pares lado a lado,
 a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos que somam o PIB,
-a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibovespa e a pessoa
+a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e dólar e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
 
@@ -29,6 +29,27 @@ a linha dele nos testes de estresse, e todo o código da B3 (`b3_indices.py`,
 `b3_derivativos.py`, `SB_B3`, a curva de DI e os futuros). Mercados ficou com o dólar, o euro
 e o "Quanto rendeu" (a parte "Dólar e bolsa" virou "Câmbio e aplicações"). `licencas.B3` tem
 `mostra=False`. Olhado em Mercados e em Riscos; **falta olhar o site inteiro no próximo build**.
+
+**25/11/2026, texto curto em todo o site** (Caio: *"Aplique a regra de diminuir e resumir os
+textos em todo o site"*). Todas as seções do builder, as perguntas, o painel de alerta
+(`alertas.py`, uma frase por campo) e os textos fixos do `web/src`: notas de três a treze
+frases ficaram em até duas (o método e a ressalva), títulos, subtítulos e legendas mais curtos,
+respostas das perguntas em até duas frases e conclusões em até três. O detalhe que saiu da
+tela foi para comentário no código, perto da peça. Ficaram as ressalvas que as regras pedem
+("conta nossa", "não é o que a Selic causou", "compara médias", as faixas). O build agora
+avisa **"nota longa"** (mais de duas frases ou 240 letras) em gráfico, variante e tabela
+(`construir.textos_longos`). **Falta o Caio olhar** as telas: da nuvem não abri o site.
+**No mesmo dia, o rótulo "conta nossa" conferido peça por peça** (Caio: *"tem alguns gráficos
+que tá como 'conta nossa' mas talvez não seja realmente"*). Corrigido: o PIB por habitante
+passa a vir pronto do IBGE (SIDRA 6784), com conta nossa só no ano que o IBGE ainda não
+publicou; a linha do IPCA em "Desocupação mais inflação" é a série de 12 meses do IBGE (SGS
+13522), e só a soma é nossa; o cartão da dívida que o Focus espera é "mercado", e a alíquota
+cheia do Comitê Gestor é "oficial"; nos gráficos do Focus no Laboratório e na expectativa
+contra a meta, a fonte diz que só o erro médio ou a meta do prazo é conta nossa; a tabela da
+LDO 2027 ganhou "conta nossa" na coluna do primário que estabiliza pelo Focus, que não dizia.
+"Cálculo próprio" virou "conta nossa" em todo lugar (eram três nomes para a mesma coisa;
+"estimativa nossa" fica para o Laboratório e as perguntas). O que ficou em aberto está no
+[PROPOSTAS](PROPOSTAS.md), "Rótulo de conta nossa".
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
@@ -87,9 +108,8 @@ A lista "Simular até" (Caio: *"deixe a pessoa escolher até quando quer ir"*) v
 2060; depois de 2036, o último ano do projeto, repete as hipóteses dele, e as linhas do
 governo e do Focus param onde eles publicam.
 **Texto curto virou regra** (Caio, 25/11: *"Diminua os textos [...] só informações
-relevantes"*; está no CLAUDE.md): as peças da LDO e o simulador foram encurtados. **Falta
-passar a regra nas peças antigas** (as notas do resto do Laboratório, por exemplo, têm cinco
-ou seis frases): espera o "sim" do Caio para varrer tudo.
+relevantes"*; está no CLAUDE.md): as peças da LDO e o simulador foram encurtados; o resto
+do site, na sessão seguinte (abaixo).
 **O primário que estabiliza, conciliado** (Caio: *"Temos uma diferença mto grande, entre 4,7%
 do PIB e 2,2% [...] as pessoas ficarão confusas"*): a tabela "Primário que estabiliza a
 dívida: de hoje ao que o governo supõe" (`secoes/estabiliza.py`) vai de um ao outro, em Riscos

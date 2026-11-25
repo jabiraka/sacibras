@@ -97,8 +97,8 @@ PERGUNTAS: tuple[Definicao, ...] = (
         "juro-alto",
         "Por que o juro é tão alto?",
         "Duas causas têm apoio claro nos dados: a inflação acima da meta, que segura a Selic,"
-        " e a dívida pública alta e crescente, que encarece o juro de prazo longo. A pouca "
-        "poupança e o juro de fora também contam, com evidência menos direta.",
+        " e a dívida alta e crescente, que encarece o juro longo. Pouca poupança e o juro de "
+        "fora também contam, com evidência menos direta.",
         (("juros", "selic-meta"), ("juros", "juro-real-ex-ante"), ("inflacao", "ipca-12m")),
         (
             Bloco(
@@ -148,14 +148,13 @@ PERGUNTAS: tuple[Definicao, ...] = (
         "divida",
         "A dívida pública se sustenta?",
         "Do jeito que está, não: com o juro e o crescimento de hoje, a dívida sobe todo ano. "
-        "Mas a conta não é fixa: se o juro cair, o esforço necessário para estabilizá-la é "
-        "bem menor do que o número de hoje sugere.",
+        "Se o juro cair, o esforço para estabilizá-la fica bem menor.",
         (("fiscal", "dbgg"), ("riscos", "primario-estabiliza"), ("fiscal", "primario")),
         (
             Bloco(
                 "Quanto falta para ela parar de subir",
                 "Com o juro de hoje, pediria um superávit acima de qualquer um desde 2006. "
-                "É uma foto: a tabela refaz a conta com juro menor e com mais crescimento.",
+                "A tabela refaz a conta com juro menor e mais crescimento.",
                 ("riscos", "primario-necessario"),
                 (("riscos", "primario-estabiliza"), ("fiscal", "primario")),
                 ("riscos", "primario-conforme-o-juro"),
@@ -195,18 +194,17 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ),
         ("calote", "dívida do governo", "o brasil vai quebrar", "sustentabilidade da dívida"),
         conclusao=(
-            "A dívida é em reais, e o governo deixar de pagá-la é o desfecho menos provável. O "
-            "que a conta diz com certeza é que ela segue subindo até haver ajuste. Se um ajuste "
-            "faria o juro cair, e quanto, a história brasileira sugere que sim, mas isso não se "
-            "mede de antemão."
+            "A dívida é em reais, e deixar de pagá-la é o desfecho menos provável. A conta diz "
+            "que ela sobe até haver ajuste. Se o ajuste baixaria o juro, a história brasileira "
+            "sugere que sim, mas isso não se mede de antemão."
         ),
     ),
     Definicao(
         "crescimento",
         "Por que o Brasil cresce pouco?",
         "Porque cada trabalhador produz quase o mesmo que há décadas. O país cresceu pondo "
-        "mais gente para trabalhar, e isso está acabando; investe menos que os países "
-        "parecidos, e a eficiência parou. Tudo isso os dados mostram com clareza.",
+        "mais gente para trabalhar, o que está acabando, e investe menos que os parecidos: "
+        "isso os dados mostram com clareza.",
         (("atividade", "pib-4t"), ("longo-prazo", "produtividade"), ("longo-prazo", "ptf-eua")),
         (
             Bloco(
@@ -248,17 +246,16 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ("pib baixo", "crescimento econômico", "produtividade", "renda média"),
         conclusao=(
             "Com a população em idade de trabalhar parando de crescer, o Brasil só cresce mais se"
-            " cada trabalhador produzir mais. Isso é conta. Já o que faz a produtividade subir "
-            "(escola, investimento, concorrência, impostos mais simples) é onde os economistas "
-            "discordam, e os dados daqui não decidem."
+            " cada trabalhador produzir mais: isso é conta. O que faz a produtividade subir é "
+            "disputado, e os dados daqui não decidem."
         ),
     ),
     Definicao(
         "inflacao",
         "A inflação está sob controle?",
-        "Ainda não. O número cheio está acima do teto da meta, os serviços correm mais que o "
-        "resto e analistas e títulos esperam inflação acima da meta para a frente. O sinal "
-        "bom é o ritmo recente dos núcleos, mais baixo que o de 12 meses.",
+        "Ainda não: o IPCA está acima do teto da meta, os serviços correm mais que o resto e "
+        "analistas e títulos esperam inflação acima da meta. O sinal bom é o ritmo recente "
+        "dos núcleos, mais baixo que o de 12 meses.",
         (("inflacao", "ipca-12m"), ("inflacao", "nucleos-12m"), ("inflacao", "focus-ipca")),
         (
             Bloco(
@@ -312,9 +309,8 @@ PERGUNTAS: tuple[Definicao, ...] = (
     Definicao(
         "imposto",
         "Para onde vai o imposto, e quem paga?",
-        "O Brasil arrecada como país rico, mas cobra sobretudo no consumo, e imposto sobre "
-        "consumo pesa mais em quem ganha menos. O dinheiro vai principalmente para a "
-        "previdência e, fora do orçamento do dia a dia, para os juros da dívida.",
+        "O Brasil arrecada como país rico, mas cobra sobretudo no consumo, que pesa mais em "
+        "quem ganha menos. O dinheiro vai principalmente para a previdência e os juros.",
         (
             ("impostos", "carga-tributaria"),
             ("impostos", "carga-consumo"),
@@ -338,8 +334,7 @@ PERGUNTAS: tuple[Definicao, ...] = (
             Bloco(
                 "Para onde vai",
                 "A União arrecada sete em cada dez reais e gasta mais com previdência e juros; "
-                "os estados, com segurança, saúde e educação; os municípios, com saúde e "
-                "educação.",
+                "estados e municípios, com saúde, educação e, nos estados, segurança.",
                 ("fiscal", "despesa-composicao"),
                 (("impostos", "carga-uniao"), ("fiscal", "previdencia-rgps")),
                 ("impostos", "despesa-esferas"),
@@ -376,17 +371,15 @@ PERGUNTAS: tuple[Definicao, ...] = (
         conclusao=(
             "A reforma do consumo simplifica a cobrança, mas não muda o peso entre consumo e "
             "renda: isso está na lei. Cobrar mais da renda ou rever isenções mudaria quem paga; o"
-            " efeito disso sobre investimento e emprego é disputado, e o painel não tem número "
-            "para decidir."
+            " efeito sobre investimento e emprego é disputado."
         ),
     ),
     Definicao(
         "cortar-gasto",
         "Onde dá para cortar gasto?",
         "Sem mudar lei, em pouco: só cerca de um real em cada dez da despesa federal é "
-        "discricionário. O resto a Constituição ou a lei mandam pagar. Contra os outros "
-        "países, o Brasil gasta muito mais em proteção social e em juros, e menos em "
-        "infraestrutura.",
+        "discricionário. Contra os outros países, o Brasil gasta mais em proteção social e "
+        "juros, e menos em infraestrutura.",
         (
             ("fiscal", "discricionaria-parte"),
             ("fiscal", "previdencia-rgps"),
@@ -447,18 +440,17 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "ajuste fiscal",
         ),
         conclusao=(
-            "Os dados mostram com clareza duas coisas: a margem do orçamento é estreita, e o "
-            "gasto do Brasil acima dos outros países está na proteção social e nos juros. "
-            "Onde cortar é escolha política, e se cada real é bem gasto pede avaliar programa "
-            "por programa, o que estes números não fazem."
+            "Os dados mostram que a margem do orçamento é estreita e que o gasto acima dos "
+            "outros países está na proteção social e nos juros. Onde cortar é escolha política;"
+            " se cada real é bem gasto, estes números não medem."
         ),
     ),
     Definicao(
         "servidores",
         "Servidor público ganha mais que quem trabalha no setor privado?",
-        "Na média, sim: o servidor estatutário ganha cerca do dobro do empregado com "
-        "carteira, e a aposentadoria média do servidor federal é várias vezes a do INSS. "
-        "Quanto disso vem de o servidor ter mais escola, estes dados não separam.",
+        "Na média, sim: o estatutário ganha cerca do dobro do empregado com carteira, e o "
+        "federal se aposenta com várias vezes a média do INSS. Quanto disso vem de mais "
+        "escola, estes dados não separam.",
         (
             ("fiscal", "servidor-rendimento"),
             ("fiscal", "aposentadoria-servidor"),
@@ -516,17 +508,16 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ),
         conclusao=(
             "O servidor ganha mais na média e se aposenta com mais: isso os dados mostram. Se "
-            "ganha mais que alguém com a mesma formação no setor privado, eles não decidem. E "
-            "a média esconde muito: as mais altas são de poucos, no Legislativo, no Ministério "
-            "Público e no Judiciário."
+            "ganha mais que alguém com a mesma formação no setor privado, eles não decidem. As "
+            "médias mais altas são do Legislativo, do Ministério Público e do Judiciário."
         ),
     ),
     Definicao(
         "estatais",
         "As estatais dão lucro ou prejuízo aos cofres públicos?",
-        "No caixa da União, dão mais do que recebem: desde 2021, os dividendos superam todo "
-        "ano a subvenção e o capital que o Tesouro põe nelas. Mas o ganho vem de quatro "
-        "empresas, oscila muito, e o saldo de 2025 foi o menor em cinco anos.",
+        "No caixa da União, dão mais do que recebem: desde 2021, os dividendos superam a "
+        "subvenção e o capital que o Tesouro põe nelas. O ganho vem de quatro empresas e "
+        "oscila: o saldo de 2025 foi o menor em cinco anos.",
         (
             ("fiscal", "estatais-saldo"),
             ("fiscal", "dividendos-12m"),
@@ -575,8 +566,7 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ),
         conclusao=(
             "Como caixa, as estatais ajudam o Tesouro, e a ajuda depende de poucas empresas. "
-            "Se vale a pena o Estado ser dono delas é outra pergunta: depende do que cada uma "
-            "entrega e de quanto valeria vendida, e isso estes dados não medem."
+            "Se vale a pena o Estado ser dono delas, estes dados não medem."
         ),
     ),
     Definicao(
@@ -637,8 +627,7 @@ PERGUNTAS: tuple[Definicao, ...] = (
         "desigualdade",
         "Quem ficou com o crescimento?",
         "Os mais pobres, pelas pesquisas do IBGE: desde 2012 a renda deles cresceu mais que a"
-        " dos mais ricos. Mas o topo aparece mal nas pesquisas, e pelos dados da Receita a "
-        "concentração lá em cima segue muito alta.",
+        " dos mais ricos. Mas pelos dados da Receita a concentração no topo segue muito alta.",
         (("trabalho", "fatia-10-ricos"), ("trabalho", "fatia-40-pobres"), ("trabalho", "pobreza")),
         (
             Bloco(
@@ -689,8 +678,7 @@ PERGUNTAS: tuple[Definicao, ...] = (
         "mercado",
         "O que o mercado espera do Brasil?",
         "Juro alto por bastante tempo, inflação acima da meta e crescimento baixo. Os títulos"
-        " públicos embutem ainda mais inflação que os analistas; parte dessa diferença é "
-        "prêmio de risco, e não previsão.",
+        " embutem mais inflação que os analistas, em parte por prêmio de risco.",
         (
             ("previsoes", "focus-pib-*"),
             ("previsoes", "focus-ipca-*"),
@@ -739,19 +727,17 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ),
         ("expectativas", "focus", "previsão", "curva de juros", "o dólar vai subir"),
         conclusao=(
-            "Analistas e títulos apontam para o mesmo lado, e isso vale levar a sério. Mas as "
-            "duas medidas erram: o quanto o Focus costuma errar está na entrada do site, e o "
-            "quanto do juro dos títulos é risco, e não expectativa, não dá para separar com "
-            "precisão."
+            "Analistas e títulos apontam para o mesmo lado. Mas as duas medidas erram: o erro "
+            "do Focus está na entrada do site, e quanto do juro dos títulos é risco não se "
+            "separa com precisão."
         ),
     ),
     Definicao(
         "crise",
         "De onde viria uma crise?",
-        "Pelos dados daqui, o ponto fraco são as contas públicas, não as contas com o exterior "
-        "nem os bancos: a dívida sobe, não se espera que pare de subir e o Brasil paga juro "
-        "acima do de fora. Os dados mostram onde está a pressão, não se nem quando ela "
-        "vira crise.",
+        "Pelos dados daqui, o ponto fraco são as contas públicas, não as externas nem os "
+        "bancos: a dívida sobe e não se espera que pare. Os dados mostram onde está a pressão,"
+        " não se nem quando ela vira crise.",
         (
             ("fiscal", "dbgg"),
             ("riscos", "juro-real-brasil-eua"),
@@ -760,45 +746,43 @@ PERGUNTAS: tuple[Definicao, ...] = (
         (
             Bloco(
                 "A dívida sobe e não se espera que pare",
-                "A cada dezembro os analistas refazem a aposta para a dívida dos anos "
-                "seguintes. Hoje, a linha do que esperam sobe até onde a coleta vai.",
+                "A cada dezembro, a aposta dos analistas para a dívida dos anos seguintes. "
+                "Hoje, ela sobe até onde a coleta vai.",
                 ("laboratorio", "divida-esperada"),
                 (("laboratorio", "divida-esperada"), ("riscos", "primario-estabiliza")),
             ),
             Bloco(
                 "O ajuste esperado costuma ficar maior que o entregue",
                 "Desde 2003, o primário esperado dois anos antes foi, na média, maior que o que"
-                " veio. Parte são choques, como 2020. Estimativa nossa, com faixa de erro.",
+                " veio, em parte por choques como 2020. Estimativa nossa, com faixa de erro.",
                 ("laboratorio", "primario-prometido"),
                 (("laboratorio", "primario-prometido"), ("fiscal", "primario")),
             ),
             Bloco(
                 "O Brasil paga mais que os outros para dever",
                 "A distância para o juro real dos EUA é o que se cobra a mais do Brasil. O "
-                "porquê o número não diz: contas, inflação e pouca poupança entram juntos.",
+                "número não diz por quê.",
                 ("riscos", "juro-real-brasil-eua"),
                 (("riscos", "juros-sobre-receita"),),
             ),
             Bloco(
                 "No dólar, quanto é daqui",
-                "Dólar que sobe contra todas as moedas é problema de fora. O resto é do Brasil:"
-                " contas públicas, política, juro, commodities, sem dizer qual. Estimativa "
-                "nossa.",
+                "Dólar que sobe contra todas as moedas é problema de fora; o resto é do Brasil,"
+                " sem dizer de qual causa. Estimativa nossa.",
                 ("laboratorio", "dolar-mundo-brasil"),
                 (("laboratorio", "dolar-de-fora"),),
             ),
             Bloco(
                 "Dólar para pagar as contas de fora, há",
                 "As reservas cobrem com sobra a dívida externa de um ano, e o investimento "
-                "direto supera o déficit externo. Crise por falta de dólar é pouco provável "
-                "hoje.",
+                "direto supera o déficit externo.",
                 ("externo", "reservas"),
                 (("riscos", "reservas-cobertura"), ("externo", "transacoes-correntes")),
             ),
             Bloco(
                 "O que o painel de alerta mostra",
-                "Cada indicador de risco na régua da própria história. A contagem diz quantos "
-                "estão no quinto pior; não é nota única nem previsão de crise.",
+                "Cada indicador na régua da própria história, e quantos estão no quinto pior. "
+                "Não é nota única nem previsão de crise.",
                 ("riscos", "basileia"),
                 (("riscos", "alertas-acesos"), ("riscos", "basileia")),
             ),
@@ -806,9 +790,8 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ("crise", "risco de crise", "o brasil vai quebrar", "crise fiscal", "crise cambial"),
         conclusao=(
             "Se a pressão crescer, o caminho mais provável pelos dados é o das contas "
-            "públicas: dívida subindo, juro longo alto e dólar pressionado por razões daqui, "
-            "e não falta de dólares nem bancos frágeis. Se o ajuste será feito, e até quando "
-            "o mercado espera, os dados daqui não decidem."
+            "públicas, não falta de dólares nem bancos frágeis. Se o ajuste será feito, e até "
+            "quando o mercado espera, os dados daqui não decidem."
         ),
     ),
 )

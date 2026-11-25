@@ -68,8 +68,8 @@ export function saiuPorUltimo(itens: Divulgado[]): HTMLElement {
   const nota = el(
     "p",
     "saiu-nota",
-    "“Costuma errar”: a média do erro do Focus nas divulgações do último ano (dois anos, no " +
-      "PIB). PIB e desocupação são revistos depois de sair. " +
+    "“Costuma errar”: erro médio do Focus no último ano (dois, no PIB). " +
+      "PIB e desocupação são revistos depois. " +
       "Fontes: IBGE e Banco Central (SGS, Copom e Focus).",
   );
   caixa.append(topo, lista, nota);

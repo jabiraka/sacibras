@@ -125,9 +125,8 @@ def pib(ufs: UFs) -> list[MetricaEstados]:
             id="pib_crescimento",
             nome="Crescimento do PIB",
             descricao=(
-                f"Quanto a economia do estado cresceu em {ano} sobre {ano - 1}, sem o efeito "
-                "dos preços. É o número oficial do IBGE, que sai com quase dois anos de "
-                "atraso; para um sinal mais novo, veja a prévia pelo IBC-R."
+                f"Crescimento em {ano} sobre {ano - 1}, sem o efeito dos preços. Oficial do "
+                "IBGE, com quase dois anos de atraso; a prévia pelo IBC-R é mais nova."
             ),
             unidade="%",
             casas=1,
@@ -164,10 +163,9 @@ def pib(ufs: UFs) -> list[MetricaEstados]:
                 id="pib_per_capita",
                 nome="PIB por habitante",
                 descricao=(
-                    "PIB do estado no ano, a preços do próprio ano, dividido pela população "
-                    "estimada pelo IBGE para 1º de julho. Mede quanto se produz por pessoa, não "
-                    "quanto cada um ganha: onde há muita mineração, petróleo ou agronegócio de "
-                    "exportação, o PIB por habitante fica bem acima da renda das famílias."
+                    "PIB do ano, a preços correntes, pela população do IBGE em 1º de julho. "
+                    "Mede o que se produz por pessoa, não a renda: com mineração, petróleo ou "
+                    "agro de exportação, fica bem acima dela."
                 ),
                 unidade="R$ por pessoa",
                 casas=0,
@@ -302,10 +300,7 @@ def ibcr(
     ano = fim.year - 1 if fim.month < 12 else fim.year
     siglas = [s for _, s, _, _ in ufs]
     fora = sorted(s for s in siglas if s not in IBCR_UF)
-    nota_fora = (
-        f" O Banco Central só publica o IBC-R de {len(IBCR_UF)} estados; "
-        f"{', '.join(fora)} ficam sem dado."
-    )
+    nota_fora = f" Sem IBC-R: {', '.join(fora)}."
     codigos = ", ".join(str(SGS[f"IBCR_{s}"].codigo) for s in sorted(IBCR_UF))
     fonte = f"Banco Central, IBC-R (SGS {codigos}); Brasil: IBC-Br (SGS {SGS['IBCBR'].codigo})"
 
@@ -313,10 +308,9 @@ def ibcr(
         id="ibcr_12_meses",
         nome="Atividade em 12 meses (IBC-R)",
         descricao=(
-            "O índice de atividade do Banco Central para o estado, uma prévia mensal do "
-            "PIB: a média dos últimos 12 meses contra a dos 12 anteriores. Não é o PIB do "
-            "IBGE (usa menos dados e pode errar o tamanho), mas chega quase dois anos "
-            "antes." + nota_fora
+            # Não é o PIB do IBGE: usa menos dados e pode errar o tamanho.
+            "Prévia mensal do PIB pelo índice de atividade do Banco Central: 12 meses contra "
+            "os 12 anteriores. Chega quase dois anos antes do PIB do IBGE." + nota_fora
         ),
         unidade="%",
         casas=1,
@@ -367,19 +361,15 @@ def ibcr(
                 valores[s] = v
                 intervalos[s] = (v + baixo, v + alto)
                 estimados.append(s)
+        # A faixa é mais larga para cima: esses estados costumam crescer mais que a região.
         como_ler += (
-            f"; nos estados sem índice (ponto vazado), entre {br(abs(baixo))} abaixo e "
-            f"{br(alto)} acima do número da região. A faixa é mais larga para cima porque "
-            "esses estados costumam crescer mais que a região."
+            f"; sem índice (ponto vazado), entre {br(abs(baixo))} abaixo e {br(alto)} acima do "
+            "da região."
         )
     elif como_ler:
         como_ler += "."
     if estimados:
-        regra = (
-            f" Para os {len(estimados)} estados sem IBC-R ({', '.join(sorted(estimados))}), "
-            "a regra é simples: o estado cresce como a região dele (o IBC-R da região). "
-            "É previsão: erra bastante, e a faixa mostra quanto."
-        )
+        regra = f" Sem IBC-R ({', '.join(sorted(estimados))}), o estado cresce como a região dele."
         cods = ", ".join(str(SGS[f"IBCR_REGIAO_{c}"].codigo) for c in REGIOES.values())
         fonte_ano = f"{fonte}; IBC-R das regiões (SGS {cods}); teste: IBGE, Contas Regionais"
     else:
@@ -388,9 +378,8 @@ def ibcr(
         id="ibcr_ano",
         nome=f"Prévia do PIB de {ano}",
         descricao=(
-            f"Previsão nossa para o crescimento de {ano}, que o IBGE só publica nas Contas "
-            f"Regionais de {ano} (em novembro de {ano + 2}). Para os estados com IBC-R, é o "
-            f"crescimento da média do índice no ano. Não é número oficial do PIB." + regra
+            f"Previsão nossa para {ano}, que o IBGE só publica em novembro de {ano + 2}: o "
+            "crescimento da média do IBC-R no ano." + regra
         ),
         unidade="%",
         casas=1,
@@ -478,14 +467,12 @@ def pib_trimestral(
     if len(com) >= MINIMO_DE_ERROS and len(sem) >= MINIMO_DE_ERROS:
         f_com = (_quantil(com, 0.1), _quantil(com, 0.9))
         f_sem = (_quantil(sem, 0.1), _quantil(sem, 0.9))
+        # A faixa refaz a conta como se o PIB do ano não tivesse saído. Não vê o erro de
+        # repartir o ano entre os trimestres (seca ou safra forte pode cair no trimestre errado).
         como_ler = (
-            "O traço é a faixa de erro. Refizemos a conta como se o IBGE ainda não tivesse "
-            "publicado o PIB do ano: em 8 de cada 10 trimestres, o número refeito depois do "
-            f"oficial ficou entre {br(abs(f_com[0]))} ponto abaixo e {br(f_com[1])} acima do "
-            "estimado antes; nos estados sem IBC-R (ponto vazado), entre "
-            f"{br(abs(f_sem[0]))} abaixo e {br(f_sem[1])} acima. O teste não vê o erro de "
-            "repartir o ano entre os trimestres: seca ou safra forte num estado pode cair no "
-            "trimestre errado."
+            "O traço é a faixa de erro: em 8 de cada 10 trimestres, a chegada do PIB oficial "
+            f"mudou o número entre {br(abs(f_com[0]))} ponto abaixo e {br(f_com[1])} acima; "
+            f"sem IBC-R (ponto vazado), entre {br(abs(f_sem[0]))} abaixo e {br(f_sem[1])} acima."
         )
 
     def faixa(s: str, tri: date) -> tuple[float, float] | None:
@@ -552,19 +539,16 @@ def pib_trimestral(
         f"Conta nossa sobre {ibge_contas_regionais.FONTE} (edição {edicao}), "
         f"{FONTE_PIB_TRIMESTRAL} e Banco Central, IBC-R (SGS {codigos}; regiões: {cods_reg})"
     )
+    # O IBGE não publica PIB trimestral por estado: só o do Brasil e o dos estados por ano.
     metodo = (
-        "O IBGE não publica PIB trimestral por estado: só o do Brasil, a cada trimestre, e o "
-        f"dos estados uma vez por ano (o último é {e.ultimo_oficial}). A conta reparte o PIB "
-        "trimestral do Brasil entre os estados pelo IBC-R do Banco Central, fechando com o "
-        f"PIB oficial de cada estado até {e.ultimo_oficial}. Estado sem IBC-R (ponto vazado) "
-        f"anda como a região: são {len(sem_indice)} hoje"
-        + (f", e também {tambem}, antes de terem índice" if tambem else "")
-        + ". Não é número oficial."
+        "O PIB trimestral do Brasil repartido entre os estados pelo IBC-R, fechando com o "
+        f"oficial anual até {e.ultimo_oficial}; sem IBC-R (ponto vazado), o estado anda como a "
+        f"região ({len(sem_indice)} hoje" + (f"; também {tambem}" if tambem else "") + ")."
     )
     c = relatorios.CONFERENCIA_PIB_ESTADOS
     conferencia = (
-        f"Conferência: contra o PIB trimestral que {len(c.estados)} estados publicam "
-        f"({', '.join(c.estados[:-1])} e {c.estados[-1]}), a nossa conta ficou, em média, a "
+        f"Conferência: contra o PIB trimestral de {', '.join(c.estados[:-1])} e "
+        f"{c.estados[-1]}, a nossa conta ficou, em média, a "
         f"{br(c.diferenca_media)} ponto do número deles em {c.trimestres} trimestres desde "
         f"{c.desde}; em 8 de cada 10, entre {br(abs(c.faixa[0]))} abaixo e {br(c.faixa[1])} "
         f"acima (conferido em {c.lida_em:%d/%m/%Y})."
@@ -577,8 +561,7 @@ def pib_trimestral(
             nome_periodo="Trimestre",
             nome="PIB no trimestre (estimativa)",
             descricao=(
-                "Estimativa nossa de quanto a economia do estado cresceu no trimestre contra "
-                f"o mesmo trimestre do ano anterior. {metodo}"
+                f"Crescimento contra o mesmo trimestre do ano anterior, estimativa nossa. {metodo}"
             ),
             unidade="%",
             casas=1,
@@ -599,8 +582,8 @@ def pib_trimestral(
             nome_periodo="Trimestre",
             nome="Contribuição para o PIB do Brasil (estimativa)",
             descricao=(
-                "Quantos pontos do crescimento do PIB do Brasil vieram de cada estado: o peso "
-                f"do estado na economia vezes o quanto ele cresceu. {metodo}"
+                "Pontos do crescimento do Brasil vindos de cada estado (peso vezes "
+                f"crescimento), estimativa nossa. {metodo}"
             ),
             unidade="ponto percentual",
             casas=2,
@@ -613,9 +596,8 @@ def pib_trimestral(
             estimados=p_contrib[0].estimados,
             como_ler=como_ler
             and (
-                "O traço é a faixa de erro: a do crescimento do estado (veja a métrica "
-                '"PIB no trimestre") vezes o peso dele na economia do país. Estado grande '
-                "pesa mais, e por isso o traço dele é mais largo."
+                "O traço é a faixa do crescimento do estado vezes o peso dele: estado grande "
+                "tem traço mais largo."
             ),
             periodos=p_contrib,
         ),
@@ -669,9 +651,9 @@ def trabalho(ufs: UFs) -> list[MetricaEstados]:
                 id="subutilizacao",
                 nome="Subutilização",
                 descricao=(
-                    "Quem está sem trabalho, quem trabalha menos horas do que gostaria e quem "
-                    "queria trabalhar mas não procurou, em proporção da força de trabalho "
-                    "ampliada. Pega o que a desocupação deixa de fora."
+                    "Sem trabalho, com menos horas do que gostaria ou querendo trabalhar sem "
+                    "procurar, em % da força de trabalho ampliada. Pega o que a desocupação "
+                    "deixa de fora."
                 ),
                 unidade="%",
                 casas=1,
@@ -712,9 +694,8 @@ def trabalho(ufs: UFs) -> list[MetricaEstados]:
                 id="renda_trabalho",
                 nome="Renda média do trabalho",
                 descricao=(
-                    "O que os ocupados costumam receber por mês, somados todos os trabalhos, "
-                    "em reais do trimestre da pesquisa. Média: puxada para cima por quem ganha "
-                    "muito."
+                    "O que os ocupados costumam receber por mês em todos os trabalhos, em reais "
+                    "da época. Média: puxada para cima por quem ganha muito."
                 ),
                 unidade="R$ por mês",
                 casas=0,
@@ -764,9 +745,9 @@ def inflacao(ufs: UFs) -> MetricaEstados:
             id="inflacao_capital",
             nome="Inflação na capital",
             descricao=(
-                "IPCA dos últimos 12 meses na capital ou na região metropolitana que o IBGE "
-                f"pesquisa no estado ({len(areas)} áreas). Vale para ela, não para o interior. "
-                f"{', '.join(fora)} não têm área pesquisada."
+                "IPCA de 12 meses da capital ou região metropolitana pesquisada "
+                f"({len(areas)} áreas), não do interior. {', '.join(fora)} não têm área "
+                "pesquisada."
             ),
             unidade="% em 12 meses",
             casas=1,
@@ -802,9 +783,9 @@ def exportacoes(ufs: UFs, populacao: dict[int, float]) -> MetricaEstados:
         id="exportacoes_per_capita",
         nome="Exportações por habitante",
         descricao=(
-            "Quanto o estado vendeu ao exterior em 12 meses, em dólares, dividido pela "
-            "população. Conta onde a mercadoria foi produzida, não o porto de saída. O que "
-            "sai sem estado declarado fica fora."
+            # O que sai sem estado declarado fica fora.
+            "Vendas ao exterior em 12 meses, em dólares, por habitante. Conta onde a mercadoria "
+            "foi produzida, não o porto de saída."
         ),
         unidade="US$ por pessoa",
         casas=0,
@@ -853,9 +834,8 @@ def exportacoes_no_pib(
         id="exportacoes_pib",
         nome="Exportações em % do PIB",
         descricao=(
-            f"Quanto o estado vendeu ao exterior em {ano}, em reais, sobre tudo o que produziu "
-            "no mesmo ano. Conta onde a mercadoria foi produzida, não o porto. Mostra o quanto "
-            "a economia do estado depende de vender para fora."
+            f"Vendas ao exterior em {ano}, em reais, sobre o PIB do estado no ano. Conta onde a "
+            "mercadoria foi produzida, não o porto."
         ),
         unidade="% do PIB do estado",
         casas=1,
@@ -864,7 +844,7 @@ def exportacoes_no_pib(
         fonte=(
             f"{comexstat.FONTE} (valor FOB de {ano}, mês a mês, em reais pelo dólar médio do "
             f"mês do Banco Central, SGS 3698); {ibge_contas_regionais.FONTE} (edição {edicao}, "
-            "PIB a preços correntes); cálculo próprio"
+            "PIB a preços correntes); conta nossa"
         ),
         valores=valores,
         brasil=round(total / pib_br * 100, 2) if pib_br else None,
@@ -978,9 +958,8 @@ def concentracao(ufs: UFs) -> MetricaEstados:
             id="pib_concentracao",
             nome="Concentração do PIB nos municípios",
             descricao=(
-                "Índice de Gini do PIB entre os municípios do estado: 0 seria todos com o mesmo "
-                "PIB, 1 seria tudo num só. Alto quer dizer que a economia se junta em poucas "
-                "cidades. O Distrito Federal é um município só e fica de fora."
+                "Gini do PIB entre os municípios do estado: 0 é todos com o mesmo PIB, 1 é tudo "
+                "num só. O Distrito Federal é um município só e fica de fora."
             ),
             unidade="índice de 0 a 1",
             casas=2,
@@ -1058,9 +1037,9 @@ def credito(
             id="credito_per_capita",
             nome="Crédito por habitante",
             descricao=(
-                "Saldo de empréstimos e financiamentos de bancos e financeiras a pessoas e "
-                "empresas do estado, dividido pela população. O estado é o do cliente. Nos "
-                "meses anteriores, a mesma população de hoje."
+                # Nos meses anteriores, divide pela mesma população de hoje.
+                "Saldo de empréstimos de bancos e financeiras a pessoas e empresas, pelo estado "
+                "do cliente, por habitante."
             ),
             unidade="R$ por pessoa",
             casas=0,

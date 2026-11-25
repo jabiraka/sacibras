@@ -65,11 +65,9 @@ REPOSICAO = 2.1
 """Filhos por mulher que repõem a população (convenção demográfica, com mortalidade baixa)."""
 ANOS_DA_TABELA = [2000, 2050, 2070]  # mais o corrente, na segunda coluna
 
-NOTA_PROJECAO = (
-    "Projeção oficial do IBGE (revisão 2024): até 2022, dado ajustado aos Censos; daí em "
-    "diante (tracejado), hipóteses de fecundidade, mortalidade e migração. O IBGE não publica "
-    "faixa de erro."
-)
+# Projeção oficial do IBGE (revisão 2024): até 2022, dado ajustado aos Censos; daí em diante
+# (tracejado), hipóteses de fecundidade, mortalidade e migração.
+NOTA_PROJECAO = "Tracejado: projeção do IBGE (revisão 2024), que não publica faixa de erro."
 
 
 # ------------------------------------------------------------------ contas
@@ -255,7 +253,7 @@ def montar(ctx: Contexto) -> Secao:
         ),
         cartao_proj(
             "idosos-por-100",
-            "Idosos (65+) para cada 100 pessoas de 15 a 64 anos",
+            "Idosos (65+) por 100 pessoas de 15 a 64 anos",
             dep_idosos,
             unidade="por 100",
             detalhe=(
@@ -298,7 +296,7 @@ def montar(ctx: Contexto) -> Secao:
         graficos_inss.append(
             grafico(
                 "inss",
-                "INSS: benefícios, arrecadação e o déficit",
+                "INSS: benefícios, arrecadação e déficit",
                 [
                     serie("beneficios", "Benefícios", beneficios),
                     serie("arrecadacao", "Arrecadação líquida", arrecadacao),
@@ -309,10 +307,11 @@ def montar(ctx: Contexto) -> Secao:
                 periodicidade="M",
                 janela_anos=20,
                 fonte=fonte_rtn,
+                # Déficit = benefícios pagos menos a arrecadação líquida para o RGPS, os dois
+                # somados em 12 meses e divididos pelo PIB dos mesmos 12 meses.
                 nota=(
-                    "Regime Geral de Previdência Social, o do INSS (não inclui servidores nem "
-                    "militares). Déficit = benefícios pagos menos a arrecadação líquida para o "
-                    "RGPS, os dois somados em 12 meses e divididos pelo PIB dos mesmos 12 meses."
+                    "Regime Geral (INSS), sem servidores nem militares. Déficit: benefícios "
+                    "menos arrecadação líquida, em 12 meses."
                 ),
             )
         )
@@ -325,7 +324,7 @@ def montar(ctx: Contexto) -> Secao:
             variante(
                 "reais",
                 "R$ de hoje",
-                "INSS: benefícios, arrecadação e o déficit, em reais de hoje",
+                "INSS em reais de hoje",
                 [
                     serie("beneficios", "Benefícios", benef_r, casas=1),
                     serie("arrecadacao", "Arrecadação líquida", arrec_r, casas=1),
@@ -398,7 +397,7 @@ def montar(ctx: Contexto) -> Secao:
     graficos = [
         grafico(
             "dependencia",
-            "Jovens e idosos para cada 100 pessoas de 15 a 64 anos",
+            "Jovens e idosos por 100 pessoas de 15 a 64 anos",
             [
                 proj("idosos", "Idosos (65 ou mais)", dep_idosos),
                 proj("jovens", "Jovens (0 a 14)", dep_jovens),
@@ -408,11 +407,9 @@ def montar(ctx: Contexto) -> Secao:
             casas=1,
             periodicidade="A",
             fonte=f"{fonte_tab4}: razões de dependência RDI65, RDJ65 e RDT65",
-            nota=(
-                f"Os idosos passam os jovens em {idosos_passam}. "
-                "Quem está em idade de trabalhar sustenta, pela renda e pelos impostos e "
-                f"contribuições, quem não está. {NOTA_PROJECAO}"
-            ),
+            # Quem está em idade de trabalhar sustenta, pela renda e pelos impostos e
+            # contribuições, quem não está.
+            nota=f"Os idosos passam os jovens em {idosos_passam}. {NOTA_PROJECAO}",
             largura="inteira",
         ),
         grafico(
@@ -424,9 +421,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="A",
             fonte=f"{PROJECAO} (tabela 2, grupos de cinco anos)",
             nota=(
-                f"Homens à esquerda, mulheres à direita, em % da população do ano. O contorno é "
-                f"{piramide.ano_contorno}. Até {ULTIMO_ANO_AJUSTADO}, dado ajustado aos Censos; "
-                "depois, projeção do IBGE."
+                f"Homens à esquerda, mulheres à direita; o contorno é {piramide.ano_contorno}. "
+                f"Até {ULTIMO_ANO_AJUSTADO}, dado ajustado aos Censos; depois, projeção do IBGE."
             ),
             largura="inteira",
             piramide=piramide,
@@ -457,8 +453,8 @@ def montar(ctx: Contexto) -> Secao:
             fonte=fonte_tab4,
             nota=(
                 (
-                    f"Os óbitos passam os nascimentos em {obitos_passam}: daí em diante a "
-                    "população só cresce com migração. "
+                    f"Os óbitos passam os nascimentos em {obitos_passam}; daí em diante, só "
+                    "a migração faz a população crescer. "
                     if obitos_passam
                     else ""
                 )
@@ -474,10 +470,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="A",
             linhas=[LinhaRef(valor=REPOSICAO, rotulo="reposição (2,1)")],
             fonte=fonte_tab4,
-            nota=(
-                "Quantos filhos uma mulher teria na vida com as taxas de cada idade daquele "
-                f"ano. Abaixo de 2,1, cada geração é menor que a dos pais. {NOTA_PROJECAO}"
-            ),
+            # Quantos filhos uma mulher teria na vida com as taxas de cada idade daquele ano.
+            nota=f"Abaixo de 2,1, cada geração é menor que a dos pais. {NOTA_PROJECAO}",
         ),
         grafico(
             "esperanca-de-vida",
@@ -496,16 +490,14 @@ def montar(ctx: Contexto) -> Secao:
         grafico(
             "mortalidade-infantil",
             "Mortalidade infantil",
-            [proj("total", "Mortes antes de 1 ano por mil nascidos vivos", ind["TMI_T"])],
+            [proj("total", "Mortes antes de 1 ano", ind["TMI_T"])],
             unidade="por mil nascidos",
             casas=1,
             periodicidade="A",
             fonte=fonte_tab4,
-            nota=(
-                "Quantas crianças, em cada mil nascidas vivas, morrem antes de fazer um ano. "
-                "Cai com saneamento, vacina, pré-natal e renda; é uma das medidas mais usadas "
-                f"de condição de vida. {NOTA_PROJECAO}"
-            ),
+            # Cai com saneamento, vacina, pré-natal e renda; uma das medidas mais usadas de
+            # condição de vida.
+            nota=f"Crianças que morrem antes de um ano, por mil nascidas vivas. {NOTA_PROJECAO}",
         ),
         grafico(
             "idosos",
@@ -528,10 +520,11 @@ def montar(ctx: Contexto) -> Secao:
             casas=2,
             periodicidade="A",
             fonte=fonte_tab3,
+            # PIB = pessoas ocupadas × produto por ocupado: enquanto a idade de trabalhar
+            # cresce, a demografia soma ao PIB.
             nota=(
-                "PIB = pessoas ocupadas × produto por ocupado. Enquanto a idade de trabalhar "
-                "cresce, a demografia soma ao PIB; abaixo de zero, a economia só cresce com "
-                "mais produtividade ou com mais gente dessa idade trabalhando. " + NOTA_PROJECAO
+                "Abaixo de zero, o PIB só cresce com mais produtividade ou mais gente dessa "
+                "idade trabalhando. " + NOTA_PROJECAO
             ),
         ),
     ]
@@ -549,13 +542,11 @@ def montar(ctx: Contexto) -> Secao:
     tabelas += tabelas_prev
 
     resumo = (
-        f"O Brasil tem {br(populacao[agora] / 1e6)} milhões de habitantes em {agora} e, "
-        f"pela projeção do IBGE, para de crescer em {ano_pico_pop}. Cada mulher tem em média "
-        f"{filhos(fecundidade[agora])}, abaixo dos 2,1 que repõem a população; há "
-        f"{br(dep_idosos[agora])} idosos para cada 100 pessoas de 15 a 64 anos, e serão "
-        f"{br(dep_idosos[2050])} em 2050. Com a idade de trabalhar parando de crescer em "
-        f"{ano_pico_pia}, o PIB passa a depender da produtividade, e o INSS paga mais "
-        "aposentados com menos gente em idade de contribuir."
+        f"{br(populacao[agora] / 1e6)} milhões de habitantes em {agora}; pela projeção do "
+        f"IBGE, a população para de crescer em {ano_pico_pop}. Cada mulher tem em média "
+        f"{filhos(fecundidade[agora])}, abaixo dos 2,1 de reposição, e há "
+        f"{br(dep_idosos[agora])} idosos por 100 pessoas de 15 a 64 anos "
+        f"({br(dep_idosos[2050])} em 2050)."
     )
     return Secao(
         id="demografia",
@@ -619,13 +610,13 @@ def _previdencia_uniao(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         casas=2,
         periodicidade="A",
         fonte=fonte,
+        # Servidores civis: o regime próprio da União (dos três Poderes). Militares: pensões e
+        # militares da reserva e reformados (estes não contribuem). União: despesas liquidadas
+        # no ano; INSS: benefícios pagos. Fora: policiais e bombeiros do DF, que a União paga
+        # pelo Fundo Constitucional do DF, e os servidores de estados e municípios.
         nota=(
-            "O que falta para pagar aposentadorias e pensões depois das contribuições, em cada "
-            "ano. Servidores civis: o regime próprio da União (dos três Poderes). Militares: "
-            "pensões e militares da reserva e reformados (estes não contribuem). Os números da "
-            "União são as despesas liquidadas no ano; os do INSS, os benefícios pagos. Fora: "
-            "policiais e bombeiros do DF, que a União paga pelo Fundo Constitucional do DF, e "
-            "os servidores de estados e municípios."
+            "O que falta para pagar aposentadorias e pensões depois das contribuições. Fora: "
+            "estados, municípios e o Fundo Constitucional do DF."
         ),
     )
 
@@ -658,13 +649,14 @@ def _previdencia_uniao(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         colunas=["contribuições", "benefícios", "déficit", "% do PIB"],
         linhas=linhas,
         fonte=fonte,
+        # Contribuições: o que se recolhe para cada regime (no dos servidores civis, com a parte
+        # que a União paga como empregadora; no dos militares, só a dos próprios militares, para
+        # as pensões). Benefícios: aposentadorias, pensões e, nos militares, a remuneração da
+        # reserva e dos reformados. INSS: do RTN; União: receitas realizadas e despesas
+        # liquidadas, do RREO.
         nota=(
-            "Contribuições: o que se recolhe para cada regime (no dos servidores civis, com "
-            "a parte que a União paga como empregadora; no dos militares, só a dos próprios "
-            "militares, para as pensões). Benefícios: aposentadorias, pensões e, nos "
-            "militares, a remuneração da reserva e dos reformados. INSS: arrecadação líquida "
-            "e benefícios pagos no ano, do RTN; União: receitas realizadas e despesas "
-            "liquidadas, do RREO."
+            "Nos militares, a contribuição é só para as pensões, e o benefício inclui reserva "
+            "e reformados."
         ),
     )
     return cartao_, grafico_, tabela
@@ -710,8 +702,8 @@ def _tabela_marcos(agora: int, ind: dict[str, PorAno], g: dict[str, PorAno]) -> 
         ],
         fonte=f"{PROJECAO} (tabelas 3 e 4)",
         nota=(
-            f"Cada ano com referência em 1º de julho. Até {ULTIMO_ANO_AJUSTADO}, dado ajustado "
-            "aos Censos; depois, projeção. Idosos: 65 anos ou mais; jovens: 0 a 14 anos."
+            f"Em 1º de julho; até {ULTIMO_ANO_AJUSTADO}, dado ajustado aos Censos, depois "
+            "projeção. Idosos: 65 anos ou mais; jovens: 0 a 14."
         ),
     )
 
@@ -732,8 +724,7 @@ def _tabela_estados(agora: int, grupos: dict[str, dict[str, PorAno]]) -> Tabela:
     return Tabela(
         id="demografia-estados",
         titulo="Idosos por estado",
-        subtitulo=f"pessoas de 65 anos ou mais, em % da população; do mais velho em {agora} "
-        "ao mais novo",
+        subtitulo=f"65 anos ou mais, em % da população; na ordem de {agora}",
         colunas=[str(a) for a in anos],
         linhas=[
             LinhaTabela(
@@ -757,7 +748,7 @@ def _grafico_onu(populacao_ibge: PorAno) -> Grafico:
     a50, a100 = 2050, 2100
     return grafico(
         "populacao-onu",
-        "População: a projeção da ONU, com a faixa, e a do IBGE",
+        "População: ONU e IBGE",
         [
             serie(
                 "ibge",
@@ -766,7 +757,7 @@ def _grafico_onu(populacao_ibge: PorAno) -> Grafico:
                 casas=1,
                 tracejado_desde=PROJETADO_DESDE,
             ),
-            serie("onu", "ONU, o meio da faixa", mediana, casas=1, tracejado_desde=mediana[0][0]),
+            serie("onu", "ONU (meio da faixa)", mediana, casas=1, tracejado_desde=mediana[0][0]),
         ],
         unidade="milhões de pessoas",
         casas=1,
@@ -779,14 +770,14 @@ def _grafico_onu(populacao_ibge: PorAno) -> Grafico:
                 pontos=barras_onu(onu, ANOS_DAS_BARRAS_ONU),
             )
         ],
+        # A ONU sorteia milhares de futuros para a fecundidade e a esperança de vida; a linha é
+        # o do meio, e a barra vai dos 10 % mais baixos aos 10 % mais altos. O IBGE não publica
+        # faixa; até 2022, a linha dele é dado ajustado aos Censos.
         nota=(
-            "Como ler: a ONU sorteia milhares de futuros para a fecundidade e a esperança de "
-            "vida; a linha é o do meio, e a barra vai de onde ficam os 10 % mais baixos a onde "
-            "ficam os 10 % mais altos. Com 19 de cada 20 futuros, a faixa de "
-            f"{a50} vai de {br(onu.inferior95[a50] / 1e3, 0)} a "
-            f"{br(onu.superior95[a50] / 1e3, 0)} milhões, e a de {a100}, de "
-            f"{br(onu.inferior95[a100] / 1e3, 0)} a {br(onu.superior95[a100] / 1e3, 0)}. O "
-            "IBGE não publica faixa; até 2022, a linha dele é dado ajustado aos Censos."
+            "A ONU sorteia milhares de futuros; a linha é o do meio. Com 19 de cada 20, "
+            f"{a50} fica entre {br(onu.inferior95[a50] / 1e3, 0)} e "
+            f"{br(onu.superior95[a50] / 1e3, 0)} milhões, e {a100}, entre "
+            f"{br(onu.inferior95[a100] / 1e3, 0)} e {br(onu.superior95[a100] / 1e3, 0)}."
         ),
         largura="inteira",
     )

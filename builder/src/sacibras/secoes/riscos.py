@@ -246,27 +246,19 @@ def primario_conforme_o_juro(
         )
         for queda in QUEDAS_DO_JURO
     ]
-    nota = (
-        "A conta do primário que estabiliza a dívida é uma foto: usa o juro e o crescimento "
-        "do momento. Se o juro cair, por exemplo porque um ajuste das contas convenceu quem "
-        "empresta, o esforço necessário cai junto: são as linhas de baixo. Inflação mais alta "
-        "aumenta o crescimento em reais (as colunas da direita) e também diminui o primário, "
-        "mas só enquanto o juro não sobe com ela"
-    )
+    # A conta é uma foto do juro e do crescimento do momento. Juro menor (por exemplo, porque
+    # um ajuste convenceu quem empresta) são as linhas de baixo; inflação mais alta aumenta o
+    # crescimento em reais (colunas da direita) e diminui o primário, mas só enquanto o juro
+    # não sobe com ela, e a parte da dívida atrelada à Selic encarece logo.
+    nota = "Foto de hoje, não previsão; inflação maior só ajuda enquanto o juro não sobe"
     if atrelada_a_selic is not None:
-        nota += (
-            f": {br(atrelada_a_selic, 0)} % da dívida em títulos segue a Selic, e essa parte "
-            "encarece logo"
-        )
+        nota += f" ({br(atrelada_a_selic, 0)} % da dívida em títulos segue a Selic)"
     nota += "."
     if dez_anos is not None:
-        nota += (
-            f" Na média dos últimos dez anos, o primário que estabilizava a dívida foi de "
-            f"{br(dez_anos)} % do PIB."
-        )
+        nota += f" Média dos últimos dez anos: {br(dez_anos)} % do PIB."
     return Tabela(
         id="primario-conforme-o-juro",
-        titulo="O primário que estabiliza a dívida, com outros juros e outros crescimentos",
+        titulo="Primário que estabiliza, com outro juro e outro crescimento",
         subtitulo=f"% do PIB; dívida bruta de {br(divida_pib)} % do PIB ({quando})",
         colunas=[
             f"PIB em reais a {br(crescimentos[0])} %",
@@ -304,14 +296,13 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
 
     fonte_juro = bcb_fiscal.FONTE_TAXA if oficial else f"{ctx.fonte_sgs('DBGG', 'NFSP_JUROS_12M')}"
     fonte_conta = (
-        f"{fonte_juro}; {ctx.fonte_sgs('DBGG', 'NFSP_PRIMARIO_12M', 'PIB_12M')}; cálculo próprio"
+        f"{fonte_juro}; {ctx.fonte_sgs('DBGG', 'NFSP_PRIMARIO_12M', 'PIB_12M')}; conta nossa"
     )
+    # Taxa implícita: os juros que a dívida bruta rendeu em 12 meses ÷ o saldo, pelo BC.
     explica_juro = (
-        "a taxa implícita da dívida bruta em 12 meses, que o Banco Central publica (os juros "
-        "que a dívida rendeu ÷ o saldo)"
+        "taxa implícita da dívida bruta, do Banco Central"
         if oficial
-        else "juros do setor público em 12 meses ÷ dívida bruta (a planilha do Banco Central "
-        "com a taxa oficial não respondeu)"
+        else "juros de 12 meses ÷ dívida bruta (sem a planilha do Banco Central)"
     )
     inicio = date(ctx.hoje.year - 20, 1, 1)
     quando = periodo(necessario[-1][0], "M")
@@ -406,11 +397,9 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             janela_anos=10,
             fonte=fonte_conta,
             nota=(
-                "Conta: dívida × (juro − crescimento) ÷ (1 + crescimento). Juro: "
-                f"{explica_juro}. Crescimento: o do "
-                "PIB em reais em 12 meses, com a inflação dentro. Quando a linha do realizado "
-                "está abaixo, a dívida sobe em % do PIB; acima, cai. É foto do juro e do "
-                "crescimento de cada mês, não projeção."
+                f"Dívida × (juro − crescimento) ÷ (1 + crescimento); juro: {explica_juro}; "
+                "crescimento: PIB em reais em 12 meses. Realizado abaixo da linha, a dívida "
+                "sobe em % do PIB; é foto de cada mês, não projeção."
             ),
         ),
         grafico(
@@ -426,9 +415,8 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             janela_anos=10,
             fonte=fonte_conta,
             nota=(
-                "Com o juro acima do crescimento, a dívida cresce sozinha em % do PIB, e só "
-                "superávit primário a segura. Com o crescimento acima, ela cai mesmo com "
-                f"pequeno déficit. Juro: {explica_juro}."
+                "Juro acima do crescimento: a dívida sobe sozinha em % do PIB e só superávit "
+                f"a segura. Juro: {explica_juro}."
             ),
         ),
     ]
@@ -578,9 +566,9 @@ def fmi_da_divida(desde: int, ate: int, bc_dezembro: dict[int, float]) -> LinhaD
     if projetados:
         fim = projetados[-1]
         subida = (
-            f" Compare a inclinação, não o nível: de {ultimo_real} a {fim}, o FMI vê a dívida "
-            f"{'subir' if valores[fim] >= valores[ultimo_real] else 'cair'} "
-            f"{br(abs(valores[fim] - valores[ultimo_real]))} pontos do PIB."
+            f"; compare a inclinação: de {ultimo_real} a {fim}, "
+            f"{'sobe' if valores[fim] >= valores[ultimo_real] else 'cai'} "
+            f"{br(abs(valores[fim] - valores[ultimo_real]))} pontos"
         )
     return LinhaDoFmi(
         serie=serie(
@@ -590,12 +578,11 @@ def fmi_da_divida(desde: int, ate: int, bc_dezembro: dict[int, float]) -> LinhaD
             casas=1,
             tracejado_desde=date(ultimo_real + 1, 1, 1) if projetados else None,
         ),
+        # O FMI soma todos os títulos do Tesouro na carteira do BC; o BC, só as compromissadas.
         nota=(
-            f"A linha do FMI (WEO de {edicao}, tracejada onde é projeção) mede outra dívida "
-            "bruta: soma todos os títulos do Tesouro que estão na carteira do Banco Central, e "
-            "o Banco Central conta só as operações compromissadas. Por isso fica acima: em "
-            f"{ano}, {br(valores[ano])} % do PIB no FMI contra {br(bc_dezembro[ano])} % no "
-            f"Banco Central, {br(diferenca)} pontos a mais.{subida}"
+            f"FMI (WEO de {edicao}, tracejado onde é projeção): outro conceito, com os títulos "
+            f"no BC; em {ano}, {br(valores[ano])} % contra {br(bc_dezembro[ano])} % do BC "
+            f"({br(diferenca)} pontos a mais){subida}."
         ),
         fonte=f"FMI, World Economic Outlook de {edicao} (GGXWDG_NGDP)",
     )
@@ -671,23 +658,16 @@ def _leque(
                 )
             ],
             fonte=f"{base.fonte}; {ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL')}{fonte_fmi}",
+            # Método: a linha de base do simulador da dívida (hipóteses do Focus) somada a
+            # choques da história. Em cada ano do período, mede-se quanto juro da dívida,
+            # crescimento, inflação e primário se afastaram da média; cada um dos 4.000
+            # sorteios tira, para os anos à frente, blocos de dois anos seguidos dessa
+            # história (os quatro desvios juntos). Pontas: 10º e 90º percentil; parte grossa,
+            # 25º e 75º. Ordem de grandeza; não separa a dívida cambial.
             nota=(
-                "Como ler: ninguém sabe o futuro, então o computador montou 4.000 futuros "
-                "possíveis para a dívida. Cada um parte do cenário do Focus e repete, ano a "
-                f"ano, tropeços e sortes que a economia já teve entre {primeiro} e {ultimo} (um "
-                "ano de juro alto, outro de crescimento fraco), tirados ao acaso como num "
-                "sorteio. A linha tracejada é o caminho do meio: metade dos futuros fica acima "
-                "dela, metade abaixo. A barra mostra onde cai a maior parte: 8 em cada 10 "
-                "ficam entre as pontas, e metade fica na parte grossa. Quanto mais longe o ano, "
-                "maior a barra, porque há mais tempo para as coisas mudarem.\n\n"
-                "Método: a linha de base do simulador da dívida (hipóteses do Focus) somada a "
-                f"choques da história. De {primeiro} a {ultimo}, mede-se quanto juro da dívida, "
-                "crescimento, inflação e primário de cada ano se afastaram da média do período; "
-                "cada sorteio tira, para os anos à frente, blocos de dois anos seguidos dessa "
-                "história (os quatro desvios juntos, como aconteceram). As pontas da barra são "
-                "o 10º e o 90º percentil; a parte grossa, o 25º e o 75º. É conta de ordem de "
-                "grandeza: supõe que o futuro pode errar como o passado errou, e não separa a "
-                "dívida cambial." + nota_fmi
+                "Como ler: 4.000 futuros sorteados a partir do Focus, repetindo tropeços e "
+                f"sortes de {primeiro} a {ultimo}; 8 em cada 10 ficam entre as pontas e metade "
+                "na parte grossa. Supõe que o futuro erra como o passado errou." + nota_fmi
             ),
             largura="inteira",
         ),
@@ -696,7 +676,7 @@ def _leque(
         1,
         Cartao(
             id="divida-sobe-em-5-anos",
-            rotulo=f"Dos futuros sorteados, em quantos a dívida sobe até {futuros[-1]}",
+            rotulo=f"Futuros sorteados em que a dívida sobe até {futuros[-1]}",
             valor=round(leque.chance_de_subir, 1),
             unidade="%",
             casas=0,
@@ -717,8 +697,9 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
     dolar = ctx.sgs("DOLAR", HIST + 2)
     vol_dolar = risco.volatilidade(dolar)
     nota_vol = (
-        "Desvio-padrão das variações diárias nos últimos 21 dias úteis, levado ao ano "
-        "(× raiz de 252). Mede o quanto o preço balança, não para que lado vai."
+        # Levado ao ano: × raiz de 252.
+        "Desvio-padrão das variações diárias em 21 dias úteis, levado ao ano; mede o quanto o "
+        "preço balança, não para que lado vai."
     )
     bloco = Bloco()
     bloco.cartoes += [
@@ -730,7 +711,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
             periodicidade="D",
             casas=1,
             detalhe="o balanço do dólar no último mês, ao ano",
-            fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
+            fonte=f"{ctx.fonte_sgs('DOLAR')}; conta nossa",
             procedencia="calculado",
             secao="riscos",
             mini=500,
@@ -745,7 +726,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
             casas=1,
             periodicidade="D",
             janela_anos=10,
-            fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
+            fonte=f"{ctx.fonte_sgs('DOLAR')}; conta nossa",
             nota=nota_vol + " Um ponto por semana.",
         ),
     ]
@@ -758,7 +739,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
             pior_quando="alto",
             unidade="% a.a.",
             periodicidade="D",
-            fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
+            fonte=f"{ctx.fonte_sgs('DOLAR')}; conta nossa",
             procedencia="calculado",
         ),
     ]
@@ -804,7 +785,7 @@ def _externo(ctx: Contexto) -> Bloco:
     meses = meses_de_importacao(reservas, ctx.sgs("IMPORTACOES", HIST + 2))
     externa_liquida = ctx.sgs("DLSP_EXTERNA", HIST)
     swaps = contas.escalar(ctx.sgs("SWAP_CAMBIAL", HIST), 1 / 1000)
-    fonte_cobertura = f"{ctx.fonte_sgs('RESERVAS', 'DIVIDA_EXTERNA_CURTO_PRAZO')}; cálculo próprio"
+    fonte_cobertura = f"{ctx.fonte_sgs('RESERVAS', 'DIVIDA_EXTERNA_CURTO_PRAZO')}; conta nossa"
     bloco = Bloco()
     bloco.cartoes += [
         cartao(
@@ -863,9 +844,8 @@ def _externo(ctx: Contexto) -> Bloco:
             linhas=[LinhaRef(valor=100.0, rotulo="reservas = dívida de curto prazo")],
             fonte=fonte_cobertura,
             nota=(
-                "Reservas internacionais no fim do trimestre sobre a dívida externa bruta de "
-                "curto prazo (pública e privada), como o Banco Central a publica; a série não "
-                "diz se o prazo é o contratado ou o que falta para vencer."
+                "Reservas no fim do trimestre ÷ dívida externa de curto prazo, pública e "
+                "privada. A série não diz se o prazo é o contratado ou o que falta para vencer."
             ),
         ),
         grafico(
@@ -881,10 +861,8 @@ def _externo(ctx: Contexto) -> Bloco:
             ],
             fonte=ctx.fonte_sgs("CAMBIO_REAL_EFETIVO"),
             nota=(
-                "O real contra a cesta de moedas dos parceiros comerciais, descontada a "
-                "inflação daqui e de lá. Para cima, o real vale menos (exportar fica mais "
-                "fácil, importar mais caro); muito abaixo da média, o real está caro e uma "
-                "correção brusca fica mais provável."
+                "O real contra as moedas dos parceiros comerciais, descontada a inflação. Para "
+                "cima, o real vale menos; muito abaixo da média, o real está caro."
             ),
         ),
     ]
@@ -909,7 +887,7 @@ def _externo(ctx: Contexto) -> Bloco:
             pior_quando="baixo",
             unidade="meses",
             periodicidade="M",
-            fonte=f"{ctx.fonte_sgs('RESERVAS', 'IMPORTACOES')}; cálculo próprio",
+            fonte=f"{ctx.fonte_sgs('RESERVAS', 'IMPORTACOES')}; conta nossa",
             procedencia="calculado",
         ),
         alerta(
@@ -932,7 +910,7 @@ def _externo(ctx: Contexto) -> Bloco:
             unidade="% do PIB",
             periodicidade="M",
             casas=2,
-            fonte=f"{ctx.fonte_sgs('IDP_12M_PIB', 'TC_12M_PIB')}; cálculo próprio",
+            fonte=f"{ctx.fonte_sgs('IDP_12M_PIB', 'TC_12M_PIB')}; conta nossa",
             procedencia="calculado",
         ),
         alerta(
@@ -1035,10 +1013,10 @@ def _credito(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="M",
             fonte=ctx.fonte_sgs("BASILEIA", "CAPITAL_PRINCIPAL"),
+            # O BC publica com alguns meses de atraso. Capital principal: ações e lucros retidos.
             nota=(
-                "Todo o Sistema Financeiro Nacional. O Banco Central publica com alguns meses "
-                "de atraso. Capital principal é a parte de melhor qualidade (ações e lucros "
-                "retidos); antes de out/2013 o conceito não existia e a série repete o Nível 1."
+                "Todo o Sistema Financeiro Nacional. Antes de out/2013, o capital principal "
+                "repete o Nível 1."
             ),
         ),
     ]
@@ -1145,7 +1123,7 @@ def _inflacao(ctx: Contexto) -> Bloco:
             periodicidade="M",
             casas=2,
             limite=teto,
-            fonte=f"{ctx.fonte_sgs(*inflacao.NUCLEOS)}; cálculo próprio",
+            fonte=f"{ctx.fonte_sgs(*inflacao.NUCLEOS)}; conta nossa",
             procedencia="calculado",
         ),
         alerta(
@@ -1262,7 +1240,7 @@ def _juro_real_e_implicita(ctx: Contexto) -> Bloco:
                 casas=2,
                 fonte=(
                     "Tesouro Direto (curva zero, o método de Juros); "
-                    f"{ctx.fonte_sgs('META_INFLACAO')}; cálculo próprio"
+                    f"{ctx.fonte_sgs('META_INFLACAO')}; conta nossa"
                 ),
                 procedencia="calculado",
             )
@@ -1275,7 +1253,7 @@ def _juro_real_e_implicita(ctx: Contexto) -> Bloco:
     diferenca = diferenca_por_mes(brasil, eua)
     if not diferenca:
         return bloco
-    fonte = f"{FONTE_CURVA}; {fred.FONTE_TIPS}; cálculo próprio"
+    fonte = f"{FONTE_CURVA}; {fred.FONTE_TIPS}; conta nossa"
     bloco.cartoes.append(
         cartao(
             "juro-real-brasil-eua",
@@ -1297,19 +1275,18 @@ def _juro_real_e_implicita(ctx: Contexto) -> Bloco:
             "Juro real de 10 anos: Brasil e EUA",
             [
                 serie("brasil", "Brasil, Tesouro IPCA+", brasil),
-                serie("eua", "EUA, título do Tesouro indexado à inflação (TIPS)", eua),
-                serie("diferenca", "Diferença (Brasil menos EUA)", diferenca),
+                serie("eua", "EUA, TIPS", eua),
+                serie("diferenca", "Brasil menos EUA", diferenca),
             ],
             unidade="% a.a.",
             casas=2,
             periodicidade="M",
             fonte=fonte,
+            # Um ponto por mês, no último dia com taxa. EUA: rendimento do título de 10 anos
+            # indexado à inflação, prazo constante, do Federal Reserve.
             nota=(
-                "Um ponto por mês, no último dia com taxa. Brasil: a curva zero do Tesouro "
-                "IPCA+ lida 10 anos à frente da data (o mesmo método de Juros). EUA: o "
-                "rendimento do título de 10 anos indexado à inflação, prazo constante, do "
-                "Federal Reserve. A diferença é quanto o Brasil paga a mais, acima da "
-                "inflação de cada país, para tomar dinheiro por 10 anos."
+                "Brasil: curva zero do Tesouro IPCA+ a 10 anos; EUA: TIPS de 10 anos. A "
+                "diferença é quanto o Brasil paga a mais acima da inflação."
             ),
         )
     )
@@ -1337,7 +1314,7 @@ def _expectativa(ctx: Contexto) -> Bloco:
             ),
             fonte=(
                 "Banco Central, Focus (mediana do IPCA dos 12 meses seguintes, suavizada); "
-                f"{ctx.fonte_sgs('META_INFLACAO')}; cálculo próprio"
+                f"{ctx.fonte_sgs('META_INFLACAO')}; conta nossa"
             ),
             procedencia="calculado",
         )
@@ -1466,19 +1443,16 @@ def _estresse(
         Tabela(
             id="estresse-episodios",
             titulo="Se acontecesse de novo: cinco episódios",
-            subtitulo=(
-                "O que cada crise fez com dólar, juro e PIB, e o mesmo tranco aplicado a hoje"
-            ),
+            subtitulo="Cada crise e o mesmo tranco aplicado a hoje",
             colunas=colunas,
             linhas=linhas,
-            fonte=f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; cálculo próprio",
+            fonte=f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; conta nossa",
+            # Alta é a do pior trecho dentro da janela (do ponto mais baixo ao mais alto que veio
+            # depois). A linha da dívida só existe onde as séries cobrem o episódio (a dívida
+            # bruta na metodologia atual começa em dez/2006).
             nota=(
-                "Não é previsão: é o tamanho de trancos que já aconteceram, posto na escala de "
-                f"hoje. As janelas são escolha nossa ({janelas}). Alta e queda são do pior "
-                "trecho dentro da janela (do ponto mais baixo ao mais alto que veio depois, e "
-                "o contrário). A linha da dívida só existe onde as séries cobrem o episódio "
-                "(a dívida bruta na metodologia atual começa em dez/2006). "
-                + relatorios.ESTRESSE_DOS_BANCOS
+                "Não é previsão: trancos que já aconteceram, na escala de hoje (janelas "
+                f"nossas: {janelas}). " + relatorios.ESTRESSE_DOS_BANCOS
             ),
         )
     )
@@ -1486,7 +1460,7 @@ def _estresse(
     if base and caminhos:
         partida = (date(base.ano_inicial, 1, 1), base.divida_inicial)
         futuros = base.anos[:n]
-        nome_base = "Linha de base (hipóteses do Focus)"
+        nome_base = "Base (Focus)"
 
         def caminho_serie(valores: list[float]) -> list[Ponto]:
             return [partida, *[(date(a, 1, 1), v) for a, v in zip(futuros, valores, strict=True)]]
@@ -1505,13 +1479,11 @@ def _estresse(
                         for ep, c in caminhos
                     ],
                 ],
+                # A dívida que subiu continua lá, rendendo juro. Não separa a dívida cambial
+                # nem o que entra na dívida sem passar pelo primário.
                 nota=(
-                    "Método: para cada episódio, mede-se quanto crescimento, primário, juro da "
-                    "dívida e inflação dos anos da crise se afastaram da média dos dois anos "
-                    "anteriores; esses desvios são somados aos primeiros anos da linha de base "
-                    "do simulador da dívida, e depois a base volta. A dívida que subiu "
-                    "continua lá, rendendo juro. Ordem de grandeza: não separa a dívida cambial "
-                    "nem o que entra na dívida sem passar pelo primário."
+                    "Base do Focus mais o desvio de cada crise (contra os dois anos antes dela) "
+                    "nos primeiros anos; depois, a base volta. Ordem de grandeza."
                 ),
             )
         )
@@ -1574,9 +1546,8 @@ def _estresse(
                         ],
                     ],
                     nota=(
-                        f"{nota} A linha de base é a do Focus; em cada episódio, soma-se aos "
-                        "primeiros anos o quanto aquele número se afastou, nos anos da crise, "
-                        "da média dos dois anos anteriores. Depois, a base volta."
+                        f"{nota} Base do Focus mais o desvio de cada crise (contra os dois anos "
+                        "antes dela); depois, a base volta."
                     ),
                 )
             )
@@ -1590,9 +1561,8 @@ def _estresse(
         return date(hoje_mes.year + a, m + 1, 1)
 
     nota_mercado = (
-        f"O caminho de cada crise nos {MESES_DO_ESTRESSE} meses desde o começo da janela, "
-        "aplicado ao nível de hoje{como}. Não é previsão: é o tamanho de trancos que já "
-        "aconteceram. A linha horizontal é o nível de hoje."
+        f"Cada crise nos {MESES_DO_ESTRESSE} meses desde o começo da janela, aplicada ao "
+        "nível de hoje{como}. Não é previsão: trancos que já aconteceram."
     )
     for id_, rotulo, titulo, pontos, unidade, casas, escala, soma in (
         ("dolar", "Dólar", "O dólar se cada crise se repetisse agora", dolar, "R$", 2, 1.0, False),
@@ -1650,7 +1620,7 @@ def _estresse(
                 linhas=v0.linhas,
                 fonte=(f"{base.fonte}; " if base else "")
                 + f"{ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL', 'DOLAR', 'SELIC_META')}; "
-                "cálculo próprio",
+                "conta nossa",
                 nota=v0.nota,
                 largura="inteira",
                 variantes=variantes,
@@ -1778,13 +1748,13 @@ def _energia(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="D",
             janela_anos=10,
-            fonte=f"{ons.FONTE}; cálculo próprio",
+            fonte=f"{ons.FONTE}; conta nossa",
+            # Somados os quatro subsistemas (Sudeste/Centro-Oeste, Sul, Nordeste e Norte).
+            # Reservatório baixo liga térmicas e encarece a luz: racionamento em 2001,
+            # bandeira de escassez hídrica em 2021.
             nota=(
-                "Energia armazenada nos reservatórios das hidrelétricas, somados os quatro "
-                "subsistemas (Sudeste/Centro-Oeste, Sul, Nordeste e Norte), sobre a capacidade "
-                "máxima. Reservatório baixo liga térmicas, encarece a conta de luz e pesa na "
-                "inflação; em 2001 houve racionamento e em 2021 houve bandeira de escassez "
-                "hídrica. O nível sobe no verão e cai no inverno. Um ponto por semana."
+                "Energia armazenada nas hidrelétricas sobre a capacidade máxima, um ponto por "
+                "semana. Sobe no verão e cai no inverno."
             ),
         )
     )
@@ -1869,10 +1839,10 @@ def _nota(ctx: Contexto) -> Bloco:
             linhas=[LinhaRef(valor=0.0, rotulo="grau de investimento (BBB−/Baa3)")],
             marcas_y=[LinhaRef(valor=float(v), rotulo=n) for v, n in NOMES_DOS_DEGRAUS.items()],
             fonte=relatorios.FONTE_NOTAS,
+            # Lido à mão no Tesouro em 14/11/2026; perspectiva estável nas três.
             nota=(
-                "Dívida de longo prazo em moeda estrangeira; só as mudanças de nota, sem a "
-                "perspectiva (hoje estável nas três). Lido à mão no Tesouro em 14/11/2026; "
-                f"depois de {periodo(relatorios.ULTIMO_ATO_LIDO, 'D')} não achamos ato novo."
+                "Dívida de longo prazo em moeda estrangeira; só as mudanças de nota. Sem ato "
+                f"novo depois de {periodo(relatorios.ULTIMO_ATO_LIDO, 'D')}."
             ),
         )
     )
@@ -1886,7 +1856,7 @@ def _elasticidades() -> Bloco:
             id="elasticidades-da-divida",
             titulo="Quanto a dívida sente o dólar, a Selic e a inflação",
             subtitulo=(
-                "A conta do Banco Central, em pontos do PIB, com os dados de "
+                "Conta do Banco Central, pontos do PIB, "
                 f"{periodo(relatorios.ELASTICIDADES_EM, 'M')}"
             ),
             colunas=["Dívida líquida do setor público", "Dívida bruta do governo geral"],
@@ -1897,11 +1867,11 @@ def _elasticidades() -> Bloco:
                 for e in relatorios.ELASTICIDADES
             ],
             fonte=relatorios.FONTE_ELASTICIDADES,
+            # O BC publica o efeito da queda de 1 pp e diz que o da alta é simétrico. Lido à
+            # mão: o quadro é uma imagem na nota mensal.
             nota=(
-                "O Banco Central publica o efeito de uma queda de 1 pp na Selic e nos índices "
-                "de preços e diz que o da alta é simétrico: aqui vai o da alta. O dólar mais "
-                "caro reduz a dívida líquida (as reservas, em dólar, valem mais em reais) e "
-                "aumenta a bruta. Lido à mão: o quadro é uma imagem na nota mensal."
+                "Efeito de uma alta de 1 pp (o BC diz que é simétrico). O dólar mais caro reduz "
+                "a dívida líquida, porque as reservas valem mais, e aumenta a bruta."
             ),
         )
     )
@@ -1927,7 +1897,7 @@ def _juros_sobre_receita(ctx: Contexto) -> Bloco:
         return Bloco()
     fonte = (
         f"{ctx.fonte_sgs('NFSP_JUROS_GC_MES')}; Tesouro Nacional, Resultado do Tesouro "
-        "Nacional (tabela 1.1, receita líquida); cálculo próprio"
+        "Nacional (tabela 1.1, receita líquida); conta nossa"
     )
     inicio = date(ctx.hoje.year - 20, 1, 1)
     bloco = Bloco()
@@ -1956,14 +1926,13 @@ def _juros_sobre_receita(ctx: Contexto) -> Bloco:
             periodicidade="M",
             janela_anos=20,
             fonte=fonte,
+            # Juros: pagos menos recebidos (reservas, empréstimos), com o swap cambial. Receita:
+            # a arrecadação menos o que a lei manda repassar a estados e municípios. As duas
+            # pontas são do mesmo governo, que tem quase toda a dívida; as agências de risco
+            # olham a mesma razão.
             nota=(
-                "Juros: os do Governo Federal e do Banco Central em 12 meses, como o Banco "
-                "Central apura (os que se pagam menos os que se recebem, nas reservas e nos "
-                "empréstimos; o resultado do swap cambial entra). Receita: a líquida do "
-                "Governo Central em 12 meses, do Tesouro (o que arrecada menos o que a lei "
-                "manda repassar a estados e municípios). As duas pontas são do mesmo governo, "
-                "que tem quase toda a dívida. Agências de risco olham a mesma razão: quanto "
-                "maior, menos sobra para o resto e mais o orçamento depende da Selic."
+                "Juros líquidos do Governo Federal e do Banco Central ÷ receita líquida do "
+                "Governo Central, em 12 meses. Quanto maior, mais o orçamento depende da Selic."
             ),
         )
     )
@@ -2003,7 +1972,7 @@ def _vencimento(ctx: Contexto) -> Bloco:
             periodicidade="M",
             casas=1,
             detalhe=f"R$ {br(saldo / 1e6, 2)} tri{no_pib}",
-            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
             procedencia="calculado",
             secao="riscos",
             mini=120,
@@ -2018,13 +1987,11 @@ def _vencimento(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="M",
             janela_anos=20,
-            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
+            # Quanto maior a parte que vence logo, mais dívida se troca no ano ao juro do momento.
             nota=(
-                "Saldo da dívida bruta do governo geral com vencimento em até 12 meses, sobre "
-                "o saldo total, pelo cronograma que o Banco Central publica. Inclui as "
-                "operações compromissadas do Banco Central, quase todas de prazo curto. Quanto "
-                "maior a parte que vence logo, mais dívida o governo precisa trocar por nova no "
-                "ano, ao juro do momento."
+                "Dívida bruta que vence em até 12 meses ÷ total, pelo cronograma do Banco "
+                "Central. Inclui as compromissadas do BC, quase todas curtas."
             ),
         )
     )
@@ -2037,7 +2004,7 @@ def _vencimento(ctx: Contexto) -> Bloco:
             pior_quando="alto",
             unidade="% da dívida bruta",
             periodicidade="M",
-            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
             procedencia="calculado",
         )
     )
@@ -2123,14 +2090,12 @@ def _justica(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="A",
             fonte=fonte_pib,
+            # Contra a União, autarquias, estatais dependentes e o BC; ações acima de R$ 1
+            # bilhão (ou as iguais somadas). A queda de 2024 e 2025 veio de ações da
+            # Previdência que passaram a risco remoto.
             nota=(
-                "O valor das ações contra a União, as autarquias, as estatais dependentes e o "
-                "Banco Central, como a AGU classifica: perda provável quando o STF, o STJ ou o "
-                "TST já decidiu contra o governo; possível quando o caso está para ser julgado "
-                "nesses tribunais. Entram as ações acima de R$ 1 bilhão (ou as iguais somadas). "
-                "Não é conta a pagar: muda com cada julgamento e com a reclassificação (a "
-                "queda de 2024 e 2025 veio de ações da Previdência que passaram a risco "
-                "remoto). Em reais, dividido pelo PIB do ano."
+                "Pela AGU: provável quando o STF, o STJ ou o TST já decidiu contra o governo; "
+                "possível quando falta julgar. Não é conta a pagar: muda a cada julgamento."
             ),
         ),
         grafico(
@@ -2149,17 +2114,15 @@ def _justica(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="A",
             fonte=fonte,
+            # O STF derrubou o limite dos precatórios na ADI 7064.
             nota=(
-                "Tudo o que a União pagou em cumprimento de sentença judicial (precatórios e "
-                "requisições de pequeno valor), sobre a despesa primária do ano. "
+                "Precatórios e requisições de pequeno valor ÷ despesa primária"
                 + (
-                    f"{', '.join(str(a) for a in previsto)}: o que está no orçamento, não o "
-                    "que foi pago. "
+                    f"; {', '.join(str(a) for a in previsto)}: o orçado, não o pago. "
                     if previsto
-                    else ""
+                    else ". "
                 )
-                + "O salto de 2023 é o pagamento dos precatórios adiados, depois que o STF "
-                "derrubou o limite (ADI 7064)."
+                + "Em 2023, os precatórios adiados, depois que o STF derrubou o limite."
             ),
         ),
     ]
@@ -2184,13 +2147,12 @@ def _justica(ctx: Contexto) -> Bloco:
                 for r in relatorios.RISCOS_FISCAIS
             ],
             fonte=fonte_pib,
+            # "Mais despesa": sentenças, garantias honradas. "Menos receita": dívidas dos
+            # estados, empréstimos dos fundos e do Fies. O anexo não soma tudo como conta a
+            # pagar. A dívida ativa está em Impostos.
             nota=(
-                "Os itens maiores do quadro-resumo do Anexo de Riscos Fiscais da LDO. "
-                '"Mais despesa": o que a União pode ter de pagar (sentenças, garantias '
-                'honradas). "Menos receita": o que tem a receber e pode não receber (dívidas '
-                "dos estados, empréstimos dos fundos e do Fies). São riscos, não perdas: só "
-                "uma parte vira gasto, e o anexo não soma tudo como conta a pagar. A dívida "
-                "ativa está em Impostos."
+                "Os itens maiores do Anexo de Riscos Fiscais da LDO. São riscos, não perdas: "
+                "só uma parte vira gasto."
             ),
         )
     )
@@ -2239,9 +2201,8 @@ def tabela_de_governanca(
 
     faixa_ge, faixa_rl = faixa("GOV_WGI_GE.SC"), faixa("GOV_WGI_RL.SC")
     erro = (
-        f" A margem de erro é grande: com 90 % de confiança, a nota do Brasil fica {faixa_ge} "
-        f"em eficácia do governo e {faixa_rl} em estado de direito. Diferença de poucos "
-        "pontos entre países não quer dizer muito."
+        f" Com 90 % de confiança, o Brasil fica {faixa_ge} em eficácia do governo e {faixa_rl} "
+        "em estado de direito: poucos pontos entre países não querem dizer muito."
         if faixa_ge and faixa_rl
         else ""
     )
@@ -2252,13 +2213,11 @@ def tabela_de_governanca(
         colunas=list(banco_mundial.GOVERNANCA.values()),
         linhas=linhas,
         fonte=f"{banco_mundial.FONTE_GOVERNANCA} ({', '.join(codigos)})",
+        # As quatro dimensões: eficácia do governo (serviços públicos e políticas), estado de
+        # direito (contratos, leis e Justiça), qualidade da regulação (regras para o setor
+        # privado) e controle da corrupção (poder público usado para ganho privado).
         nota=(
-            "O Banco Mundial junta dezenas de pesquisas e avaliações (de empresas, ONGs, "
-            "organismos e da população) numa nota por país, todo ano, com o mesmo método para "
-            "todos. Eficácia do governo: a qualidade dos serviços públicos e das políticas. "
-            "Estado de direito: se contratos e leis valem e a Justiça funciona. Qualidade da "
-            "regulação: se as regras ajudam o setor privado. Controle da corrupção: o quanto "
-            "o poder público é usado para ganho privado." + erro
+            "Dezenas de pesquisas juntadas numa nota por país, todo ano, com o mesmo método." + erro
         ),
     )
 
@@ -2326,15 +2285,13 @@ def _inss_ate_2100(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="A",
             fonte=fonte,
+            # Projeção atuarial que o Ministério da Previdência manda com o projeto da LDO
+            # todo ano, pela LRF. Até 2030, a grade de parâmetros da Fazenda; depois, a
+            # população da ONU e as regras de hoje (a reforma de 2019 inclusive), com o
+            # salário mínimo subindo com o PIB. Muda a cada ano, com a grade e a população.
             nota=(
-                "Até 2025, o realizado (Tesouro); depois, tracejado, a projeção atuarial que "
-                "o Ministério da Previdência manda com o projeto da LDO todo ano, pela Lei de "
-                "Responsabilidade Fiscal. A distância entre as linhas é o déficit. Método: até "
-                "2030, a grade de parâmetros do Ministério da Fazenda; depois, a população "
-                "projetada pela ONU e as regras de hoje (a reforma de 2019 inclusive), com o "
-                "salário mínimo subindo com o PIB. Não há faixa de erro publicada nem "
-                "projeção de mercado para comparar; a do governo muda a cada ano, com a grade "
-                "e com a população."
+                "Até 2025, o realizado; depois, tracejada, a projeção atuarial do governo, com "
+                "as regras de hoje. Não há faixa de erro publicada nem projeção de mercado."
             ),
             largura="inteira",
         )
@@ -2420,7 +2377,7 @@ def montar(ctx: Contexto) -> Secao:
             referencia=ctx.hoje,
             periodicidade="D",
             detalhe=_mais_grave(acesos),
-            fonte="Painel de alerta desta página (cada linha com a sua fonte); cálculo próprio",
+            fonte="Painel de alerta desta página (cada linha com a sua fonte); conta nossa",
             procedencia="calculado",
             secao="riscos",
         ),
@@ -2430,8 +2387,7 @@ def montar(ctx: Contexto) -> Secao:
         edicao = f" Focus de {periodo(bcb_focus.data_da_ultima_edicao(), 'D')}."
     resumo = (
         f"{frase} No painel de alerta, {len(acesos)} de {len(alertas)} indicadores estão no "
-        "quinto pior da própria história. Nada aqui é previsão de crise: são medidas de "
-        f"quanto a economia aguenta, com a fonte ao lado.{edicao}"
+        f"quinto pior da própria história. Nada aqui é previsão de crise.{edicao}"
     )
     return Secao(
         id="riscos",

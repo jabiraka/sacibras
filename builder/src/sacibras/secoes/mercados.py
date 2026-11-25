@@ -125,7 +125,11 @@ def retornos_em_reais(ctx: Contexto) -> Grafico:
         "poupanca": ("Poupança", _acumular_mensal(poupanca), "realizado"),
     }
     fontes = [ctx.fonte_sgs("DOLAR", "EURO", "CDI_DIA", "POUPANCA", "IPCA")]
-    notas: list[str] = []
+    # Fora da tela (25/11/2026, texto curto): dólar e euro na cotação de venda do BC; o CDI
+    # rende dia a dia; a poupança, a do aniversário no dia 1º; o Tesouro (sem juros
+    # semestrais) é marcado pelo preço de venda do dia; o ouro é a média do mês em dólares
+    # (FMI) vezes o dólar médio do mês.
+    notas: list[str] = ["R$ 100 aplicados no início, antes de imposto e taxa"]
     # Tesouro Direto e ouro: sem a fonte, a linha fica de fora e o resto sai.
     try:
         for chave, tipo, nome in [
@@ -135,11 +139,7 @@ def retornos_em_reais(ctx: Contexto) -> Grafico:
             precos = tesouro_direto.precos(tipo, inicio - timedelta(days=10))
             niveis[chave] = (nome, carteira_rolada(precos, inicio, PRAZO_DO_TESOURO), "realizado")
         fontes.append("Tesouro Nacional, preços do Tesouro Direto")
-        notas.append(
-            "Tesouro Prefixado e IPCA+ (os sem juros semestrais): o título que vence em uns "
-            f"{PRAZO_DO_TESOURO} anos, trocado no vencimento pelo de prazo mais perto de "
-            f"{PRAZO_DO_TESOURO} anos, com o preço de venda do dia (sobe e desce com os juros)."
-        )
+        notas.append(f"Tesouro: o título de uns {PRAZO_DO_TESOURO} anos, trocado no vencimento")
     except Exception as erro:
         print(f"    retornos: Tesouro Direto ficou de fora: {str(erro)[:120]}")
     try:
@@ -150,10 +150,7 @@ def retornos_em_reais(ctx: Contexto) -> Grafico:
             "realizado",
         )
         fontes.append(f"FMI, preços de commodities (PCPS); {ctx.fonte_sgs('DOLAR_MEDIA_MES')}")
-        notas.append(
-            "O ouro é a média do mês em dólares (FMI) vezes o dólar médio do mês, e sai com "
-            "um mês de atraso."
-        )
+        notas.append("ouro com um mês de atraso")
     except Exception as erro:
         print(f"    retornos: ouro ficou de fora: {str(erro)[:120]}")
     niveis["ipca"] = (
@@ -180,15 +177,7 @@ def retornos_em_reais(ctx: Contexto) -> Grafico:
         casas=2,
         periodicidade="D",
         fonte="; ".join(fontes),
-        nota=" ".join(
-            [
-                "Cada linha é quanto R$ 100 aplicados no início do período valeriam hoje, em "
-                "reais, antes de imposto e de taxa. Dólar e euro, a cotação de venda do BC; "
-                "o CDI rende dia a dia; a poupança, a do aniversário no dia 1º.",
-                *notas,
-                "O IPCA mostra o que a inflação comeu: acima dele, ganhou poder de compra.",
-            ]
-        ),
+        nota="; ".join(notas) + ". Acima do IPCA, ganhou poder de compra.",
         largura="inteira",
     )
 

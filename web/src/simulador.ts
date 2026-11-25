@@ -20,7 +20,7 @@ const CONTROLES: Controle[] = [
   {
     id: "inflacao",
     rotulo: "Inflação (IPCA)",
-    ajuda: "com o juro parado, mais inflação encolhe a dívida em % do PIB",
+    ajuda: "com o juro igual, mais inflação encolhe a dívida",
   },
   { id: "primario", rotulo: "Resultado primário", ajuda: "receitas menos despesas, sem os juros" },
 ];
@@ -102,12 +102,12 @@ export function montarSimulador(s: SimuladorDivida): HTMLElement[] {
     const fim = simulada[simulada.length - 1] ?? s.divida_inicial;
     const focusFim = s.focus_divida[s.focus_divida.length - 1];
     resultado.replaceChildren(
-      document.createTextNode(`Com essas hipóteses, a dívida chega a `),
+      document.createTextNode(`A dívida chega a `),
       el("b", "", `${numero(fim, 1)} % do PIB em ${ultimoAno}`),
       document.createTextNode(
         focusFim === null || focusFim === undefined
           ? "."
-          : `. O Focus espera ${numero(focusFim, 1)} %.`,
+          : `. Focus: ${numero(focusFim, 1)} %.`,
       ),
     );
     cancelAnimationFrame(pendente);
@@ -115,7 +115,7 @@ export function montarSimulador(s: SimuladorDivida): HTMLElement[] {
       const partida: [string, number] = [`${s.ano_inicial}-01-01`, s.divida_inicial];
       const g: Grafico = {
         id: "simulador-divida",
-        titulo: "Dívida bruta: o que já foi, o Focus e a sua simulação",
+        titulo: "Dívida bruta: realizado, Focus e simulação",
         subtitulo: "",
         tipo: "linha",
         unidade: "% do PIB",

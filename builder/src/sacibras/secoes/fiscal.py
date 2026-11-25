@@ -56,7 +56,7 @@ def primario_por_quem_mede(
         return None
     return Tabela(
         id="primario-bc-fmi",
-        titulo="O primário do Brasil por quem mede: Banco Central e FMI",
+        titulo="O primário por quem mede: Banco Central e FMI",
         subtitulo="% do PIB no ano; negativo é déficit",
         colunas=[str(a) for a in anos],
         linhas=[
@@ -73,7 +73,7 @@ def primario_por_quem_mede(
                 casas=2,
             ),
             LinhaTabela(
-                rotulo="Governo geral (FMI, em Brasil no mundo)",
+                rotulo="Governo geral (FMI)",
                 valores=[round(fmi_anual[a], 2) for a in anos],
                 unidade="% do PIB",
                 casas=2,
@@ -81,15 +81,14 @@ def primario_por_quem_mede(
         ],
         fonte="Banco Central (SGS 5793 e 5783, NFSP em 12 meses, dezembro); FMI, World "
         "Economic Outlook (GGXONLB_NGDP)",
+        # O BC soma União, estados, municípios, o próprio BC e as estatais (fora Petrobras,
+        # Eletrobras e bancos) e mede "abaixo da linha" (quanto a dívida variou); o FMI mede
+        # só o governo geral, "acima da linha" (receitas menos despesas). A meta da LDO vale
+        # para o Governo Central.
         nota=(
-            "Conversam, mas não são a mesma conta. Quem entra: o Banco Central soma União, "
-            "estados, municípios, o próprio Banco Central e as estatais (fora Petrobras, "
-            "Eletrobras e bancos); o FMI mede só o governo geral (União, estados e municípios). "
-            'Como se mede: o Banco Central olha quanto a dívida variou no ano ("abaixo da '
-            'linha"); o FMI soma receitas e despesas ("acima da linha"). Os dois andam '
-            "juntos na maior parte dos anos, mas há anos de diferença grande. Para o Brasil, o "
-            "número oficial é o do Banco Central (e a meta da LDO vale para o Governo Central); "
-            "para comparar países, o do FMI, que mede todos do mesmo jeito."
+            "O Banco Central soma também as estatais e mede pela variação da dívida; o FMI "
+            "mede só o governo geral, por receita menos despesa. Para o Brasil vale o do "
+            "Banco Central; para comparar países, o do FMI."
         ),
     )
 
@@ -118,7 +117,7 @@ def despesa_contra_a_faixa(despesa: list[Ponto], ipca: list[Ponto], inicio: date
         grafico(
             "despesa-real",
             "Despesa do Governo Central: crescimento acima da inflação",
-            [serie("despesa", "Despesa total, 12 meses contra os 12 anteriores", cresc)],
+            [serie("despesa", "Despesa total", cresc)],
             unidade="% em 12 meses, descontada a inflação",
             casas=1,
             periodicidade="M",
@@ -137,16 +136,13 @@ def despesa_contra_a_faixa(despesa: list[Ponto], ipca: list[Ponto], inicio: date
                 "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, tabela "
                 f"1.1); IPCA (Banco Central, SGS 433); faixa: {faixa.referencia}; conta nossa"
             ),
+            # A faixa é o quanto a lei deixa crescer, por ano, o limite da despesa desde 2024.
+            # Pagamento grande num mês só faz a linha saltar, e de novo um ano depois. O limite
+            # deixa de fora o complemento da União ao Fundeb e os créditos extraordinários.
             nota=(
-                "A soma de 12 meses da despesa primária, cada mês a preços de hoje pelo IPCA, "
-                "contra a dos 12 meses anteriores. A faixa é o quanto a lei deixa crescer, por "
-                "ano, o limite da despesa desde 2024. Pagamento grande num mês só faz a linha "
-                "saltar, e de novo um ano depois, quando ele sai da conta. Não é a apuração "
-                "oficial: o limite deixa "
-                "despesas de fora (como o complemento da União ao Fundeb e os créditos "
-                "extraordinários) e "
-                "é corrigido pelo IPCA até junho do ano anterior; a despesa total pode sair da "
-                "faixa sem descumprir a lei."
+                "Despesa primária de 12 meses a preços de hoje contra a dos 12 anteriores. Não "
+                "é a apuração oficial: o limite deixa despesas de fora, e a despesa total pode "
+                "sair da faixa sem descumprir a lei."
             ),
         )
     ]
@@ -188,7 +184,7 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
     g = grafico(
         "meta-primario",
         f"O primário do Governo Central e a meta de {meta.ano}",
-        [serie("gc", "Governo Federal e Banco Central, 12 meses", doze, casas=1)],
+        [serie("gc", "Governo Central, 12 meses", doze, casas=1)],
         unidade="R$ bilhões (superávit +, déficit −)",
         casas=1,
         periodicidade="M",
@@ -199,11 +195,11 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
             pontos=[(d, piso, teto) for d in meses_da_meta if d >= inicio_meta],
         ),
         linhas=[LinhaRef(valor=centro, rotulo=f"meta R$ {br(centro)} bi")],
+        # O BC é quem apura a meta (LC 200/2023); os descontos são despesas que outras normas
+        # tiram da conta, previstos no relatório bimestral.
         nota=(
-            "Soma de 12 meses do resultado que o Banco Central apura (quem apura a meta, "
-            "pela LC 200/2023). A meta vale para o ano fechado. Na verificação, o governo "
-            f"desconta despesas que outras normas tiram da conta: R$ {br(ultima.deducao)} bi "
-            f"previstos para {meta.ano} no relatório do {ultima.bimestre}."
+            "Soma de 12 meses apurada pelo Banco Central; a meta vale para o ano fechado. A "
+            f"conta oficial desconta R$ {br(ultima.deducao)} bi ({ultima.bimestre})."
         ),
     )
 
@@ -314,14 +310,13 @@ def fatores_da_divida(ctx: Contexto, anos: int, inicio: date) -> Grafico:
             f"{ctx.fonte_sgs('DBGG', 'PIB_12M', 'NFSP_PRIMARIO_12M')}; {bcb_fiscal.FONTE_TAXA}; "
             "conta nossa"
         ),
+        # Juros: a taxa implícita vezes a dívida média. PIB em reais (com a inflação): a mesma
+        # dívida fica menor diante de um PIB maior. Superávit entra para baixo. É a conta do
+        # simulador olhada para trás; o BC publica a dele (fatores condicionantes) só na nota
+        # mensal, com outra abertura.
         nota=(
-            "As barras somadas dão a variação da dívida bruta em % do PIB em 12 meses (a "
-            "linha). Juros: a taxa implícita vezes a dívida média. Crescimento do PIB em reais "
-            "(com a inflação): a mesma dívida fica menor diante de um PIB maior. Déficit "
-            "primário: o do setor público; superávit entra para baixo. Resto: o que os três "
-            "não explicam, como o caixa do Tesouro, as reservas, o câmbio e os ajustes. É a "
-            "conta do simulador da dívida olhada para trás; o Banco Central publica a dele "
-            "(fatores condicionantes) só na tabela da nota mensal, com outra abertura."
+            "As barras somadas dão a variação da dívida em 12 meses (a linha). O resto é o que "
+            "juros, PIB e primário não explicam: caixa, reservas, câmbio."
         ),
     )
 
@@ -353,12 +348,10 @@ def juro_e_prazos(ctx: Contexto, inicio: date) -> tuple[Cartao, Grafico]:
         casas=1,
         periodicidade="M",
         janela_anos=10,
-        fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+        fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
         nota=(
-            "O saldo da dívida bruta do governo geral pelo prazo que falta para vencer, como "
-            "parte do total, no cronograma que o Banco Central publica. Inclui as operações "
-            "compromissadas do Banco Central, quase todas de prazo curto. A parte de até um "
-            "ano é a que o governo precisa trocar por dívida nova nos próximos 12 meses."
+            "Saldo pelo prazo que falta para vencer, com as compromissadas do Banco Central, "
+            "quase todas curtas. A parte de até 1 ano é a que vence nos próximos 12 meses."
         ),
     )
     return c, g
@@ -465,7 +458,7 @@ def montar(ctx: Contexto) -> Secao:
                 serie("dlsp", "Dívida líquida do setor público", dlsp, desde=inicio),
                 serie(
                     "focus",
-                    "Focus: dívida bruta no fim do ano (mediana)",
+                    "Focus (fim do ano)",
                     [dbgg[-1], *[p for p in fim_de_ano(focus_divida) if p[0] > dbgg[-1][0]]],
                     papel="consenso",
                 ),
@@ -482,10 +475,10 @@ def montar(ctx: Contexto) -> Secao:
             "Resultado primário em 12 meses",
             [
                 serie("consolidado", "Setor público consolidado", primario, desde=inicio),
-                serie("gc", "Governo Federal e Banco Central", primario_gc, desde=inicio),
+                serie("gc", "Governo Central", primario_gc, desde=inicio),
                 serie(
                     "focus",
-                    "Focus: setor público no fim do ano (mediana)",
+                    "Focus (fim do ano)",
                     [
                         primario[-1],
                         *[p for p in fim_de_ano(focus_primario) if p[0] > primario[-1][0]],
@@ -597,15 +590,14 @@ def montar(ctx: Contexto) -> Secao:
                 "Resultado primário em 12 meses, em reais de hoje",
                 [
                     serie("consolidado", "Setor público consolidado", cons_r, desde=inicio),
-                    serie("gc", "Governo Federal e Banco Central", gc_r, desde=inicio),
+                    serie("gc", "Governo Central", gc_r, desde=inicio),
                 ],
                 unidade=f"R$ bilhões de {periodo(base_p, 'M')} (superávit +, déficit −)",
                 casas=0,
                 periodicidade="M",
                 nota=(
-                    "Soma de 12 meses do resultado mensal, cada mês a preços de hoje pelo IPCA "
-                    "(conta nossa sobre a série mensal do Banco Central). O Focus não projeta o "
-                    "primário em reais."
+                    "Soma de 12 meses, cada mês a preços de hoje pelo IPCA (conta nossa). O "
+                    "Focus não projeta o primário em reais."
                 ),
                 fonte=fonte_prim_rs,
             ),
@@ -874,7 +866,7 @@ def montar(ctx: Contexto) -> Secao:
     graficos.append(
         grafico(
             "divida-indexador",
-            "De que é feita a dívida: participação por indexador",
+            "De que é feita a dívida, por indexador",
             [
                 serie("selic", "Selic (Over)", selic_div, desde=inicio),
                 serie("prefixado", "Prefixado", pre_div, desde=inicio),
@@ -889,10 +881,8 @@ def montar(ctx: Contexto) -> Secao:
             janela_anos=10,
             fonte=ctx.fonte_sgs(*chaves_divida),
             nota=(
-                "Dívida mobiliária federal, posição em carteira (títulos do Tesouro Nacional). "
-                "As séries de participação por indexador não trazem o IPCA: "
-                '"Índices de preços" é o que falta para 100 % depois dos demais indexadores '
-                "(IPCA, em sua maior parte, mais IGP-M e IGP-DI)."
+                "Dívida mobiliária federal em carteira. As séries não trazem o IPCA: "
+                '"Índices de preços" é o que falta para 100 % (quase todo IPCA, mais os IGPs).'
             ),
         )
     )
