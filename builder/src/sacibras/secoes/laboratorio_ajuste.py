@@ -122,7 +122,7 @@ def dolar(ctx: Contexto) -> Pecas:
     graficos = [
         grafico(
             "dolar-mundo-brasil",
-            "O dólar em 12 meses: o que veio de fora e o que é do Brasil",
+            "Dólar em 12 meses: de fora e do Brasil",
             [
                 serie(
                     "brasil",
@@ -131,12 +131,12 @@ def dolar(ctx: Contexto) -> Pecas:
                 ),
                 serie(
                     "fora",
-                    "De fora (o dólar contra os emergentes)",
+                    "De fora",
                     [(p.dia, ajuste.composta(p.de_fora)) for p in semanais],
                 ),
                 serie(
                     "total",
-                    "Dólar no Brasil, variação em 12 meses",
+                    "Dólar no Brasil",
                     [(p.dia, ajuste.composta(p.total)) for p in semanais],
                 ),
             ],
@@ -147,20 +147,19 @@ def dolar(ctx: Contexto) -> Pecas:
             janela_anos=10,
             manchete=(
                 f"Em 12 meses até {hoje.dia:%d/%m/%Y}, o dólar {lado} "
-                f"{br(abs(total))} % no Brasil: {_sinal(de_fora)} % de fora e "
-                f"{_sinal(do_brasil)} % só do Brasil"
+                f"{br(abs(total))} %: {_sinal(de_fora)} % de fora e "
+                f"{_sinal(do_brasil)} % do Brasil"
             ),
+            # De fora: a variação do dólar contra a cesta de emergentes (índice do Federal
+            # Reserve) vezes o quanto o real a acompanha, reta por mínimos quadrados sobre as
+            # variações diárias dos cinco anos anteriores. As duas partes se multiplicam no
+            # total. A faixa do cartão vai do menor ao maior resultado com o real medido em 2, 5
+            # e 10 anos, estreita quando o dólar lá fora quase não se mexeu. O real está na
+            # cesta com peso pequeno, o que puxa um pouco para "de fora".
             nota=(
-                "O dólar sobe no Brasil por dois caminhos: porque sobe contra todo mundo, ou "
-                "por algo daqui. De fora: a variação do dólar contra uma cesta de moedas de "
-                "países emergentes (índice do Federal Reserve) vezes o quanto o real costuma "
-                "acompanhá-la, medido nos cinco anos anteriores (uma reta por mínimos "
-                "quadrados sobre as variações de cada dia). Só do Brasil: o resto, que junta "
-                "contas públicas, política, juro e preço do que o país exporta; esta conta não "
-                "separa um do outro. As duas partes se compõem (multiplicam) no total. A faixa do "
-                "número de hoje vai do menor ao maior resultado com o real medido em 2, 5 e 10 "
-                "anos; ela é estreita quando o dólar lá fora quase não se mexeu. O real "
-                'está na cesta com peso pequeno, o que puxa um pouco para "de fora".'
+                "Conta nossa: de fora é o dólar contra os emergentes vezes o quanto o real o "
+                "acompanhou em cinco anos; o resto é do Brasil. A parte do Brasil junta contas "
+                "públicas, política, juro e exportações, sem separar uma da outra."
             ),
             largura="inteira",
         )
@@ -181,19 +180,16 @@ def dolar(ctx: Contexto) -> Pecas:
     ]
     tabela = Tabela(
         id="dolar-altas",
-        titulo="As maiores altas do dólar em 12 meses: de onde vieram",
+        titulo="As maiores altas do dólar em 12 meses",
         subtitulo=(
-            f"as cinco maiores desde {partes[0].dia.year}, uma por episódio, e os 12 meses até "
-            "hoje; variação do dólar no Brasil"
+            f"as cinco maiores desde {partes[0].dia.year}, uma por episódio, e os 12 meses até hoje"
         ),
         colunas=["Dólar no Brasil (%)", "De fora (%)", "Só do Brasil (%)"],
         linhas=linhas,
         fonte=fonte,
         nota=(
-            "Cada linha são os 12 meses que terminam na data. A mesma conta do gráfico: de "
-            "fora é o dólar contra os emergentes vezes o quanto o real costumava acompanhá-lo "
-            "nos cinco anos até a data. Alta com a parte do Brasil grande é a que não se "
-            "explica pelo que aconteceu com as outras moedas."
+            "Os 12 meses até cada data, com a conta do gráfico. Parte do Brasil grande: alta "
+            "que as outras moedas não explicam."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -226,11 +222,11 @@ def divida(ctx: Contexto) -> Pecas:
     anos = [a for a in sorted(dbgg) if a >= DESDE]
     cenarios = {
         "sem-deficit": (
-            "Sem déficit primário (zero nos anos de déficit)",
+            "Sem déficit primário",
             {a: max(primario[a], 0.0) for a in anos if a in primario and a not in POUPADO},
         ),
         "um": (
-            f"Com primário de pelo menos {br(PISO, 0)} % do PIB em todo ano",
+            f"Primário de pelo menos {br(PISO, 0)} % do PIB",
             {a: max(primario[a], PISO) for a in anos if a in primario and a not in POUPADO},
         ),
     }
@@ -267,9 +263,9 @@ def divida(ctx: Contexto) -> Pecas:
     graficos = [
         grafico(
             "divida-outro-primario",
-            f"A dívida bruta se o primário tivesse sido outro desde {DESDE}",
+            f"A dívida bruta com outro primário desde {DESDE}",
             [
-                serie("realizada", "Dívida bruta (o que aconteceu)", pontos(dbgg)),
+                serie("realizada", "Realizada", pontos(dbgg)),
                 *(
                     serie(k, nome, pontos(contas_[k]), papel="previsao")
                     for k, (nome, _) in cenarios.items()
@@ -280,19 +276,17 @@ def divida(ctx: Contexto) -> Pecas:
             periodicidade="A",
             fonte=fonte,
             manchete=(
-                f"Sem os déficits primários desde {DESDE}, a dívida bruta de {ultimo} seria de "
-                f"{br(sem)} % do PIB, e não de {br(dbgg[ultimo])} % (conta de contabilidade)"
+                f"Sem os déficits desde {DESDE}, a dívida bruta de {ultimo} seria "
+                f"{br(sem)} % do PIB, e não {br(dbgg[ultimo])} %"
             ),
+            # Cada real de déficit que não houve deixa de virar dívida e de render a taxa
+            # implícita do ano (Banco Central). Dois erros de sinais opostos que os dados não
+            # medem: juro menor com dívida menor (abaixo da linha) e PIB menor por um tempo com
+            # o ajuste (acima). Vale para o setor público inteiro; não diz como se chegaria lá.
             nota=(
-                "Não é previsão: é a dívida refeita para trás, trocando só o primário. Cada "
-                "real de déficit que não houve deixa de virar dívida e deixa de render o juro "
-                "que a dívida pagou em cada ano (a taxa implícita, do Banco Central), com o "
-                f"PIB como foi. O déficit de {POUPADO[0]}, o da pandemia, fica como foi. A "
-                "conta tem dois erros conhecidos, de sinais opostos, que os dados daqui não "
-                "medem: com dívida menor o juro provavelmente teria sido menor (a dívida "
-                "ficaria abaixo da linha), e com gasto menor ou imposto maior o PIB poderia "
-                "ter crescido menos por um tempo (ficaria acima). Vale para o resultado do "
-                "setor público inteiro; não diz como se chegaria a ele."
+                "Conta nossa, não previsão: a dívida refeita trocando só o primário, com juro e "
+                f"PIB como foram ({POUPADO[0]} fica como foi). Fica de fora o efeito do ajuste "
+                "no juro e no PIB, que os dados daqui não medem."
             ),
         )
     ]
@@ -330,15 +324,14 @@ def divida(ctx: Contexto) -> Pecas:
         ),
         colunas=[
             f"Dívida em {ultimo}",
-            "Diferença para o que aconteceu (pp)",
+            "Diferença (pp)",
             "Primário médio no período",
         ],
         linhas=linhas,
         fonte=fonte,
         nota=(
-            "A diferença é a soma dos déficits que não teriam havido, mais o juro sobre eles, "
-            "com o juro e o crescimento de cada ano como foram. O efeito de um primário maior "
-            "sobre o juro e sobre o PIB não entra: os dados daqui não o medem."
+            "Diferença: os déficits que não teriam havido, mais o juro sobre eles. O efeito de "
+            "um primário maior no juro e no PIB não entra."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -398,7 +391,7 @@ def promessa(ctx: Contexto) -> Pecas:
     series = [
         serie(
             "realizado",
-            "Primário realizado",
+            "Realizado",
             [(date(a, 1, 1), v) for a, v in sorted(realizado.items()) if a > PRIMEIRA_SAFRA],
         )
     ]
@@ -407,7 +400,7 @@ def promessa(ctx: Contexto) -> Pecas:
         series.append(
             serie(
                 f"antes-{h}",
-                f"O que o Focus esperava {nome}",
+                f"Focus, {nome}",
                 [(date(a, 1, 1), v) for a, v in sorted(previsto.items()) if a <= ultimo],
             )
         )
@@ -418,12 +411,12 @@ def promessa(ctx: Contexto) -> Pecas:
         agora = {}
     futuros = [(date(a, 1, 1), v) for a, v in sorted(agora.items()) if ultimo < a <= ultimo + 5]
     if futuros:
-        series.append(serie("focus-hoje", "O que o Focus espera hoje", futuros, papel="previsao"))
+        series.append(serie("focus-hoje", "Focus hoje", futuros, papel="previsao"))
     lado = "acima" if dois.media > 0 else "abaixo"
     graficos = [
         grafico(
             "primario-prometido",
-            "O primário que o mercado esperava e o que veio",
+            "O primário que o Focus esperava e o que veio",
             series,
             unidade="% do PIB",
             casas=1,
@@ -431,17 +424,14 @@ def promessa(ctx: Contexto) -> Pecas:
             fonte=fonte,
             manchete=(
                 f"Dois anos antes, o Focus esperava em média {br(abs(dois.media))} pp do PIB "
-                f"de primário {lado} do que veio ({dois.anos[0]} a {dois.anos[-1]})"
+                f"{lado} do que veio ({dois.anos[0]} a {dois.anos[-1]})"
             ),
+            # Mediana do Focus para o primário do setor público em dezembro de um, dois ou
+            # quatro anos antes. É a expectativa do mercado, que lê o que o governo anuncia.
             nota=(
-                "Cada linha de expectativa mostra, no ano a que se refere, a mediana que os "
-                "analistas do Focus davam para o resultado primário do setor público em "
-                "dezembro de um, dois ou quatro anos antes. Linha de expectativa acima do "
-                "realizado: esperava-se um resultado melhor do que o que veio. É a "
-                "expectativa do mercado, que lê o que o governo anuncia; a meta de cada "
-                "orçamento contra o realizado ainda não está aqui. O erro junta choques que "
-                f"ninguém previa ({EXCECAO}) e ajuste que se esperava e não veio; a tabela "
-                f"refaz a conta sem {EXCECAO}."
+                "Mediana do Focus em dezembro de um, dois ou quatro anos antes; acima do "
+                f"realizado, esperava-se mais. O erro junta choques ({EXCECAO}) e ajuste "
+                "esperado que não veio."
             ),
         )
     ]
@@ -467,20 +457,19 @@ def promessa(ctx: Contexto) -> Pecas:
             )
     tabela = Tabela(
         id="primario-erro-horizonte",
-        titulo="Quanto o primário esperado passou do que veio, conforme a antecedência",
+        titulo="O erro do primário esperado, por antecedência",
         subtitulo=(
-            f"esperado pelo Focus menos realizado, pp do PIB, anos de {dois.anos[0]} a "
-            f"{dois.anos[-1]}; positivo: esperava-se mais"
+            f"Focus menos realizado, pp do PIB, {dois.anos[0]} a {dois.anos[-1]}; "
+            "positivo: esperava-se mais"
         ),
         colunas=["Média", "90 %: de", "até", "Anos com o esperado acima (%)"],
         linhas=linhas,
         fonte=fonte,
+        # Erro de Newey-West porque os erros de anos vizinhos andam juntos. Realizado: o
+        # primário do setor público consolidado em dezembro, como o BC publica hoje.
         nota=(
-            "Média do erro com o intervalo de 90 % (erro de Newey-West, porque os erros de "
-            "anos vizinhos andam juntos). São duas dezenas de anos e uns poucos, como 2015 e "
-            "2016, pesam muito: intervalo que encosta no zero quer dizer que o viés não se "
-            "distingue do acaso. Realizado: o resultado primário do setor público consolidado "
-            "em dezembro, como o Banco Central publica hoje."
+            "Média com intervalo de 90 %. Poucos anos, e 2015 e 2016 pesam muito: intervalo "
+            "que encosta no zero é viés que não se distingue do acaso."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -525,8 +514,8 @@ def episodios(ctx: Contexto) -> Pecas:
         id="primario-episodios",
         titulo="Quando o primário mudou: veio da receita ou da despesa?",
         subtitulo=(
-            f"Governo Central, % do PIB, de {min(primario)} a {max(primario)}; sequências de "
-            f"anos em que o primário andou {br(MINIMO_DO_EPISODIO, 0)} pp ou mais para o mesmo lado"
+            f"Governo Central, % do PIB, {min(primario)} a {max(primario)}; anos seguidos com o "
+            f"primário andando {br(MINIMO_DO_EPISODIO, 0)} pp ou mais"
         ),
         colunas=[
             "Primário no ano de partida",
@@ -540,13 +529,12 @@ def episodios(ctx: Contexto) -> Pecas:
             "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, tabela 1.1); "
             f"PIB: {ctx.fonte_sgs('PIB_12M')}; {CONTA}"
         ),
+        # Receita sobe com imposto novo, mas também com inflação, commodities e receita de
+        # uma vez só; despesa em % do PIB cai quando o PIB cresce mais que ela. 2020 e a volta
+        # de 2021 são a pandemia.
         nota=(
-            "Primário = receita líquida menos despesa total, as duas em % do PIB de cada ano; "
-            "as duas últimas colunas somam a mudança. Pela receita: quanto a receita subiu. "
-            "Pela despesa: quanto a despesa caiu (negativo: ela subiu). A conta mostra por "
-            "onde o resultado mudou, não por quê: receita sobe com imposto novo, mas também "
-            "com inflação, commodities e receita de uma vez só; despesa em % do PIB cai "
-            "quando o PIB cresce mais que ela. 2020 e a volta de 2021 são a pandemia."
+            "Receita líquida menos despesa total, em % do PIB; as duas últimas colunas somam a "
+            "mudança (despesa negativa: subiu). Mostra por onde mudou, não por quê."
         ),
     )
     return [], [], [tabela]
@@ -571,7 +559,7 @@ def divida_esperada(ctx: Contexto) -> Pecas:
     series = [
         serie(
             "realizada",
-            "Dívida bruta (o que aconteceu)",
+            "Realizada",
             [(date(a, 1, 1), v) for a, v in sorted(realizada.items()) if a >= primeira],
         )
     ]
@@ -579,7 +567,7 @@ def divida_esperada(ctx: Contexto) -> Pecas:
         series.append(
             serie(
                 f"safra-{feita}",
-                f"O que o Focus esperava em dez/{feita}",
+                f"Focus, dez/{feita}",
                 [
                     (date(a, 1, 1), v)
                     for a, v in sorted(safras[feita].items())
@@ -591,7 +579,7 @@ def divida_esperada(ctx: Contexto) -> Pecas:
     series.append(
         serie(
             "focus-hoje",
-            "O que o Focus espera hoje",
+            "Focus hoje",
             [(date(a, 1, 1), v) for a, v in sorted(futuros.items())],
             papel="previsao",
         )
@@ -628,7 +616,7 @@ def divida_esperada(ctx: Contexto) -> Pecas:
     graficos = [
         grafico(
             "divida-esperada",
-            "A dívida bruta que o mercado esperava, safra a safra",
+            "A dívida bruta que o Focus esperava, safra a safra",
             series,
             unidade="% do PIB",
             casas=1,
@@ -638,19 +626,12 @@ def divida_esperada(ctx: Contexto) -> Pecas:
                 f"O Focus espera dívida bruta de {br(futuros[alvo])} % do PIB em {alvo}; em "
                 f"{ultimo} ela foi de {br(realizada[ultimo])} %"
             ),
+            # Linha que sobe sem parar: o mercado não via a dívida estabilizar. A queda de 2021
+            # e 2022 veio em boa parte da inflação e da revisão do PIB.
             nota=(
-                "Cada linha de expectativa é uma safra: a mediana que os analistas do Focus "
-                "davam, em dezembro daquele ano, para a dívida bruta do governo geral nos "
-                "cinco anos seguintes. Linha que sobe sem parar: o mercado não via a dívida "
-                "estabilizar naquele horizonte. O Focus coleta esta expectativa desde "
-                f"{primeira}; são poucas safras, e o PIB revisado muda o nível da dívida em % "
-                "do PIB depois do fato (a queda de 2021 e 2022 veio em boa parte da inflação e "
-                "da revisão do PIB)."
-                + (
-                    f" Erro médio da expectativa (esperado menos realizado): {'; '.join(feitos)}."
-                    if feitos
-                    else ""
-                )
+                "Cada linha: a mediana do Focus em dezembro para os cinco anos seguintes. "
+                f"Safras só desde {primeira}, e a revisão do PIB muda a dívida depois do fato"
+                + (f"; erro médio (esperado − realizado): {'; '.join(feitos)}." if feitos else ".")
             ),
         )
     ]
@@ -698,10 +679,9 @@ def esperar(ctx: Contexto) -> Pecas:
         raise ValueError("Focus sem a dívida dos próximos anos")
     tabela = Tabela(
         id="custo-de-esperar",
-        titulo="O primário que estabiliza a dívida, conforme o ano em que ela para de subir",
+        titulo="O primário que estabiliza a dívida, por ano de partida",
         subtitulo=(
-            "% do PIB; a dívida de partida é a que o Focus espera para o fim de cada ano, e o "
-            "juro, cada ponta e a mediana do juro neutro estimado aqui"
+            "% do PIB; dívida de partida do Focus; juro: as pontas e a mediana do juro neutro"
         ),
         colunas=[
             "Dívida de partida (Focus)",
@@ -714,15 +694,13 @@ def esperar(ctx: Contexto) -> Pecas:
             f"Banco Central (Focus de {bcb_focus.data_da_ultima_edicao():%d/%m/%Y}: dívida bruta "
             f"e PIB); juro neutro: estimativa do Laboratório; {CONTA}"
         ),
+        # Cenário de longo prazo em que a dívida custa o juro neutro (hoje custa mais). Esperar
+        # muda pouco o primário necessário, que cresce na proporção da dívida; muda o nível
+        # em que ela para e o juro pago daí em diante.
         nota=(
-            "A conta de sempre, dívida × (juro − crescimento) ÷ (1 + crescimento), em termos "
-            f"reais, com o crescimento do PIB que o Focus espera para {max(pib)} "
-            f"({br(crescimento)} % ao ano) e três juros reais: a menor, a mediana e a maior "
-            "estimativa do juro neutro. Não é previsão: é um cenário de longo prazo em que a "
-            "dívida custa o juro neutro (hoje ela custa mais). Esperar muda pouco o primário "
-            "necessário, porque ele cresce na proporção da dívida; o que muda é o nível em que "
-            "a dívida para, e quanto juro se paga sobre ela daí em diante. A conta não mede se "
-            "o juro sobe com a dívida mais alta, que é o risco de esperar."
+            "Conta nossa, não previsão: dívida × (juro − crescimento) ÷ (1 + crescimento), "
+            f"real, com o PIB do Focus para {max(pib)} ({br(crescimento)} % ao ano). Não mede "
+            "se o juro sobe com a dívida mais alta, o risco de esperar."
         ),
     )
     return [], [], [tabela]
@@ -936,12 +914,12 @@ def meta_da_ldo(ctx: Contexto) -> Pecas:
             [
                 serie(
                     "realizado",
-                    "Primário do Governo Central",
+                    "Realizado",
                     [(date(a, 1, 1), realizado[a]) for a in anos],
                 ),
                 serie(
                     "meta",
-                    "Meta no texto original da LDO",
+                    "Meta original da LDO",
                     [(date(a, 1, 1), metas[a]) for a in anos],
                 ),
             ],
@@ -953,23 +931,21 @@ def meta_da_ldo(ctx: Contexto) -> Pecas:
                 f"De {anos[0]} a {anos[-1]}, o primário do Governo Central ficou abaixo da meta "
                 f"original da LDO em {abaixo} de {len(anos)} anos"
             ),
+            # A meta é a da LDO sancionada (orçamentos fiscal e da seguridade), sem as mudanças
+            # do ano; até 2010 em % do PIB, depois em reais divididos pelo PIB. O realizado é o
+            # do BC, que apura a meta. De 2007 a 2014 a lei deixava descontar PPI e PAC; ficar
+            # abaixo junta choque (2020) com meta trocada no caminho.
             nota=(
-                "A meta é a que a LDO fixou quando foi sancionada, para os orçamentos fiscal e "
-                "da seguridade social, sem as mudanças feitas depois, durante o ano. Até 2010 a "
-                "lei a escrevia em % do PIB; de 2011 em diante, em reais, aqui divididos pelo "
-                "PIB do ano. O realizado é o do Banco Central, que apura a meta. Duas ressalvas: "
-                "de 2007 a 2014 a própria lei deixava descontar investimentos (PPI, PAC) e a "
-                "comparação aqui é com a meta cheia; e ficar abaixo junta choque que ninguém "
-                f"previa ({EXCECAO}) com meta que foi trocada no caminho. Sem {EXCECAO}, a "
-                f"diferença média é de {_sinal(media_sem)} pp (90 %: de {_sinal(lo_sem)} a "
-                f"{_sinal(hi_sem)})."
+                "Meta cheia do texto sancionado contra o apurado pelo Banco Central; de 2007 a "
+                f"2014 a lei deixava descontar investimentos. Sem {EXCECAO}, a diferença média "
+                f"é de {_sinal(media_sem)} pp (90 %: de {_sinal(lo_sem)} a {_sinal(hi_sem)})."
             ),
         )
     ]
     tabela = Tabela(
         id="meta-ldo",
-        titulo="A meta de primário de cada LDO e o que veio, ano a ano",
-        subtitulo="Governo Central, % do PIB; a meta é a do texto original da lei",
+        titulo="A meta de cada LDO e o que veio, ano a ano",
+        subtitulo="Governo Central, % do PIB; meta do texto original",
         colunas=["Meta", "Realizado", "Realizado menos meta (pp)"],
         linhas=[
             LinhaTabela(
@@ -987,8 +963,7 @@ def meta_da_ldo(ctx: Contexto) -> Pecas:
         ],
         fonte=fonte,
         nota=(
-            "Meta em reais dividida pelo PIB do ano como o Banco Central o publica hoje. A "
-            "meta é a cheia; o que o texto original já deixava descontar ou tolerar: "
+            "Meta cheia, em reais sobre o PIB publicado hoje. O que a lei já deixava descontar: "
             + "; ".join(
                 f"{a}, {leis.METAS_DAS_LDOS[a].abatimento}"
                 for a in anos

@@ -86,11 +86,7 @@ def _simulador(
         fim = selic_fim.get(a, anterior)
         juro.append(round(implicito + atrelada * ((anterior + fim) / 2 - selic_hoje), 2))
         anterior = fim
-    como_juro = (
-        "a taxa implícita da dívida bruta em 12 meses, do Banco Central"
-        if oficial
-        else "juros de 12 meses do setor público ÷ dívida bruta; a taxa do BC não respondeu"
-    )
+    como_juro = "taxa implícita do BC" if oficial else "juros ÷ dívida, sem a taxa do BC"
     return SimuladorDivida(
         ano_inicial=ano,
         divida_inicial=round(focus_divida[ano], 2),
@@ -107,18 +103,16 @@ def _simulador(
             + (f"; {bcb_fiscal.FONTE_TAXA}" if oficial else "")
             + "; cálculo próprio"
         ),
+        # Parte da dívida que o Focus espera para o fim do ano. A parte atrelada à Selic
+        # acompanha a Selic do Focus; crescimento, inflação e primário são medianas do Focus,
+        # com a última repetida nos anos que ele não cobre. Na vida real parte dos títulos é
+        # corrigida pelo IPCA e o BC sobe a Selic com a inflação. Não separa a dívida atrelada
+        # ao câmbio nem o que entra na dívida sem passar pelo primário.
         nota=(
-            "Conta: dívida do ano seguinte = dívida × (1 + juro) ÷ ((1 + crescimento) × "
-            "(1 + inflação)) − resultado primário. Parte da dívida que o Focus espera para o "
-            f"fim de {ano}. Juro: o que a dívida paga hoje ({como_juro} = {br(implicito)} % "
-            "ao ano); a parte atrelada à Selic "
-            f"({br(atrelada * 100, 0)} % dos títulos) acompanha a Selic esperada pelo Focus. "
-            "Crescimento, inflação e primário: medianas do Focus, com a última repetida nos "
-            "anos que o Focus não cobre. Inflação: na conta, o juro não reage a ela; na vida "
-            "real, parte dos títulos é corrigida pelo IPCA e o Banco Central sobe a Selic "
-            "quando a inflação sobe, então mexa no juro junto. É conta de ordem de grandeza: "
-            "não separa a dívida atrelada ao câmbio nem o que entra na dívida sem passar pelo "
-            "primário."
+            "Conta nossa: dívida × (1 + juro) ÷ ((1 + crescimento) × (1 + inflação)) − "
+            f"primário, com o juro de hoje ({como_juro}, {br(implicito)} %) e o resto do "
+            f"Focus a partir de {ano}. Ordem de grandeza: o juro não reage à inflação, então "
+            "mexa nos dois juntos."
         ),
     )
 
@@ -163,8 +157,8 @@ def montar(ctx: Contexto) -> Secao:
         linhas=linhas,
         fonte="Banco Central, Relatório Focus (ExpectativasMercadoAnuais)",
         nota=(
-            "Consenso não é previsão nossa: é a mediana das projeções que as instituições "
-            "participantes informam ao Banco Central."
+            "Consenso, não previsão nossa: a mediana das projeções que as instituições "
+            "informam ao Banco Central."
         ),
     )
 
@@ -247,10 +241,9 @@ def montar(ctx: Contexto) -> Secao:
                 )
             ]
             extra["nota"] = (
-                "Como ler: a barra é o tamanho do erro de um ano comum. Vai da mediana do Focus "
-                "menos o erro médio que ela teve desde 2010 (medida nesta mesma época do ano) "
-                "até a mediana mais esse erro. Em anos de surpresa, como 2015 e 2020, o número "
-                "de verdade caiu bem longe dela. Quanto mais longe o ano, maior a barra."
+                "Como ler: a barra é o erro de um ano comum, a mediana do Focus mais ou menos o "
+                "erro médio dela nesta época do ano desde 2010. Em anos de surpresa, como 2015 "
+                "e 2020, o número caiu bem longe."
             )
         return grafico(
             id,
@@ -340,10 +333,10 @@ def montar(ctx: Contexto) -> Secao:
             )
         )
         series_tri = [
-            serie("realizado", "PIB realizado", realizado_aa[-12:]),
+            serie("realizado", "Realizado", realizado_aa[-12:]),
             serie(
                 "agora",
-                "PIB agora (estimativa própria)",
+                "Estimativa nossa",
                 [ultimo, (agora.trimestre, agora.previsao)],
                 papel="previsao",
             ),
@@ -385,15 +378,15 @@ def montar(ctx: Contexto) -> Secao:
                     "IBGE (SIDRA 5932); Banco Central (IBC-Br, SGS 24363; Focus, "
                     "ExpectativasMercadoTrimestrais); cálculo próprio"
                 ),
+                # Reta do crescimento do PIB contra o do IBC-Br médio do trimestre (os dois
+                # contra um ano antes). Erro típico: raiz do erro quadrático médio fora da
+                # amostra, com o IBC-Br do trimestre inteiro e os dados revisados de hoje.
                 nota=(
-                    "Método: reta que liga o crescimento do PIB ao do IBC-Br médio do trimestre "
-                    f"(os dois contra um ano antes), estimada em {agora.trimestres_na_amostra} "
-                    f"trimestres. Do {periodo(agora.trimestre, 'T')} já saíram "
-                    f"{agora.meses_disponiveis} de 3 meses do IBC-Br ("
-                    f"{br(agora.ibc_no_trimestre)} % em um ano). Erro típico: raiz do erro "
-                    f"quadrático médio fora da amostra nos últimos {agora.trimestres_no_teste} "
-                    "trimestres, com o IBC-Br do trimestre inteiro e os dados revisados de hoje "
-                    "— com menos meses, o erro real é maior."
+                    "Estimativa nossa: o PIB pelo IBC-Br do trimestre, reta em "
+                    f"{agora.trimestres_na_amostra} trimestres; já saíram "
+                    f"{agora.meses_disponiveis} de 3 meses ({br(agora.ibc_no_trimestre)} % em "
+                    f"um ano). Erro medido em {agora.trimestres_no_teste} trimestres com o "
+                    "trimestre inteiro: com menos meses, é maior."
                 ),
             ),
         )
@@ -447,7 +440,7 @@ def montar(ctx: Contexto) -> Secao:
             Tabela(
                 id="acerto-focus",
                 titulo="Quanto o Focus costuma errar",
-                subtitulo="A aposta de hoje e o erro que a mediana teve nesta época, desde 2010",
+                subtitulo="A aposta de hoje e o erro nesta época do ano, desde 2010",
                 colunas=[
                     "Aposta de hoje",
                     "Erro típico (pp)",
@@ -460,10 +453,9 @@ def montar(ctx: Contexto) -> Secao:
                     "Cálculo sobre o Focus (edições antigas), o IPCA e o PIB (Banco Central e IBGE)"
                 ),
                 nota=(
-                    "Erro típico: média do erro absoluto entre a mediana do Focus em "
-                    f"{periodo(ctx.hoje, 'D')[:5]} de cada ano e o que aconteceu. Viés positivo: o "
-                    "mercado apostou acima do realizado, em média. O realizado é o dado revisado "
-                    "de hoje, não o da época."
+                    "Erro típico: média do erro absoluto da mediana em "
+                    f"{periodo(ctx.hoje, 'D')[:5]} de cada ano; viés positivo: apostou acima. "
+                    "O realizado é o revisado de hoje, não o da época."
                 ),
             )
         )
@@ -508,10 +500,10 @@ def montar(ctx: Contexto) -> Secao:
         resumo += f" PIB de {br(pib_f, 2)} % e IPCA de {br(ipca_f, 2)} % em {ano}."
     if agora:
         resumo += (
-            f" A estimativa própria para o PIB do {periodo(agora.trimestre, 'T')} é de "
-            f"{br(agora.previsao)} % em um ano, com erro típico de {br(agora.erro_tipico)} ponto."
+            f" Estimativa nossa para o PIB do {periodo(agora.trimestre, 'T')}: "
+            f"{br(agora.previsao)} % em um ano (erro típico de {br(agora.erro_tipico)} ponto)."
         )
-    resumo += " Toda previsão aqui vem com o consenso ao lado, a faixa de erro e o método."
+    resumo += " Sempre com o consenso, a faixa de erro e o método."
     return Secao(
         id="previsoes",
         titulo="Previsões",

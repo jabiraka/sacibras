@@ -338,11 +338,11 @@ def montar(ctx: Contexto) -> Secao:
             casas=3,
             periodicidade="A",
             fonte=f"{PNADA} (SIDRA 7435 e 7453); antes de 2012, {IPEA} ({GINI_IPEA})",
+            # Renda por pessoa: trabalho, aposentadoria, aluguel e programas sociais da casa,
+            # dividida pelos moradores. O Ipea ajusta a PNAD antiga para casar em 2012.
             nota=(
-                "Vai de 0 (todos com a mesma renda) a 1 (uma pessoa com toda a renda). A renda "
-                "por pessoa é a de todas as fontes da casa (trabalho, aposentadoria, aluguel, "
-                "programas sociais) dividida pelos moradores. Antes de 2012, a PNAD antiga, "
-                "que o Ipea ajusta para casar com a PNAD Contínua em 2012."
+                "De 0 (todos com a mesma renda) a 1 (uma pessoa com tudo). Antes de 2012, a "
+                "PNAD antiga, ajustada pelo Ipea."
             ),
             largura="inteira",
         )
@@ -410,9 +410,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="A",
             fonte=f"{PNADA} (SIDRA 7527)",
             nota=(
-                "As pessoas em fila, da menor renda por pessoa para a maior, e a parte da renda "
-                "de todas as fontes que cabe a cada grupo. O IBGE arredonda cada fatia em uma "
-                "casa: a soma pode dar 99,9 ou 100,1."
+                "A parte da renda de cada grupo, com as pessoas em fila pela renda. O IBGE "
+                "arredonda cada fatia: a soma pode dar 99,9 ou 100,1."
             ),
         )
     )
@@ -440,9 +439,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="A",
             fonte=f"{PNADA} (SIDRA 7533); conta nossa",
             nota=(
-                "Renda média por pessoa de cada grupo, já descontada a inflação (a preços do "
-                f"último ano), com {base.year} = 100. Acima de 100, o grupo ganha mais do que "
-                f"em {base.year}."
+                "Renda média por pessoa de cada grupo, descontada a inflação. Acima de 100, "
+                f"ganha mais do que em {base.year}."
             ),
         )
     )
@@ -467,7 +465,7 @@ def montar(ctx: Contexto) -> Secao:
         Tabela(
             id="pobreza-decimos",
             titulo="A renda de cada grupo de 10 %",
-            subtitulo=f"as pessoas em fila, da menor renda por pessoa para a maior; {ultimo.year}",
+            subtitulo=f"pessoas em fila pela renda; {ultimo.year}",
             colunas=[
                 f"renda por pessoa, R$ por mês ({ultimo.year})",
                 f"% da renda ({ultimo.year})",
@@ -480,9 +478,8 @@ def montar(ctx: Contexto) -> Secao:
             ],
             fonte=f"{PNADA} (SIDRA 7527 e 7533)",
             nota=(
-                "Renda de todas as fontes da casa dividida pelos moradores, a preços do último "
-                "ano. Cada linha é um décimo das pessoas; o 1 % mais rico está dentro dos 10 % "
-                "mais ricos."
+                "Renda da casa por morador, a preços do último ano. O 1 % mais rico está dentro "
+                "dos 10 % mais ricos."
             ),
         )
     )
@@ -559,12 +556,11 @@ def montar(ctx: Contexto) -> Secao:
                     for g in grupos
                 ],
                 fonte=fonte_irpf,
+                # Renda: a tributável, a de tributação exclusiva e a isenta somadas. A PNAD
+                # subestima o topo (quem ganha muito responde menos e declara menos à pesquisa).
                 nota=(
-                    f"Só quem entregou a declaração ({br(tot.declarantes / 1e6)} milhões de "
-                    "pessoas). Renda é a tributável, a de tributação exclusiva e a isenta "
-                    "somadas. A PNAD subestima a renda do topo (quem ganha muito responde menos "
-                    "e declara menos à pesquisa); o Imposto de Renda vê melhor essa ponta, mas "
-                    "não vê quem não declara."
+                    f"Só quem declarou ({br(tot.declarantes / 1e6)} milhões de pessoas). O IR vê "
+                    "o topo melhor que a PNAD, mas não vê quem não declara."
                 ),
             )
         )
@@ -621,10 +617,10 @@ def montar(ctx: Contexto) -> Secao:
                 unidade="% das pessoas",
                 periodicidade="A",
                 fonte=f"{IPEA} ({POBREZA_IPEA} e {EXTREMA_IPEA})",
+                # US$ 8,30 é a linha de pobreza para países de renda média-alta, como o Brasil;
+                # US$ 3,00, a de extrema pobreza.
                 nota=(
-                    "As linhas do Banco Mundial, em dólares de paridade do poder de compra de "
-                    "2021: US$ 8,30 por dia por pessoa é a de pobreza para países de renda "
-                    "média-alta, como o Brasil, e US$ 3,00, a de extrema pobreza. Até 2011, a "
+                    "Linhas do Banco Mundial por pessoa, em dólares PPC de 2021. Até 2011, a "
                     "PNAD antiga; depois, a PNAD Contínua."
                 ),
                 largura="inteira",
@@ -674,9 +670,8 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="A",
             fonte=f"{PNADA} (SIDRA 7441 e 7444); conta nossa",
             nota=(
-                "A renda média do trabalho de um grupo em proporção da do outro. Compara médias: "
-                "não separa o que vem de escolaridade, idade, região ou ocupação do que vem de "
-                "discriminação."
+                "Renda média do trabalho de um grupo sobre a do outro. Compara médias: não "
+                "separa escola, idade, região ou ocupação de discriminação."
             ),
         ),
         grafico(
@@ -693,10 +688,7 @@ def montar(ctx: Contexto) -> Secao:
             casas=0,
             periodicidade="A",
             fonte=f"{PNADA} (SIDRA 7441 e 7444)",
-            nota=(
-                "Rendimento médio habitual de todos os trabalhos, das pessoas ocupadas de 14 "
-                "anos ou mais, a preços do último ano."
-            ),
+            nota="Renda média do trabalho dos ocupados de 14 anos ou mais, a preços do último ano.",
         ),
     ]
 
@@ -878,12 +870,12 @@ def fome(avisos: list[str]) -> tuple[list[Cartao], list[Grafico], list[Tabela], 
                     f"{banco_mundial.INSEGURANCA_GRAVE})"
                 ),
                 linhas=[LinhaRef(valor=MAPA_DA_FOME, rotulo="Mapa da Fome")],
+                # Subalimentação: a parte da população que não come o bastante para as
+                # necessidades mínimas de energia, pela conta da FAO. Cada ano é a média dos
+                # três que terminam nele. A insegurança grave é da escala da FAO, não do IBGE.
                 nota=(
-                    "Subalimentação: a parte da população que não come o bastante para as "
-                    "necessidades mínimas de energia, pela conta da FAO. Acima de 2,5 % o país "
-                    'entra no Mapa da Fome; quando a FAO publica "menos de 2,5 %", a série '
-                    "mostra 2,5. Cada ano é a média dos três anos que terminam nele. A "
-                    "insegurança grave é a da escala da FAO, outra pesquisa que a do IBGE."
+                    "Acima de 2,5 % de subalimentação, o país entra no Mapa da Fome. Quando a "
+                    'FAO publica "menos de 2,5 %", a série mostra 2,5.'
                 ),
                 largura="inteira",
             )
@@ -919,12 +911,9 @@ def fome(avisos: list[str]) -> tuple[list[Cartao], list[Grafico], list[Tabela], 
         colunas=[str(ultimo.year), str(grave[0][0].year)],
         linhas=linhas,
         fonte=f"{PNADA}, segurança alimentar (SIDRA 9552 e 9751)",
-        nota=(
-            "Escala Brasileira de Insegurança Alimentar (EBIA): oito perguntas sobre os últimos "
-            "três meses. Grave é quando alguém da casa, adulto ou criança, ficou sem comer ou "
-            "passou fome por falta de dinheiro. A PNAD Contínua mede desde 2023; as pesquisas "
-            "de antes (PNAD 2004, 2009 e 2013, POF 2018) estão no gráfico da fome desde 2004."
-        ),
+        # EBIA: oito perguntas sobre os últimos três meses. A PNAD Contínua mede desde 2023; as
+        # pesquisas de antes (PNAD 2004, 2009 e 2013, POF 2018) estão em "Fome desde 2004".
+        nota=("Escala EBIA. Grave: alguém da casa ficou sem comer por falta de dinheiro."),
     )
     return cartoes, graficos, [tabela], grave
 
@@ -950,11 +939,11 @@ def fome_nas_pesquisas() -> Grafico:
         casas=1,
         periodicidade="A",
         fonte=f"IBGE, segurança alimentar (SIDRA 6665: {quais})",
+        # PNAD 2004, 2009 e 2013, POF 2017-2018 e PNAD Contínua de 2023 em diante, juntas pelo
+        # IBGE numa tabela só (as pesquisas de cada ano estão na fonte).
         nota=(
-            "A mesma escala (EBIA) em pesquisas diferentes: a PNAD de 2004, 2009 e 2013, a "
-            "POF de 2017-2018 e a PNAD Contínua de 2023 em diante, juntas pelo IBGE numa "
-            "tabela só. A comparação entre elas é aproximada. Só há os anos com pesquisa: a "
-            "linha liga um ao outro, sem medir o que houve entre eles."
+            "A mesma escala (EBIA) em pesquisas diferentes: a comparação é aproximada. A linha "
+            "liga os anos com pesquisa, sem medir o que houve entre eles."
         ),
     )
 
@@ -980,10 +969,7 @@ def esgoto_por_estado() -> Tabela:
     return Tabela(
         id="pobreza-sinisa",
         titulo="Esgoto coletado e tratado, por estado",
-        subtitulo=(
-            f"{dados.ano}; % das pessoas com rede de esgoto, % das casas com coleta e "
-            "tratamento e quanto do esgoto coletado é tratado"
-        ),
+        subtitulo=f"{dados.ano}; do pior estado para o melhor, pela rede",
         colunas=["rede, % pessoas", "tratamento, % casas", "% tratado"],
         linhas=[linha("Brasil", brasil)] + [linha(n, v) for n, v in achados],
         fonte=(
@@ -991,11 +977,11 @@ def esgoto_por_estado() -> Tabela:
             + (f", publicado em {dados.publicado}" if dados.publicado else "")
             + " (indicadores IES0001, IES0007 e IES2004)"
         ),
+        # Prestadores: empresas, autarquias e prefeituras. A PNAD pergunta a cada casa, conta a
+        # fossa ligada à rede e não diz se o esgoto é tratado.
         nota=(
-            "O que os prestadores de esgoto (empresas, autarquias e prefeituras) informam ao "
-            "Ministério das Cidades, dividido pela população do IBGE. É outra conta que a da "
-            "PNAD acima, que pergunta a cada casa: a PNAD conta também a fossa ligada à rede e "
-            "não diz se o esgoto é tratado. Do pior estado para o melhor, pela rede."
+            "O que os prestadores informam ao Ministério das Cidades, sobre a população do "
+            "IBGE. Outra conta que a da PNAD, que não vê o tratamento."
         ),
     )
 
@@ -1020,8 +1006,7 @@ def topo_no_tempo() -> Grafico:
         for id_, nome, _ in TOPO_NO_TEMPO
     ]
     aviso = "".join(
-        f" {d.year} fica em branco: no arquivo da Receita, a fatia do 0,01 % de cima salta "
-        f"para {br(v)} % e volta no ano seguinte, sem explicação; parece erro no arquivo."
+        f" {d.year} em branco: o 0,01 % salta para {br(v)} % e volta, parece erro no arquivo."
         for d, v in saltos
     )
     return grafico(
@@ -1035,12 +1020,9 @@ def topo_no_tempo() -> Grafico:
             f"{receita_centis.FONTE}, anos-calendário {anos[0]} a {anos[-1]} (tabela V); "
             "as fatias: conta nossa"
         ),
-        nota=(
-            "Quanto da renda de quem entregou a declaração ficou com o 1 %, o 0,1 % e o "
-            "0,01 % de renda mais alta. Renda é a tributável, a isenta (lucros e dividendos "
-            "inclusive) e a de tributação exclusiva, sem heranças e doações. Quem não declara "
-            "fica de fora; o ano é o da renda, declarada no ano seguinte." + aviso
-        ),
+        # Renda: a tributável, a isenta (lucros e dividendos inclusive) e a de tributação
+        # exclusiva, sem heranças e doações. O ano é o da renda, declarada no ano seguinte.
+        nota=("Só quem declarou, sem heranças e doações; o ano é o da renda." + aviso),
     )
 
 
@@ -1154,15 +1136,13 @@ def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]
             LinhaRef(valor=meta.agua, rotulo=f"meta de água para {meta.prazo.year}"),
             LinhaRef(valor=meta.esgoto, rotulo=f"meta de esgoto para {meta.prazo.year}"),
         ],
+        # Esgoto ligado à rede: rede geral de esgoto ou pluvial, ou fossa séptica ligada a ela;
+        # fossa não ligada, vala ou rio ficam de fora. Começa em 2019, quando o IBGE mudou as
+        # categorias. Em 2020 e 2021 a pesquisa não perguntou sobre a casa. As metas (água
+        # potável; coleta e tratamento de esgoto) e a norma estão na fonte.
         nota=(
-            "Parte dos moradores que tem cada serviço em casa. Esgoto ligado à rede: rede geral "
-            "de esgoto ou pluvial, ou fossa séptica ligada a ela; fossa não ligada, vala ou "
-            "rio ficam de fora. O esgoto começa em 2019, quando o IBGE mudou as categorias. Em "
-            "2020 e 2021 a pesquisa não perguntou sobre a casa. As metas são as do Marco Legal "
-            f"do Saneamento ({meta.referencia}): {br(meta.agua, 0)} % da população com água "
-            f"potável e {br(meta.esgoto, 0)} % com coleta e tratamento de esgoto até "
-            f"{meta.prazo.strftime('%d/%m/%Y')}. A PNAD vê se o esgoto sai pela rede, não se é "
-            "tratado: a parte tratada é menor que a linha do esgoto."
+            f"Metas do Marco Legal do Saneamento, até {meta.prazo.strftime('%d/%m/%Y')}. A "
+            "PNAD não vê se o esgoto é tratado: a parte tratada é menor que a linha."
         ),
     )
     grafico_casa = grafico(
@@ -1176,11 +1156,9 @@ def saneamento() -> tuple[list[Cartao], list[Grafico], list[Tabela], list[Ponto]
         unidade="% das pessoas",
         periodicidade="A",
         fonte=f"{fonte} (SIDRA 7307, 6738 e 6739)",
-        nota=(
-            "Lenha ou carvão: a casa usa para cozinhar, mesmo que tenha gás também. A fumaça "
-            "dentro de casa faz mal à saúde, e quem volta à lenha costuma ser quem não consegue "
-            "pagar o botijão."
-        ),
+        # A fumaça dentro de casa faz mal à saúde, e quem volta à lenha costuma ser quem não
+        # consegue pagar o botijão.
+        nota="Lenha ou carvão: a casa usa para cozinhar, mesmo tendo gás.",
     )
     ultimo = a[-1][0]
     tabela = Tabela(
@@ -1245,12 +1223,10 @@ def programas_sociais() -> tuple[list[Cartao], list[Grafico]]:
         periodicidade="A",
         fonte=f"{PNADA} (SIDRA 7457 e 7458)",
         nota=(
-            "Parte dos domicílios em que algum morador recebeu o programa. BPC: o benefício de "
-            "um salário mínimo a idosos e pessoas com deficiência de baixa renda. "
+            "BPC: um salário mínimo a idosos e pessoas com deficiência de baixa renda."
             + (
-                f"Em {com[-1][0].year}, a renda por pessoa de quem recebe o Bolsa Família, já "
-                f"com o benefício, era R$ {br(com[-1][1], 0)} por mês; a de quem não recebe, "
-                f"R$ {br(sem[-1][1], 0)}."
+                f" Renda por pessoa em {com[-1][0].year}: R$ {br(com[-1][1], 0)} com o Bolsa "
+                f"Família (já somado), R$ {br(sem[-1][1], 0)} sem ele."
                 if com and sem
                 else ""
             )
@@ -1335,10 +1311,8 @@ def tabela_estados(gini_brasil: list[Ponto]) -> Tabela:
             f"Indicadores Sociais do IBGE ({POBREZA_UF})"
         ),
         nota=(
-            "O ano mais novo de cada fonte. Pobreza: abaixo de US$ 8,30 por dia. Fome: "
-            "insegurança alimentar grave. Esgoto: ligado à rede; água: da rede geral. O Gini de "
-            "cada estado (o do Brasil é "
-            f"{br(gini_brasil[-1][1], 3)}) e a pobreza também estão no mapa de Estados."
+            "Ano mais novo de cada fonte; pobreza abaixo de US$ 8,30 por dia, fome grave. O "
+            f"Gini por estado (Brasil: {br(gini_brasil[-1][1], 3)}) está no mapa de Estados."
         ),
     )
 
@@ -1384,12 +1358,11 @@ def dispersao_paises() -> Grafico:
         fonte=(
             f"{banco_mundial.FONTE} ({banco_mundial.GINI} e {banco_mundial.PIB_POR_HABITANTE_PPC})"
         ),
+        # Índia, Indonésia e boa parte da África e da Ásia medem o consumo.
         nota=(
-            f"Cada ponto é um país, no ano mais novo com Gini ({anos[0]} a {anos[-1]}; o Brasil, "
-            f"{gini['BRA'][0]}). O Brasil é o {posicao}º mais "
-            f"desigual de {len(gini)} países. Em parte dos países (Índia, Indonésia e boa "
-            "parte da África e da Ásia) o Banco Mundial mede o consumo, e não a renda, o que "
-            "dá Gini menor."
+            f"Ano mais novo com Gini ({anos[0]} a {anos[-1]}; Brasil, {gini['BRA'][0]}): o "
+            f"Brasil é o {posicao}º mais desigual de {len(gini)}. Onde se mede o consumo, não "
+            "a renda, o Gini sai menor."
         ),
         largura="inteira",
         dispersao=Dispersao(
@@ -1471,10 +1444,11 @@ def escola_e_renda() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             unidade="% das pessoas",
             periodicidade="A",
             fonte=f"{PNADA}, educação (SIDRA 7113 e 7125)",
+            # É bem mais comum entre os mais velhos, que estudaram quando a escola não chegava
+            # a todos.
             nota=(
                 "Quem não sabe ler nem escrever um bilhete simples, pela resposta à pesquisa. "
-                "É bem mais comum entre os mais velhos, que estudaram quando a escola não "
-                "chegava a todos. Em 2020 e 2021 a pesquisa não perguntou sobre educação."
+                "Sem dado em 2020 e 2021."
             ),
         ),
         grafico(
@@ -1492,11 +1466,11 @@ def escola_e_renda() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             casas=0,
             periodicidade="A",
             fonte=f"{PNADA} (SIDRA 7443)",
+            # Rendimento médio habitual de todos os trabalhos, ocupados de 14 anos ou mais, a
+            # preços do último ano; quem tem diploma também trabalha em outros setores.
             nota=(
-                "Rendimento médio habitual de todos os trabalhos das pessoas ocupadas de 14 "
-                "anos ou mais, a preços do último ano, pelo nível de instrução mais alto que a "
-                "pessoa concluiu. Compara médias: quem tem diploma também é, em média, mais "
-                "velho, mora mais em cidade grande e trabalha em outros setores."
+                "Pelo nível mais alto concluído. Compara médias: quem tem diploma é, em média, "
+                "mais velho e mora mais em cidade grande."
             ),
         ),
     ]
@@ -1528,9 +1502,8 @@ def escola_e_renda() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
         ],
         fonte=f"{PNADA} (SIDRA 7443 e 7442); a média e o crescimento: conta nossa",
         nota=(
-            "Rendimento médio habitual de todos os trabalhos, das pessoas ocupadas de 14 anos "
-            "ou mais, a preços do último ano. As primeiras linhas são pelo nível de instrução "
-            "mais alto concluído; as outras, por idade."
+            "Renda média do trabalho, a preços do último ano. Primeiro por instrução "
+            "concluída; depois, por idade."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -1564,16 +1537,16 @@ def moradia() -> tuple[list[Cartao], list[Grafico]]:
         unidade="% das pessoas",
         periodicidade="A",
         fonte=fonte,
+        # Em 2020 e 2021 a pesquisa não perguntou sobre a casa. O déficit habitacional da
+        # Fundação João Pinheiro fica de fora: o site não abre daqui e não sai todo ano.
         nota=(
             (
-                f"Parte dos moradores pela condição da casa onde moram. O resto ({br(pago[-1][1])}"
-                f" % em {pago[-1][0].year}) mora em casa própria já paga. "
+                f"O resto ({br(pago[-1][1])} % em {pago[-1][0].year}) mora em casa própria já "
+                "paga. "
                 if pago
-                else "Parte dos moradores pela condição da casa onde moram. "
+                else ""
             )
-            + "Cedida: emprestada por parente, patrão ou outro, sem aluguel. Em 2020 e 2021 a "
-            "pesquisa não perguntou sobre a casa. O déficit habitacional da Fundação João "
-            "Pinheiro fica de fora: o site dela não abre daqui e as edições não saem todo ano."
+            + "Cedida: emprestada por parente, patrão ou outro, sem aluguel."
         ),
     )
     return [cartao_aluguel], [graf]
@@ -1609,7 +1582,7 @@ def topo_por_centis() -> tuple[list[Cartao], list[Tabela]]:
     tabela = Tabela(
         id="pobreza-centis",
         titulo="Renda e patrimônio de quem declara, do pé ao topo",
-        subtitulo=f"declarações de {ano + 1}, renda de {ano}; as pessoas em fila pela renda",
+        subtitulo=f"declarações de {ano + 1}, renda de {ano}",
         colunas=["% da renda", "% do patrimônio", "imposto, % da renda"],
         linhas=[
             LinhaTabela(
@@ -1625,17 +1598,16 @@ def topo_por_centis() -> tuple[list[Cartao], list[Tabela]]:
             for g in grupos
         ],
         fonte=fonte,
+        # Renda: tributável, isenta e de tributação exclusiva somadas, sem heranças e doações.
+        # Patrimônio: bens e direitos no fim do ano, sem descontar as dívidas. O imposto é o da
+        # declaração: falta o retido sobre aplicações e outros rendimentos exclusivos. As três
+        # primeiras linhas somam todos; as de baixo estão dentro dos 10 % de cima.
+        # Saíram da tela o total de bens (tot.bens) e a renda média do 0,01 % de cima.
         nota=(
-            f"Só quem declarou ({br(tot.declarantes / 1e6)} milhões de pessoas), em fila pela "
-            "renda tributável, isenta e de tributação exclusiva somadas, sem heranças e "
-            "doações. Patrimônio é o total de bens e direitos declarados no fim do ano "
-            f"(R$ {br(tot.bens / 1e12)} tri), sem descontar as dívidas; imóveis e carros entram "
-            "pelo valor de compra, não pelo de mercado. O imposto é o da declaração: falta o "
-            "retido sobre aplicações e outros rendimentos de tributação exclusiva. As três "
-            "primeiras linhas somam todos; as de baixo estão dentro dos 10 % de cima. Renda "
-            f"média por ano: R$ {br(media(grupos[0]), 0)} mil na metade de baixo, "
-            f"R$ {br(media(um) / 1e3, 1)} milhões no 1 % de cima e "
-            f"R$ {br(media(grupos[-1]) / 1e3, 0)} milhões no 0,01 % de cima."
+            f"Só quem declarou ({br(tot.declarantes / 1e6)} milhões), em fila pela renda; "
+            f"renda média de R$ {br(media(grupos[0]), 0)} mil por ano na metade de baixo e "
+            f"R$ {br(media(um) / 1e3, 1)} milhões no 1 % de cima. Patrimônio pelo valor de "
+            "compra, sem descontar dívidas; o imposto não inclui o retido na fonte."
         ),
     )
     return [cartao_bens], [tabela]
