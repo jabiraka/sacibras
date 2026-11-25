@@ -837,3 +837,132 @@ def fichas(fonte: str, linhas: list[EstatalNoAno]) -> list[FichaEstatal]:
         saida.append(ficha(anos, do_ultimo, fonte))
     saida.sort(key=lambda f: (f.setor, f.nome))
     return saida
+
+
+# ------------------------------------------------------------------ rendem mais que o juro?
+#
+# Caio, 25/11/2026: "Vale manter as estatais? Bem provocativo mesmo, mostrando os dados que
+# podem sustentar uma conclusão ou outra". A régua é a do custo de oportunidade: se a União
+# vendesse a parte dela e abatesse dívida, deixaria de pagar o juro médio da dívida bruta. O
+# retorno é o lucro sobre o patrimônio do ano (contábil, da Sest); o juro, a taxa implícita
+# de 12 meses em dezembro (BC). Fica de fora o preço de venda: ele vem da bolsa, e a B3 saiu.
+
+GRANDES = {
+    "PETROBRAS (Grupo)": "Petrobras",
+    "BNDES (Grupo)": "BNDES",
+    "BB (Grupo)": "Banco do Brasil",
+    "CAIXA (Grupo)": "Caixa",
+}
+
+
+def _roe(x: EstatalNoAno) -> float | None:
+    return _razao(x["lucro"], x["patrimonio"], positivo=True)
+
+
+def retorno(
+    fonte_sest: str, linhas: list[EstatalNoAno], taxa: list[Ponto], fonte_taxa: str
+) -> Pecas:
+    """O retorno das estatais que vivem do que vendem contra o juro da dívida."""
+    juro = {d.year: v for d, v in taxa if d.month == 12}
+    anos = sorted({x.ano for x in linhas if x.ano in juro})
+    ultimo = anos[-1]
+    por = {(x.sigla, x.ano): x for x in linhas}
+    fonte = f"{fonte_sest}; juro: {fonte_taxa}"
+
+    series = [
+        Serie(
+            id=_id(sigla),
+            nome=nome,
+            pontos=[
+                (date(a, 1, 1), _round(_roe(por[(sigla, a)])) if (sigla, a) in por else None)
+                for a in anos
+            ],
+        )
+        for sigla, nome in GRANDES.items()
+    ]
+    series.append(
+        Serie(
+            id="juro",
+            nome="Juro da dívida",
+            pontos=[(date(a, 1, 1), round(juro[a], 2)) for a in anos],
+            papel="referencia",
+        )
+    )
+    acima = [
+        n
+        for s, n in GRANDES.items()
+        if (x := por.get((s, ultimo))) and (r := _roe(x)) and r > juro[ultimo]
+    ]
+    desenho = grafico(
+        "estatais-retorno",
+        "As maiores estatais rendem mais que o juro da dívida?",
+        series,
+        unidade="% ao ano",
+        casas=1,
+        periodicidade="A",
+        fonte=fonte,
+        rotulo_opcao="Retorno contra o juro",
+        manchete=(
+            f"Em {ultimo}, juro da dívida de {br(juro[ultimo])} %; acima dele: "
+            f"{', '.join(acima) if acima else 'nenhuma das quatro'}."
+        ),
+        nota=(
+            "Retorno é o lucro sobre o patrimônio do ano. Vender e abater dívida pouparia o "
+            "juro, mas o ganho depende do preço de venda, que estes dados não têm."
+        ),
+    )
+
+    def linha(x: EstatalNoAno, grupo: str) -> LinhaTabela:
+        da_empresa = [por[(x.sigla, a)] for a in anos if (x.sigla, a) in por]
+        roes = [r for y in da_empresa if (r := _roe(y)) is not None]
+        r = _roe(x)
+        return LinhaTabela(
+            rotulo=NOMES.get(x.sigla, x.sigla.replace(" (Grupo)", "")),
+            valores=[
+                None if r is None else round(r, 1),
+                # Com patrimônio negativo hoje, a média de anos de patrimônio quase zero engana.
+                round(sum(roes) / len(roes), 1) if roes and r is not None else None,
+                None if r is None else round(r - juro[ultimo], 1),
+                round(sum(_saldo(y) for y in da_empresa) / 1e9, 2),
+            ],
+            unidade="",
+            casas=1,
+            grupo=grupo,
+        )
+
+    vendem = sorted(
+        (x for x in linhas if x.ano == ultimo and not x.dependente),
+        key=lambda x: -(x["patrimonio"] or 0.0),
+    )
+    grupos = (
+        (f"Renderam acima do juro em {ultimo}", lambda r: r is not None and r > juro[ultimo]),
+        (f"Renderam abaixo do juro em {ultimo}", lambda r: r is not None and r <= juro[ultimo]),
+        ("Patrimônio negativo ou zero", lambda r: r is None),
+    )
+    linhas_tabela = [
+        linha(x, f"{nome} ({sum(1 for y in vendem if cabe(_roe(y)))})")
+        for nome, cabe in grupos
+        for x in vendem
+        if cabe(_roe(x))
+    ]
+    tabela = Tabela(
+        id="estatais-retorno",
+        titulo="As estatais que vivem do que vendem, contra o juro da dívida",
+        subtitulo=(
+            f"Retorno sobre o patrimônio, em %; juro médio da dívida bruta em {ultimo}: "
+            f"{br(juro[ultimo])} %"
+        ),
+        colunas=[
+            str(ultimo),
+            f"Média desde {anos[0]}",
+            "Contra o juro, pp",
+            f"Saldo com a União desde {anos[0]}, R$ bi",
+        ],
+        linhas=linhas_tabela,
+        fonte=fonte,
+        nota=(
+            "As não dependentes, da maior para a menor em patrimônio. Saldo: dividendos à "
+            "União menos subvenção e aporte."
+        ),
+    )
+    return [], [desenho], [tabela]

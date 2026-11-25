@@ -21,6 +21,18 @@ a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e dól
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
 
+**25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,
+mostrando os dados que podem sustentar uma conclusão ou outra, pode avaliar vc pelos dados, eu
+acho que não"*). Em Governo (o tema ficou com seis, o teto). A régua é o juro médio da dívida
+bruta (dezembro de cada ano): a peça nova `estatais-retorno` (gráfico atrás de "O caixa da
+União", lista "Gráfico", e tabela das 27 não dependentes) põe o retorno sobre o patrimônio
+contra ele. Em 2025 (juro de 12,7 %): 11 das 27 acima, uns 60 % do patrimônio; BB e Caixa
+abaixo; a Petrobras ficou abaixo em 2024. A resposta: "Não todas, e talvez nem a maioria";
+a conclusão diz que manter as 44 não se sustenta e que vender as grandes depende do preço,
+que estes dados não medem. **Os números da resposta são fixos no texto** (11 de 27, R$ 8,5 bi
+dos Correios): reler quando sair a edição de 2027 da Sest. Olhado a 390 e 1280 px; **falta o
+Caio olhar**.
+
 **25/11/2026, uma estatal por dentro** (Caio: *"Na aba das estatais, abra por estatal um
 dashboard com informações mais relevantes, principalmente histórico de performance, receita ou
 prejuízo e outras métricas relevantes para analisar empresas"*). Em Contas públicas › Estatais,

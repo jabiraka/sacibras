@@ -126,3 +126,21 @@ def test_banco_e_dependente() -> None:
     assert [c.rotulo for c in hosp.cartoes][2] == "Subvenção do Tesouro"
     assert hosp.cartoes[-1].valor == -7.0  # pagou 1 bi, recebeu 8 bi
     assert "Dependente do Tesouro" in hosp.descricao
+
+
+def test_retorno_contra_o_juro_da_divida() -> None:
+    from datetime import date
+
+    taxa = [(date(2024, 12, 1), 10.0), (date(2025, 12, 1), 13.0)]
+    _, [desenho], [tabela] = estatais.retorno(FONTE, sest.empresas(_planilha()), taxa, "BC")
+    juro = next(s for s in desenho.series if s.id == "juro")
+    assert [v for _, v in juro.pontos] == [10.0, 13.0]
+    petro = next(s for s in desenho.series if s.id == "petrobras")
+    assert [v for _, v in petro.pontos] == [15.0, 15.0]  # 6 bi sobre 40 bi
+    assert "acima dele: Petrobras" in desenho.manchete
+    # Sete não dependentes; a dependente fica fora da tabela.
+    assert len(tabela.linhas) == 7
+    assert all("HOSP" not in li.rotulo for li in tabela.linhas)
+    primeira = tabela.linhas[0]
+    assert primeira.grupo.startswith("Renderam acima do juro em 2025")
+    assert primeira.valores[2] == 2.0  # 15 % contra 13 %

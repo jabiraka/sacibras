@@ -231,7 +231,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   tela diz isso**: o servidor tem mais escola, e estes dados não separam o quanto da diferença
   vem daí. Nas estatais, a conta é a do caixa (dividendos menos subvenção e aporte, a mesma
   que a Sest faz), dita como tal: não é o lucro das empresas nem o valor delas, e a tela não
-  diz se vale a pena o Estado ser dono. Para caber no teto de cinco partes, a meta fiscal
+  diz se vale a pena o Estado ser dono. **Exceção, a pergunta "Vale manter as estatais?"**
+  (Caio, 25/11/2026: *"Bem provocativo mesmo, mostrando os dados que podem sustentar uma
+  conclusão ou outra, pode avaliar vc pelos dados"*): a régua é o juro médio da dívida (vender
+  e abater dívida pouparia esse juro; `estatais.retorno`), o lado a favor e o contra vão
+  lado a lado, e o que depende do preço de venda (que viria da bolsa) fica "estes dados não
+  medem". Para caber no teto de cinco partes, a meta fiscal
   entrou em "Primário, juros e meta" e a receita e a despesa da União em "Receita e gasto".
 - **Categorias e partes, pouca coisa por tela** (Caio, 14/11/2026: *"humanos não conseguem ler
   muitas informações em uma página [...] classifique melhor em categorias, crie

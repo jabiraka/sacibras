@@ -816,7 +816,8 @@ def montar(ctx: Contexto) -> Secao:
             except Exception as erro:
                 print(f"    estatais: {nome} ficou de fora: {str(erro)[:120]}")
         try:  # uma ficha por estatal (Sest, anexo I), num arquivo à parte
-            fichas = estatais.fichas(*sest.empresas_da_mais_nova())
+            fonte_sest, linhas_sest = sest.empresas_da_mais_nova()
+            fichas = estatais.fichas(fonte_sest, linhas_sest)
             ctx.memo["fiscal_estatais"] = FichasEstatais(
                 fichas=fichas,
                 primeira=next((f.id for f in fichas if f.nome == estatais.PRIMEIRA), fichas[0].id),
@@ -824,6 +825,18 @@ def montar(ctx: Contexto) -> Secao:
             )
         except Exception as erro:
             print(f"    estatais: as fichas (Sest) ficaram de fora: {str(erro)[:120]}")
+            linhas_sest = []
+        try:  # o retorno de cada uma contra o juro da dívida (Caio, 25/11/2026)
+            if linhas_sest:
+                taxa = ctx.memo.get("taxa_implicita_dbgg") or bcb_fiscal.taxa_implicita_dbgg()
+                ctx.memo["taxa_implicita_dbgg"] = taxa
+                _, g_ret, t_ret = estatais.retorno(
+                    fonte_sest, linhas_sest, taxa, bcb_fiscal.FONTE_TAXA
+                )
+                graficos += g_ret
+                tabelas += t_ret
+        except Exception as erro:
+            print(f"    estatais: o retorno contra o juro ficou de fora: {str(erro)[:120]}")
     except Exception as erro:
         print(f"    servidores e estatais ficaram de fora: {str(erro)[:120]}")
 

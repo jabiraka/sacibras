@@ -87,6 +87,7 @@ TEMA_DE: dict[str, str] = {
     "cortar-gasto": "contas-publicas",
     "servidores": "contas-publicas",
     "estatais": "contas-publicas",
+    "manter-estatais": "contas-publicas",
     "mercado": "mercado-riscos",
     "crise": "mercado-riscos",
 }
@@ -567,6 +568,74 @@ PERGUNTAS: tuple[Definicao, ...] = (
         conclusao=(
             "Como caixa, as estatais ajudam o Tesouro, e a ajuda depende de poucas empresas. "
             "Se vale a pena o Estado ser dono delas, estes dados não medem."
+        ),
+    ),
+    # Caio, 25/11/2026: "Adicione agora uma pergunta no painel: Vale manter as estatais? Bem
+    # provocativo mesmo, mostrando os dados que podem sustentar uma conclusão ou outra, pode
+    # avaliar vc pelos dados, eu acho que não". A régua é o juro da dívida: vender e abater
+    # dívida pouparia esse juro. Lido em 25/11/2026 contra a Sest (edição 2026) e o BC: em
+    # 2025, 11 das 27 não dependentes renderam acima de 12,7 % (Petrobras, BNDES, BNB, Basa,
+    # Finep, Porto de Santos, Serpro, Dataprev, Infraero, NAV, PPSA), cerca de 60 % do
+    # patrimônio delas; BB (9,3 %) e Caixa (10,7 %) ficaram abaixo; a Petrobras ficou abaixo
+    # em 2024 (10,1 % contra 10,7 %). O preço de venda não está no painel (viria da bolsa).
+    Definicao(
+        "manter-estatais",
+        "Vale manter as estatais?",
+        "Não todas, e talvez nem a maioria: das 44, 17 vivem do orçamento, os Correios "
+        "afundam e só 11 das outras 27 renderam mais que o juro da dívida em 2025. Mas essas "
+        "11 são as maiores, a Petrobras à frente.",
+        (
+            ("fiscal", "estatais-saldo"),
+            ("fiscal", "estatais-subvencao"),
+            ("fiscal", "dividendos-12m"),
+        ),
+        (
+            Bloco(
+                "A régua: o juro da dívida",
+                "Vendendo e abatendo dívida, a União pouparia esse juro: vale manter a que rende "
+                "mais. Petrobras e BNDES rendem; Banco do Brasil e Caixa ficaram abaixo em 2025.",
+                ("fiscal", "estatais-retorno"),
+                (("fiscal", "juro-implicito"),),
+                ("fiscal", "estatais-retorno"),
+            ),
+            Bloco(
+                "A favor de manter: poucas pagam a conta",
+                "Desde 2021, os dividendos superam o que a União põe nas estatais. Quase tudo "
+                "vem de quatro empresas; vendê-las acaba com essa renda.",
+                ("fiscal", "dividendos-por-empresa"),
+                (("fiscal", "dividendos-12m"),),
+                ("fiscal", "estatais-lucro"),
+            ),
+            Bloco(
+                "Contra: os Correios",
+                "Não recebem do Tesouro, mas perderam R$ 8,5 bi em 2025 e devem mais do que "
+                "têm. Prejuízo assim pode virar aporte da União.",
+                ("fiscal", "estatais-primario"),
+                (("fiscal", "estatais-primario"),),
+            ),
+            Bloco(
+                "Contra: as que vivem do orçamento",
+                "Hospitais, pesquisa e obras, pagos pelo Tesouro. Vender não acaba com o gasto: "
+                "o serviço iria ao orçamento ou acabaria. Estes dados não decidem.",
+                None,
+                (("fiscal", "estatais-subvencao"),),
+                ("fiscal", "estatais-subvencoes"),
+            ),
+        ),
+        (
+            "privatização",
+            "privatizar",
+            "vender as estatais",
+            "vale manter estatais",
+            "Petrobras privatizar",
+            "Correios privatização",
+            "estatal dá lucro",
+        ),
+        conclusao=(
+            "Pelos números, manter as 44 não se sustenta: a maioria rende menos que o juro da "
+            "dívida, dá prejuízo ou vive do orçamento. O argumento para manter se apoia em "
+            "poucas grandes, e vendê-las só compensa se o preço pagar mais que os dividendos, "
+            "o que estes dados não medem."
         ),
     ),
     Definicao(
