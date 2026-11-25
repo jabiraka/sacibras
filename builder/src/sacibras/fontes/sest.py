@@ -1,21 +1,12 @@
-"""Os números de cada estatal federal, ano a ano: o Anexo I do Relatório Agregado da Sest.
+"""Sest (Ministério da Gestão): a planilha do anexo I do Relatório Agregado das Empresas
+Estatais Federais, uma linha por empresa e ano, em reais.
 
-Caio, 25/11/2026: *"Na aba das estatais, abra por estatal um dashboard com informações mais
-relevantes, principalmente histórico de performance, receita ou prejuízo e outras métricas
-relevantes para analisar empresas"*.
-
-A planilha "Anexo I – Séries históricas" sai uma vez por ano, em junho, com o relatório
-(Ministério da Gestão, Sest). Uma linha por empresa e ano, as 44 de controle direto da União,
-valores em reais, desde 2021 na edição de 2026 (lida em 25/11/2026). O NOME DO ARQUIVO MUDA
-a cada edição (`AnexoISrieshistricasRelatrioAgregado...2026anobase2025.xlsx`), então o
-endereço se acha na página do relatório: o link do Anexo I com o ano-base mais novo.
-
-Duas armadilhas da edição de 2026, achadas comparando 2025 com 2024 em todas as empresas:
-- as colunas da demonstração do valor adicionado (pessoal, impostos, lucro retido e as do
-  fim da planilha) de 2025 vêm em R$ mil, não em reais (mediana de 2025/2024 perto de
-  0,001). `_corrigir_escala` acha isso sozinha e multiplica por mil;
-- a remuneração média, a idade média e o tempo de serviço de 2024 e 2025 vêm vazios ou com
-  outro número no lugar. Ficam de fora.
+O Caio pediu (25/11/2026) que o builder leia sozinho a edição mais nova quando ela sair. A
+página da transparência das estatais lista a planilha de cada edição com o ano no nome
+("...EstataisFederais2026anobase2025.xlsx"); o builder pega a de edição mais alta. Conferido em
+25/11/2026: a edição 2026 reproduz os números lidos à mão em `relatorios.ESTATAIS_POR_ANO`
+(dividendos à União, subvenção, aporte, lucro e prejuízos, de 2021 a 2025), a subvenção de cada
+dependente e o lucro das maiores. Sai uma vez por ano, em junho.
 """
 
 from __future__ import annotations
@@ -31,11 +22,14 @@ from typing import Any
 import openpyxl  # type: ignore[import-untyped]
 
 from sacibras.rede import FonteForaDoArError, baixar
+from sacibras.relatorios import EstataisNoAno
 
 PAGINA = (
     "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/defeso_relatorio%20agregado"
 )
-# A edição lida em 25/11/2026, para quando a página não abrir.
+FONTE = "Ministério da Gestão (Sest), Relatório Agregado das Empresas Estatais Federais"
+# A planilha e o PDF da edição de 2026, abertos em 25/11/2026: são os links da tela
+# (`links.py`). Edição nova muda os dois nomes; o build avisa (`empresas_da_mais_nova`).
 RESERVA = (
     "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/"
     "AnexoISrieshistricasRelatrioAgregadodasEmpresasEstataisFederais2026anobase2025.xlsx"
@@ -44,7 +38,142 @@ PDF = (
     "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/"
     "RelatrioAgregadodasEmpresasEstataisFederais2026anobase202506181.pdf"
 )
-FONTE = "Ministério da Gestão (Sest), Relatório Agregado das Empresas Estatais Federais, anexo I"
+VALIDADE = 24 * 3600
+
+_PLANILHA = re.compile(r'href="([^"]*AnexoI[^"]*?(\d{4})anobase(\d{4})\.xlsx)"')
+
+NOMES = {
+    "EBSERH": "Ebserh (hospitais universitários)",
+    "EMBRAPA": "Embrapa (pesquisa agropecuária)",
+    "CONCEIÇÃO": "Grupo Hospitalar Conceição",
+    "HCPA": "Hospital de Clínicas de Porto Alegre",
+    "CODEVASF": "Codevasf (obras nos vales do São Francisco e do Parnaíba)",
+    "CONAB": "Conab (abastecimento)",
+    "CBTU": "CBTU (trens urbanos)",
+    "CPRM": "CPRM (Serviço Geológico)",
+    "EBC": "EBC (comunicação pública)",
+    "AMAZUL": "Amazul (programa nuclear da Marinha)",
+    "NUCLEP": "Nuclep (equipamentos pesados)",
+    "TELEBRAS": "Telebras",
+    "TRENSURB": "Trensurb (trens de Porto Alegre)",
+    "INFRA S.A.": "Infra S.A. (ferrovias e projetos)",
+    "IMBEL": "Imbel (material bélico)",
+    "EPE": "EPE (pesquisa energética)",
+    "CEITEC": "Ceitec (semicondutores)",
+}
+"""A abreviação da planilha e o nome com o que a empresa faz, para a tela."""
+
+MAIORES = {
+    "PETROBRAS (Grupo)": "Petrobras",
+    "BNDES (Grupo)": "BNDES",
+    "BB (Grupo)": "Banco do Brasil",
+    "CAIXA (Grupo)": "Caixa",
+    "ECT": "Correios",
+}
+"""As do quadro do lucro: as três que fazem quase todo o lucro, a Caixa e os Correios."""
+
+
+@dataclass(frozen=True)
+class Anexo:
+    edicao: int
+    ano_base: int
+    url: str
+    por_ano: dict[int, EstataisNoAno]
+    subvencoes: list[tuple[str, float]]
+    """(nome, R$ milhões) de cada dependente no ano-base, da maior para a menor."""
+    lucros: list[tuple[str, float, float]]
+    """(nome, R$ milhões no ano anterior, no ano-base), na ordem de `MAIORES`."""
+    diretas: int
+    dependentes: int
+
+    @property
+    def fonte(self) -> str:
+        return f"{FONTE} {self.edicao}, ano-base {self.ano_base}, anexo I"
+
+
+def planilha_mais_nova(html: str) -> tuple[int, int, str]:
+    """(edição, ano-base, endereço) da planilha do anexo I de edição mais alta na página."""
+    achadas = [(int(m.group(2)), int(m.group(3)), m.group(1)) for m in _PLANILHA.finditer(html)]
+    if not achadas:
+        raise FonteForaDoArError("Sest: a página não lista a planilha do anexo I")
+    return max(achadas)
+
+
+def ler(conteudo: bytes) -> list[dict[str, object]]:
+    livro = openpyxl.load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
+    linhas = list(livro.worksheets[0].iter_rows(values_only=True))
+    cabeca = [str(c).strip() if c is not None else "" for c in linhas[0]]
+    return [dict(zip(cabeca, linha, strict=False)) for linha in linhas[1:] if linha[0]]
+
+
+def _num(linha: dict[str, object], coluna: str) -> float:
+    valor = linha.get(coluna)
+    return float(valor) / 1e6 if isinstance(valor, int | float) else 0.0
+
+
+def montar(linhas: list[dict[str, object]], edicao: int, ano_base: int, url: str) -> Anexo:
+    anos = sorted({int(str(x["ANO"])) for x in linhas})
+    por_ano: dict[int, EstataisNoAno] = {}
+    for ano in anos:
+        do_ano = [x for x in linhas if int(str(x["ANO"])) == ano]
+        resultado = [_num(x, "RESULTADO LÍQUIDO") for x in do_ano]
+        por_ano[ano] = EstataisNoAno(
+            lucro=round(sum(resultado), 1),
+            dividendos_uniao=round(
+                sum(_num(x, "DIVIDENDOS E JCP PAGOS À UNIÃO") for x in do_ano), 1
+            ),
+            subvencao=round(sum(_num(x, "SUBVENÇÃO") for x in do_ano), 1),
+            aporte=round(sum(_num(x, "AFAC") for x in do_ano), 1),
+            prejuizos=round(sum(v for v in resultado if v < 0), 1),
+        )
+    base = [x for x in linhas if int(str(x["ANO"])) == ano_base]
+    antes = {str(x["ABREVIAÇÃO"]): x for x in linhas if int(str(x["ANO"])) == ano_base - 1}
+    agora = {str(x["ABREVIAÇÃO"]): x for x in base}
+    subvencoes = sorted(
+        (
+            (NOMES.get(str(x["ABREVIAÇÃO"]), str(x["ABREVIAÇÃO"])), round(_num(x, "SUBVENÇÃO"), 1))
+            for x in base
+            if _num(x, "SUBVENÇÃO") > 0
+        ),
+        key=lambda par: -par[1],
+    )
+    lucros = [
+        (
+            nome,
+            round(_num(antes[sigla], "RESULTADO LÍQUIDO"), 1),
+            round(_num(agora[sigla], "RESULTADO LÍQUIDO"), 1),
+        )
+        for sigla, nome in MAIORES.items()
+        if sigla in antes and sigla in agora
+    ]
+    dependentes = sum(1 for x in base if x.get("DEPENDÊNCIA DO TESOURO NACIONAL") == "Dependente")
+    return Anexo(edicao, ano_base, url, por_ano, subvencoes, lucros, len(base), dependentes)
+
+
+def anexo() -> Anexo:
+    """A planilha da edição mais nova, já somada."""
+    html = baixar(PAGINA, validade=VALIDADE, tempo_limite=60).decode("utf-8", "replace")
+    edicao, ano_base, url = planilha_mais_nova(html)
+    linhas = ler(baixar(url, validade=VALIDADE, tempo_limite=120))
+    saida = montar(linhas, edicao, ano_base, url)
+    if ano_base not in saida.por_ano:
+        raise FonteForaDoArError(f"Sest: a planilha {edicao} não traz o ano-base {ano_base}")
+    return saida
+
+
+# ------------------------------------------------------------------ cada empresa, ano a ano
+#
+# Caio, 25/11/2026: *"Na aba das estatais, abra por estatal um dashboard com informações mais
+# relevantes, principalmente histórico de performance, receita ou prejuízo e outras métricas
+# relevantes para analisar empresas"*. As mesmas linhas da planilha, empresa por empresa, para
+# a ficha de cada uma (`secoes/estatais.fichas`).
+#
+# Duas armadilhas da edição de 2026, achadas comparando 2025 com 2024 em todas as empresas:
+# - as colunas da demonstração do valor adicionado (pessoal, impostos e as do fim da planilha)
+#   de 2025 vêm em R$ mil, não em reais (mediana de 2025/2024 perto de 0,001).
+#   `_corrigir_escala` acha isso sozinha e multiplica por mil;
+# - a remuneração média, a idade média e o tempo de serviço de 2024 e 2025 vêm vazios ou com
+#   outro número no lugar. Ficam de fora.
 
 # Cabeçalho normalizado (sem acento, minúsculas, espaços simples) -> campo.
 COLUNAS = {
@@ -86,7 +215,7 @@ def _normal(texto: object) -> str:
 def _numero(v: Any) -> float | None:
     if isinstance(v, bool) or v is None:
         return None
-    if isinstance(v, (int, float)):
+    if isinstance(v, int | float):
         return float(v)
     return None  # "-", "#N/A", ""
 
@@ -108,8 +237,8 @@ class EstatalNoAno:
         return self.valores.get(campo)
 
 
-def ler(conteudo: bytes) -> list[EstatalNoAno]:
-    """As linhas da planilha, já com a escala corrigida."""
+def empresas(conteudo: bytes) -> list[EstatalNoAno]:
+    """As linhas da planilha, empresa por empresa, já com a escala corrigida."""
     livro = openpyxl.load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
     linhas = list(livro.worksheets[0].iter_rows(values_only=True))
     if not linhas:
@@ -162,20 +291,11 @@ def _corrigir_escala(linhas: list[EstatalNoAno]) -> None:
                         x.valores[campo] = v * 1000
 
 
-def endereco() -> str:
-    """O link do Anexo I mais novo na página do relatório; sem a página, o lido em 25/11."""
-    try:
-        html = baixar(PAGINA).decode("utf-8", "ignore")
-    except Exception:
-        return RESERVA
-    links = re.findall(r'href="([^"]*AnexoI[^"I][^"]*\.xlsx)"', html)
-    com_ano = [(int(m.group(1)), u) for u in links if (m := re.search(r"anobase(\d{4})", u))]
-    return max(com_ano)[1] if com_ano else RESERVA
-
-
-def estatais() -> list[EstatalNoAno]:
-    url = endereco()
+def empresas_da_mais_nova() -> tuple[str, list[EstatalNoAno]]:
+    """A fonte ("..., anexo I") e as linhas da planilha da edição mais nova."""
+    html = baixar(PAGINA, validade=VALIDADE, tempo_limite=60).decode("utf-8", "replace")
+    edicao, ano_base, url = planilha_mais_nova(html)
     if url != RESERVA:
-        # O link na tela (`links.py`) aponta para RESERVA: edição nova pede trocar os dois.
         print(f"    aviso: edição nova do anexo I da Sest ({url}); atualize RESERVA e PDF")
-    return ler(baixar(url))
+    linhas = empresas(baixar(url, validade=VALIDADE, tempo_limite=120))
+    return f"{FONTE} {edicao}, ano-base {ano_base}, anexo I", linhas

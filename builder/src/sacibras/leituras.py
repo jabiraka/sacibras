@@ -62,10 +62,11 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Avaliação bimestral do primário (o desconto da meta)",
         "leis.AVALIACOES_2026",
-        date(2026, 11, 14),
-        date(2026, 11, 24),
-        "Relatório de Avaliação de Receitas e Despesas Primárias do 5º bimestre (sai até 22/11) "
-        "ou a nota da Conorf no site do Senado. A cada bimestre.",
+        date(2026, 11, 25),
+        date(2027, 1, 22),
+        "Relatório de Avaliação de Receitas e Despesas Primárias do 6º bimestre (sai até 22/1; "
+        "gov.br/planejamento, relatórios de avaliação fiscal) ou a nota da Conorf no site do "
+        "Senado. A cada bimestre.",
     ),
     Leitura(
         "Salário mínimo do ano (o decreto de 2027 sai em dezembro)",
@@ -281,8 +282,8 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Receita prevista para o ano (LOA e avaliação bimestral)",
         "relatorios.RECEITA_PREVISTA",
-        date(2026, 11, 14),
-        date(2026, 11, 24),
+        date(2026, 11, 25),
+        date(2027, 1, 22),
         "O mesmo relatório bimestral de leis.AVALIACOES_2026 (Tabela 1, receita administrada "
         "e RGPS). A cada bimestre; em janeiro, trocar o ano e a LOA.",
     ),
@@ -371,10 +372,11 @@ LEITURAS: list[Leitura] = [
         "relatorios.ESTATAIS_POR_ANO",
         date(2026, 11, 19),
         date(2027, 7, 15),
-        "Sest (gov.br/gestao, estatais, transparência), Relatório Agregado das Empresas "
-        "Estatais Federais 2027, anexo I (PDF e planilha; o nome do arquivo muda a cada "
-        "edição). Acrescentar 2026 e atualizar SUBVENCOES_2025 e LUCRO_DOS_MAIORES. Sai em "
-        "junho. O texto da pergunta das estatais diz 'o menor em cinco anos': conferir.",
+        "O builder lê sozinho a planilha do anexo I da edição mais nova (fontes/sest.py). "
+        "Em julho, conferir que a tela mostra a edição 2027 (ano-base 2026); se não, ver se "
+        "a página da Sest mudou o nome do arquivo. Atualizar os números de reserva "
+        "(ESTATAIS_POR_ANO, SUBVENCOES_2025, LUCRO_DOS_MAIORES) e a frase da pergunta das "
+        "estatais ('o menor em cinco anos').",
     ),
 ]
 

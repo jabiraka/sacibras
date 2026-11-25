@@ -1120,6 +1120,7 @@ async function iniciar(): Promise<void> {
     fontes.append(li);
   }
   montarMenu(painel);
+  ligarEnderecos(fontes);
 
   let vistaAtual: string | null = null;
   const desenhar = (): void => {

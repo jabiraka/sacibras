@@ -75,7 +75,13 @@ primário que estabiliza pelo Focus. O SGS 20704 é o imobiliário inteiro (o BC
 como direcionado); o catálogo diz isso agora. Onde o órgão publica e o builder não lê, a peça é oficial com o link para a página do
 número (reservatórios: painel do ONS; vagas do Caged: MTE; saldo das estatais: Sest; regras
 em `links.py`), e o aviso na nota onde o número pode diferir do publicado (o aporte das estatais,
-que a p. 86 do relatório dá maior; o Caged contra o saldo do MTE). **A conferir do PC**: "Só do PC", abaixo. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
+que a p. 86 do relatório dá maior; o Caged contra o saldo do MTE). **A conferir do PC**: "Só do PC", abaixo. **As estatais se atualizam sozinhas** (Caio: *"se for atualizar no
+próximo ano esses PDFs com números, pode botar o builder pra ler o mais atualizado?"*): o
+builder abre a página da transparência da Sest, pega a planilha do anexo I de edição mais alta
+(o ano está no nome do arquivo) e refaz a conta, a lista das subvenções e o lucro das maiores
+(`fontes/sest.py`); a edição 2026 dá os mesmos números que estavam escritos à mão, que ficam de
+reserva em `relatorios.py`. Os outros números lidos em PDF (`relatorios.py`, `leis.py`) seguem
+com prazo de releitura em `leituras.py`: cada um pede ver se a fonte tem planilha ou série. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
@@ -404,8 +410,6 @@ As próximas:
 - **até 23/12**: o projeto da LDO 2027 (`relatorios.PLDO_2027`), antes se a issue `tramitação` abrir.
 - **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
 - **até 19/02/2027**: as dez perguntas (`perguntas.LIDAS_EM`).
-- **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e
-  `relatorios.RECEITA_PREVISTA`.
 - **até 03/12**: nota fiscal do BC → `relatorios.ELASTICIDADES`.
 - **até 14/12**: nota de crédito (`relatorios.NOTAS`; o sisweb estava fora do ar).
 - **até 15/12**: quem está no RRF e no Propag (`relatorios.ACORDOS`): o RMGH de 2026 do
@@ -417,6 +421,7 @@ As próximas:
 - **até 10/01/2027**: decreto do salário mínimo de 2027 → `leis.SALARIO_MINIMO_NORMAS`
   (o valor vem do SGS 1619; a tela só cita a norma do ano que estiver no dicionário).
 - **até 20/01/2027**: teto do INSS de 2027 (portaria de janeiro) → `relatorios.TETO_INSS`.
+- **até 22/01/2027**: relatório do 6º bimestre (gov.br/planejamento, relatórios de avaliação fiscal) → `leis.AVALIACOES_2026` e `relatorios.RECEITA_PREVISTA`; em janeiro, trocar também o ano e a LOA da receita. O do 5º foi lido em 25/11/2026 (resultado −89,3 bi, dedução 77,0 bi, após a dedução −12,3 bi; a meta de piso é 0).
 - **até 28/02/2027**: aposentadoria média do INSS (BEPS, quadro 15) →
   `relatorios.INSS_APOSENTADORIA_MEDIA`.
 - **até 15/05/2027**: avaliações atuariais do PLDO 2028 → `relatorios.SERVIDORES_POR_PODER`
@@ -448,8 +453,8 @@ As próximas:
     fotos usaram um calendário fabricado; conferir do PC que a caixa abre com o de verdade.
 - **Números que a tela dá como oficiais e se conferem na fonte** (25/11/2026; a peça leva o
   aviso até a conferência; ao conferir, tirar o aviso e anotar a data no comentário):
-  - **Aporte das estatais** (`relatorios.ESTATAIS_POR_ANO`): a tela usa a soma das empresas
-    na planilha do anexo I, que dá o retorno de 2025 da p. 17 (R$ 13,1 bi); a tabela-resumo da
+  - **Aporte das estatais** (`fontes/sest.py`, que lê sozinho a planilha do anexo I da
+    edição mais nova): a tela usa a soma das empresas na planilha, que dá o retorno de 2025 da p. 17 (R$ 13,1 bi); a tabela-resumo da
     p. 86 traz aporte maior em todos os anos (2025: 3.418,3 contra 1.709,1), e a nota diz isso.
     Perguntar à Sest (ou ver o relatório de 2025, ano-base 2024, que não está na página) qual
     vale. O de 2024 não publica retorno.

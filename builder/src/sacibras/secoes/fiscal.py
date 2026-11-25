@@ -789,7 +789,7 @@ def montar(ctx: Contexto) -> Secao:
                     inicio,
                 ),
             ),
-            ("a conta do ano (Sest)", estatais.conta_do_ano),
+            ("a conta do ano (Sest)", lambda: estatais.conta_do_ano(estatais.sest_mais_nova())),
             (
                 "o primário das estatais (BC)",
                 lambda: estatais.primario(
@@ -816,7 +816,7 @@ def montar(ctx: Contexto) -> Secao:
             except Exception as erro:
                 print(f"    estatais: {nome} ficou de fora: {str(erro)[:120]}")
         try:  # uma ficha por estatal (Sest, anexo I), num arquivo à parte
-            fichas = estatais.fichas(sest.estatais())
+            fichas = estatais.fichas(*sest.empresas_da_mais_nova())
             ctx.memo["fiscal_estatais"] = FichasEstatais(
                 fichas=fichas,
                 primeira=next((f.id for f in fichas if f.nome == estatais.PRIMEIRA), fichas[0].id),

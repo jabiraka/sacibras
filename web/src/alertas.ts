@@ -21,6 +21,7 @@ import {
   type Par,
 } from "./alertas-paises";
 import { botoesDaImagem, tema, type Desenho, type Figura, type ItemDaLegenda } from "./grafico";
+import { fonteComEnderecos } from "./fontes";
 import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import type { Alerta } from "./tipos";
@@ -35,6 +36,13 @@ export function acesos(alertas: Alerta[]): number {
 }
 
 /** A régua: o melhor valor que a história já viu à esquerda, o pior à direita. */
+/** A linha pequena do indicador: a data e a fonte, que ganha o link (`fontes.ts`). */
+function comFonte(antes: string, fonte: string, depois = ""): HTMLElement {
+  const pequeno = el("small");
+  pequeno.append(antes, el("span", "fonte", fonte), depois);
+  return pequeno;
+}
+
 function regua(a: Alerta, antes: number | null = null): HTMLElement {
   const alto = a.pior_quando === "alto";
   const [melhor, pior] = alto ? [a.minimo, a.maximo] : [a.maximo, a.minimo];
@@ -109,7 +117,7 @@ function linha(a: Alerta, modo: "historia" | "tendencia" = "historia"): HTMLElem
   const nome = el("div", "alerta-nome");
   nome.append(
     el("span", "", a.nome),
-    el("small", "", `${periodo(a.referencia, a.periodicidade)} · ${a.fonte}`),
+    comFonte(`${periodo(a.referencia, a.periodicidade)} · `, a.fonte),
   );
   if (a.limite) {
     // O traço do limite pode ficar atrás do ponto: o número vai também por escrito.
@@ -367,7 +375,7 @@ function linhaDoPais(
   const nomeNo = el("div", "alerta-nome");
   nomeNo.append(
     el("span", "", par.nome),
-    el("small", "", `${c.ano} · ${c.fonte}${nome !== par.nome ? ` · no painel: ${nome}` : ""}`),
+    comFonte(`${c.ano} · `, c.fonte, nome !== par.nome ? ` · no painel: ${nome}` : ""),
   );
   const valor = el("div", "alerta-valor");
   const unidade = par.unidade ?? d.m.metricas.find((x) => x.id === par.metrica)?.unidade ?? "";
@@ -943,7 +951,7 @@ export function montarAlertas(alertas: Alerta[]): HTMLElement {
           id: `alertas-${vista}`,
           titulo: `Painel de alerta: ${v.rotulo.toLowerCase()}`,
           sub: `${acesos(alertas)} de ${alertas.length} indicadores no quinto pior da própria história · ▲ = pior que 80 %`,
-          fonte: `Fonte: ${[...new Set([...fontes].flatMap((f) => f.split(";").map((x) => x.split(",")[0]?.trim() ?? "")).filter(Boolean))].join("; ")}. Conta do painel; a fonte de cada indicador está na tela.`,
+          fonte: fonteComEnderecos(`Fonte: ${[...new Set([...fontes].flatMap((f) => f.split(";").map((x) => x.split(",")[0]?.trim() ?? "")).filter(Boolean))].join("; ")}. Conta do painel; a fonte de cada indicador está na tela.`),
           nota: `${v.explica} Não é previsão de crise nem nota de risco.`,
           legenda,
           desenho: desenhoDosAlertas(grupos, vista === "resumo" ? ["História", "Países", "Um ano"] : null),

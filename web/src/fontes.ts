@@ -11,7 +11,9 @@ interface Regra {
 
 interface Registro {
   regras: Regra[];
-  gerais: Regra[];
+  /** Instituição citada sem link dela: entra a página geral (`dominio` é o pedaço do endereço
+   *  que já a cobre). */
+  instituicoes: (Regra & { dominio: string })[];
 }
 
 export interface Endereco {
@@ -29,7 +31,7 @@ export function enderecosDaFonte(fonte: string): Endereco[] {
     for (const r of regras) {
       for (const m of fonte.matchAll(new RegExp(r.padrao, "g"))) {
         if (r.por_numero) {
-          for (const n of new Set((m[1] ?? "").match(/\d+/g) ?? [])) {
+          for (const n of new Set((m[1] ?? "").match(/[A-Z][A-Z0-9_]*[0-9_][A-Z0-9_]*|\d+/g) ?? [])) {
             const url = r.url.replace("{n}", n);
             if (!achados.has(url)) achados.set(url, { nome: r.nome.replace("{n}", n), url });
           }
@@ -40,7 +42,10 @@ export function enderecosDaFonte(fonte: string): Endereco[] {
     }
   };
   somar(registro.regras);
-  if (!achados.size) somar(registro.gerais);
+  for (const i of registro.instituicoes) {
+    const cobre = [...achados.keys()].some((u) => u.includes(i.dominio));
+    if (!cobre && new RegExp(i.padrao).test(fonte)) somar([i]);
+  }
   return [...achados.values()];
 }
 
@@ -83,7 +88,7 @@ function pendurar(no: HTMLElement): void {
       for (const m of fonte.matchAll(new RegExp(r.padrao, "g"))) {
         if (r.por_numero) {
           const base = m.index + m[0].indexOf(m[1] ?? "");
-          for (const n of (m[1] ?? "").matchAll(/\d+/g)) {
+          for (const n of (m[1] ?? "").matchAll(/[A-Z][A-Z0-9_]*[0-9_][A-Z0-9_]*|\d+/g)) {
             const url = r.url.replace("{n}", n[0]);
             nos.push({ ini: base + n.index, fim: base + n.index + n[0].length, e: { nome: n[0], url } });
             usados.add(url);
@@ -116,7 +121,7 @@ function pendurar(no: HTMLElement): void {
 }
 
 function varrer(raiz: ParentNode): void {
-  for (const no of raiz.querySelectorAll<HTMLElement>(".fonte:not([data-fontes])")) pendurar(no);
+  for (const no of raiz.querySelectorAll<HTMLElement>(".fonte:not([data-fontes]), #fontes li:not([data-fontes])")) pendurar(no);
 }
 
 /** Lê os padrões e passa a pôr o endereço em toda `.fonte` que aparecer dentro de `raiz`. */

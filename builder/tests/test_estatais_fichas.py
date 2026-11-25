@@ -7,6 +7,8 @@ import openpyxl  # type: ignore[import-untyped]
 from sacibras.fontes import sest
 from sacibras.secoes import estatais
 
+FONTE = f"{sest.FONTE} 2026, ano-base 2025, anexo I"
+
 CABECALHO = [
     "ANO",
     "CÓDIGO",
@@ -82,7 +84,7 @@ def _planilha() -> bytes:
 
 
 def test_le_a_planilha_e_corrige_a_escala_da_dva() -> None:
-    linhas = sest.ler(_planilha())
+    linhas = sest.empresas(_planilha())
     assert len(linhas) == 16
     x = next(x for x in linhas if x.sigla == "A" and x.ano == 2025)
     assert x["pessoal"] == 2.1e9  # vezes mil: a mediana de 2025/2024 deu 0,001
@@ -93,7 +95,7 @@ def test_le_a_planilha_e_corrige_a_escala_da_dva() -> None:
 
 
 def test_ficha_de_cada_estatal() -> None:
-    fichas = {f.id: f for f in estatais.fichas(sest.ler(_planilha()))}
+    fichas = {f.id: f for f in estatais.fichas(FONTE, sest.empresas(_planilha()))}
     assert len(fichas) == 8
     p = fichas["petrobras"]
     assert p.nome == "Petrobras"
@@ -115,7 +117,7 @@ def test_ficha_de_cada_estatal() -> None:
 
 
 def test_banco_e_dependente() -> None:
-    fichas = {f.id: f for f in estatais.fichas(sest.ler(_planilha()))}
+    fichas = {f.id: f for f in estatais.fichas(FONTE, sest.empresas(_planilha()))}
     banco = fichas["banco"]
     receita = next(c for c in banco.cartoes if c.rotulo == "Receita")
     assert receita.valor == 35.0  # intermediação mais tarifas

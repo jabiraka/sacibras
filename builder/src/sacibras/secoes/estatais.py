@@ -22,7 +22,7 @@ from collections.abc import Callable
 from datetime import date
 
 from sacibras import contas, relatorios
-from sacibras.fontes.sest import FONTE as FONTE_SEST
+from sacibras.fontes import sest
 from sacibras.fontes.sest import EstatalNoAno
 from sacibras.schema import Cartao, FichaEstatal, Grafico, LinhaTabela, Serie, Tabela
 from sacibras.secoes.base import br, cartao, grafico, periodo, serie
@@ -137,9 +137,26 @@ def dividendos(det: dict[str, list[Ponto]], pib: list[Ponto], fonte: str, inicio
     return cartoes, graficos, [tabela]
 
 
-def conta_do_ano() -> Pecas:
-    """Dividendos menos subvenção e aporte, ano a ano (Relatório Agregado da Sest)."""
-    por_ano = relatorios.ESTATAIS_POR_ANO
+def sest_mais_nova() -> sest.Anexo | None:
+    """A planilha da Sest da edição mais nova, ou None se a Sest falhar."""
+    try:
+        return sest.anexo()
+    except Exception as erro:
+        print(f"  aviso: estatais: planilha da Sest indisponível ({str(erro)[:120]})")
+        return None
+
+
+def conta_do_ano(lido: sest.Anexo | None = None) -> Pecas:
+    """Dividendos menos subvenção e aporte, ano a ano (Relatório Agregado da Sest): da
+    planilha da edição mais nova (`lido`) ou, sem ela, dos números lidos à mão."""
+    if lido is not None:
+        por_ano, fonte = lido.por_ano, lido.fonte
+        subvencoes_lista, lucros_lista = lido.subvencoes, lido.lucros
+        diretas, dependentes = lido.diretas, lido.dependentes
+    else:
+        por_ano, fonte = relatorios.ESTATAIS_POR_ANO, relatorios.FONTE_ESTATAIS
+        subvencoes_lista, lucros_lista = relatorios.SUBVENCOES_2025, relatorios.LUCRO_DOS_MAIORES
+        diretas, dependentes = relatorios.ESTATAIS_DIRETAS, relatorios.ESTATAIS_DEPENDENTES
     anos = sorted(por_ano)
     ultimo = anos[-1]
 
@@ -151,7 +168,6 @@ def conta_do_ano() -> Pecas:
         return [(date(a, 1, 1), valor(a) / 1000) for a in anos]  # type: ignore[operator]
 
     x = por_ano[ultimo]
-    fonte = relatorios.FONTE_ESTATAIS
     cartoes = [
         Cartao(
             id="estatais-saldo",
@@ -177,10 +193,7 @@ def conta_do_ano() -> Pecas:
             casas=1,
             referencia=date(ultimo, 1, 1),
             periodicidade="A",
-            detalhe=(
-                f"{relatorios.ESTATAIS_DEPENDENTES} das {relatorios.ESTATAIS_DIRETAS} estatais; "
-                "mais da metade vai a hospitais"
-            ),
+            detalhe=(f"{dependentes} das {diretas} estatais; mais da metade vai a hospitais"),
             fonte=fonte,
             secao="fiscal",
             mini=[(d, round(v, 2)) for d, v in pontos(lambda a: por_ano[a].subvencao)],
@@ -266,7 +279,7 @@ def conta_do_ano() -> Pecas:
     subvencoes = Tabela(
         id="estatais-subvencoes",
         titulo="Quem recebe a subvenção do Tesouro",
-        subtitulo=f"{ultimo}, as {relatorios.ESTATAIS_DEPENDENTES} estatais dependentes",
+        subtitulo=f"{ultimo}, as {dependentes} estatais dependentes",
         colunas=["R$ bilhões", "% do total"],
         linhas=[
             LinhaTabela(
@@ -275,9 +288,9 @@ def conta_do_ano() -> Pecas:
                 unidade="",
                 casas=1,
             )
-            for nome, v in relatorios.SUBVENCOES_2025
+            for nome, v in subvencoes_lista
         ],
-        fonte=fonte.replace("anexo I", "p. 17"),
+        fonte=fonte,
         nota=(
             "Estatal dependente é a que recebe do orçamento para pagar pessoal e custeio. O "
             "gasto dela já está dentro da despesa da União (boa parte, na saúde e na "
@@ -293,7 +306,7 @@ def conta_do_ano() -> Pecas:
             LinhaTabela(
                 rotulo=nome, valores=[round(a / 1000, 1), round(b / 1000, 1)], unidade="", casas=1
             )
-            for nome, a, b in relatorios.LUCRO_DOS_MAIORES
+            for nome, a, b in lucros_lista
         ],
         fonte=fonte,
         nota=(
@@ -433,7 +446,9 @@ def _por_empregado(x: EstatalNoAno) -> float | None:
     return p / n / 1000 if p and n else None
 
 
-def ficha(anos: list[EstatalNoAno], todas_do_ano: list[EstatalNoAno]) -> FichaEstatal:
+def ficha(
+    anos: list[EstatalNoAno], todas_do_ano: list[EstatalNoAno], fonte_sest: str
+) -> FichaEstatal:
     """A ficha de uma estatal; `anos` em ordem, `todas_do_ano` para a posição no ranking."""
     u = anos[-1]
     nome = NOMES.get(u.sigla, u.sigla.replace(" (Grupo)", ""))
@@ -457,7 +472,7 @@ def ficha(anos: list[EstatalNoAno], todas_do_ano: list[EstatalNoAno]) -> FichaEs
     def reais(v: float) -> str:
         return f"{curta.replace('R$ ', 'R$ ' + br(v / escala) + ' ')}"
 
-    fonte = f"{FONTE_SEST}, {anos[0].ano} a {u.ano}"
+    fonte = f"{fonte_sest}, {anos[0].ano} a {u.ano}"
     ultimo = date(u.ano, 1, 1)
     banco = (u["intermediacao"] or 0.0) > 0
 
@@ -812,13 +827,13 @@ def _round(v: float | None) -> float | None:
     return None if v is None else round(v, 2)
 
 
-def fichas(linhas: list[EstatalNoAno]) -> list[FichaEstatal]:
+def fichas(fonte: str, linhas: list[EstatalNoAno]) -> list[FichaEstatal]:
     """Uma ficha por estatal que está na edição mais nova, por setor e nome."""
     ultimo = max(x.ano for x in linhas)
     do_ultimo = [x for x in linhas if x.ano == ultimo]
     saida = []
     for atual in do_ultimo:
         anos = sorted((x for x in linhas if x.sigla == atual.sigla), key=lambda x: x.ano)
-        saida.append(ficha(anos, do_ultimo))
+        saida.append(ficha(anos, do_ultimo, fonte))
     saida.sort(key=lambda f: (f.setor, f.nome))
     return saida
