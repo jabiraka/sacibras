@@ -777,7 +777,7 @@ def _metricas_de_risco(ctx: Contexto, ano: int, manter: set[str]) -> list[Metric
                 maior_e_melhor=True,
                 fonte=(
                     "FMI, International Liquidity (reservas) e Balance of Payments "
-                    "(importação de bens e serviços); conta nossa"
+                    "(importação de bens e serviços); cálculo próprio"
                 ),
                 anos=anos_r,
                 valores={iso: v for iso, v in sorted(meses.items()) if iso in manter},
@@ -799,7 +799,7 @@ def _metricas_de_risco(ctx: Contexto, ano: int, manter: set[str]) -> list[Metric
                 unidade="% a.a.",
                 casas=1,
                 maior_e_melhor=False,
-                fonte="BIS, câmbio diário contra o dólar (WS_XRU); conta nossa",
+                fonte="BIS, câmbio diário contra o dólar (WS_XRU); cálculo próprio",
                 anos=[ano],
                 valores={iso: [v] for iso, v in sorted(vol.items()) if iso in manter},
             )

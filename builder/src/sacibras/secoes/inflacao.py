@@ -103,7 +103,7 @@ def tabela_medidas(medidas: list[tuple[str, list[list[Ponto]], str]], fonte: str
         ],
         linhas=linhas,
         fonte=fonte,
-        nota="Média dos núcleos: média simples dos cinco, conta nossa. " + SEM_AJUSTE,
+        nota="Média dos núcleos: média simples dos cinco, cálculo próprio. " + SEM_AJUSTE,
     )
 
 
@@ -198,10 +198,10 @@ def grafico_contribuicoes(contribuicoes: dict[str, list[Ponto]], inicio: date) -
         periodicidade="M",
         janela_anos=3,
         linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
-        fonte=f"{FONTE_GRUPOS}; conta nossa",
-        # O IBGE publica o impacto de cada grupo só no mês; a soma dos 12 é conta nossa.
+        fonte=f"{FONTE_GRUPOS}; cálculo próprio",
+        # O IBGE publica o impacto de cada grupo só no mês; a soma dos 12 é cálculo próprio.
         nota=(
-            "Conta nossa: o peso de cada grupo vezes a alta, mês a mês; somadas, as barras dão "
+            "Cálculo próprio: o peso de cada grupo vezes a alta, mês a mês; somadas, as barras dão "
             f"o IPCA (a linha). Demais grupos: {DEMAIS_GRUPOS.lower()}."
         ),
     )
@@ -209,7 +209,7 @@ def grafico_contribuicoes(contribuicoes: dict[str, list[Ponto]], inicio: date) -
 
 def _tabela_grupos(contribuicoes: dict[str, list[Ponto]] | None = None) -> Tabela | None:
     """Os nove grupos do IPCA: variação no mês, em 12 meses, peso (SIDRA 7060) e a
-    contribuição para o IPCA de 12 meses (conta nossa)."""
+    contribuição para o IPCA de 12 meses (cálculo próprio)."""
     cats = ",".join(GRUPOS_IPCA)
     try:
         mes = ibge_sidra.series(
@@ -254,7 +254,7 @@ def _tabela_grupos(contribuicoes: dict[str, list[Ponto]] | None = None) -> Tabel
             *(["Contribuição em 12 meses (pontos)"] if com_contrib else []),
         ],
         linhas=linhas,
-        fonte=FONTE_GRUPOS + ("; contribuição: conta nossa" if com_contrib else ""),
+        fonte=FONTE_GRUPOS + ("; contribuição: cálculo próprio" if com_contrib else ""),
         nota=(
             "Contribuição: quantos pontos do IPCA de 12 meses vieram do grupo (o peso vezes "
             "a alta, mês a mês). As nove somam o IPCA de 12 meses."
@@ -603,7 +603,7 @@ def montar(ctx: Contexto) -> Secao:
             linhas=[LinhaRef(valor=meta.centro, rotulo=f"meta {br(meta.centro)} %")],
             janela_anos=5,
             fonte=f"{ctx.fonte_sgs(*NUCLEOS)}; meta: {meta.referencia}",
-            nota="Média simples dos cinco núcleos, conta nossa. " + SEM_AJUSTE,
+            nota="Média simples dos cinco núcleos, cálculo próprio. " + SEM_AJUSTE,
         ),
     ]
 
@@ -634,7 +634,7 @@ def montar(ctx: Contexto) -> Secao:
             metas,
             date(ctx.hoje.year - 15, 1, 1),
             f"Banco Central, Focus (mediana); {ctx.fonte_sgs('META_INFLACAO')}; "
-            "meta no prazo: conta nossa",
+            "meta no prazo: cálculo próprio",
         )
         if g_esperada:
             graficos.append(g_esperada)

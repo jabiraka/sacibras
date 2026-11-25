@@ -40,7 +40,7 @@ def juro_que_a_divida_paga(
         ctx.memo["taxa_implicita_dbgg"] = oficial
         return oficial, True
     except Exception as erro:
-        print(f"    riscos: sem a taxa implícita do BC, fica a conta nossa ({str(erro)[:100]})")
+        print(f"    riscos: sem a taxa implícita do BC, fica o cálculo próprio ({str(erro)[:100]})")
     estoque = dict(dbgg)
     return [(d, j / estoque[d] * 100) for d, j in juros_pib if estoque.get(d)], False
 
@@ -136,7 +136,7 @@ def ponte(ctx: Contexto) -> Tabela:
         linhas=linhas,
         fonte=(
             f"{bcb_fiscal.FONTE_TAXA}; {ctx.fonte_sgs('DBGG', 'PIB_12M')}; "
-            f"{relatorios.FONTE_PLDO_2027}; Banco Central (Focus); conta nossa"
+            f"{relatorios.FONTE_PLDO_2027}; Banco Central (Focus); cálculo próprio"
         ),
         nota="O projeto da LDO ainda não é lei.",
     )

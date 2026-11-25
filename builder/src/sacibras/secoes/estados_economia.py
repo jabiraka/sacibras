@@ -536,7 +536,7 @@ def pib_trimestral(
     codigos = ", ".join(str(SGS[f"IBCR_{s}"].codigo) for s in sorted(IBCR_UF))
     cods_reg = ", ".join(str(SGS[f"IBCR_REGIAO_{c}"].codigo) for c in REGIOES.values())
     fonte = (
-        f"Conta nossa sobre {ibge_contas_regionais.FONTE} (edição {edicao}), "
+        f"Cálculo próprio sobre {ibge_contas_regionais.FONTE} (edição {edicao}), "
         f"{FONTE_PIB_TRIMESTRAL} e Banco Central, IBC-R (SGS {codigos}; regiões: {cods_reg})"
     )
     # O IBGE não publica PIB trimestral por estado: só o do Brasil e o dos estados por ano.
@@ -548,7 +548,7 @@ def pib_trimestral(
     c = relatorios.CONFERENCIA_PIB_ESTADOS
     conferencia = (
         f"Conferência: contra o PIB trimestral de {', '.join(c.estados[:-1])} e "
-        f"{c.estados[-1]}, a nossa conta ficou, em média, a "
+        f"{c.estados[-1]}, o cálculo próprio ficou, em média, a "
         f"{br(c.diferenca_media)} ponto do número deles em {c.trimestres} trimestres desde "
         f"{c.desde}; em 8 de cada 10, entre {br(abs(c.faixa[0]))} abaixo e {br(c.faixa[1])} "
         f"acima (conferido em {c.lida_em:%d/%m/%Y})."
@@ -844,7 +844,7 @@ def exportacoes_no_pib(
         fonte=(
             f"{comexstat.FONTE} (valor FOB de {ano}, mês a mês, em reais pelo dólar médio do "
             f"mês do Banco Central, SGS 3698); {ibge_contas_regionais.FONTE} (edição {edicao}, "
-            "PIB a preços correntes); conta nossa"
+            "PIB a preços correntes); cálculo próprio"
         ),
         valores=valores,
         brasil=round(total / pib_br * 100, 2) if pib_br else None,

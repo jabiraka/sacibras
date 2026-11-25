@@ -33,13 +33,13 @@ FONTE_INVESTIMENTO = "IBGE, Contas Nacionais Trimestrais (SIDRA 6727 e 6726)"
 # Valores a preços correntes (SIDRA 1846, variável 585, R$ milhões), para pesar consumo e
 # investimento na demanda privada. Conferido na API do SIDRA em 15/11/2026: consumo das
 # famílias R$ 2.112.893 mi e FBCF R$ 552.092 mi no 2º tri/2026.
-FONTE_DEMANDA_PRIVADA = "IBGE, Contas Nacionais Trimestrais (SIDRA 5932 e 1846); conta nossa"
+FONTE_DEMANDA_PRIVADA = "IBGE, Contas Nacionais Trimestrais (SIDRA 5932 e 1846); cálculo próprio"
 # Demanda privada: consumo das famílias + FBCF, sem governo, estoques e exterior. Cada parte
 # entra com a variação em um ano, pesada pelo valor em reais correntes dela no mesmo trimestre
 # do ano anterior. É a ideia da "real final sales to private domestic purchasers" que o
 # Econvitals mostra para os EUA.
 NOTA_DEMANDA_PRIVADA = (
-    "Consumo das famílias mais investimento, sem governo nem exterior. Conta nossa: cada "
+    "Consumo das famílias mais investimento, sem governo nem exterior. Cálculo próprio: cada "
     "parte pesada pelo seu valor em reais um ano antes."
 )
 
@@ -84,11 +84,13 @@ OFERTA: dict[str, tuple[str, str, int]] = {
     "90696": ("servicos", "Serviços", 1),
     "90706": ("impostos", "Impostos sobre produtos", 1),
 }
-FONTE_CONTRIBUICOES = "IBGE, Contas Nacionais Trimestrais (SIDRA 1620 e 1846); conta nossa"
+FONTE_CONTRIBUICOES = "IBGE, Contas Nacionais Trimestrais (SIDRA 1620 e 1846); cálculo próprio"
 # As importações entram com o sinal trocado não porque tirem do PIB, mas para não contar duas
 # vezes: o que veio de fora já está no consumo, no investimento e nas exportações.
 NOTA_IMPORTACOES = "Importações entram com o sinal trocado, para não contar duas vezes."
-FONTE_CARREGO = "IBGE, Contas Nacionais Trimestrais (SIDRA 1621, com ajuste sazonal); conta nossa"
+FONTE_CARREGO = (
+    "IBGE, Contas Nacionais Trimestrais (SIDRA 1621, com ajuste sazonal); cálculo próprio"
+)
 
 
 Contribuicoes = dict[str, list[Ponto]]
@@ -150,7 +152,7 @@ def graficos_das_contribuicoes(
             "",
             # Contra o mesmo trimestre do ano anterior. A diferença do encadeamento de preços
             # (em média, 0,1 ponto) foi repartida pela fatia de cada setor.
-            "Conta nossa: a fatia de cada setor no PIB um ano antes vezes o quanto cresceu. "
+            "Cálculo próprio: a fatia de cada setor no PIB um ano antes vezes o quanto cresceu. "
             "Somadas, as barras dão o PIB (a linha).",
         ),
         (
@@ -161,7 +163,7 @@ def graficos_das_contribuicoes(
             "Estoques e ajuste",
             # O IBGE publica o quanto cada componente cresceu, não a contribuição. Estoques e
             # ajuste: o que sobra, a variação dos estoques mais a diferença do encadeamento.
-            "Conta nossa: a fatia de cada gasto no PIB um ano antes vezes o quanto cresceu; "
+            "Cálculo próprio: a fatia de cada gasto no PIB um ano antes vezes o quanto cresceu; "
             "somadas, as barras dão o PIB (a linha). " + NOTA_IMPORTACOES,
         ),
     ):
@@ -204,7 +206,7 @@ ANOS_NA_TABELA = 15
 # arredondamento). Estoques e ajuste: a variação dos estoques, que o IBGE não publica em
 # volume, mais a diferença do encadeamento de preços.
 NOTA_COMPONENTES = (
-    "Taxas não se somam; pontos do PIB somam (conta nossa: a taxa vezes a fatia no ano "
+    "Taxas não se somam; pontos do PIB somam (cálculo próprio: a taxa vezes a fatia no ano "
     "anterior). " + NOTA_IMPORTACOES
 )
 
@@ -454,7 +456,7 @@ def pib_por_habitante(
 
 
 def com_a_conta_depois(oficial: list[Ponto], conta: list[Ponto]) -> tuple[list[Ponto], int]:
-    """O número publicado em todos os anos que ele cobre e a conta nossa só depois do último
+    """O número publicado em todos os anos que ele cobre e o cálculo próprio só depois do último
     (as Contas Nacionais anuais saem com atraso). Devolve também quantos anos são da conta."""
     ultimo = max((d for d, _ in oficial), default=date(1, 1, 1))
     depois = [(d, v) for d, v in conta if d > ultimo]
@@ -481,11 +483,11 @@ def grafico_pib_por_habitante() -> Grafico | None:
         anos = [d.year for d, _ in pib[-extra:]]
         quais = anos[0] if len(anos) == 1 else f"{anos[0]} a {anos[-1]}"
         fonte += (
-            f"; {quais}: conta nossa com as Contas Trimestrais (SIDRA 1620) e as Projeções da "
+            f"; {quais}: cálculo próprio com as Contas Trimestrais (SIDRA 1620) e as Projeções da "
             "População (revisão 2024)"
         )
         nota = (
-            f"{quais}: conta nossa, até o IBGE publicar o ano (PIB em volume, média do ano; "
+            f"{quais}: cálculo próprio, até o IBGE publicar o ano (PIB em volume, média do ano; "
             "descontada a população projetada)."
         )
     return grafico(

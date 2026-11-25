@@ -455,7 +455,7 @@ export interface MetricaEstados {
   ano_previsto?: number | null;
   /** Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. */
   marcas?: { valor: number; rotulo: string }[];
-  /** A conta nossa comparada com número oficial de outra fonte, em uma frase. */
+  /** O cálculo próprio comparado com número oficial de outra fonte, em uma frase. */
   conferencia?: string;
   /** A métrica em cada período que a fonte tem (trimestre, ano, mês), do mais novo ao mais antigo. */
   periodos?: PeriodoDaMetrica[];

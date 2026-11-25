@@ -186,8 +186,8 @@ def rigidez(
         # ano (o Bolsa Família, boa parte da saúde), não o valor do ano. A discricionária também
         # tem piso: parte dela conta para os mínimos de saúde e educação.
         nota=(
-            "Conta nossa sobre a tabela 1.1 do Tesouro; as linhas somam a despesa total. Cortar "
-            "a obrigatória pede mudar a lei; a discricionária se corta no orçamento."
+            "Cálculo próprio sobre a tabela 1.1 do Tesouro; as linhas somam a despesa total. "
+            "Cortar a obrigatória pede mudar a lei; a discricionária se corta no orçamento."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -252,7 +252,7 @@ def contra_os_paises(
         )
         if diferenca is not None and not nome.startswith(" "):
             acima.append((diferenca, nome, b or 0.0, emerg or 0.0))
-    fonte = f"{fmi_cofog.FONTE}; grupos do FMI (World Economic Outlook); medianas: conta nossa"
+    fonte = f"{fmi_cofog.FONTE}; grupos do FMI (World Economic Outlook); medianas: cálculo próprio"
     tabela = Tabela(
         id="gasto-por-funcao",
         titulo="Onde o governo gasta: o Brasil e os outros países",

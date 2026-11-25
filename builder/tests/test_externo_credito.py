@@ -201,6 +201,6 @@ def test_credito_poe_a_casa_propria_depois_dos_numeros_de_antes() -> None:
     ]
     concessoes = next(c for c in secao.cartoes if c.id == "imobiliario-concessoes")
     assert concessoes.unidade == "R$ bilhões"
-    assert concessoes.procedencia == "calculado"
+    assert concessoes.procedencia == "oficial"
     ivgr = next(c for c in secao.cartoes if c.id == "ivgr")
     assert "IPCA no mesmo período" in ivgr.detalhe

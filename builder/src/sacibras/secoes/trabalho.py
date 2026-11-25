@@ -79,7 +79,7 @@ def grafico_fatores_da_desocupacao(
         casas=2,
         periodicidade="M",
         janela_anos=5,
-        fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6318); conta nossa",
+        fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6318); cálculo próprio",
         # Gente ocupada: a fatia da população que trabalha cresce, a taxa cai (barra para
         # baixo). Gente na força de trabalho: mais gente trabalhando ou procurando, a taxa sobe.
         nota=(
@@ -111,7 +111,7 @@ def grafico_fatores_da_massa(
         casas=2,
         periodicidade="M",
         janela_anos=5,
-        fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6392 e 6318); conta nossa",
+        fonte="IBGE, PNAD Contínua, trimestre móvel (SIDRA 6392 e 6318); cálculo próprio",
         # A massa é gente ocupada vezes o rendimento médio: a primeira barra vem de haver mais
         # (ou menos) gente trabalhando; a segunda, de cada um ganhar mais acima da inflação.
         nota="As barras somam a variação da massa (a linha): mais gente ou mais renda por pessoa.",
@@ -369,7 +369,8 @@ def _caged_por_setor(ctx: Contexto, total: list[Ponto], inicio: date) -> tuple[G
     fonte = ctx.fonte_sgs(*(c for c, _ in SETORES_CAGED), "EMPREGO_SERVICOS", "EMPREGO_FORMAL")
     # Vagas em 12 meses: o estoque contra o mesmo mês do ano anterior.
     nota = (
-        "Estoque do Novo Caged (Banco Central), sem ajuste sazonal; vagas em 12 meses: conta nossa."
+        "Estoque do Novo Caged (Banco Central), sem ajuste sazonal; vagas em 12 meses: "
+        "cálculo próprio."
     )
     grandes = [
         serie(
@@ -513,7 +514,7 @@ def salario_minimo(ctx: Contexto) -> tuple[Cartao, ComparadorSalario]:
         # Acima da inflação: (1 + alta do mínimo) ÷ (1 + IPCA) − 1; o IPCA do período vai do
         # fim do mês de início ao fim do mês final. Desde 1995, o primeiro ano inteiro do real.
         nota=(
-            f"Conta nossa, desde {SALARIO_MINIMO_DESDE.year}. O mínimo corrigido pelo IPCA é o "
+            f"Cálculo próprio, desde {SALARIO_MINIMO_DESDE.year}. O mínimo corrigido pelo IPCA é o "
             "que ele valeria só acompanhando a inflação; a distância até ele é o ganho real."
         ),
     )
@@ -823,13 +824,12 @@ def montar(ctx: Contexto) -> Secao:
     except Exception as erro:  # a conta a mais não derruba a seção
         print(f"  aviso: trabalho sem os fatores da desocupação: {str(erro)[:120]}")
     try:
-        # O IPCA de 12 meses é o que o IBGE publica (SGS 13522); só a soma é nossa.
+        # O IPCA de 12 meses é o que o IBGE publica (SGS 13522); a soma não leva rótulo.
         g_soma = grafico_desocupacao_mais_inflacao(
             desocupacao,
             ctx.sgs("IPCA_12M"),
             inicio,
-            f"IBGE, PNAD Contínua (SIDRA 6381); IPCA: {ctx.fonte_sgs('IPCA_12M')}; "
-            "soma: conta nossa",
+            f"IBGE, PNAD Contínua (SIDRA 6381); IPCA: {ctx.fonte_sgs('IPCA_12M')}",
         )
         if g_soma:
             graficos.append(g_soma)
@@ -855,7 +855,7 @@ def montar(ctx: Contexto) -> Secao:
                 pib_ano,
                 taxa_ano,
                 "IBGE, Contas Nacionais Trimestrais (SIDRA 1620, volume) e PNAD Contínua "
-                "(SIDRA 6381, média dos 12 trimestres móveis do ano); conta nossa",
+                "(SIDRA 6381, média dos 12 trimestres móveis do ano); cálculo próprio",
             ),
         ):
             if g_pontos:

@@ -2,7 +2,7 @@
 crescimento e a produtividade total dos fatores (PTF) da Penn World Table.
 
 Morava em Demografia; foi para Atividade (Caio, 15/11/2026: *"eficiência e produtividade
-deveriam ficar em Atividade"*). A produtividade por hora é conta nossa: PIB em volume sobre as
+deveriam ficar em Atividade"*). A produtividade por hora é cálculo próprio: PIB em volume sobre as
 horas habituais da PNAD (ocupados × horas por semana). A PTF depois do último ano da PWT é
 estimativa nossa, pela conta da PWT com os números do IBGE.
 """
@@ -106,7 +106,7 @@ def grafico_rendimento_e_produto(por_ocupado: list[Ponto]) -> Grafico | None:
         ),
         fonte=(
             f"IBGE, Contas Nacionais Trimestrais (SIDRA {PIB_VOLUME[0]}) e PNAD Contínua "
-            f"(SIDRA {OCUPADOS[0]} e {RENDIMENTO[0]}); conta nossa"
+            f"(SIDRA {OCUPADOS[0]} e {RENDIMENTO[0]}); cálculo próprio"
         ),
         # O rendimento é o habitual de todos os trabalhos, descontada a inflação pelo IBGE. No
         # longo prazo, o salário só cresce de forma duradoura se cada trabalhador produz mais.
@@ -450,7 +450,7 @@ def pecas() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
     ]
     fonte_hora = (
         f"{fonte_prod}; horas: PNAD Contínua (SIDRA {HORAS[0]}, horas habituais em todos os "
-        "trabalhos); conta nossa"
+        "trabalhos); cálculo próprio"
     )
     if hora:
         cartoes.append(
@@ -485,11 +485,11 @@ def pecas() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             fonte=fonte_hora if hora else fonte_prod,
             # Somas de quatro trimestres: o PIB em volume e a média de ocupados. Por hora: o PIB
             # dividido pelas horas da média de quatro trimestres, cada uma os ocupados vezes as
-            # horas que costumam trabalhar por semana (conta nossa).
+            # horas que costumam trabalhar por semana (cálculo próprio).
             nota=(
                 "Quatro trimestres, 100 em 2012 (início da PNAD). "
                 + (
-                    "Por hora, conta nossa com as horas habituais: férias, faltas e hora extra "
+                    "Por hora, cálculo próprio com as horas habituais: férias, faltas e hora extra "
                     "não entram."
                     if hora
                     else "É produto por pessoa, não por hora trabalhada."
@@ -528,7 +528,7 @@ def pecas() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
                 # PIB em volume, média anual de ocupados; repartição pelos logaritmos. Na
                 # pandemia, quem perdeu o trabalho saiu da conta e voltou depois.
                 nota=(
-                    "As duas partes somam o crescimento do PIB no ano (conta nossa). De 2020 a "
+                    "As duas partes somam o crescimento do PIB no ano (cálculo próprio). De 2020 a "
                     "2022 a pandemia distorce a conta."
                 ),
             )
@@ -586,7 +586,9 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
     ano_pico_rel, pico_rel = max(((d.year, v) for d, v in rel_br), key=lambda x: x[1])
     fonte_ptf = f"{pwt.FONTE}: rtfpna"
     fonte_rel = f"{pwt.FONTE}: ctfp, PTF a paridade de poder de compra"
-    fonte_conta = f"{pwt.FONTE}: rgdpna, rnna, emp, avh, hc e labsh; conta nossa pelo método da PWT"
+    fonte_conta = (
+        f"{pwt.FONTE}: rgdpna, rnna, emp, avh, hc e labsh; cálculo próprio pelo método da PWT"
+    )
     decadas = periodos(parcelas)
     # A PTF daqui contra a da PWT, nas médias de cada período: max(abs(m.ptf - m.ptf_pwt)).
     repetidos = anos_repetidos(brasil, "labsh")
@@ -604,7 +606,7 @@ def _pwt(insumos: Insumos | None = None) -> tuple[list[Cartao], list[Grafico], T
         fonte_ibge = (
             f"IBGE: Contas Trimestrais (SIDRA {PIB_VOLUME[0]}, PIB e FBCF) e PNAD Contínua "
             f"(SIDRA {OCUPADOS[0]}, ocupados; {HORAS_EFETIVAS[0]}, horas efetivas; "
-            f"{ESTUDO[0]}, anos de estudo); conta nossa"
+            f"{ESTUDO[0]}, anos de estudo); cálculo próprio"
         )
         fonte_est = f"{fonte_ibge}, emendada na {pwt.FONTE.split(' (')[0]} de {ultimo}"
         # A estimativa é a mesma conta da PWT com os números do IBGE (PIB, investimento,

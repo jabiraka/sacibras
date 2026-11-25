@@ -1260,7 +1260,7 @@ def _gasto_por_area(anual: siconfi.ColetaAnual) -> list[MetricaEstados]:
                 referencia=str(anual.ano),
                 fonte=(
                     "Tesouro Nacional, SICONFI, Declaração de Contas Anuais (DCA), Anexo I-E, "
-                    f"despesas liquidadas por função, {anual.ano}; a parte: conta nossa"
+                    f"despesas liquidadas por função, {anual.ano}; a parte: cálculo próprio"
                 ),
                 valores={
                     u: round(valores[u] / base[u] * 100, 2) if u in valores else None

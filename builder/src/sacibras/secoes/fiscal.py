@@ -134,7 +134,7 @@ def despesa_contra_a_faixa(despesa: list[Ponto], ipca: list[Ponto], inicio: date
             ),
             fonte=(
                 "Tesouro Nacional, Resultado do Tesouro Nacional (série histórica, tabela "
-                f"1.1); IPCA (Banco Central, SGS 433); faixa: {faixa.referencia}; conta nossa"
+                f"1.1); IPCA (Banco Central, SGS 433); faixa: {faixa.referencia}; cálculo próprio"
             ),
             # A faixa é o quanto a lei deixa crescer, por ano, o limite da despesa desde 2024.
             # Pagamento grande num mês só faz a linha saltar, e de novo um ano depois. O limite
@@ -308,7 +308,7 @@ def fatores_da_divida(ctx: Contexto, anos: int, inicio: date) -> Grafico:
         janela_anos=5,
         fonte=(
             f"{ctx.fonte_sgs('DBGG', 'PIB_12M', 'NFSP_PRIMARIO_12M')}; {bcb_fiscal.FONTE_TAXA}; "
-            "conta nossa"
+            "cálculo próprio"
         ),
         # Juros: a taxa implícita vezes a dívida média. PIB em reais (com a inflação): a mesma
         # dívida fica menor diante de um PIB maior. Superávit entra para baixo. É a conta do
@@ -348,7 +348,7 @@ def juro_e_prazos(ctx: Contexto, inicio: date) -> tuple[Cartao, Grafico]:
         casas=1,
         periodicidade="M",
         janela_anos=10,
-        fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
+        fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
         nota=(
             "Saldo pelo prazo que falta para vencer, com as compromissadas do Banco Central, "
             "quase todas curtas. A parte de até 1 ano é a que vence nos próximos 12 meses."
@@ -596,7 +596,7 @@ def montar(ctx: Contexto) -> Secao:
                 casas=0,
                 periodicidade="M",
                 nota=(
-                    "Soma de 12 meses, cada mês a preços de hoje pelo IPCA (conta nossa). O "
+                    "Soma de 12 meses, cada mês a preços de hoje pelo IPCA (cálculo próprio). O "
                     "Focus não projeta o primário em reais."
                 ),
                 fonte=fonte_prim_rs,

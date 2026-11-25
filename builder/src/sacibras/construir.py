@@ -113,7 +113,7 @@ FONTES = {
     "mundo": "FMI (WEO), BIS, OCDE e Tesouro Nacional",
     "laboratorio": (
         "Laboratório: Banco Central (Focus, Copom, SGS), Tesouro Direto, IBGE (SIDRA), Federal "
-        "Reserve (H.10) e Penn World Table, com conta nossa"
+        "Reserve (H.10) e Penn World Table, com cálculo próprio"
     ),
     "previsoes": "Banco Central (Focus)",
     "riscos": "Banco Central, Tesouro Nacional, IBGE, IPEADATA e ONS (riscos)",

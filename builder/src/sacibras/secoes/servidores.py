@@ -266,7 +266,7 @@ def folha_da_uniao(
         ],
         fonte=fonte,
         nota=(
-            "Conta nossa sobre a tabela 1.5 do Tesouro: as linhas somam a despesa de pessoal e "
+            "Cálculo próprio sobre a tabela 1.5 do Tesouro: as linhas somam a despesa de pessoal e "
             "encargos sociais. As contribuições que os servidores e os militares pagam para a "
             "própria aposentadoria entram como receita, não aqui."
         ),
@@ -283,7 +283,7 @@ def por_poder(ano: int, gasto_do_poder: dict[str, tuple[float, int]]) -> list[Ta
     total = sum(v for v, _ in gasto_do_poder.values())
     fonte_rgf = (
         f"Tesouro Nacional, Siconfi, Relatório de Gestão Fiscal da União (anexo 1, {ano}); "
-        "soma dos órgãos: conta nossa"
+        "soma dos órgãos: cálculo próprio"
     )
     gasto_tabela = Tabela(
         id="folha-por-poder",
@@ -330,7 +330,7 @@ def por_poder(ano: int, gasto_do_poder: dict[str, tuple[float, int]]) -> list[Ta
     ]
     linhas.append(
         LinhaTabela(
-            rotulo="Todos os civis (média ponderada, conta nossa)",
+            rotulo="Todos os civis (média ponderada, cálculo próprio)",
             valores=[
                 round(ativos / 1000, 1),
                 round(media),
@@ -428,7 +428,7 @@ def aposentadoria() -> tuple[list[Cartao], list[Tabela]]:
         for p in sorted(civis, key=lambda p: -p.provento)
     ]
     linhas.append(
-        linha("Servidor civil: todos (conta nossa)", media, "Servidores da União", aposentados)
+        linha("Servidor civil: todos (cálculo próprio)", media, "Servidores da União", aposentados)
     )
     linhas += [
         linha(f"Militar: {nome.lower()}", v, "Servidores da União", n)
@@ -487,7 +487,7 @@ def por_esfera(valores: fmi_pessoal.Valores) -> tuple[list[Grafico], list[Tabela
     """Quem fica com a folha: União, estados e municípios, na ativa e aposentados."""
     geral = valores[("BRA", fmi_pessoal.GERAL, fmi_pessoal.ATIVOS, "POGDP_PT")]
     ano = max(geral)
-    fonte = f"{fmi_pessoal.FONTE}; partes do total: conta nossa"
+    fonte = f"{fmi_pessoal.FONTE}; partes do total: cálculo próprio"
 
     def reais(setor: str, indicador: str) -> float:
         return valores.get(("BRA", setor, indicador, "XDC"), {}).get(ano, 0.0) / 1e9
@@ -575,7 +575,9 @@ def contra_os_paises(
             if indicador == fmi_pessoal.ATIVOS:
                 quantos[codigo] = n
         colunas.append(f"{nome} ({quantos[codigo]})")
-    fonte = f"{fmi_pessoal.FONTE}; grupos do FMI (World Economic Outlook); medianas: conta nossa"
+    fonte = (
+        f"{fmi_pessoal.FONTE}; grupos do FMI (World Economic Outlook); medianas: cálculo próprio"
+    )
 
     def arredondar(v: float | None) -> float | None:
         return None if v is None else round(v, 1)
