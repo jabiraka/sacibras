@@ -52,6 +52,7 @@ from sacibras.schema import (
     LinhaTabela,
     MarcaDeAliquota,
     PontoDispersao,
+    Procedencia,
     Secao,
     SimuladorReforma,
     Tabela,
@@ -428,7 +429,16 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
 
     total_br = de("BRA")
     ultimo = max(total_br)
-    consumo = {a: de("BRA", "T_5000")[a] / v * 100 for a, v in total_br.items() if v}
+    # A OCDE publica a parte de cada base na carga; sem ela, a mesma divisão feita aqui.
+    try:
+        consumo = ocde_receita.carga(["BRA"], ["S13"], ["T_5000"], unidade="PT_OTR_SECTOR")[
+            ("BRA", "S13", "T_5000")
+        ]
+        proc_consumo: Procedencia = "oficial"
+    except Exception as erro:
+        print(f"  aviso: impostos: parte do consumo da OCDE indisponível ({str(erro)[:100]})")
+        consumo = {a: de("BRA", "T_5000")[a] / v * 100 for a, v in total_br.items() if v}
+        proc_consumo = "calculado"
 
     cartoes = [
         cartao(
@@ -455,7 +465,7 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
             periodicidade="A",
             detalhe="ICMS, ISS, IPI, Cofins, PIS e afins",
             fonte=fonte,
-            procedencia="calculado",
+            procedencia=proc_consumo,
             secao="impostos",
             mini=30,
         ),

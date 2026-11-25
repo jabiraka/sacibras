@@ -147,3 +147,15 @@ def test_metricas_da_pwt_por_pais_e_sem_os_anos_que_a_pwt_nao_tem() -> None:
     parte = metricas["parte_trabalho"]
     assert parte.anos == [2022] and parte.valores == {"BRA": [51.0]}
     assert "G001" not in ptf.valores  # a PWT não tem os grupos do FMI
+
+
+def test_reservas_do_banco_mundial_por_ano() -> None:
+    from sacibras.fontes import banco_mundial
+
+    linhas = [
+        {"countryiso3code": "BRA", "date": "2025", "value": 8.42},
+        {"countryiso3code": "BRA", "date": "2024", "value": 7.95},
+        {"countryiso3code": "MEX", "date": "2025", "value": None},
+        {"countryiso3code": "", "date": "2025", "value": 1.0},
+    ]
+    assert banco_mundial.por_ano(linhas, [2024, 2025]) == {"BRA": [7.95, 8.42]}

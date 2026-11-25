@@ -369,8 +369,8 @@ def _caged_por_setor(ctx: Contexto, total: list[Ponto], inicio: date) -> tuple[G
     fonte = ctx.fonte_sgs(*(c for c, _ in SETORES_CAGED), "EMPREGO_SERVICOS", "EMPREGO_FORMAL")
     # Vagas em 12 meses: o estoque contra o mesmo mês do ano anterior.
     nota = (
-        "Estoque do Novo Caged (Banco Central), sem ajuste sazonal; vagas em 12 meses: "
-        "cálculo próprio."
+        "Estoque do Novo Caged (Banco Central), sem ajuste sazonal; vagas em 12 meses: o "
+        "estoque contra o de um ano antes."
     )
     grandes = [
         serie(
@@ -620,7 +620,6 @@ def montar(ctx: Contexto) -> Secao:
                 f"no mês: {br(saldo[-1][1], 0)} mil; média de 3 meses: {br(saldo_3m[-1][1], 0)} mil"
             ),
             fonte=ctx.fonte_sgs("EMPREGO_FORMAL"),
-            procedencia="calculado",
             secao="trabalho",
             mini=48,
         ),

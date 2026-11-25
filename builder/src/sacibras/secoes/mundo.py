@@ -16,7 +16,7 @@ from datetime import date, timedelta
 
 import pycountry
 
-from sacibras.fontes import bis, fmi, ocde_juros, ocde_receita, pwt, tesouro_direto
+from sacibras.fontes import banco_mundial, bis, fmi, ocde_juros, ocde_receita, pwt, tesouro_direto
 from sacibras.modelos import risco
 from sacibras.schema import GrupoMundo, MetricaMundo, Mundo, MundoPaises, Pais
 from sacibras.secoes.base import Contexto, br
@@ -751,19 +751,30 @@ def volatilidade_do_cambio(
 
 def _metricas_de_risco(ctx: Contexto, ano: int, manter: set[str]) -> list[MetricaMundo]:
     """Só no arquivo de todos os países, para o painel de alerta contra outros países:
-    reservas em meses de importação (FMI) e volatilidade do câmbio (BIS). Cada uma que falha
-    fica de fora."""
+    reservas em meses de importação (Banco Mundial) e volatilidade do câmbio (BIS). Cada uma
+    que falha fica de fora."""
     saida: list[MetricaMundo] = []
     anos = list(range(ano - 6, ano + 1))
     try:
-        anos_r, meses = sem_anos_vazios(
-            anos,
-            reservas_em_meses(
-                fmi.estatistica(fmi.RESERVAS, anos[0]),
-                fmi.estatistica(fmi.IMPORTACOES, anos[0]),
+        # O Banco Mundial publica o número pronto; sem ele, a mesma conta com os dados do FMI.
+        try:
+            linhas = banco_mundial.indicador(banco_mundial.RESERVAS_MESES, anos[0], anos[-1])
+            anos_r, meses = sem_anos_vazios(anos, banco_mundial.por_ano(linhas, anos))
+            fonte_reservas = f"{banco_mundial.FONTE} (FI.RES.TOTL.MO)"
+        except Exception as erro:
+            print(f"  aviso: mundo: reservas do Banco Mundial indisponíveis ({str(erro)[:120]})")
+            anos_r, meses = sem_anos_vazios(
                 anos,
-            ),
-        )
+                reservas_em_meses(
+                    fmi.estatistica(fmi.RESERVAS, anos[0]),
+                    fmi.estatistica(fmi.IMPORTACOES, anos[0]),
+                    anos,
+                ),
+            )
+            fonte_reservas = (
+                "FMI, International Liquidity (reservas) e Balance of Payments "
+                "(importação de bens e serviços); cálculo próprio"
+            )
         saida.append(
             MetricaMundo(
                 id="reservas_meses",
@@ -775,10 +786,7 @@ def _metricas_de_risco(ctx: Contexto, ano: int, manter: set[str]) -> list[Metric
                 unidade="meses",
                 casas=1,
                 maior_e_melhor=True,
-                fonte=(
-                    "FMI, International Liquidity (reservas) e Balance of Payments "
-                    "(importação de bens e serviços); cálculo próprio"
-                ),
+                fonte=fonte_reservas,
                 anos=anos_r,
                 valores={iso: v for iso, v in sorted(meses.items()) if iso in manter},
             )

@@ -471,12 +471,16 @@ SGS: dict[str, SerieSGS] = {
         "M",
         "14/11/2026",
     ),
+    # No CKAN (conferido em 25/11/2026) o 20704 está entre os recursos direcionados: é o
+    # financiamento imobiliário inteiro (taxas de mercado, 20702, mais reguladas, 20703),
+    # porque o BC classifica todo o imobiliário como direcionado; nos livres não há linha dele.
     "IMOB_CONCESSOES": SerieSGS(
         20704,
-        "Concessões de crédito, pessoas físicas, financiamento imobiliário total",
+        "Concessões de crédito com recursos direcionados, pessoas físicas, financiamento "
+        "imobiliário total",
         "R$ milhões",
         "M",
-        "14/11/2026",
+        "25/11/2026",
     ),
     # IVG-R: valor de avaliação dos imóveis dados em garantia de financiamento residencial
     # (alienação fiduciária e hipoteca), 13 regiões metropolitanas; tendência de longo prazo.

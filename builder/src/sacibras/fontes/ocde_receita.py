@@ -58,8 +58,13 @@ def carga(
     setores: list[str] | None = None,
     categorias: list[str] | None = None,
     inicio: int = 2000,
+    unidade: str = "PT_B1GQ",
 ) -> Tabela:
-    """Receita tributária em % do PIB. Lista vazia ou `None` traz todos (a chave vazia)."""
+    """Receita tributária em % do PIB. Lista vazia ou `None` traz todos (a chave vazia).
+
+    `unidade="PT_OTR_SECTOR"` traz a parte de cada categoria na receita tributária da esfera,
+    em %, como a OCDE publica (conferido em 25/11/2026: bens e serviços, 42,7 % no Brasil em
+    2024)."""
     chave = ".".join(
         [
             "+".join(paises or []),
@@ -67,7 +72,7 @@ def carga(
             "+".join(setores or ["S13"]),
             "+".join(categorias or ["_T", *BASES]),
             "_T",
-            "PT_B1GQ",
+            unidade,
             "A",
         ]
     )

@@ -26,6 +26,9 @@ INSEGURANCA_GRAVE = "SN.ITK.SVFI.ZS"
 IDOSOS = "SP.POP.65UP.TO.ZS"
 """População de 65 anos ou mais (% do total), da Divisão de População da ONU (World Population
 Prospects) e das estatísticas dos países; conferido em 15/11/2026, de 1960 a 2025."""
+RESERVAS_MESES = "FI.RES.TOTL.MO"
+"""Reservas totais, com o ouro, em meses de importação de bens e serviços; conferido em
+25/11/2026 (Brasil: 8,4 meses em 2025). É a conta que o painel fazia com os dados do FMI."""
 FONTE = "Banco Mundial, World Development Indicators"
 AGREGADOS = {"1W": "WLD", "ZJ": "LCN", "XD": "HIC", "OE": "OED"}
 """O `country.id` de duas letras de alguns agregados e o código de três que se pede."""
@@ -149,3 +152,16 @@ def series_dos_paises(
         chave = str(x.get("countryiso3code") or AGREGADOS.get(id2, id2))
         saida.setdefault(chave, []).append((int(x["date"]), float(x["value"])))
     return {k: sorted(v) for k, v in saida.items()}
+
+
+def por_ano(linhas: list[dict[str, Any]], anos: list[int]) -> dict[str, list[float | None]]:
+    """{ISO3: [valor de cada ano em `anos`, ou None]}, só os países (sem os agregados)."""
+    posicao = {a: i for i, a in enumerate(anos)}
+    saida: dict[str, list[float | None]] = {}
+    for linha in linhas:
+        iso, valor = str(linha.get("countryiso3code") or ""), linha.get("value")
+        ano = int(linha.get("date") or 0)
+        if valor is None or len(iso) != 3 or ano not in posicao:
+            continue
+        saida.setdefault(iso, [None] * len(anos))[posicao[ano]] = round(float(valor), 2)
+    return saida
