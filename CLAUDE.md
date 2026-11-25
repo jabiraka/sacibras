@@ -82,6 +82,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   Fecomercio, B3) tira o CSV e o PNG. Série do SGS feita por terceiro leva `origem` no
   catálogo (o SGS repassa, não relicencia). Fonte privada nova só entra com a licença lida e
   registrada; quando quem decide é o Caio, vai em `decisao`.
+- **Projeto que ainda não é lei entra dizendo isso** (Caio, 25/11/2026, sobre a LDO 2027:
+  *"Pode já colocar, dizendo que ainda não virou lei [...] a gente vai ter que monitorar se
+  algo muda até a sanção"*): o número vem do texto do projeto no Senado, em `relatorios.py`,
+  e a tela diz "projeto, não é lei" e onde ele está. O projeto entra em
+  `tramitacao.PROJETOS`; o `sacibras tramitacao` abre a issue `tramitação` quando ele anda.
+  Sancionada a lei, o número passa para `leis.py` e o projeto sai da lista.
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 

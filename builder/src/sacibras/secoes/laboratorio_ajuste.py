@@ -988,3 +988,165 @@ def meta_da_ldo(ctx: Contexto) -> Pecas:
         ),
     )
     return cartoes, graficos, [tabela]
+
+
+# ------------------------------------------------------------------ o projeto da LDO 2027
+
+# Caio, 25/11/2026: *"tem como ver se isso vai estabilizar a dívida"* e *"Pode já colocar,
+# dizendo que ainda não virou lei"*. É o que o governo projeta, não conta nossa: a peça põe a
+# meta e a dívida do projeto ao lado do Focus e do primário que estabilizaria a dívida, e
+# diz em que o governo supõe diferente do mercado. Sancionada a lei, a meta de 2027 vai para
+# `leis.METAS_DAS_LDOS` e o "ainda não é lei" sai daqui.
+
+
+def ldo_proposta(ctx: Contexto) -> Pecas:
+    proj = relatorios.PLDO_2027
+    realizada = ajuste.ultimo_de_cada_ano(ctx.sgs("DBGG", 30))
+    divida_focus = bcb_focus.mediana_anual_hoje(INDICADOR_DIVIDA)
+    pib_focus = bcb_focus.mediana_anual_hoje("PIB Total")
+    if not realizada:
+        raise ValueError("sem a dívida bruta realizada")
+    ultimo = max(realizada)
+    governo = {a: x.divida for a, x in proj.items()} | relatorios.PLDO_2027_DIVIDA_ATE_2036
+    futuros = {a: v for a, v in sorted(governo.items()) if a > ultimo}
+    pico = max(futuros, key=lambda a: futuros[a])
+    focus = {a: v for a, v in sorted(divida_focus.items()) if a > ultimo}
+    lido = f"lido em {relatorios.PLDO_2027_LIDO_EM:%d/%m/%Y}"
+    fonte = (
+        f"{relatorios.FONTE_PLDO_2027} ({lido}); Banco Central (Focus de "
+        f"{bcb_focus.data_da_ultima_edicao():%d/%m/%Y}; {ctx.fonte_sgs('DBGG')})"
+    )
+    meta = proj[2027]
+    cartoes = [
+        Cartao(
+            id="ldo-2027",
+            rotulo="Meta de primário para 2027 no projeto da LDO",
+            valor=meta.meta or 0.0,
+            unidade="% do PIB",
+            casas=2,
+            referencia=date(2027, 12, 1),
+            periodicidade="A",
+            detalhe=(
+                f"projeto, não é lei; estabilizar pediria {br(relatorios.PLDO_2027_ESTABILIZA)} %"
+            ),
+            fonte=f"{relatorios.FONTE_PLDO_2027} ({lido})",
+            procedencia="oficial",
+            secao="laboratorio",
+        )
+    ]
+    series = [
+        serie(
+            "realizada",
+            "Dívida bruta (o que aconteceu)",
+            [(date(a, 1, 1), v) for a, v in sorted(realizada.items()) if a >= ultimo - 10],
+        ),
+        serie(
+            "pldo-2027",
+            "O que o governo projeta no projeto da LDO 2027",
+            [(date(ultimo, 1, 1), realizada[ultimo])]
+            + [(date(a, 1, 1), v) for a, v in futuros.items()],
+            papel="previsao",
+        ),
+    ]
+    if focus:
+        series.append(
+            serie(
+                "focus-hoje",
+                "O que o Focus espera hoje",
+                [(date(ultimo, 1, 1), realizada[ultimo])]
+                + [(date(a, 1, 1), v) for a, v in focus.items()],
+                papel="previsao",
+            )
+        )
+    fim_focus = max(focus) if focus else None
+    comparar = [a for a in (2027, 2028, 2029, 2030) if a in pib_focus]
+    supoe = ""
+    if comparar:
+        gov = sum(proj[a].pib for a in comparar) / len(comparar)
+        mer = sum(pib_focus[a] for a in comparar) / len(comparar)
+        supoe = (
+            f" O governo supõe o PIB crescendo {br(gov)} % ao ano de {comparar[0]} a "
+            f"{comparar[-1]}, na média; o Focus espera {br(mer)} %. Com menos crescimento, a "
+            "receita é menor e a dívida pesa mais sobre o PIB."
+        )
+    graficos = [
+        grafico(
+            "ldo-2027-divida",
+            "A dívida bruta no projeto da LDO 2027 e no Focus",
+            series,
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            manchete=(
+                f"O projeto da LDO 2027 projeta a dívida bruta em {br(futuros[pico])} % do PIB "
+                f"em {pico}, o ponto mais alto, e em {br(futuros[max(futuros)])} % em "
+                f"{max(futuros)}"
+                + (f"; o Focus espera {br(focus[fim_focus])} % em {fim_focus}" if fim_focus else "")
+            ),
+            nota=" ".join(
+                [
+                    f"Ainda não é lei: em {relatorios.PLDO_2027_LIDO_EM:%d/%m/%Y}, o "
+                    f"{relatorios.PLDO_2027_PROJETO} estava {relatorios.PLDO_2027_SITUACAO},",
+                    "e a meta pode mudar até a votação e a sanção.",
+                    "A linha do governo é a do Anexo de Metas Fiscais do projeto,",
+                    "que supõe a meta cumprida todo ano.",
+                    "Pelo próprio anexo, o primário que impediria a dívida de crescer em 2027",
+                    f"seria de {br(relatorios.PLDO_2027_ESTABILIZA)} % do PIB;",
+                    f"o projeto prevê {br(meta.primario, 2)} % antes dos descontos e",
+                    f"{br(meta.meta or 0.0, 2)} % depois deles",
+                    "(parte dos precatórios, a defesa e o Fundo Social",
+                    "ficam fora da conta da meta).",
+                    supoe.strip(),
+                    'Quanto as metas passadas se cumpriram está em "A meta de cada LDO e o que',
+                    'veio".',
+                ]
+            ),
+        )
+    ]
+    linhas = [
+        LinhaTabela(
+            rotulo=str(a) + ("" if a == 2027 else " (indicativa)"),
+            valores=[
+                x.meta,
+                x.primario,
+                x.divida,
+                divida_focus.get(a),
+                x.pib,
+                pib_focus.get(a),
+            ],
+            unidade="",
+            casas=2,
+        )
+        for a, x in proj.items()
+        if x.meta is not None
+    ]
+    tabela = Tabela(
+        id="ldo-2027",
+        titulo="O projeto da LDO 2027: meta, dívida e o que o governo supõe",
+        subtitulo=(
+            "Governo Central (primário) e governo geral (dívida bruta), % do PIB; PIB em % ao "
+            "ano; projeto, ainda não é lei"
+        ),
+        colunas=[
+            "Meta de primário",
+            "Primário antes dos descontos",
+            "Dívida bruta (governo)",
+            "Dívida bruta (Focus)",
+            "PIB (governo)",
+            "PIB (Focus)",
+        ],
+        linhas=linhas,
+        fonte=fonte,
+        nota=(
+            "A meta de 2027 é a do art. 2º do projeto (R$ "
+            f"{br(relatorios.PLDO_2027_META_BI)} bi, com tolerância de R$ "
+            f"{br(relatorios.PLDO_2027_FAIXA_BI[0])} bi a R$ "
+            f"{br(relatorios.PLDO_2027_FAIXA_BI[1])} bi); as de 2028 a 2030 são indicativas e "
+            'voltam a ser votadas a cada LDO. "Antes dos descontos" é o primário que o '
+            "governo projeta contando tudo; a meta se apura sem parte dos precatórios, a "
+            "defesa e o Fundo Social. A Selic média que o governo supõe cai de "
+            f"{br(proj[2027].selic)} % em 2027 para {br(proj[2030].selic)} % em 2030."
+        ),
+    )
+    return cartoes, graficos, [tabela]

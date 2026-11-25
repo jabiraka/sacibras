@@ -43,6 +43,15 @@ LEITURAS: list[Leitura] = [
         do_pc=True,
     ),
     Leitura(
+        "Projeto da LDO 2027: meta, dívida projetada e parâmetros (ainda não é lei)",
+        "relatorios.PLDO_2027",
+        date(2026, 11, 25),
+        date(2026, 12, 23),
+        "Senado, matéria 173677 (dadosabertos/materia/textos/173677): o parecer final da CMO, "
+        "o autógrafo e a lei sancionada. O `sacibras tramitacao` avisa quando ela anda (issue "
+        "`tramitação`). Sancionada, a meta de 2027 vai para leis.METAS_DAS_LDOS.",
+    ),
+    Leitura(
         "Faixa do crescimento real do limite da despesa (arcabouço fiscal)",
         "leis.FAIXA_DA_DESPESA",
         date(2026, 11, 20),

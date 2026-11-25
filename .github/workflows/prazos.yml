@@ -3,6 +3,7 @@ name: Prazos de releitura
 # O que foi lido à mão em lei ou relatório (builder/src/sacibras/leituras.py) tem prazo para
 # ser lido de novo. Quando um prazo vence ou falta uma semana, abre ou atualiza a issue
 # "releitura"; quando tudo está em dia, fecha. Com prazo vencido, a execução fica vermelha.
+# Também olha se os projetos de lei mostrados no painel andaram (issue "tramitação").
 on:
   workflow_dispatch:
   schedule:
@@ -11,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "builder/src/sacibras/leituras.py"
+      - "builder/src/sacibras/tramitacao.py"
       - ".github/workflows/prazos.yml"
 
 permissions:
@@ -52,6 +54,26 @@ jobs:
                 "vencido ou vencendo em até 7 dias. Ao reler, atualize o número e o comentário " +
                 "no arquivo de origem e, em `builder/src/sacibras/leituras.py`, a `lida_em` e o " +
                 "`reler_ate`. A issue fecha sozinha quando tudo estiver em dia.",
+              corpo,
+            });
+      - name: Projetos de lei que andaram no Congresso
+        run: uv run --no-dev sacibras tramitacao --saida tramitacao.md
+      - name: Abrir, atualizar ou fechar a issue da tramitação
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const corpo = fs.readFileSync("builder/tramitacao.md", "utf8");
+            await require("./.github/scripts/aviso.js")({ github, context }, {
+              rotulo: "tramitação",
+              cor: "1d76db",
+              titulo: "Projeto de lei mostrado no painel andou no Congresso",
+              explicacao:
+                "O painel mostra um projeto que ainda não é lei (`builder/src/sacibras/" +
+                "tramitacao.py`). Leia o que mudou na fonte e confira se a meta ou os anexos " +
+                "mudaram (`relatorios.py`); depois atualize em `tramitacao.py` a situação e o " +
+                "informe vistos. Sancionada a lei, a meta vai para `leis.py` e o projeto sai " +
+                "da lista. A issue fecha sozinha quando nada mais mudou.",
               corpo,
             });
       - name: Vermelho se houver prazo vencido

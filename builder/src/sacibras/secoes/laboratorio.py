@@ -770,6 +770,7 @@ def montar(ctx: Contexto) -> Secao:
         ("os ajustes que já houve", laboratorio_ajuste.episodios),
         ("a dívida que o Focus espera", laboratorio_ajuste.divida_esperada),
         ("o custo de esperar", laboratorio_ajuste.esperar),
+        ("o projeto da LDO 2027", laboratorio_ajuste.ldo_proposta),
         ("crescimento", _crescimento),
     ):
         try:

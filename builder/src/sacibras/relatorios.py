@@ -986,3 +986,79 @@ ANUNCIOS_FISCAIS: list[AnuncioFiscal] = [
         "Agência Brasil, 11/11/2026",
     ),
 ]
+
+
+# ------------------------------------------------------------------ o projeto da LDO 2027
+
+# Ainda não é lei (Caio, 25/11/2026: *"Pode já colocar, dizendo que ainda não virou lei [...]
+# a gente vai ter que monitorar se algo muda até a sanção"*). Lido em 25/11/2026 no Senado
+# (dadosabertos/materia/textos/173677): o PLN nº 2/2026-CN, enviado em 15/4/2026, PDF do
+# projeto com os anexos (documento d9a2f9cf-b17e-48cc-98ab-1c87d946ef90), e o Relatório
+# Preliminar da CMO com emendas, de 11/11/2026 (documento a30facb4-40e8-49ce-9901-1442fdde029a).
+# A mensagem modificativa de 31/8/2026 (Mensagem nº 730) mexe nos arts. 25-A, 69 e 140 e no
+# Anexo III, não na meta. Tramitação em 25/11/2026: "MATÉRIA COM A RELATORIA" na CMO desde
+# 4/11; relatório preliminar aprovado em 11/11; "Encerrado o prazo regimental, foram
+# apresentadas 1.504 [...] emendas" (24/11). A meta pode mudar até a votação no plenário do
+# Congresso e o veto até a sanção: `sacibras tramitacao` olha a matéria todo dia útil.
+# Trechos: art. 2º, "meta de superávit primário de R$ 73.216.092.959,00 [...] para o Governo
+# Central"; § 1º, "limite superior [...] R$ 109.824.139.439,00" e "limite inferior [...] R$
+# 36.608.046.480,00". Anexo IV.3 (Metas Fiscais), Tabela 1, "Projeções: Dívida Bruta do
+# Governo Geral (DBGG) e Resultados Primários Efetivos": "2026 83,6 -0,44"; "2027 86,0 0,05";
+# "2028 87,3 0,62"; "2029 87,8 0,93"; "2030 87,5 1,26"; ... "2036 83,4 1,50" (fontes: STN;
+# primário do Governo Central até 2030 pela Resolução JEO nº 13, de 4/12/2025). Tabela 3,
+# "Parâmetros Macroeconômicos", PIB real: "2026 [...] 2,3"; "2027 [...] 2,6"; "2028 [...]
+# 2,6"; "2029 [...] 2,6"; "2030 [...] 2,7"; Selic média: 13,6; 10,6; 9,3; 8,3; 7,3. Relatório
+# da CMO, Tabela 2 (da Tabela 3 do Anexo IV.2): meta 0,50; 1,00; 1,25; 1,50 % do PIB de 2027 a
+# 2030 ("Indicativo" de 2028 em diante); "Exclusão de despesas para fins de verificação do
+# cumprimento da meta 65,66 0,45 60,12 0,38 53,60 0,32 43,56 0,24". Texto, p. 12: "Para 2027, o
+# resultado primário deveria ser de 2,2% do PIB (R$ 314,2 bilhões acima do programado no PLDO
+# 2027) para impedir o crescimento da dívida" (do Gráfico 2 do Anexo IV.3, que é imagem).
+# LER DE NOVO na votação da CMO e do plenário e na sanção; sancionada, a meta de 2027 passa
+# para `leis.METAS_DAS_LDOS` e `leis.META_PRIMARIA_*`, e esta peça diz "lei".
+
+
+@dataclass(frozen=True)
+class AnoDoPLDO:
+    """Um ano do Anexo de Metas Fiscais do projeto, em % do PIB (o PIB, em % ao ano)."""
+
+    meta: float | None
+    """Meta de primário do Governo Central; de 2028 em diante, indicativa."""
+    primario: float
+    """O primário projetado antes dos descontos que a apuração da meta admite."""
+    divida: float
+    """Dívida bruta do governo geral no fim do ano."""
+    pib: float
+    """Crescimento real do PIB que o governo supõe."""
+    selic: float
+    """Selic média do ano que o governo supõe, % ao ano."""
+
+
+PLDO_2027_LIDO_EM = date(2026, 11, 25)
+PLDO_2027_PROJETO = "PLN nº 2/2026"
+PLDO_2027_SITUACAO = (
+    "na Comissão Mista de Orçamento, que aprovou o relatório preliminar em 11/11/2026 e "
+    "recebeu 1.504 emendas até 24/11"
+)
+PLDO_2027_META_BI = 73.216092959
+PLDO_2027_FAIXA_BI = (36.60804648, 109.824139439)
+PLDO_2027_ESTABILIZA = 2.2
+"""O primário que estabilizaria a dívida bruta em 2027, pelo próprio anexo (% do PIB)."""
+PLDO_2027: dict[int, AnoDoPLDO] = {
+    2026: AnoDoPLDO(None, -0.44, 83.6, 2.3, 13.6),
+    2027: AnoDoPLDO(0.50, 0.05, 86.0, 2.6, 10.6),
+    2028: AnoDoPLDO(1.00, 0.62, 87.3, 2.6, 9.3),
+    2029: AnoDoPLDO(1.25, 0.93, 87.8, 2.6, 8.3),
+    2030: AnoDoPLDO(1.50, 1.26, 87.5, 2.7, 7.3),
+}
+PLDO_2027_DIVIDA_ATE_2036: dict[int, float] = {
+    2031: 87.0,
+    2032: 86.4,
+    2033: 85.7,
+    2034: 84.9,
+    2035: 84.1,
+    2036: 83.4,
+}
+FONTE_PLDO_2027 = (
+    "Projeto da LDO 2027 (PLN nº 2/2026, Congresso Nacional), art. 2º e Anexo IV.3 (Metas "
+    "Fiscais, STN), e Relatório Preliminar da CMO de 11/11/2026, tabela 2"
+)

@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 24/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 25/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,22 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibovespa e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**25/11/2026, o projeto da LDO 2027 no Laboratório** (Caio: *"tem como ver se isso vai
+estabilizar a dívida [...]?"* e *"Pode já colocar, dizendo que ainda não virou lei [...] a
+gente vai ter que monitorar se algo muda até a sanção"*). **O projeto não foi aprovado**: em
+25/11 o PLN nº 2/2026 estava na CMO (relatório preliminar aprovado em 11/11, 1.504 emendas até
+24/11). Entrou em Laboratório › O prometido e o que veio: o cartão da meta de 2027 (0,50 % do
+PIB; "estabilizar pediria 2,2 %", do próprio anexo), o gráfico da dívida bruta do projeto contra
+o Focus (atrás de "A dívida que o mercado esperava", lista "Gráfico") e a tabela de 2027 a 2030
+(meta, primário antes dos descontos, dívida e PIB do governo e do Focus). Números em
+`relatorios.PLDO_2027`, lidos no Senado. **Para monitorar**: `sacibras tramitacao`
+(`tramitacao.py`) olha a matéria no Senado todo dia útil no workflow "Prazos de releitura" e
+abre a issue `tramitação` quando a situação muda ou sai informe novo. A cada aviso: ler o
+parecer ou o autógrafo, conferir a meta e os anexos e atualizar o que foi visto em
+`tramitacao.py`. **Sancionada a lei**: a meta de 2027 vai para `leis.METAS_DAS_LDOS` e
+`META_PRIMARIA_2027`, a peça deixa de dizer "projeto" e o projeto sai de `tramitacao.PROJETOS`.
+Olhada a 390 e 1280 px; **falta o Caio olhar**.
 
 **24/11/2026, o site parou de atualizar** (Caio: *"faça com que o sacibras atualize todo dia
 [...] como o site era atualizado antes"*): desde 20/11 as cinco rodadas agendadas do Actions
@@ -272,6 +288,7 @@ Na ordem do plano; o que está aqui ainda não foi feito:
 A lista inteira sai de `sacibras leituras --todas` (`leituras.py`); a issue `releitura` avisa.
 As próximas:
 
+- **até 23/12**: o projeto da LDO 2027 (`relatorios.PLDO_2027`), antes se a issue `tramitação` abrir.
 - **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
 - **até 19/02/2027**: as dez perguntas (`perguntas.LIDAS_EM`).
 - **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e

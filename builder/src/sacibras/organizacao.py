@@ -494,10 +494,10 @@ PARTES: dict[str, list[Parte]] = {
             "promessa",
             "O prometido e o que veio",
             "A meta de cada ano e o que o mercado esperava, contra o primário e a dívida que "
-            "vieram.",
-            cartoes=["meta-ldo", "primario-prometido", "divida-esperada"],
-            graficos=["meta-ldo", "primario-prometido", "divida-esperada"],
-            tabelas=["meta-ldo", "primario-erro-horizonte"],
+            "vieram; e a meta do projeto da LDO 2027.",
+            cartoes=["ldo-2027", "meta-ldo", "primario-prometido", "divida-esperada"],
+            graficos=["meta-ldo", "primario-prometido", "divida-esperada", "ldo-2027-divida"],
+            tabelas=["meta-ldo", "primario-erro-horizonte", "ldo-2027"],
         ),
         Parte(
             "crescimento",
@@ -937,6 +937,15 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
         "inflacao-juros-dolar": Agrupar(
             graficos={"focus-selic": ["focus-ipca", "focus-câmbio"]},
             rotulos={"focus-selic": "Selic", "focus-ipca": "IPCA", "focus-câmbio": "Dólar"},
+        ),
+    },
+    "laboratorio": {
+        "promessa": Agrupar(
+            graficos={"divida-esperada": ["ldo-2027-divida"]},
+            rotulos={
+                "divida-esperada": "O que o Focus esperava, safra a safra",
+                "ldo-2027-divida": "O projeto da LDO 2027",
+            },
         ),
     },
     "riscos": {

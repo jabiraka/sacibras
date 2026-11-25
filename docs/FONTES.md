@@ -239,6 +239,17 @@ O que dá para acrescentar, por ordem de valor para a leitura macro:
 9. **Risco-país**: o EMBI+ aberto parou em 2024; CDS não tem fonte gratuita.
 
 
+## Projeto de lei em tramitação (lido em 25/11/2026)
+
+O projeto da LDO 2027 (PLN nº 2/2026) e o que ainda não é lei: `legis.senado.leg.br/
+dadosabertos/materia/textos/<codigo>` lista os textos (o projeto com os anexos, as mensagens
+modificativas, os relatórios da CMO), cada um com o PDF em `sdleg-getter/dadosabertos/
+documento/<id>`; `materia/movimentacoes/<codigo>` dá a situação e os informes (pedir com
+`Accept: application/json`). O código da matéria sai de `materia/pesquisa/lista?sigla=PLN&
+ano=A`. Abrem da nuvem. O PDF do projeto tem 1.152 páginas: a tabela da dívida está no Anexo
+IV.3 (`pdftotext -layout` lê); o gráfico do primário que estabiliza é imagem, e o número de 2027
+veio do relatório preliminar da CMO.
+
 ## Metas das LDOs (lidas em 19/11/2026)
 
 A meta de primário do Governo Central no texto original de cada LDO (`leis.METAS_DAS_LDOS`),

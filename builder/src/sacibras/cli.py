@@ -49,6 +49,12 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="grava aqui a tabela das pendentes em Markdown (vazio se nenhuma)",
     )
+    tramitacao = comandos.add_parser(
+        "tramitacao", help="se os projetos de lei mostrados no painel andaram no Congresso"
+    )
+    tramitacao.add_argument(
+        "--saida", type=Path, help="grava aqui a tabela do que mudou (vazio se nada mudou)"
+    )
     smoke = comandos.add_parser("fontes-smoke", help="uma chamada mínima a cada fonte")
     smoke.add_argument("--markdown", action="store_true", help="imprime a tabela em Markdown")
     args = parser.parse_args(argv)
@@ -94,6 +100,15 @@ def main(argv: list[str] | None = None) -> int:
             args.saida.write_text(leituras_.tabela(hoje) + "\n" if pendente else "", "utf-8")
         vencidas = [x for x in leituras_.LEITURAS if leituras_.situacao(x, hoje) == "vencida"]
         return 1 if args.estrito and vencidas else 0
+
+    if args.comando == "tramitacao":
+        from sacibras import tramitacao as tramitacao_
+
+        tabela = tramitacao_.olhar()
+        print(tabela or "Nenhum projeto andou desde a última leitura.")
+        if args.saida:
+            args.saida.write_text(tabela + "\n" if tabela else "", "utf-8")
+        return 0
 
     from sacibras.fontes.smoke import rodar
 
