@@ -844,7 +844,7 @@ def exportacoes_no_pib(
         fonte=(
             f"{comexstat.FONTE} (valor FOB de {ano}, mês a mês, em reais pelo dólar médio do "
             f"mês do Banco Central, SGS 3698); {ibge_contas_regionais.FONTE} (edição {edicao}, "
-            "PIB a preços correntes); cálculo próprio"
+            "PIB a preços correntes); conta nossa"
         ),
         valores=valores,
         brasil=round(total / pib_br * 100, 2) if pib_br else None,

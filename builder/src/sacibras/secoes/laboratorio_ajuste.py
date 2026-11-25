@@ -368,7 +368,7 @@ def promessa(ctx: Contexto) -> Pecas:
     ultimo = max(realizado)
     fonte = (
         "Banco Central (Focus, mediana de dezembro de cada ano; "
-        f"{ctx.fonte_sgs('NFSP_PRIMARIO_12M')}); {CONTA}"
+        f"{ctx.fonte_sgs('NFSP_PRIMARIO_12M')}); erro médio: {CONTA}"
     )
     cartoes = [
         Cartao(
@@ -588,7 +588,7 @@ def divida_esperada(ctx: Contexto) -> Pecas:
     antes = safras[max(safras)].get(alvo)
     fonte = (
         f"Banco Central (Focus, mediana de dezembro de cada ano e a de hoje; "
-        f"{ctx.fonte_sgs('DBGG')}); {CONTA}"
+        f"{ctx.fonte_sgs('DBGG')}); erro médio: {CONTA}"
     )
     erros = {h: ajuste.erro_por_horizonte(safras, realizada, h) for h in HORIZONTES}
     feitos = [
@@ -609,7 +609,7 @@ def divida_esperada(ctx: Contexto) -> Pecas:
                 else f"em {ultimo} ela era de {br(realizada[ultimo])} %"
             ),
             fonte=fonte,
-            procedencia="calculado",
+            procedencia="mercado",
             secao="laboratorio",
         )
     ]
@@ -1370,7 +1370,7 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
                 "PIB (Focus)",
             ],
             linhas=linhas,
-            fonte=fonte,
+            fonte=f"{fonte}; estabiliza (Focus): {CONTA}",
             nota=" ".join(
                 [
                     f"Meta de 2027: R$ {br(relatorios.PLDO_2027_META_BI)} bi (tolerância de",

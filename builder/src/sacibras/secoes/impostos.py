@@ -867,8 +867,8 @@ def _simulador_da_reforma(
             periodicidade="D",
             casas=1,
             detalhe=f"entre {br(leis.TETO_IBS_CBS, 1)} (teto da lei) e {br(soma_recente, 1)}",
+            # O valor é o do Comitê Gestor; só a ponta de cima do detalhe é soma nossa.
             fonte=f"{r.FONTE_ALIQUOTA_COMITE}; {leis.TETO_IBS_CBS_NORMA}; {r.FONTE_CBS_2027}",
-            procedencia="calculado",
             secao="impostos",
         ),
         cartao(
@@ -911,7 +911,7 @@ def _simulador_da_reforma(
         ],
         fonte=(
             f"{r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; {leis.TETO_IBS_CBS_NORMA}; "
-            "somas: cálculo próprio"
+            "somas: conta nossa"
         ),
         # O Comitê Gestor refaz a conta todo ano; o número definitivo só sai no fim da
         # transição. A CBS do TCU para 2027 ficou acima da estimativa anterior
@@ -1030,7 +1030,7 @@ def _simulador_da_reforma(
         ],
         fonte=(
             f"{leis.REFORMA_NORMAS}; {r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; "
-            "multiplicações: cálculo próprio"
+            "multiplicações: conta nossa"
         ),
         como_ler=(
             "O valor digitado é o preço sem IBS nem CBS. A faixa vai do teto da lei "
@@ -1555,7 +1555,7 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
         unidade="% do IBS de estados e municípios",
         casas=1,
         periodicidade="A",
-        fonte=f"{leis.IBS_DESTINO_NORMA}; a conta ano a ano: cálculo próprio",
+        fonte=f"{leis.IBS_DESTINO_NORMA}; a conta ano a ano: conta nossa",
         # De 2029 a 2032, 80 % do IBS vai pela receita média antiga de ICMS e ISS; em 2033,
         # 90 %; depois, cai 1/45 por ano até acabar em 2078. Do resto, 5 % vão aos que mais
         # perdem e 95 % pelo destino.

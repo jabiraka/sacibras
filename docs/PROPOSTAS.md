@@ -192,6 +192,30 @@ Entraram o projeto da LDO 2027 e a conta nossa da dívida por cenário (ver o
   hipótese para depois de 2030.
 - **A mesma peça a cada PLDO** (abril) e a cada LDO sancionada: hoje os nomes dizem 2027.
 
+## Rótulo de conta nossa (sessão de 25/11/2026)
+
+A auditoria das peças que se dizem conta nossa (ver o [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md))
+corrigiu os casos em que o número na tela era o publicado. Ficaram, para decidir ou conferir:
+
+- **Crédito imobiliário (`imobiliario-concessoes`)**: no CKAN do BC, o SGS 20704 é o crédito
+  com recursos **direcionados**; o catálogo e o rótulo dizem "total". Conferir e corrigir o
+  nome ou a série.
+- **Saldo do Caged em 12 meses (`emprego-formal`)**: o MTE publica o saldo de 12 meses pronto;
+  a conta pela diferença do estoque (SGS 28763) pode não bater com ele. Trocar pela série do
+  MTE se ela abrir da nuvem.
+- **Reservas em meses de importação (Brasil no mundo)**: o Banco Mundial publica pronto (WDI
+  FI.RES.TOTL.MO); dá para trocar a fonte e marcar oficial.
+- **Impostos sobre o consumo (`carga-consumo`)**: a OCDE publica a parte na carga total
+  pronta; dá para ler direto.
+- **Reservatórios (`reservatorios`)**: a energia armazenada do SIN é a definição do ONS, que
+  publica o número no painel, não no CSV que o builder lê. Fica conta nossa até haver o CSV.
+- **Saldo das estatais (`estatais-saldo`)**: o de 2025 é o retorno financeiro que a Sest
+  publica; os anos de antes são reconstrução nossa. Pode citar a Sest no cartão.
+- **Reservas contra a dívida de curto prazo**: o BC publica o indicador por prazo residual; o
+  painel usa o prazo original. Ver se dá para trocar.
+- Transformações simples (12 meses, deflacionar, dividir por outra série oficial, média dos
+  núcleos) ficam como conta nossa enquanto a fonte não publica o número pronto.
+
 ## Indicadores clássicos (sessão de 20/11/2026)
 
 Caio: *"veja se dá pra colocar, se não ficar muito poluído, gráficos ou variações de gráficos

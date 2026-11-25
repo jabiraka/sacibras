@@ -348,7 +348,7 @@ def juro_e_prazos(ctx: Contexto, inicio: date) -> tuple[Cartao, Grafico]:
         casas=1,
         periodicidade="M",
         janela_anos=10,
-        fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
+        fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
         nota=(
             "Saldo pelo prazo que falta para vencer, com as compromissadas do Banco Central, "
             "quase todas curtas. A parte de até 1 ano é a que vence nos próximos 12 meses."

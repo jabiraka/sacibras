@@ -633,7 +633,8 @@ def montar(ctx: Contexto) -> Secao:
             esperada,
             metas,
             date(ctx.hoje.year - 15, 1, 1),
-            f"Banco Central, Focus (mediana); {ctx.fonte_sgs('META_INFLACAO')}; conta nossa",
+            f"Banco Central, Focus (mediana); {ctx.fonte_sgs('META_INFLACAO')}; "
+            "meta no prazo: conta nossa",
         )
         if g_esperada:
             graficos.append(g_esperada)

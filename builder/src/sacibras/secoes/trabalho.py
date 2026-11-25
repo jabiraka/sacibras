@@ -823,12 +823,13 @@ def montar(ctx: Contexto) -> Secao:
     except Exception as erro:  # a conta a mais não derruba a seção
         print(f"  aviso: trabalho sem os fatores da desocupação: {str(erro)[:120]}")
     try:
-        ipca_mes = ctx.sgs("IPCA")
+        # O IPCA de 12 meses é o que o IBGE publica (SGS 13522); só a soma é nossa.
         g_soma = grafico_desocupacao_mais_inflacao(
             desocupacao,
-            contas.acumulado(ipca_mes, 12),
+            ctx.sgs("IPCA_12M"),
             inicio,
-            f"IBGE, PNAD Contínua (SIDRA 6381); IPCA: {ctx.fonte_sgs('IPCA')}; conta nossa",
+            f"IBGE, PNAD Contínua (SIDRA 6381); IPCA: {ctx.fonte_sgs('IPCA_12M')}; "
+            "soma: conta nossa",
         )
         if g_soma:
             graficos.append(g_soma)

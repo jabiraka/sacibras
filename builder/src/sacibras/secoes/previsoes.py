@@ -101,7 +101,7 @@ def _simulador(
             f"Focus de {periodo(edicao, 'D')} (PIB, IPCA, Selic, resultado primário e dívida); "
             f"{ctx.fonte_sgs('DBGG', 'DIVIDA_IDX_SELIC')}"
             + (f"; {bcb_fiscal.FONTE_TAXA}" if oficial else "")
-            + "; cálculo próprio"
+            + "; conta nossa"
         ),
         # Parte da dívida que o Focus espera para o fim do ano. A parte atrelada à Selic
         # acompanha a Selic do Focus; crescimento, inflação e primário são medianas do Focus,
@@ -376,7 +376,7 @@ def montar(ctx: Contexto) -> Secao:
                 ],
                 fonte=(
                     "IBGE (SIDRA 5932); Banco Central (IBC-Br, SGS 24363; Focus, "
-                    "ExpectativasMercadoTrimestrais); cálculo próprio"
+                    "ExpectativasMercadoTrimestrais); conta nossa"
                 ),
                 # Reta do crescimento do PIB contra o do IBC-Br médio do trimestre (os dois
                 # contra um ano antes). Erro típico: raiz do erro quadrático médio fora da

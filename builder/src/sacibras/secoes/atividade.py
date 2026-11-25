@@ -453,13 +453,41 @@ def pib_por_habitante(
     return pib, por_hab
 
 
+def com_a_conta_depois(oficial: list[Ponto], conta: list[Ponto]) -> tuple[list[Ponto], int]:
+    """O número publicado em todos os anos que ele cobre e a conta nossa só depois do último
+    (as Contas Nacionais anuais saem com atraso). Devolve também quantos anos são da conta."""
+    ultimo = max((d for d, _ in oficial), default=date(1, 1, 1))
+    depois = [(d, v) for d, v in conta if d > ultimo]
+    return sorted(oficial) + depois, len(depois)
+
+
 def grafico_pib_por_habitante() -> Grafico | None:
+    # O IBGE publica as duas variações prontas na tabela 6784 (Contas Nacionais anuais, que
+    # saem com cerca de dois anos de atraso). Os anos depois do último publicado são conta
+    # nossa: o volume das Trimestrais (1620, média do ano) e a projeção da população.
+    oficial_pib = ibge_sidra.serie(6784, 9810)
+    oficial_hab = ibge_sidra.serie(6784, 9814)
     volume = ibge_sidra.serie(1620, 583, classificacao="c11255/90707", trimestral=True)
     populacao = ibge_projecao.grupos()["BR"]["POP_T"]
-    pib, por_hab = pib_por_habitante(produtividade.anual(volume, media=True), populacao)
-    if not pib:
+    conta_pib, conta_hab = pib_por_habitante(produtividade.anual(volume, media=True), populacao)
+    pib, extra = com_a_conta_depois(oficial_pib[-25:], conta_pib)
+    por_hab, _ = com_a_conta_depois(oficial_hab[-25:], conta_hab)
+    if not pib or not por_hab:
         return None
     ano = pib[-1][0].year
+    fonte = "IBGE, Contas Nacionais (SIDRA 6784)"
+    nota = ""
+    if extra:
+        anos = [d.year for d, _ in pib[-extra:]]
+        quais = anos[0] if len(anos) == 1 else f"{anos[0]} a {anos[-1]}"
+        fonte += (
+            f"; {quais}: conta nossa com as Contas Trimestrais (SIDRA 1620) e as Projeções da "
+            "População (revisão 2024)"
+        )
+        nota = (
+            f"{quais}: conta nossa, até o IBGE publicar o ano (PIB em volume, média do ano; "
+            "descontada a população projetada)."
+        )
     return grafico(
         "pib-por-habitante",
         "PIB e PIB por habitante",
@@ -471,16 +499,10 @@ def grafico_pib_por_habitante() -> Grafico | None:
             f"Em {ano}, o PIB cresceu {br(pib[-1][1])} % e o PIB por habitante, "
             f"{br(por_hab[-1][1])} %."
         ),
-        fonte=(
-            "IBGE, Contas Nacionais Trimestrais (SIDRA 1620, volume) e Projeções da População "
-            "(revisão 2024); conta nossa"
-        ),
+        fonte=fonte,
         # Quando a população cresce, o país pode produzir mais sem que cada pessoa, na média,
         # fique com mais.
-        nota=(
-            "PIB em volume, média do ano contra a do anterior. Por habitante, descontado o "
-            "crescimento da população."
-        ),
+        nota=nota,
     )
 
 

@@ -837,7 +837,7 @@ def _ciclos_alinhados(ctx: Contexto) -> list[Grafico]:
         return []
     selic_mensal = modelo_selic.fim_do_mes(meta)
     antes, depois = 6, 36
-    fonte = f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M')}; cálculo próprio"
+    fonte = f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M')}; conta nossa"
     como_ler = (
         "Um ciclo por linha, do sexto mês antes do primeiro corte a três anos depois. É o que "
         "aconteceu, não o que a Selic causou."
@@ -961,9 +961,7 @@ def _ciclos_da_selic(ctx: Contexto) -> list[Tabela]:
                 subtitulo=f"Inflação, dólar e dívida desde que o Copom passou a {verbo}",
                 colunas=[c.rotulo for c in deste],
                 linhas=linhas,
-                fonte=(
-                    f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M', 'DOLAR', 'DBGG')}; cálculo próprio"
-                ),
+                fonte=(f"{ctx.fonte_sgs('SELIC_META', 'IPCA_12M', 'DOLAR', 'DBGG')}; conta nossa"),
                 # Fora da tela (25/11/2026, texto curto): o Copom age pelo que espera da
                 # inflação, e no mesmo período vieram safra, petróleo, crise de fora e contas
                 # públicas; o efeito da Selic sozinha está no simulador. Um e dois anos contam
@@ -1188,7 +1186,7 @@ def _efeito_da_selic(ctx: Contexto) -> tuple[list[Cartao], list[Tabela], Simulad
         fonte=(
             f"{r.FONTE_EFEITO_SELIC}; {r.FONTE_FAIXA_DO_IPCA}; {fonte_divida}; Focus de "
             f"{periodo(bcb_focus.data_da_ultima_edicao(), 'D')}; soma das parcelas da dívida: "
-            "cálculo próprio"
+            "conta nossa"
         ),
         # Fora da tela (25/11/2026, texto curto): inflação é a resposta do IPCA em quatro
         # trimestres, já com o que passa pelo dólar e pela expectativa; dólar é o coeficiente
