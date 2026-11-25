@@ -3,6 +3,7 @@
 // da série fica desenhado em contorno, para ver o envelhecimento. A escala é a mesma em
 // todos os anos, então a forma muda e a régua não.
 
+import { fonteComEnderecos } from "./fontes";
 import { numero } from "./formato";
 import { botoesDaImagem, tema, type Desenho } from "./grafico";
 import { el } from "./pecas";
@@ -95,7 +96,7 @@ export function montarPiramide(g: Grafico, p: Piramide): HTMLElement {
           id: `${g.id}-${ano}`,
           titulo: g.titulo,
           sub: `% da população · ${rotuloDoAno(ano)}`,
-          fonte: `Fonte: ${g.fonte}`,
+          fonte: fonteComEnderecos(`Fonte: ${g.fonte}`),
           nota: frase.textContent ?? "",
           legenda: [
             { nome: "Homens", chave: "barra" as const, cor: cores[1] },

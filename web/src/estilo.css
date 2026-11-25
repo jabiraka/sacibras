@@ -4302,3 +4302,17 @@ details.guardado > .alternativas-barra {
     animation: none;
   }
 }
+
+/* O endereço exato da fonte, ao lado do nome dela (Caio, 25/11/2026). */
+.fonte-links a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.fonte-links a:hover {
+  color: var(--tinta-2);
+  text-decoration-color: currentColor;
+}

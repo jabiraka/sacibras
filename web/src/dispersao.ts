@@ -4,6 +4,7 @@
 // a nota diz quem é, com o botão para mostrar todos. A tabela com todos os países fica
 // guardada embaixo, como a dos outros gráficos.
 
+import { fonteComEnderecos } from "./fontes";
 import { numero } from "./formato";
 import { botoesDaImagem, textoSemBotoes } from "./grafico";
 import { el } from "./pecas";
@@ -53,7 +54,7 @@ export function montarDispersao(g: Grafico, d: Dispersao): HTMLElement {
         id: g.id,
         titulo: g.titulo,
         sub: g.subtitulo,
-        fonte: `Fonte: ${g.fonte}`,
+        fonte: fonteComEnderecos(`Fonte: ${g.fonte}`),
         nota: textoSemBotoes(aviso),
         legenda: [
           {

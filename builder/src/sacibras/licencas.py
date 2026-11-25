@@ -136,7 +136,9 @@ B3 = Licenca(
         "na tela, sem download. A cláusula não foi achada nos dois textos lidos; registrar o "
         "trecho quando o Caio indicar onde está."
     ),
-    marca=r"\bB3\b",
+    # A fonte na tela aponta o Ipeadata (Caio, 25/11/2026: "só aponte pro ipeadata"); o dado
+    # segue sendo o índice da B3, então a marca também acha a série e o "sem download" fica.
+    marca=r"\bB3\b|IBVSP366|IPEADATA \(Ibovespa\)",
     motivo="índice ou preço da B3, que licencia a redistribuição dos dados dela",
     citacao="B3",
 )

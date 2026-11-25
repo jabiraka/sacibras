@@ -99,6 +99,7 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   primário) e botões que carregam o projeto, as médias do Focus e o erro da história. Diz
   aonde a dívida chega, quando para de subir e de quanto a meta teria de ser para ela
   voltar ao nível de partida, sempre com a faixa do erro que as metas já tiveram.
+- **Fonte com o endereço exato** (Caio, 25/11/2026: *"coloque o site de onde estamos tirando a informação, o site exato"*): fonte nova ganha regra em `builder/src/sacibras/links.py` (o site põe o link e o endereço na imagem e no CSV).
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 

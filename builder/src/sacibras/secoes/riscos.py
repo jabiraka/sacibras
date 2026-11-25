@@ -1515,8 +1515,8 @@ def _estresse(
             colunas=colunas,
             linhas=linhas,
             fonte=(
-                f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; IPEADATA (Ibovespa); "
-                "conta nossa"
+                f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; "
+                "Ipeadata, Ibovespa IBVSP366; conta nossa"
             ),
             # Alta e queda são do pior trecho dentro da janela (do ponto mais baixo ao mais
             # alto que veio depois, e o contrário). A linha da dívida só existe onde as séries
@@ -1701,7 +1701,7 @@ def _estresse(
                 linhas=v0.linhas,
                 fonte=(f"{base.fonte}; " if base else "")
                 + f"{ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL', 'DOLAR', 'SELIC_META')}; "
-                "IPEADATA (Ibovespa); conta nossa",
+                "Ipeadata, Ibovespa IBVSP366; conta nossa",
                 nota=v0.nota,
                 largura="inteira",
                 variantes=variantes,

@@ -28,6 +28,7 @@ def test_fonte_privada_tira_o_download_e_a_publica_nao() -> None:
     assert "FGV IBRE" in igpm.fonte and igpm.sem_download.startswith("Sem download:")
     assert "Fecomercio" in _grafico(ctx.fonte_sgs("CONFIANCA_CONSUMIDOR")).sem_download
     assert "B3" in _grafico(f"{ipeadata.FONTE_IBOVESPA}; conta nossa").sem_download
+    assert "B3" not in ipeadata.FONTE_IBOVESPA
     assert _grafico(ctx.fonte_sgs("IPCA_12M", "INPC")).sem_download == ""
     assert _grafico("Penn World Table 11.0 (licença CC BY 4.0)").sem_download == ""
 

@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 25/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 25/11/2026 (de novo). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -41,6 +41,16 @@ LDO 2027 ganhou "conta nossa" na coluna do primário que estabiliza pelo Focus, 
 "Cálculo próprio" virou "conta nossa" em todo lugar (eram três nomes para a mesma coisa;
 "estimativa nossa" fica para o Laboratório e as perguntas). O que ficou em aberto está no
 [PROPOSTAS](PROPOSTAS.md), "Rótulo de conta nossa".
+
+**25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
+onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
+ganham um endereço por código; as instituições, a página dos dados), vão para `fontes.json` e
+o site (`web/src/fontes.ts`) põe os links no rodapé de gráfico, tabela, mapa e ranking, e o
+endereço por extenso no PNG, no CSV e na dica do cartão. Fonte sem regra cai na página geral da
+instituição (IBGE, Banco Central, Tesouro) ou fica sem link: `links.sem_endereco`. Cada código de série (SGS, SIDRA) é link no próprio texto; instituição ganha o nome
+linkado depois do texto, e o endereço vai na dica. Olhado a 390 e 1280 px em Inflação e
+Atividade (sem estouro). **Falta**: abrir os endereços das regras do PC (só os SGS/SIDRA vêm das próprias chamadas do builder; os das
+instituições foram escritos de cabeça e não foram abertos daqui).
 
 **25/11/2026, troca suave nas listas dos gráficos** (Caio: *"quando clico num drop down [...]
 as vezes muda do outro lado os gráficos, e o drop down muda um pouco de posição [...] deixe mais

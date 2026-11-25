@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.comando == "build":
-        from sacibras import busca, glossario
+        from sacibras import busca, glossario, links
         from sacibras.construir import construir
 
         print(f"Gerando em {args.saida}")
@@ -70,6 +70,7 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as erro:
             print(f"  aviso: índice da busca não gravado ({erro})")
         print(f"  glossário: {glossario.gravar(args.saida)} termos")
+        print(f"  endereços das fontes: {links.gravar(args.saida)} regras")
         for x in leituras_.pendentes(date.today()):
             situacao = leituras_.situacao(x, date.today())
             print(f"  aviso: releitura {situacao} ({x.reler_ate:%d/%m/%Y}): {x.o_que}")

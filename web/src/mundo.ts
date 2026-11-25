@@ -7,6 +7,7 @@
 //   3. duas métricas ao mesmo tempo, um ponto por país;
 //   4. a tabela com tudo, guardada.
 
+import { fonteComEnderecos } from "./fontes";
 import { numero } from "./formato";
 import { botoesDaImagem, montarGrafico, textoSemBotoes } from "./grafico";
 import { el, guardar } from "./pecas";
@@ -189,7 +190,7 @@ export function montarMundo(m: Mundo): HTMLElement {
             id: `mundo-ranking-${metrica.id}-${ano}`,
             titulo: textoSemBotoes(tituloRanking) || metrica.nome,
             sub: subRanking.textContent?.split(" · ")[0] ?? metrica.unidade,
-            fonte: `Fonte: ${metrica.fonte}`,
+            fonte: fonteComEnderecos(`Fonte: ${metrica.fonte}`),
             nota: textoSemBotoes(posicao),
             legenda: [],
             desenho: desenhoDoRanking(desenhado.itens, desenhado.regua, metrica.casas),
@@ -589,7 +590,9 @@ export function montarMundo(m: Mundo): HTMLElement {
         id: `mundo-${eixoY.id}-${eixoX.id}-${ano}`,
         titulo: `${eixoY.nome} contra ${eixoX.nome}`,
         sub: `Um ponto por país, em ${ano}. Na horizontal: ${eixoX.nome} (${eixoX.unidade}); na vertical: ${eixoY.nome} (${eixoY.unidade})`,
-        fonte: eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`,
+        fonte: fonteComEnderecos(
+          eixoX.fonte === eixoY.fonte ? `Fonte: ${eixoX.fonte}` : `Fontes: ${eixoX.fonte}; ${eixoY.fonte}`,
+        ),
         nota: textoSemBotoes(notaDispersao),
         legenda: itens.map((item) => ({
           nome: item.textContent ?? "",

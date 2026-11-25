@@ -15,6 +15,7 @@ import { abrirBusca, ligarBusca, revelar } from "./busca";
 import { agendaDaSemana, agendaDoAssunto } from "./calendario";
 import { saiuPorUltimo } from "./saiu";
 import { ligarGlossario } from "./glossario";
+import { fonteComEnderecos, ligarEnderecos } from "./fontes";
 import { vistaGlossario } from "./glossario-pagina";
 import { ligarNomesProprios, ligarTraducao, protegerNomeDeEstado } from "./traducao";
 import { novoDesdeAUltimaVisita, seloNovo } from "./novidades";
@@ -182,7 +183,7 @@ function montarCartao(c: Cartao): HTMLElement {
   proc.append(el("i"), document.createTextNode(c.procedencia));
   pe.append(proc);
   no.append(pe);
-  no.title = `Fonte: ${c.fonte}`;
+  no.title = fonteComEnderecos(`Fonte: ${c.fonte}`);
   return no;
 }
 
@@ -382,7 +383,7 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
 function preencherEssencial(item: HTMLElement, c: Cartao, aoVivo: boolean): void {
   item.replaceChildren();
   item.title =
-    `${c.detalhe && !aoVivo ? `${c.detalhe}. ` : ""}Fonte: ${c.fonte}` +
+    `${c.detalhe && !aoVivo ? `${c.detalhe}. ` : ""}${fonteComEnderecos(`Fonte: ${c.fonte}`)}` +
     (aoVivo ? ". Lido agora, direto da fonte." : "");
   const valor = el("strong");
   valorComUnidade(c, valor);
@@ -1071,6 +1072,7 @@ async function iniciar(): Promise<void> {
   ligarNomesProprios();
   ligarBusca();
   ligarGlossario(conteudo);
+  ligarEnderecos(conteudo);
   document.querySelector(".menu-botao")?.addEventListener("click", () => {
     abrirMenu(!document.getElementById("lateral")?.classList.contains("aberta"));
   });
