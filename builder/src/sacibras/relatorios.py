@@ -1042,10 +1042,7 @@ class AnoDoPLDO:
 
 PLDO_2027_LIDO_EM = date(2026, 11, 25)
 PLDO_2027_PROJETO = "PLN nº 2/2026"
-PLDO_2027_SITUACAO = (
-    "na Comissão Mista de Orçamento, que aprovou o relatório preliminar em 11/11/2026 e "
-    "recebeu 1.504 emendas até 24/11"
-)
+PLDO_2027_SITUACAO = "na Comissão Mista de Orçamento"
 PLDO_2027_META_BI = 73.216092959
 PLDO_2027_FAIXA_BI = (36.60804648, 109.824139439)
 PLDO_2027_ESTABILIZA = 2.2

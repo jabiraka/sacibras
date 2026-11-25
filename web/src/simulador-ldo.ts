@@ -23,11 +23,11 @@ interface Controle {
 
 const CONTROLES: Controle[] = [
   { id: "crescimento", rotulo: "Crescimento do PIB", ajuda: "acima da inflação", min: -3, max: 2 },
-  { id: "juro", rotulo: "Juro da dívida", ajuda: "o juro médio que a dívida paga por ano", min: -2, max: 3 },
+  { id: "juro", rotulo: "Juro da dívida", ajuda: "juro médio da dívida", min: -2, max: 3 },
   {
     id: "primario",
     rotulo: "Primário",
-    ajuda: "abaixo de zero: a meta não se cumpre inteira",
+    ajuda: "negativo: meta não cumprida",
     min: -3,
     max: 3,
   },
@@ -142,19 +142,15 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
     const focusFim = s.focus_divida[s.focus_divida.length - 1];
     const cai = anoEmQueCai(s, simulada);
     const ao_lado = [
-      governoFim === undefined ? "" : `o projeto projeta ${numero(governoFim, 1)} %`,
-      focusFim === null || focusFim === undefined ? "" : `o Focus espera ${numero(focusFim, 1)} %`,
+      governoFim === undefined ? "" : `governo ${numero(governoFim, 1)} %`,
+      focusFim === null || focusFim === undefined ? "" : `Focus ${numero(focusFim, 1)} %`,
     ].filter(Boolean);
     resultado.replaceChildren(
-      document.createTextNode("Com essas hipóteses, a dívida bruta chega a "),
-      el("b", "", `${numero(fim, 1)} % do PIB em ${ultimo}`),
+      document.createTextNode(`Dívida em ${ultimo}: `),
+      el("b", "", `${numero(fim, 1)} % do PIB`),
       document.createTextNode(
-        (ao_lado.length ? ` (${ao_lado.join("; ")})` : "") +
-          (cai === null
-            ? ` e não para de subir até ${ultimo}.`
-            : cai === primeiro
-              ? ` e já cai em ${cai}.`
-              : ` e para de subir em ${cai}.`),
+        (ao_lado.length ? ` (${ao_lado.join("; ")}). ` : ". ") +
+          (cai === null ? `Não para de subir até ${ultimo}.` : `Para de subir em ${cai}.`),
       ),
     );
 
@@ -162,39 +158,35 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
     // de partida, com o crescimento e o juro escolhidos.
     const falta = primarioQueFalta(s, desvios);
     const metaDoAno = s.meta[0];
-    const nivel = `${numero(s.divida_inicial, 1)} % do PIB`;
+    const volta = `Para voltar aos ${numero(s.divida_inicial, 1)} % de ${s.ano_inicial}: `;
     if (falta <= 0.05) {
       meta.replaceChildren(
-        document.createTextNode(
-          `Com esse crescimento e esse juro, as metas do projeto, cumpridas, bastam para a dívida voltar em ${ultimo} ao nível de ${s.ano_inicial} (${nivel})` +
-            (falta < -0.05 ? `, com folga de ${numero(-falta, 1)} pp do PIB por ano.` : "."),
-        ),
+        document.createTextNode(volta),
+        el("b", "", "as metas do projeto bastam"),
+        document.createTextNode(falta < -0.05 ? `, com folga de ${numero(-falta, 1)} pp.` : "."),
       );
     } else {
       meta.replaceChildren(
+        document.createTextNode(`${volta}primário `),
+        el("b", "", `${numero(falta, 1)} pp acima do projeto`),
         document.createTextNode(
-          `Com esse crescimento e esse juro, para a dívida voltar em ${ultimo} ao nível de ${s.ano_inicial} (${nivel}), o primário teria de ficar `,
-        ),
-        el("b", "", `${numero(falta, 1)} pp do PIB acima do que o projeto prevê`),
-        document.createTextNode(
-          ", todo ano" +
+          " todo ano" +
             (metaDoAno === null || metaDoAno === undefined
               ? "."
-              : `: meta de ${numero(metaDoAno + falta, 1)} % do PIB em ${primeiro}, no lugar de ${numero(metaDoAno, 2)} %.`),
+              : ` (meta de ${numero(metaDoAno + falta, 1)} % em ${primeiro}, não ${numero(metaDoAno, 2)} %).`),
         ),
       );
     }
 
     // A faixa: o mesmo crescimento e o mesmo juro, com o erro que as metas já tiveram.
-    const [menor, medio, maior] = s.erro_da_historia;
+    const [menor, , maior] = s.erro_da_historia;
     const com = (erro: number) => {
       const t = trajetoriaDaLDO(s, { ...desvios, primario: -erro });
       return t[t.length - 1] ?? s.divida_inicial;
     };
     faixa.textContent =
-      `Se o primário ficar abaixo do projeto como as metas das LDOs já ficaram (${numero(medio, 1)} pp do PIB na média; ` +
-      `de ${numero(menor, 1)} a ${numero(maior, 1)} em 90 % dos casos), com esse crescimento e esse juro a dívida vai a ` +
-      `${numero(com(medio), 1)} % do PIB em ${ultimo} (de ${numero(com(menor), 1)} a ${numero(com(maior), 1)} %).`;
+      `Com o erro que as metas já tiveram (${numero(menor, 1)} a ${numero(maior, 1)} pp): ` +
+      `de ${numero(com(menor), 1)} a ${numero(com(maior), 1)} % em ${ultimo}.`;
 
     cancelAnimationFrame(pendente);
     pendente = requestAnimationFrame(() => {
@@ -208,7 +200,7 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
       ];
       const g: Grafico = {
         id: "simulador-ldo",
-        titulo: "Dívida bruta: o projeto da LDO 2027, o Focus e a sua simulação",
+        titulo: "Dívida bruta: governo, Focus e a sua simulação",
         subtitulo: "",
         tipo: "linha",
         unidade: "% do PIB",
@@ -218,14 +210,14 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
           { id: "realizado", nome: "Realizado", papel: "realizado", tracejado_desde: null, pontos: s.realizado },
           {
             id: "governo",
-            nome: "Projeto da LDO 2027 (governo)",
+            nome: "Governo",
             papel: "previsao",
             tracejado_desde: null,
             pontos: linha(s.governo_divida),
           },
           {
             id: "focus",
-            nome: "Focus (mediana)",
+            nome: "Focus",
             papel: "consenso",
             tracejado_desde: null,
             pontos: linha(s.focus_divida),
@@ -251,7 +243,7 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
   }
   pintar();
   return [
-    el("p", "nota", `A linha de base é o ${s.projeto}.`),
+    el("p", "nota", `Linha de base: ${s.projeto}.`),
     painel,
     resultado,
     meta,

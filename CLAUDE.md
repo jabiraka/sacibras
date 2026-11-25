@@ -266,6 +266,14 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   `builder/src/sacibras/glossario.py` (até três frases, sem jargão; número de lei só de norma
   lida). A tela sublinha a palavra e põe "?" nos rótulos sozinha. Indicador novo no painel de
   alerta ganha "o que é / por que é alerta / pode levar a" em `alertas.py`.
+- **Texto curto, sempre** (Caio, 25/11/2026: *"Diminua os textos [...] coloque isso como
+  regra nas próximas sessões, tem que ser coisas bem mais simples e sumários, só informações
+  relevantes nos textos"*). Vale para tudo o que vai à tela: título em uma linha, legenda
+  de série em poucas palavras ("Governo", "Focus"), frase do gráfico só com os números,
+  nota em até duas frases (o método e a ressalva que muda a leitura) e resultado de
+  simulador em uma linha por resposta. Detalhe de método, conferência e história da conta
+  ficam no código e nos docs, não na tela. Texto novo se escreve curto; ao mexer numa peça
+  antiga, encurta-se o texto dela junto.
 - **Resultado: só o essencial** (Caio, 14/11/2026: *"se for apresentar o resultado, escreva
   só o essencial, sem muitos detalhes e contextos"*). O texto embaixo do número no cartão
   (`detalhe`) tem até 60 letras (o builder avisa: "detalhe longo"); explicação vai para a nota

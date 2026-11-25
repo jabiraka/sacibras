@@ -952,7 +952,7 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             graficos={"divida-esperada": ["ldo-2027-divida"]},
             rotulos={
                 "divida-esperada": "O que o Focus esperava, safra a safra",
-                "ldo-2027-divida": "O projeto da LDO 2027",
+                "ldo-2027-divida": "Projeto da LDO 2027",
             },
         ),
     },

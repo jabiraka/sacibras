@@ -319,7 +319,7 @@ function caixaDoSimuladorReforma(sim: SimuladorReforma): HTMLElement {
 function caixaDoSimuladorLDO(sim: SimuladorLDO): HTMLElement {
   const caixa = guardar(
     "Simule a dívida com as metas da LDO 2027",
-    "Mude o crescimento, o juro e o quanto da meta se cumpre, e veja a dívida e a meta que seria preciso",
+    "Mude o crescimento, o juro e o primário",
     () => montarSimuladorLDO(sim),
   );
   caixa.id = "simulador-ldo";

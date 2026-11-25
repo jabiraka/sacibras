@@ -1103,7 +1103,7 @@ def _simulador_da_ldo(
     primario = media([mercado[a].primario - governo[a].primario for a in anos])
     menor, medio, maior = erro
     return SimuladorLDO(
-        projeto=f"projeto da LDO 2027 ({relatorios.PLDO_2027_PROJETO}), ainda não é lei",
+        projeto="projeto da LDO 2027, ainda não é lei",
         ano_inicial=min(proj),
         divida_inicial=partida,
         anos=anos,
@@ -1130,18 +1130,9 @@ def _simulador_da_ldo(
             ),
         ],
         fonte=f"{fonte}; {CONTA}",
-        nota=" ".join(
-            [
-                "Conta nossa, não previsão. A linha de base é a do projeto: a dívida de cada",
-                "ano é a do ano anterior mais os juros, menos o primário, sobre um PIB maior,",
-                "com a sobra que faz a conta chegar à dívida do anexo.",
-                "Cada controle soma o mesmo tanto em todos os anos, de",
-                f"{anos[0]} a {anos[-1]}; por isso o botão do Focus usa as diferenças médias",
-                "e chega perto, não em cima, da dívida que o Focus espera.",
-                "O juro é o juro médio da dívida, que acompanha a Selic com atraso.",
-                "Mexer num controle não mexe nos outros: a conta não mede o efeito do ajuste",
-                "sobre o PIB nem o da dívida sobre o juro.",
-            ]
+        nota=(
+            "Conta nossa, não previsão. Cada controle vale para todos os anos e não mexe nos "
+            "outros."
         ),
     )
 
@@ -1184,12 +1175,12 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
     series = [
         serie(
             "realizada",
-            "Dívida bruta (o que aconteceu)",
+            "Realizado",
             [(date(a, 1, 1), v) for a, v in sorted(realizada.items()) if a >= ultimo - 10],
         ),
         serie(
             "pldo-2027",
-            "O que o governo projeta no projeto da LDO 2027",
+            "Governo (projeto da LDO 2027)",
             ponte + [(date(a, 1, 1), v) for a, v in futuros.items()],
             papel="previsao",
         ),
@@ -1198,7 +1189,7 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
         series.append(
             serie(
                 "focus-hoje",
-                "O que o Focus espera hoje",
+                "Focus",
                 ponte + [(date(a, 1, 1), v) for a, v in focus.items()],
                 papel="consenso",
             )
@@ -1236,39 +1227,25 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
         series.append(
             serie(
                 "historia",
-                "Conta nossa: as metas com o erro da história, crescimento e juro do Focus",
+                "Conta nossa (metas com o erro da história)",
                 [inicio] + [(date(a, 1, 1), v) for a, v in central.items()],
                 papel="previsao",
             )
         )
         intervalos = [
             Intervalo(
-                nome="Se o erro for o menor ou o maior da faixa de 90 % da história",
+                nome="Faixa de 90 % do erro das metas",
                 serie="historia",
                 pontos=[(date(a, 1, 1), round(baixo[a], 2), round(alto[a], 2)) for a in central],
             )
         ]
         fonte_conta = f"{fonte}; {CONTA}"
-        frase_nossa = (
-            f"; com o erro que as metas já tiveram, a conta dá {br(central[fim])} % "
-            f"(de {br(baixo[fim])} a {br(alto[fim])} %)"
-        )
+        frase_nossa = f", conta nossa {br(central[fim])} % ({br(baixo[fim])} a {br(alto[fim])})"
         sobra_media = sum(sobra.values()) / len(sobra)
-        confere = _conferencia_com_o_tesouro(partida, governo, sobra)
         nota_nossa = [
-            "Conta nossa, não previsão: a dívida de cada ano é a do ano anterior mais os",
-            "juros, menos o primário, sobre um PIB maior.",
-            "Com os números do governo, a conta chega à dívida do anexo a menos de uma sobra",
-            f"de {br(sobra_media)} pp do PIB por ano, em média, mantida igual em tudo;",
-            "com os choques de 1 pp que o Tesouro simula no anexo de riscos, fica a até",
-            f"{br(confere)} pp do resultado dele em {ATE_O_FOCUS}.",
-            "Na linha da conta, o primário é o que o projeto prevê menos",
-            f"{br(medio)} pp, o quanto o resultado ficou abaixo da meta original da LDO, em",
-            f"média, de {de} a {ate} (faixa de 90 %: de {br(menor)} a {br(maior)} pp, as",
-            "pontas dos traços); o crescimento é o do Focus",
-            f"(depois de {ATE_O_FOCUS}, a última mediana) e o juro é o que faz a mesma conta",
-            "chegar à dívida que o próprio Focus espera.",
-            "Não entram o efeito do ajuste sobre o PIB nem o da dívida sobre o juro.",
+            f"Conta nossa, não previsão: as metas do projeto menos {br(medio)} pp, o erro",
+            f"médio das LDOs de {de} a {ate} (traços: {br(menor)} a {br(maior)}), com",
+            "crescimento e juro do Focus.",
         ]
 
         def divida_com(quais: tuple[str, ...]) -> dict[int, float]:
@@ -1289,35 +1266,28 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
                 grupo=grupo,
             )
 
-        um = "O projeto do governo, trocando uma hipótese por vez (% do PIB)"
-        nosso = "As metas com o erro da história, crescimento e juro do Focus (% do PIB)"
-        de_onde = "De onde vem a diferença entre o Focus e o governo (pp do PIB)"
-        nomes = {
-            "crescimento": "crescimento do PIB",
-            "juro": "juro da dívida",
-            "primario": "primário",
-        }
+        um = "Governo, trocando uma hipótese (% do PIB)"
+        nosso = "Metas com o erro da história (% do PIB)"
+        de_onde = "Focus menos governo: de onde vem (pp do PIB)"
+        nomes = {"crescimento": "Crescimento", "juro": "Juro", "primario": "Primário"}
         tabelas.append(
             Tabela(
                 id="ldo-2027-cenarios",
                 titulo="A dívida bruta, cenário a cenário",
-                subtitulo=(
-                    "Dívida bruta do governo geral; a mesma conta com os números do projeto "
-                    "da LDO 2027 (ainda não é lei), do Focus e da história das metas"
-                ),
+                subtitulo="Projeto da LDO 2027, ainda não é lei",
                 colunas=[str(meio), str(fim)],
                 linhas=[
-                    linha("Tudo como o governo supõe", do_governo, um),
-                    linha("Com o crescimento do Focus", divida_com(("crescimento",)), um),
-                    linha("Com o juro que o Focus embute", divida_com(("juro",)), um),
-                    linha("Com o primário do Focus", divida_com(("primario",)), um),
-                    linha("Com os três (é a dívida do Focus)", do_mercado, um),
-                    linha(f"Erro médio ({br(medio)} pp abaixo da meta)", central, nosso),
+                    linha("Como o governo supõe", do_governo, um),
+                    linha("Crescimento do Focus", divida_com(("crescimento",)), um),
+                    linha("Juro do Focus", divida_com(("juro",)), um),
+                    linha("Primário do Focus", divida_com(("primario",)), um),
+                    linha("Os três (é o Focus)", do_mercado, um),
+                    linha(f"Erro médio ({br(medio)} pp)", central, nosso),
                     linha(f"Erro menor ({br(menor)} pp)", baixo, nosso),
                     linha(f"Erro maior ({br(maior)} pp)", alto, nosso),
                     *(
                         LinhaTabela(
-                            rotulo=f"Do {nomes[f]}",
+                            rotulo=nomes[f],
                             valores=[round(partes[meio][f], 1), round(partes[fim][f], 1)],
                             unidade="",
                             casas=1,
@@ -1326,7 +1296,7 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
                         for f in ajuste.FATORES
                     ),
                     LinhaTabela(
-                        rotulo="Diferença inteira",
+                        rotulo="Total",
                         valores=[
                             round(do_mercado[meio] - do_governo[meio], 1),
                             round(do_mercado[fim] - do_governo[fim], 1),
@@ -1339,37 +1309,26 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
                 fonte=fonte_conta,
                 nota=" ".join(
                     [
-                        *nota_nossa,
-                        "A repartição da diferença é a média do efeito de trocar cada",
-                        "hipótese em todas as ordens: as parcelas somam a diferença inteira.",
-                        "O primário do Focus é o do setor público consolidado; o do projeto,",
-                        "o do Governo Central com estados e municípios.",
-                        "O Focus não colhe o deflator do PIB: vale o do governo, e a",
-                        "inflação diferente entra no juro que o Focus embute.",
+                        "Conta nossa. Com os números do governo, a conta deixa uma sobra de",
+                        f"{br(sobra_media)} pp por ano, mantida em todos os cenários.",
+                        f"Depois de {ATE_O_FOCUS}: crescimento na última mediana do Focus e o",
+                        "juro que fecha com a dívida do Focus.",
                     ]
                 ),
             )
         )
 
     fim_focus = max(focus) if focus else None
-    comparar = [a for a in (2027, 2028, 2029, 2030) if a in pib_focus]
-    supoe = ""
-    if comparar:
-        gov = sum(proj[a].pib for a in comparar) / len(comparar)
-        mer = sum(pib_focus[a] for a in comparar) / len(comparar)
-        supoe = (
-            f"O governo supõe o PIB crescendo {br(gov)} % ao ano de {comparar[0]} a "
-            f"{comparar[-1]}, na média; o Focus espera {br(mer)} %."
-        )
     alvo = fim_focus if fim_focus in futuros else max(futuros)
     manchete = (
-        f"Para {alvo}, o projeto da LDO 2027 projeta a dívida bruta em {br(futuros[alvo])} % "
-        "do PIB" + (f"; o Focus espera {br(focus[alvo])} %" if alvo in focus else "") + frase_nossa
+        f"Em {alvo}: governo {br(futuros[alvo])} % do PIB"
+        + (f", Focus {br(focus[alvo])} %" if alvo in focus else "")
+        + frase_nossa
     )
     graficos = [
         grafico(
             "ldo-2027-divida",
-            "A dívida bruta no projeto da LDO 2027, no Focus e com o erro da história",
+            "A dívida bruta: governo, Focus e a conta com a história",
             series,
             unidade="% do PIB",
             casas=1,
@@ -1379,18 +1338,8 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
             manchete=manchete,
             nota=" ".join(
                 [
-                    f"Ainda não é lei: em {relatorios.PLDO_2027_LIDO_EM:%d/%m/%Y}, o "
-                    f"{relatorios.PLDO_2027_PROJETO} estava {relatorios.PLDO_2027_SITUACAO},",
-                    "e a meta pode mudar até a votação e a sanção.",
-                    "A linha do governo é a do Anexo de Metas Fiscais do projeto,",
-                    "que supõe a meta cumprida todo ano.",
-                    "Pelo próprio anexo, o primário que impediria a dívida de crescer em 2027",
-                    f"seria de {br(relatorios.PLDO_2027_ESTABILIZA)} % do PIB;",
-                    f"o projeto prevê {br(meta.primario, 2)} % antes dos descontos e",
-                    f"{br(meta.meta or 0.0, 2)} % depois deles",
-                    "(parte dos precatórios, a defesa e o Fundo Social",
-                    "ficam fora da conta da meta).",
-                    supoe,
+                    f"Projeto, ainda não é lei (em {relatorios.PLDO_2027_LIDO_EM:%d/%m/%Y},",
+                    f"{relatorios.PLDO_2027_SITUACAO}).",
                     *nota_nossa,
                 ]
             ),
@@ -1416,11 +1365,8 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
     tabelas.append(
         Tabela(
             id="ldo-2027",
-            titulo="O projeto da LDO 2027: meta, dívida e o que o governo supõe",
-            subtitulo=(
-                "Governo Central (primário) e governo geral (dívida bruta), % do PIB; PIB em "
-                "% ao ano; projeto, ainda não é lei"
-            ),
+            titulo="O projeto da LDO 2027 em números",
+            subtitulo="% do PIB; PIB em % ao ano; ainda não é lei",
             colunas=[
                 "Meta de primário",
                 "Primário antes dos descontos",
@@ -1433,15 +1379,11 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
             fonte=fonte,
             nota=" ".join(
                 [
-                    "A meta de 2027 é a do art. 2º do projeto",
-                    f"(R$ {br(relatorios.PLDO_2027_META_BI)} bi, com tolerância de",
+                    f"Meta de 2027: R$ {br(relatorios.PLDO_2027_META_BI)} bi (tolerância de",
                     f"R$ {br(relatorios.PLDO_2027_FAIXA_BI[0])} bi a",
-                    f"R$ {br(relatorios.PLDO_2027_FAIXA_BI[1])} bi);",
-                    "as de 2028 a 2030 são indicativas e voltam a ser votadas a cada LDO.",
-                    '"Antes dos descontos" é o primário que o governo projeta contando tudo;',
-                    "a meta se apura sem parte dos precatórios, a defesa e o Fundo Social.",
-                    "A Selic média que o governo supõe cai de",
-                    f"{br(proj[2027].selic)} % em 2027 para {br(proj[2030].selic)} % em 2030.",
+                    f"R$ {br(relatorios.PLDO_2027_FAIXA_BI[1])} bi); as de 2028 a 2030 são",
+                    "indicativas. A meta se apura sem parte dos precatórios, a defesa e o",
+                    "Fundo Social.",
                 ]
             ),
         )
