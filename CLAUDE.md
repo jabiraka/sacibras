@@ -314,6 +314,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   recentes; não compara com o imposto de hoje, porque não há número oficial por produto. Fora
   os três simuladores e o da LDO (no Laboratório), cenário montado pela pessoa não entra sem o
   "sim" do Caio.
+- **Primário que estabiliza a dívida: sempre com a hipótese no nome** (Caio, 25/11/2026:
+  *"Temos que achar um jeito de conciliar esses dois, ou as pessoas ficarão confusas"*,
+  sobre os 4,7 % de Riscos e os 2,2 % do governo). É a mesma conta com juro e PIB
+  diferentes: o número diz de quando são ("de hoje", "governo, para 2027", "Focus") e a
+  tabela-ponte (`secoes/estabiliza.py`) vai de um ao outro, nas duas telas. Número novo
+  desse tipo entra na ponte.
 - **Riscos** (Caio, 14/11/2026): a palavra na tela é *sustentabilidade da dívida*, não
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
   Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de

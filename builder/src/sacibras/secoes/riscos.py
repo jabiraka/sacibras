@@ -52,8 +52,9 @@ from sacibras.schema import (
     Tabela,
     VarianteGrafico,
 )
-from sacibras.secoes import estados, inflacao, mundo, previsoes
+from sacibras.secoes import estabiliza, estados, inflacao, mundo, previsoes
 from sacibras.secoes.base import Contexto, br, cartao, grafico, periodo, serie
+from sacibras.secoes.estabiliza import juro_que_a_divida_paga
 from sacibras.tipos import Periodicidade, Ponto
 
 HIST = 25
@@ -200,23 +201,6 @@ def historia_anual(ctx: Contexto, juro_divida: list[Ponto], primario: list[Ponto
 # ------------------------------------------------------------------ 1. a dívida
 
 
-def juro_que_a_divida_paga(
-    ctx: Contexto, dbgg: list[Ponto], juros_pib: list[Ponto]
-) -> tuple[list[Ponto], bool]:
-    """(a taxa implícita da DBGG em 12 meses, True); sem a planilha do BC, (juros de 12 meses
-    do setor público ÷ dívida bruta, False). Fica no memo para quem mais usar."""
-    if "taxa_implicita_dbgg" in ctx.memo:
-        return ctx.memo["taxa_implicita_dbgg"], True
-    try:
-        oficial = bcb_fiscal.taxa_implicita_dbgg()
-        ctx.memo["taxa_implicita_dbgg"] = oficial
-        return oficial, True
-    except Exception as erro:
-        print(f"    riscos: sem a taxa implícita do BC, fica a conta nossa ({str(erro)[:100]})")
-    estoque = dict(dbgg)
-    return [(d, j / estoque[d] * 100) for d, j in juros_pib if estoque.get(d)], False
-
-
 QUEDAS_DO_JURO = (0.0, 1.0, 2.0, 3.0, 4.0)
 """Quanto o juro da dívida cai em cada linha da tabela, em pontos percentuais."""
 PASSO_DO_CRESCIMENTO = 2.0
@@ -340,7 +324,7 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
     bloco.cartoes += [
         cartao(
             "primario-estabiliza",
-            "Primário que estabiliza a dívida",
+            "Primário que estabiliza a dívida, com o juro e o PIB de hoje",
             necessario,
             unidade="% do PIB",
             periodicidade="M",
@@ -449,6 +433,8 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
             ),
         ),
     ]
+    with contextlib.suppress(Exception):  # sem o Focus ou a planilha do BC, fica sem a ponte
+        bloco.tabelas.append(estabiliza.ponte(ctx))
     bloco.tabelas.append(
         primario_conforme_o_juro(
             # Os três do mesmo mês do cartão (as séries não acabam todas no mesmo mês).

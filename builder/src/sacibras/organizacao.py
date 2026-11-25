@@ -504,7 +504,13 @@ PARTES: dict[str, list[Parte]] = {
             "vieram; e a meta do projeto da LDO 2027.",
             cartoes=["ldo-2027", "meta-ldo", "primario-prometido", "divida-esperada"],
             graficos=["meta-ldo", "primario-prometido", "divida-esperada", "ldo-2027-divida"],
-            tabelas=["meta-ldo", "primario-erro-horizonte", "ldo-2027-cenarios", "ldo-2027"],
+            tabelas=[
+                "meta-ldo",
+                "primario-erro-horizonte",
+                "ldo-2027-cenarios",
+                "primario-estabiliza-ponte",
+                "ldo-2027",
+            ],
             extras=["simulador-ldo"],
         ),
         Parte(
@@ -564,7 +570,11 @@ PARTES: dict[str, list[Parte]] = {
                 "juro-da-divida",
             ],
             graficos=["divida-leque", "primario-necessario", "juro-crescimento"],
-            tabelas=["primario-conforme-o-juro", "elasticidades-da-divida"],
+            tabelas=[
+                "primario-estabiliza-ponte",
+                "primario-conforme-o-juro",
+                "elasticidades-da-divida",
+            ],
         ),
         Parte(
             "custo",

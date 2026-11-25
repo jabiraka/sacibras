@@ -201,3 +201,13 @@ def test_o_simulador_da_ldo_parte_do_projeto_e_tem_os_tres_botoes() -> None:
     assert focus.crescimento < 0
     assert historia.primario == -0.6
     assert sim.meta[0] == 0.5
+
+
+def test_o_primario_requerido_do_governo_e_o_primario_mais_a_alta_da_divida() -> None:
+    from sacibras import relatorios
+
+    proj = relatorios.PLDO_2027
+    for a, grafico in relatorios.PLDO_2027_REQUERIDO.items():
+        refeito = proj[a].primario + proj[a].divida - proj[a - 1].divida
+        # 2027 é o ano em que o gráfico e a tabela do anexo não batem (2,2 contra 2,4)
+        assert abs(refeito - grafico) < (0.25 if a == 2027 else 0.11)

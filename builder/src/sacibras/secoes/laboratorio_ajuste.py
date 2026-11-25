@@ -27,6 +27,7 @@ from sacibras.schema import (
     SimuladorLDO,
     Tabela,
 )
+from sacibras.secoes import estabiliza
 from sacibras.secoes.base import MESES, Contexto, br, grafico, serie
 from sacibras.tipos import Ponto
 
@@ -1154,6 +1155,19 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
         f"{bcb_focus.data_da_ultima_edicao():%d/%m/%Y}; {ctx.fonte_sgs('DBGG')})"
     )
     meta = proj[2027]
+    # Os dois números do primário que estabiliza, lado a lado (a ponte entre eles vai na
+    # tabela): o do governo para 2027 e o de Riscos, com o juro e o PIB de hoje.
+    detalhe = f"projeto; estabilizar: {br(relatorios.PLDO_2027_ESTABILIZA)} % (governo)"
+    tabelas: list[Tabela] = []
+    try:
+        de_hoje = estabiliza.hoje(ctx).primario
+        detalhe = (
+            f"estabilizar: {br(relatorios.PLDO_2027_ESTABILIZA)} % (governo); "
+            f"{br(de_hoje)} % com o juro de hoje"
+        )
+        tabelas.append(estabiliza.ponte(ctx))
+    except Exception as falha:
+        print(f"    laboratório: sem a ponte do primário ({str(falha)[:100]})")
     cartoes = [
         Cartao(
             id="ldo-2027",
@@ -1163,9 +1177,7 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
             casas=2,
             referencia=date(2027, 12, 1),
             periodicidade="A",
-            detalhe=(
-                f"projeto, não é lei; estabilizar pediria {br(relatorios.PLDO_2027_ESTABILIZA)} %"
-            ),
+            detalhe=detalhe,
             fonte=f"{relatorios.FONTE_PLDO_2027} ({lido})",
             procedencia="oficial",
             secao="laboratorio",
@@ -1198,7 +1210,6 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
     # A conta nossa: as metas do projeto com o erro que as LDOs já tiveram, e o crescimento
     # e o juro que o mercado espera. Só sai se a peça da meta de cada LDO saiu antes.
     erro = ctx.memo.get("laboratorio_erro_ldo")
-    tabelas: list[Tabela] = []
     intervalos: list[Intervalo] = []
     frase_nossa = ""
     nota_nossa: list[str] = []
@@ -1353,6 +1364,8 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
                 x.primario,
                 x.divida,
                 divida_focus.get(a),
+                relatorios.PLDO_2027_REQUERIDO.get(a),
+                estabiliza.do_focus(a),
                 x.pib,
                 pib_focus.get(a),
             ],
@@ -1372,6 +1385,8 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
                 "Primário antes dos descontos",
                 "Dívida bruta (governo)",
                 "Dívida bruta (Focus)",
+                "Primário que estabiliza (governo)",
+                "Primário que estabiliza (Focus)",
                 "PIB (governo)",
                 "PIB (Focus)",
             ],

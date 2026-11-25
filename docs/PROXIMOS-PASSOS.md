@@ -59,11 +59,19 @@ em todos os anos, então o botão do Focus chega a 102,3 %, não aos 103,0 % do 
 relevantes"*; está no CLAUDE.md): as peças da LDO e o simulador foram encurtados. **Falta
 passar a regra nas peças antigas** (as notas do resto do Laboratório, por exemplo, têm cinco
 ou seis frases): espera o "sim" do Caio para varrer tudo.
-**A conta não bate exato com a do governo**: com os números do anexo sobra de 0,5 a 0,8 pp
-do PIB por ano (0,6 na média), que a conta soma de volta. Não achei de onde vem (juro sobre o
-estoque médio corta para 0,4; trocar o deflator ou tirar os estados não resolve). Serve para
-comparar cenários; o nível depende dessa sobra. Vale perguntar ao Tesouro ou achar a
-memória de cálculo do Anexo IV.3.
+**O primário que estabiliza, conciliado** (Caio: *"Temos uma diferença mto grande, entre 4,7%
+do PIB e 2,2% [...] as pessoas ficarão confusas"*): a tabela "Primário que estabiliza a
+dívida: de hoje ao que o governo supõe" (`secoes/estabiliza.py`) vai de um ao outro, em Riscos
+› A dívida se sustenta? e no Laboratório: 4,7 % com o juro e o PIB de hoje; −2,5 do juro
+(13,0 % → 9,8 %); −0,5 do PIB em reais; +0,5 de emissões que não são déficit; 2,2 % do
+governo para 2027; e 3,7 % pelo Focus. O cartão de Riscos diz "com o juro e o PIB de hoje" e
+o da LDO traz os dois números. **O 2,2 % do governo** é o primário do ano mais o quanto a
+dívida sobe (Anexo IV.3, gráfico 2, lido na imagem: `relatorios.PLDO_2027_REQUERIDO`);
+refeito com a tabela do anexo bate em todos os anos menos 2027 (2,4). A sobra de 0,6 pp da
+nossa conta é isso: emissões que o governo projeta e a fórmula de livro não tem.
+**Riscos continua na fórmula de livro**: testei trocar pelo método do governo (primário mais
+a alta da dívida) e o "resto" foi de −3,8 a +4,5 pp do PIB por ano desde 2007, sem sinal
+fixo (−0,1 em set/2026); o governo é que o supõe fixo em +0,6.
 Olhada a 390 e 1280 px; **falta o Caio olhar**.
 
 **24/11/2026, o site parou de atualizar** (Caio: *"faça com que o sacibras atualize todo dia

@@ -1047,17 +1047,37 @@ PLDO_2027_META_BI = 73.216092959
 PLDO_2027_FAIXA_BI = (36.60804648, 109.824139439)
 PLDO_2027_ESTABILIZA = 2.2
 """O primário que estabilizaria a dívida bruta em 2027, pelo próprio anexo (% do PIB)."""
+# Anexo IV.3, Gráfico 2, "Resultado primário do governo central requerido para estabilizar a
+# DBGG/PIB", lido em 25/11/2026 na imagem da p. 158 do PDF (barras "Requerido"). Nota 1: "O
+# primário requerido em cada ano corresponde ao necessário para estabilizar a DBGG/PIB no ano
+# anterior [...] em 2030, um superávit primário de 1,0% do PIB estabiliza a DBGG no patamar
+# projetado para 2029". É o primário do ano mais o quanto a dívida sobe: refeito com a Tabela
+# 1 do mesmo anexo, bate em todos os anos menos 2027 (2,4 pela tabela, 2,2 no gráfico).
+PLDO_2027_REQUERIDO: dict[int, float] = {
+    2027: 2.2,
+    2028: 1.9,
+    2029: 1.5,
+    2030: 1.0,
+    2031: 0.8,
+    2032: 0.8,
+    2033: 0.7,
+    2034: 0.7,
+    2035: 0.7,
+    2036: 0.8,
+}
 # Anexo IV.3, Tabela 1 (dívida, primário "GC" e "GR": "2031 87,0 1,31 0,05" ... "2036 83,4
 # 1,50 0,02"), Tabela 2, "Taxa Implícita de Juros da DBGG", coluna "Nominal" ("2026 11,8";
 # "2027 9,8"; ... "2036 7,2") e Tabela 3, "Parâmetros Macroeconômicos", colunas "Média" da
 # Selic, "PIB real" e "Deflator" ("2027 9,7 10,6 3,0 2,6 4,9 5,5"; "2036 6,4 6,4 3,0 3,0 3,8
 # 5,9"; "Grade de Parâmetros de longo prazo da SPE de 06/03/2026").
+# A dívida de 2027 a 2030 com duas casas vem do Anexo IV.2, Tabela 4 ("Dívida Bruta do
+# Governo Geral 85,96 87,27 87,85 87,53").
 PLDO_2027: dict[int, AnoDoPLDO] = {
     2026: AnoDoPLDO(None, -0.44, 0.24, 83.6, 11.8, 2.3, 4.4, 13.6),
-    2027: AnoDoPLDO(0.50, 0.05, 0.04, 86.0, 9.8, 2.6, 4.9, 10.6),
-    2028: AnoDoPLDO(1.00, 0.62, 0.03, 87.3, 9.1, 2.6, 4.7, 9.3),
-    2029: AnoDoPLDO(1.25, 0.93, 0.04, 87.8, 8.5, 2.6, 4.7, 8.3),
-    2030: AnoDoPLDO(1.50, 1.26, 0.05, 87.5, 8.0, 2.7, 4.7, 7.3),
+    2027: AnoDoPLDO(0.50, 0.05, 0.04, 85.96, 9.8, 2.6, 4.9, 10.6),
+    2028: AnoDoPLDO(1.00, 0.62, 0.03, 87.27, 9.1, 2.6, 4.7, 9.3),
+    2029: AnoDoPLDO(1.25, 0.93, 0.04, 87.85, 8.5, 2.6, 4.7, 8.3),
+    2030: AnoDoPLDO(1.50, 1.26, 0.05, 87.53, 8.0, 2.7, 4.7, 7.3),
     2031: AnoDoPLDO(None, 1.31, 0.05, 87.0, 7.5, 2.7, 4.4, 6.5),
     2032: AnoDoPLDO(None, 1.38, 0.04, 86.4, 7.3, 2.8, 4.2, 6.4),
     2033: AnoDoPLDO(None, 1.41, 0.03, 85.7, 7.3, 2.9, 4.0, 6.4),

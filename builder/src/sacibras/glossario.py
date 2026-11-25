@@ -1030,8 +1030,8 @@ TERMOS: list[Termo] = [
     Termo(
         "primario-que-estabiliza",
         "Primário que estabiliza a dívida",
-        "O superávit primário que deixaria a dívida parada em % do PIB, com o juro e o "
-        "crescimento de hoje. Abaixo dele, ela sobe.",
+        "O superávit primário que deixaria a dívida parada em % do PIB. Depende do juro e do "
+        "crescimento usados na conta: os de hoje, os que o governo supõe ou os do Focus.",
         ("primário que estabiliza", "estabilizar a dívida", "estabiliza a dívida"),
         "#riscos/divida",
     ),
