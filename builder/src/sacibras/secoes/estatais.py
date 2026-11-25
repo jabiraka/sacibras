@@ -19,6 +19,7 @@ from __future__ import annotations
 from datetime import date
 
 from sacibras import contas, relatorios
+from sacibras.fontes import sest
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Tabela
 from sacibras.secoes.base import br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
@@ -132,9 +133,26 @@ def dividendos(det: dict[str, list[Ponto]], pib: list[Ponto], fonte: str, inicio
     return cartoes, graficos, [tabela]
 
 
-def conta_do_ano() -> Pecas:
-    """Dividendos menos subvenção e aporte, ano a ano (Relatório Agregado da Sest)."""
-    por_ano = relatorios.ESTATAIS_POR_ANO
+def sest_mais_nova() -> sest.Anexo | None:
+    """A planilha da Sest da edição mais nova, ou None se a Sest falhar."""
+    try:
+        return sest.anexo()
+    except Exception as erro:
+        print(f"  aviso: estatais: planilha da Sest indisponível ({str(erro)[:120]})")
+        return None
+
+
+def conta_do_ano(lido: sest.Anexo | None = None) -> Pecas:
+    """Dividendos menos subvenção e aporte, ano a ano (Relatório Agregado da Sest): da
+    planilha da edição mais nova (`lido`) ou, sem ela, dos números lidos à mão."""
+    if lido is not None:
+        por_ano, fonte = lido.por_ano, lido.fonte
+        subvencoes_lista, lucros_lista = lido.subvencoes, lido.lucros
+        diretas, dependentes = lido.diretas, lido.dependentes
+    else:
+        por_ano, fonte = relatorios.ESTATAIS_POR_ANO, relatorios.FONTE_ESTATAIS
+        subvencoes_lista, lucros_lista = relatorios.SUBVENCOES_2025, relatorios.LUCRO_DOS_MAIORES
+        diretas, dependentes = relatorios.ESTATAIS_DIRETAS, relatorios.ESTATAIS_DEPENDENTES
     anos = sorted(por_ano)
     ultimo = anos[-1]
 
@@ -146,7 +164,6 @@ def conta_do_ano() -> Pecas:
         return [(date(a, 1, 1), valor(a) / 1000) for a in anos]  # type: ignore[operator]
 
     x = por_ano[ultimo]
-    fonte = relatorios.FONTE_ESTATAIS
     cartoes = [
         Cartao(
             id="estatais-saldo",
@@ -172,10 +189,7 @@ def conta_do_ano() -> Pecas:
             casas=1,
             referencia=date(ultimo, 1, 1),
             periodicidade="A",
-            detalhe=(
-                f"{relatorios.ESTATAIS_DEPENDENTES} das {relatorios.ESTATAIS_DIRETAS} estatais; "
-                "mais da metade vai a hospitais"
-            ),
+            detalhe=(f"{dependentes} das {diretas} estatais; mais da metade vai a hospitais"),
             fonte=fonte,
             secao="fiscal",
             mini=[(d, round(v, 2)) for d, v in pontos(lambda a: por_ano[a].subvencao)],
@@ -202,9 +216,14 @@ def conta_do_ano() -> Pecas:
         casas=1,
         periodicidade="A",
         fonte=fonte,
+        # Os dividendos vêm de quatro empresas; a subvenção vai às dependentes (hospitais,
+        # pesquisa, obras). Todos os números são do anexo I da Sest; o aporte é a soma das
+        # empresas na planilha, o mesmo que dá o retorno de 2025 da p. 17 (R$ 13,1 bi). A
+        # tabela-resumo da p. 86 traz aporte maior em todos os anos (2025: 3.418,3 contra
+        # 1.709,1). O relatório de 2024 não publica retorno (lido em 25/11/2026).
         nota=(
-            "Os dividendos vêm de quatro empresas; a subvenção vai às dependentes (hospitais, "
-            "pesquisa, obras). Valores da época, sem descontar a inflação."
+            "Valores da época, sem descontar a inflação. Aporte pela soma das empresas, como "
+            "no retorno de 2025 da Sest; o resumo da p. 86 traz um valor maior."
         ),
         manchete=(
             f"Em {ultimo}, a União recebeu R$ {br(x.dividendos_uniao / 1000)} bi e pôs "
@@ -249,14 +268,14 @@ def conta_do_ano() -> Pecas:
         # das ações. O prejuízo de uma não dependente (os Correios) não sai do Tesouro no ano:
         # vira dívida ou perda de patrimônio da empresa, e pode virar aporte depois.
         nota=(
-            "O saldo é a conta do caixa, a mesma da Sest: não é o lucro das empresas nem o "
-            "valor delas. Prejuízo de não dependente (os Correios) não sai do Tesouro no ano."
+            "O saldo é a conta do caixa, a mesma da Sest: não é o lucro nem o valor das "
+            "empresas. Aporte pela soma das empresas; o resumo da p. 86 traz um valor maior."
         ),
     )
     subvencoes = Tabela(
         id="estatais-subvencoes",
         titulo="Quem recebe a subvenção do Tesouro",
-        subtitulo=f"{ultimo}, as {relatorios.ESTATAIS_DEPENDENTES} estatais dependentes",
+        subtitulo=f"{ultimo}, as {dependentes} estatais dependentes",
         colunas=["R$ bilhões", "% do total"],
         linhas=[
             LinhaTabela(
@@ -265,9 +284,9 @@ def conta_do_ano() -> Pecas:
                 unidade="",
                 casas=1,
             )
-            for nome, v in relatorios.SUBVENCOES_2025
+            for nome, v in subvencoes_lista
         ],
-        fonte=fonte.replace("anexo I", "p. 17"),
+        fonte=fonte,
         nota=(
             "Estatal dependente é a que recebe do orçamento para pagar pessoal e custeio. O "
             "gasto dela já está dentro da despesa da União (boa parte, na saúde e na "
@@ -283,7 +302,7 @@ def conta_do_ano() -> Pecas:
             LinhaTabela(
                 rotulo=nome, valores=[round(a / 1000, 1), round(b / 1000, 1)], unidade="", casas=1
             )
-            for nome, a, b in relatorios.LUCRO_DOS_MAIORES
+            for nome, a, b in lucros_lista
         ],
         fonte=fonte,
         nota=(

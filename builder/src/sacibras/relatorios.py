@@ -742,7 +742,10 @@ FONTE_TETOS = (
 # federais em 2025 (dividendos e JCP pagos à União menos os valores de subvenções e de [...]
 # AFAC) foi de R$ 13,1 bilhões". P. 21: "No universo das 44 empresas de controle direto, 17
 # são dependentes e 27 não dependentes de recursos do Tesouro Nacional."
-# Sai uma vez por ano, em junho. Valores em R$ milhões.
+# Desde 25/11/2026 o builder lê a planilha da edição mais nova sozinho (`fontes/sest.py`); estes
+# números ficam de reserva, para quando a Sest não responder.
+# O relatório de 2024 (ano-base 2023) não publica retorno financeiro (lido em 25/11/2026);
+# a p. 17 do de 2026 é a única que o publica. Sai uma vez por ano, em junho. R$ milhões.
 @dataclass(frozen=True)
 class EstataisNoAno:
     lucro: float

@@ -371,10 +371,11 @@ LEITURAS: list[Leitura] = [
         "relatorios.ESTATAIS_POR_ANO",
         date(2026, 11, 19),
         date(2027, 7, 15),
-        "Sest (gov.br/gestao, estatais, transparência), Relatório Agregado das Empresas "
-        "Estatais Federais 2027, anexo I (PDF e planilha; o nome do arquivo muda a cada "
-        "edição). Acrescentar 2026 e atualizar SUBVENCOES_2025 e LUCRO_DOS_MAIORES. Sai em "
-        "junho. O texto da pergunta das estatais diz 'o menor em cinco anos': conferir.",
+        "O builder lê sozinho a planilha do anexo I da edição mais nova (fontes/sest.py). "
+        "Em julho, conferir que a tela mostra a edição 2027 (ano-base 2026); se não, ver se "
+        "a página da Sest mudou o nome do arquivo. Atualizar os números de reserva "
+        "(ESTATAIS_POR_ANO, SUBVENCOES_2025, LUCRO_DOS_MAIORES) e a frase da pergunta das "
+        "estatais ('o menor em cinco anos').",
     ),
 ]
 

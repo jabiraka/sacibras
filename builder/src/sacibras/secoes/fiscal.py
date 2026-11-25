@@ -788,7 +788,7 @@ def montar(ctx: Contexto) -> Secao:
                     inicio,
                 ),
             ),
-            ("a conta do ano (Sest)", estatais.conta_do_ano),
+            ("a conta do ano (Sest)", lambda: estatais.conta_do_ano(estatais.sest_mais_nova())),
             (
                 "o primário das estatais (BC)",
                 lambda: estatais.primario(

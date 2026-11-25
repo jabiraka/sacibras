@@ -163,3 +163,51 @@ def test_primario_das_estatais_troca_o_sinal() -> None:
     )
     assert cartao.valor == pytest.approx(-7.2) and cartao.detalhe.startswith("déficit")
     assert grafico.series[0].pontos[-1][1] == -0.05
+
+
+def test_sest_pega_a_planilha_da_edicao_mais_nova() -> None:
+    from sacibras.fontes import sest
+
+    html = (
+        '<a href="https://x/AnexoISrieshistricasRelatrioAgregado2026anobase2025.xlsx">'
+        '<a href="https://x/AnexoISrieshistricasRelatrioAgregado2027anobase2026.xlsx">'
+        '<a href="https://x/A%20SEST/AnexoISrieshistricas.xlsx">'
+    )
+    assert sest.planilha_mais_nova(html) == (
+        2027,
+        2026,
+        "https://x/AnexoISrieshistricasRelatrioAgregado2027anobase2026.xlsx",
+    )
+
+
+def test_sest_soma_as_empresas() -> None:
+    from sacibras.fontes import sest
+
+    def empresa(
+        ano: int, sigla: str, dep: str, lucro: float, uniao: float, sub: float, afac: float
+    ):
+        return {
+            "ANO": ano,
+            "ABREVIAÇÃO": sigla,
+            "DEPENDÊNCIA DO TESOURO NACIONAL": dep,
+            "RESULTADO LÍQUIDO": lucro * 1e6,
+            "DIVIDENDOS E JCP PAGOS À UNIÃO": uniao * 1e6,
+            "SUBVENÇÃO": sub * 1e6,
+            "AFAC": afac * 1e6,
+        }
+
+    linhas = [
+        empresa(2024, "ECT", "Não dependente", -2447.2, 0, 0, 0),
+        empresa(2024, "EBSERH", "Dependente", 10, 0, 12000, 5),
+        empresa(2025, "ECT", "Não dependente", -8457.8, 0, 0, 0),
+        empresa(2025, "EBSERH", "Dependente", 20, 0, 13678, 1),
+        empresa(2025, "PETROBRAS (Grupo)", "Não dependente", 110605, 22326, 0, 0),
+    ]
+    lido = sest.montar(linhas, 2026, 2025, "u")  # type: ignore[arg-type]
+    assert lido.por_ano[2025].lucro == round(-8457.8 + 20 + 110605, 1)
+    assert lido.por_ano[2025].prejuizos == -8457.8
+    assert lido.por_ano[2025].aporte == 1.0
+    assert lido.subvencoes == [("Ebserh (hospitais universitários)", 13678.0)]
+    assert lido.lucros == [("Correios", -2447.2, -8457.8)]
+    assert (lido.diretas, lido.dependentes) == (3, 1)
+    assert lido.fonte.endswith("2026, ano-base 2025, anexo I")
