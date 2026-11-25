@@ -12,7 +12,7 @@ URL = "https://www.ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='{codigo}')
 IBOVESPA = "GM366_IBVSP366"
 """Ibovespa, fechamento diário (conferido no IPEADATA em 14/11/2026; sai com um dia de
 atraso em relação à B3)."""
-FONTE_IBOVESPA = "B3, Ibovespa (fechamento), pelo IPEADATA (série GM366_IBVSP366)"
+FONTE_IBOVESPA = "Ipeadata, Ibovespa (fechamento), série GM366_IBVSP366"
 """O índice é da B3 mesmo vindo do IPEADATA: sem CSV nem PNG (`licencas.B3`)."""
 
 

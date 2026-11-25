@@ -1541,8 +1541,8 @@ def _estresse(
             colunas=colunas,
             linhas=linhas,
             fonte=(
-                f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; IPEADATA (Ibovespa); "
-                "cálculo próprio"
+                f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; "
+                "Ipeadata, Ibovespa IBVSP366; cálculo próprio"
             ),
             nota=(
                 "Não é previsão: é o tamanho de trancos que já aconteceram, posto na escala de "
@@ -1732,7 +1732,7 @@ def _estresse(
                 linhas=v0.linhas,
                 fonte=(f"{base.fonte}; " if base else "")
                 + f"{ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL', 'DOLAR', 'SELIC_META')}; "
-                "IPEADATA (Ibovespa); cálculo próprio",
+                "Ipeadata, Ibovespa IBVSP366; cálculo próprio",
                 nota=v0.nota,
                 largura="inteira",
                 variantes=variantes,
