@@ -356,12 +356,16 @@ class ReceitaPrevista:
 # a mesma Nota Informativa da Conorf/Senado de 25/9/2026 usada em `leis.AVALIACOES_2026`
 # (Tabela 1): "Receita Administrada pela RFB/MF, exceto RGPS e líquida de incentivos fiscais
 # 2.079,8 [3º bim.] 2.065,7 [4º bim.]"; "Arrecadação Líquida para o RGPS 784,0 786,4". Lidos em
-# 14/11/2026. LER DE NOVO a cada bimestre (o do 5º sai até 22/11) e trocar o ano em janeiro.
+# 14/11/2026. Avaliação do 5º bimestre: o relatório do MPO de 24/11/2026 (gov.br/planejamento,
+# relatorios-de-avaliacao-fiscal/2026/relatorio_5__bimestre_2026.pdf, Tabela 1, lido em
+# 25/11/2026): "Receita Administrada pela RFB/MF, exceto RGPS e líquida de incentivos fiscais
+# 2.064.946,0"; "Arrecadação Líquida para o RGPS 777.560,0" (R$ milhões). LER DE NOVO a cada
+# bimestre (o do 6º sai até 22/1/2027) e trocar o ano em janeiro.
 ANO_DA_RECEITA_PREVISTA = 2026
-AVALIACAO_DA_RECEITA = "4º bimestre"
+AVALIACAO_DA_RECEITA = "5º bimestre"
 RECEITA_PREVISTA = [
-    ReceitaPrevista("Tributos administrados pela Receita", "receita_rfb", 2041.0, 2065.7),
-    ReceitaPrevista("Contribuição ao INSS", "arrecadacao_rgps", 793.2, 786.4),
+    ReceitaPrevista("Tributos administrados pela Receita", "receita_rfb", 2041.0, 2064.9),
+    ReceitaPrevista("Contribuição ao INSS", "arrecadacao_rgps", 793.2, 777.6),
 ]
 
 # ------------------------------------------------------------------ dívida ativa

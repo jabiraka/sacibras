@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 25/11/2026 (a B3 saiu). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 25/11/2026. A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -393,8 +393,6 @@ As próximas:
 - **até 23/12**: o projeto da LDO 2027 (`relatorios.PLDO_2027`), antes se a issue `tramitação` abrir.
 - **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
 - **até 19/02/2027**: as dez perguntas (`perguntas.LIDAS_EM`).
-- **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e
-  `relatorios.RECEITA_PREVISTA`.
 - **até 03/12**: nota fiscal do BC → `relatorios.ELASTICIDADES`.
 - **até 14/12**: nota de crédito (`relatorios.NOTAS`; o sisweb estava fora do ar).
 - **até 15/12**: quem está no RRF e no Propag (`relatorios.ACORDOS`): o RMGH de 2026 do
@@ -406,6 +404,7 @@ As próximas:
 - **até 10/01/2027**: decreto do salário mínimo de 2027 → `leis.SALARIO_MINIMO_NORMAS`
   (o valor vem do SGS 1619; a tela só cita a norma do ano que estiver no dicionário).
 - **até 20/01/2027**: teto do INSS de 2027 (portaria de janeiro) → `relatorios.TETO_INSS`.
+- **até 22/01/2027**: relatório do 6º bimestre (gov.br/planejamento, relatórios de avaliação fiscal) → `leis.AVALIACOES_2026` e `relatorios.RECEITA_PREVISTA`; em janeiro, trocar também o ano e a LOA da receita. O do 5º foi lido em 25/11/2026 (resultado −89,3 bi, dedução 77,0 bi, após a dedução −12,3 bi; a meta de piso é 0).
 - **até 28/02/2027**: aposentadoria média do INSS (BEPS, quadro 15) →
   `relatorios.INSS_APOSENTADORIA_MEDIA`.
 - **até 15/05/2027**: avaliações atuariais do PLDO 2028 → `relatorios.SERVIDORES_POR_PODER`

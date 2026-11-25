@@ -62,10 +62,11 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Avaliação bimestral do primário (o desconto da meta)",
         "leis.AVALIACOES_2026",
-        date(2026, 11, 14),
-        date(2026, 11, 24),
-        "Relatório de Avaliação de Receitas e Despesas Primárias do 5º bimestre (sai até 22/11) "
-        "ou a nota da Conorf no site do Senado. A cada bimestre.",
+        date(2026, 11, 25),
+        date(2027, 1, 22),
+        "Relatório de Avaliação de Receitas e Despesas Primárias do 6º bimestre (sai até 22/1; "
+        "gov.br/planejamento, relatórios de avaliação fiscal) ou a nota da Conorf no site do "
+        "Senado. A cada bimestre.",
     ),
     Leitura(
         "Salário mínimo do ano (o decreto de 2027 sai em dezembro)",
@@ -281,8 +282,8 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Receita prevista para o ano (LOA e avaliação bimestral)",
         "relatorios.RECEITA_PREVISTA",
-        date(2026, 11, 14),
-        date(2026, 11, 24),
+        date(2026, 11, 25),
+        date(2027, 1, 22),
         "O mesmo relatório bimestral de leis.AVALIACOES_2026 (Tabela 1, receita administrada "
         "e RGPS). A cada bimestre; em janeiro, trocar o ano e a LOA.",
     ),

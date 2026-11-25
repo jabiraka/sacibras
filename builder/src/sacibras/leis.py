@@ -206,10 +206,16 @@ class AvaliacaoBimestral:
 # reproduz o relatório do Executivo: "5. Resultado Primário -52,0 [3º bim.] -80,9 [4º bim.]";
 # "6. Dedução EC 136, ADPF 1236 e LCs 221, 223 e 235 62,8 67,3"; "7. Resultado Primário após
 # Dedução 10,8 -13,6". Nota 3: precatórios (R$ 54,7 bi), defesa (R$ 5,0 bi), saúde e a ADPF
-# 1236. LER DE NOVO a cada bimestre (o do 5º sai até 22/11).
+# 1236. Lido em 25/11/2026 no próprio relatório do 5º bimestre, publicado em 24/11 pelo MPO
+# (gov.br/planejamento/pt-br/assuntos/orcamento/relatorios-de-avaliacao-fiscal/2026/
+# relatorio_5__bimestre_2026.pdf), Tabela 1, em R$ milhões: "5. Resultado Primário
+# -89.306,5"; "6. Dedução EC 136, ADPF 1236 e LCs 221, 223, 235 e 239 76.984,7"; "7. Resultado
+# Primário após Dedução -12.321,8" (a do 4º bimestre: -80.936,8, 67.291,4 e -13.645,4). LER DE
+# NOVO a cada bimestre (o do 6º sai até 22/1/2027).
 AVALIACOES_2026 = [
     AvaliacaoBimestral("3º bimestre", -52.0, 62.8, "Relatório de Avaliação do 3º bimestre de 2026"),
     AvaliacaoBimestral("4º bimestre", -80.9, 67.3, "Relatório de Avaliação do 4º bimestre de 2026"),
+    AvaliacaoBimestral("5º bimestre", -89.3, 77.0, "Relatório de Avaliação do 5º bimestre de 2026"),
 ]
 
 # Lidos em 14/11/2026, ainda sem uso na tela (pedem o RREO Anexo 12 e o Anexo 08 de cada
