@@ -143,7 +143,7 @@ def test_a_conta_do_ano_fecha_com_a_da_sest() -> None:
     por_linha = {li.rotulo: li.valores for li in conta.linhas}
     for i in range(len(conta.colunas)):
         soma = sum(v[i] for nome, v in por_linha.items() if nome.startswith(("Div", "Sub", "Apo")))  # type: ignore[misc]
-        assert soma == pytest.approx(por_linha["Saldo para a União (conta nossa)"][i], abs=0.11)  # type: ignore[arg-type]
+        assert soma == pytest.approx(por_linha["Saldo para a União"][i], abs=0.11)  # type: ignore[arg-type]
     assert sum(v for _, v in relatorios.SUBVENCOES_2025) == pytest.approx(
         relatorios.ESTATAIS_POR_ANO[2025].subvencao, abs=1.0
     )

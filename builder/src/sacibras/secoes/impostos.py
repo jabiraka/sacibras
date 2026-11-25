@@ -52,6 +52,7 @@ from sacibras.schema import (
     LinhaTabela,
     MarcaDeAliquota,
     PontoDispersao,
+    Procedencia,
     Secao,
     SimuladorReforma,
     Tabela,
@@ -428,7 +429,16 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
 
     total_br = de("BRA")
     ultimo = max(total_br)
-    consumo = {a: de("BRA", "T_5000")[a] / v * 100 for a, v in total_br.items() if v}
+    # A OCDE publica a parte de cada base na carga; sem ela, a mesma divisão feita aqui.
+    try:
+        consumo = ocde_receita.carga(["BRA"], ["S13"], ["T_5000"], unidade="PT_OTR_SECTOR")[
+            ("BRA", "S13", "T_5000")
+        ]
+        proc_consumo: Procedencia = "oficial"
+    except Exception as erro:
+        print(f"  aviso: impostos: parte do consumo da OCDE indisponível ({str(erro)[:100]})")
+        consumo = {a: de("BRA", "T_5000")[a] / v * 100 for a, v in total_br.items() if v}
+        proc_consumo = "calculado"
 
     cartoes = [
         cartao(
@@ -455,7 +465,7 @@ def _carga(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabela], st
             periodicidade="A",
             detalhe="ICMS, ISS, IPI, Cofins, PIS e afins",
             fonte=fonte,
-            procedencia="calculado",
+            procedencia=proc_consumo,
             secao="impostos",
             mini=30,
         ),
@@ -909,10 +919,7 @@ def _simulador_da_reforma(
                 casas=2,
             ),
         ],
-        fonte=(
-            f"{r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; {leis.TETO_IBS_CBS_NORMA}; "
-            "somas: conta nossa"
-        ),
+        fonte=(f"{r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; {leis.TETO_IBS_CBS_NORMA}"),
         # O Comitê Gestor refaz a conta todo ano; o número definitivo só sai no fim da
         # transição. A CBS do TCU para 2027 ficou acima da estimativa anterior
         # (relatorios.CBS_ESTIMATIVA_ANTERIOR), e a CBS de 2033 pode ser outra. O teto vale
@@ -920,7 +927,7 @@ def _simulador_da_reforma(
         nota=(
             "A alíquota cheia repõe a arrecadação que sai: quanto mais desconto, mais alta "
             f"para o resto. Somar a CBS do TCU ({br(r.CBS_REFERENCIA_2027, 1)} %) ao IBS do "
-            f"Comitê ({br(r.IBS_COMITE_GESTOR, 1)} %) é conta nossa; acima do teto, o governo "
+            f"Comitê ({br(r.IBS_COMITE_GESTOR, 1)} %) é cálculo próprio; acima do teto, o governo "
             "tem de propor ao Congresso como voltar a ele."
         ),
     )
@@ -1030,7 +1037,7 @@ def _simulador_da_reforma(
         ],
         fonte=(
             f"{leis.REFORMA_NORMAS}; {r.FONTE_ALIQUOTA_COMITE}; {r.FONTE_CBS_2027}; "
-            "multiplicações: conta nossa"
+            "multiplicações: cálculo próprio"
         ),
         como_ler=(
             "O valor digitado é o preço sem IBS nem CBS. A faixa vai do teto da lei "
@@ -1411,7 +1418,7 @@ def _transferencias(ctx: Contexto) -> Pecas:
     )
     fonte = (
         f"{tesouro_transferencias.FONTE}; arrecadação: {receita_arrecadacao.FONTE}; população: "
-        "Tesouro Nacional, cadastro de entes do SICONFI; as divisões: conta nossa"
+        "Tesouro Nacional, cadastro de entes do SICONFI; as divisões: cálculo próprio"
     )
     soma = round((total_fpe + total_fpm) / 1e9, 1)
     cartoes = [
@@ -1428,7 +1435,6 @@ def _transferencias(ctx: Contexto) -> Pecas:
                 "arrecada"
             ),
             fonte=fonte,
-            procedencia="calculado",
             secao="impostos",
         )
     ]
@@ -1555,12 +1561,12 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
         unidade="% do IBS de estados e municípios",
         casas=1,
         periodicidade="A",
-        fonte=f"{leis.IBS_DESTINO_NORMA}; a conta ano a ano: conta nossa",
+        fonte=f"{leis.IBS_DESTINO_NORMA}; a conta ano a ano: cálculo próprio",
         # De 2029 a 2032, 80 % do IBS vai pela receita média antiga de ICMS e ISS; em 2033,
         # 90 %; depois, cai 1/45 por ano até acabar em 2078. Do resto, 5 % vão aos que mais
         # perdem e 95 % pelo destino.
         nota=(
-            "Conta nossa, ano a ano, sobre o texto da emenda: a parte pela receita antiga "
+            "Cálculo próprio, ano a ano, sobre o texto da emenda: a parte pela receita antiga "
             "some até 2078. Quanto cada estado ganha ou perde não tem número oficial."
         ),
         largura="inteira",
@@ -1629,7 +1635,7 @@ def _esferas(ctx: Contexto) -> Pecas:
         "S1312": {a: por["S1312"][a] / total[a] * 100 for a in anos},
         "S1313": {a: por["S1313"][a] / total[a] * 100 for a in anos},
     }
-    fonte_ocde = f"{ocde_receita.FONTE}; parte de cada esfera: conta nossa"
+    fonte_ocde = f"{ocde_receita.FONTE}; parte de cada esfera: cálculo próprio"
     cartoes = [
         cartao(
             id_,

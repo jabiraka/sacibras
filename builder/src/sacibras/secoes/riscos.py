@@ -280,12 +280,12 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
     atrelada = ctx.sgs("DIVIDA_IDX_SELIC", HIST)
 
     # O juro que a dívida paga: a taxa implícita da dívida bruta em 12 meses, que o Banco
-    # Central publica (decisão de 15/11/2026: substitui a conta nossa, juros de 12 meses do
+    # Central publica (decisão de 15/11/2026: substitui o cálculo próprio, juros de 12 meses do
     # setor público ÷ dívida bruta, que punha os juros LÍQUIDOS de todo o setor público, as
     # estatais e o que o BC ganha nas reservas inclusive, sobre a dívida BRUTA do governo
     # geral, e saía de 1 a 4 pp abaixo; 10,8 % contra 13,0 % em set/2026). A dívida bruta
     # cresce pelo juro que ela mesma rende: é essa taxa que entra na conta da estabilização.
-    # Se a planilha do BC falhar, volta a conta nossa, dita no cartão.
+    # Se a planilha do BC falhar, volta o cálculo próprio, dita no cartão.
     juro_divida, oficial = juro_que_a_divida_paga(ctx, dbgg, juros)
     crescimento = contas.variacao(pib, 12)
     folga = contas.subtrair(juro_divida, crescimento)
@@ -296,7 +296,7 @@ def _divida(ctx: Contexto, base: SimuladorDivida | None) -> tuple[Bloco, str, An
 
     fonte_juro = bcb_fiscal.FONTE_TAXA if oficial else f"{ctx.fonte_sgs('DBGG', 'NFSP_JUROS_12M')}"
     fonte_conta = (
-        f"{fonte_juro}; {ctx.fonte_sgs('DBGG', 'NFSP_PRIMARIO_12M', 'PIB_12M')}; conta nossa"
+        f"{fonte_juro}; {ctx.fonte_sgs('DBGG', 'NFSP_PRIMARIO_12M', 'PIB_12M')}; cálculo próprio"
     )
     # Taxa implícita: os juros que a dívida bruta rendeu em 12 meses ÷ o saldo, pelo BC.
     explica_juro = (
@@ -711,7 +711,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
             periodicidade="D",
             casas=1,
             detalhe="o balanço do dólar no último mês, ao ano",
-            fonte=f"{ctx.fonte_sgs('DOLAR')}; conta nossa",
+            fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
             procedencia="calculado",
             secao="riscos",
             mini=500,
@@ -726,7 +726,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
             casas=1,
             periodicidade="D",
             janela_anos=10,
-            fonte=f"{ctx.fonte_sgs('DOLAR')}; conta nossa",
+            fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
             nota=nota_vol + " Um ponto por semana.",
         ),
     ]
@@ -739,7 +739,7 @@ def _mercado(ctx: Contexto) -> tuple[Bloco, list[Ponto]]:
             pior_quando="alto",
             unidade="% a.a.",
             periodicidade="D",
-            fonte=f"{ctx.fonte_sgs('DOLAR')}; conta nossa",
+            fonte=f"{ctx.fonte_sgs('DOLAR')}; cálculo próprio",
             procedencia="calculado",
         ),
     ]
@@ -785,7 +785,7 @@ def _externo(ctx: Contexto) -> Bloco:
     meses = meses_de_importacao(reservas, ctx.sgs("IMPORTACOES", HIST + 2))
     externa_liquida = ctx.sgs("DLSP_EXTERNA", HIST)
     swaps = contas.escalar(ctx.sgs("SWAP_CAMBIAL", HIST), 1 / 1000)
-    fonte_cobertura = f"{ctx.fonte_sgs('RESERVAS', 'DIVIDA_EXTERNA_CURTO_PRAZO')}; conta nossa"
+    fonte_cobertura = f"{ctx.fonte_sgs('RESERVAS', 'DIVIDA_EXTERNA_CURTO_PRAZO')}; cálculo próprio"
     bloco = Bloco()
     bloco.cartoes += [
         cartao(
@@ -887,7 +887,7 @@ def _externo(ctx: Contexto) -> Bloco:
             pior_quando="baixo",
             unidade="meses",
             periodicidade="M",
-            fonte=f"{ctx.fonte_sgs('RESERVAS', 'IMPORTACOES')}; conta nossa",
+            fonte=f"{ctx.fonte_sgs('RESERVAS', 'IMPORTACOES')}; cálculo próprio",
             procedencia="calculado",
         ),
         alerta(
@@ -910,7 +910,7 @@ def _externo(ctx: Contexto) -> Bloco:
             unidade="% do PIB",
             periodicidade="M",
             casas=2,
-            fonte=f"{ctx.fonte_sgs('IDP_12M_PIB', 'TC_12M_PIB')}; conta nossa",
+            fonte=f"{ctx.fonte_sgs('IDP_12M_PIB', 'TC_12M_PIB')}; cálculo próprio",
             procedencia="calculado",
         ),
         alerta(
@@ -1123,7 +1123,7 @@ def _inflacao(ctx: Contexto) -> Bloco:
             periodicidade="M",
             casas=2,
             limite=teto,
-            fonte=f"{ctx.fonte_sgs(*inflacao.NUCLEOS)}; conta nossa",
+            fonte=f"{ctx.fonte_sgs(*inflacao.NUCLEOS)}; cálculo próprio",
             procedencia="calculado",
         ),
         alerta(
@@ -1240,7 +1240,7 @@ def _juro_real_e_implicita(ctx: Contexto) -> Bloco:
                 casas=2,
                 fonte=(
                     "Tesouro Direto (curva zero, o método de Juros); "
-                    f"{ctx.fonte_sgs('META_INFLACAO')}; conta nossa"
+                    f"{ctx.fonte_sgs('META_INFLACAO')}; cálculo próprio"
                 ),
                 procedencia="calculado",
             )
@@ -1253,7 +1253,7 @@ def _juro_real_e_implicita(ctx: Contexto) -> Bloco:
     diferenca = diferenca_por_mes(brasil, eua)
     if not diferenca:
         return bloco
-    fonte = f"{FONTE_CURVA}; {fred.FONTE_TIPS}; conta nossa"
+    fonte = f"{FONTE_CURVA}; {fred.FONTE_TIPS}; cálculo próprio"
     bloco.cartoes.append(
         cartao(
             "juro-real-brasil-eua",
@@ -1314,7 +1314,7 @@ def _expectativa(ctx: Contexto) -> Bloco:
             ),
             fonte=(
                 "Banco Central, Focus (mediana do IPCA dos 12 meses seguintes, suavizada); "
-                f"{ctx.fonte_sgs('META_INFLACAO')}; conta nossa"
+                f"{ctx.fonte_sgs('META_INFLACAO')}; cálculo próprio"
             ),
             procedencia="calculado",
         )
@@ -1446,7 +1446,7 @@ def _estresse(
             subtitulo="Cada crise e o mesmo tranco aplicado a hoje",
             colunas=colunas,
             linhas=linhas,
-            fonte=f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; conta nossa",
+            fonte=f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; cálculo próprio",
             # Alta é a do pior trecho dentro da janela (do ponto mais baixo ao mais alto que veio
             # depois). A linha da dívida só existe onde as séries cobrem o episódio (a dívida
             # bruta na metodologia atual começa em dez/2006).
@@ -1620,7 +1620,7 @@ def _estresse(
                 linhas=v0.linhas,
                 fonte=(f"{base.fonte}; " if base else "")
                 + f"{ctx.fonte_sgs('IPCA_12M', 'PIB_VAR_ANUAL', 'DOLAR', 'SELIC_META')}; "
-                "conta nossa",
+                "cálculo próprio",
                 nota=v0.nota,
                 largura="inteira",
                 variantes=variantes,
@@ -1748,7 +1748,7 @@ def _energia(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="D",
             janela_anos=10,
-            fonte=f"{ons.FONTE}; conta nossa",
+            fonte=f"{ons.FONTE}; cálculo próprio",
             # Somados os quatro subsistemas (Sudeste/Centro-Oeste, Sul, Nordeste e Norte).
             # Reservatório baixo liga térmicas e encarece a luz: racionamento em 2001,
             # bandeira de escassez hídrica em 2021.
@@ -1897,7 +1897,7 @@ def _juros_sobre_receita(ctx: Contexto) -> Bloco:
         return Bloco()
     fonte = (
         f"{ctx.fonte_sgs('NFSP_JUROS_GC_MES')}; Tesouro Nacional, Resultado do Tesouro "
-        "Nacional (tabela 1.1, receita líquida); conta nossa"
+        "Nacional (tabela 1.1, receita líquida); cálculo próprio"
     )
     inicio = date(ctx.hoje.year - 20, 1, 1)
     bloco = Bloco()
@@ -1972,7 +1972,7 @@ def _vencimento(ctx: Contexto) -> Bloco:
             periodicidade="M",
             casas=1,
             detalhe=f"R$ {br(saldo / 1e6, 2)} tri{no_pib}",
-            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
             procedencia="calculado",
             secao="riscos",
             mini=120,
@@ -1987,7 +1987,7 @@ def _vencimento(ctx: Contexto) -> Bloco:
             casas=1,
             periodicidade="M",
             janela_anos=20,
-            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
             # Quanto maior a parte que vence logo, mais dívida se troca no ano ao juro do momento.
             nota=(
                 "Dívida bruta que vence em até 12 meses ÷ total, pelo cronograma do Banco "
@@ -2004,7 +2004,7 @@ def _vencimento(ctx: Contexto) -> Bloco:
             pior_quando="alto",
             unidade="% da dívida bruta",
             periodicidade="M",
-            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; conta nossa",
+            fonte=f"{bcb_fiscal.FONTE_CRONOGRAMA}; cálculo próprio",
             procedencia="calculado",
         )
     )
@@ -2377,7 +2377,7 @@ def montar(ctx: Contexto) -> Secao:
             referencia=ctx.hoje,
             periodicidade="D",
             detalhe=_mais_grave(acesos),
-            fonte="Painel de alerta desta página (cada linha com a sua fonte); conta nossa",
+            fonte="Painel de alerta desta página (cada linha com a sua fonte); cálculo próprio",
             procedencia="calculado",
             secao="riscos",
         ),

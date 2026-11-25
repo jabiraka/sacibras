@@ -390,7 +390,7 @@ def montar(ctx: Contexto) -> Secao:
             "Razão 10/40",
             palma,
             "vezes",
-            f"{PNADA} (SIDRA 7527); conta nossa",
+            f"{PNADA} (SIDRA 7527); cálculo próprio",
             "10 % mais ricos ÷ 40 % mais pobres",
             1,
         ),
@@ -437,7 +437,7 @@ def montar(ctx: Contexto) -> Secao:
             ],
             unidade=f"{base.year} = 100",
             periodicidade="A",
-            fonte=f"{PNADA} (SIDRA 7533); conta nossa",
+            fonte=f"{PNADA} (SIDRA 7533); cálculo próprio",
             nota=(
                 "Renda média por pessoa de cada grupo, descontada a inflação. Acima de 100, "
                 f"ganha mais do que em {base.year}."
@@ -652,7 +652,7 @@ def montar(ctx: Contexto) -> Secao:
                 rotulo,
                 pontos,
                 "% da renda",
-                f"{PNADA} (SIDRA {quem}); conta nossa",
+                f"{PNADA} (SIDRA {quem}); cálculo próprio",
                 f"renda do trabalho; {pontos[0][0].year}: {br(pontos[0][1], 0)} %",
                 1,
             )
@@ -668,7 +668,7 @@ def montar(ctx: Contexto) -> Secao:
             ],
             unidade="% da renda",
             periodicidade="A",
-            fonte=f"{PNADA} (SIDRA 7441 e 7444); conta nossa",
+            fonte=f"{PNADA} (SIDRA 7441 e 7444); cálculo próprio",
             nota=(
                 "Renda média do trabalho de um grupo sobre a do outro. Compara médias: não "
                 "separa escola, idade, região ou ocupação de discriminação."
@@ -1018,7 +1018,7 @@ def topo_no_tempo() -> Grafico:
         periodicidade="A",
         fonte=(
             f"{receita_centis.FONTE}, anos-calendário {anos[0]} a {anos[-1]} (tabela V); "
-            "as fatias: conta nossa"
+            "as fatias: cálculo próprio"
         ),
         # Renda: a tributável, a isenta (lucros e dividendos inclusive) e a de tributação
         # exclusiva, sem heranças e doações. O ano é o da renda, declarada no ano seguinte.
@@ -1421,7 +1421,7 @@ def escola_e_renda() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             "Superior completo, contra médio completo",
             razao_sup,
             "vezes",
-            f"{PNADA} (SIDRA 7443); conta nossa",
+            f"{PNADA} (SIDRA 7443); cálculo próprio",
             "renda do trabalho com diploma ÷ só com o médio",
             1,
         )
@@ -1500,7 +1500,7 @@ def escola_e_renda() -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
             *(linha(nome, instrucao.get(cod, [])) for cod, nome in INSTRUCAO.items()),
             *(linha(nome, idade.get(cod, [])) for cod, nome in IDADES_RENDA.items()),
         ],
-        fonte=f"{PNADA} (SIDRA 7443 e 7442); a média e o crescimento: conta nossa",
+        fonte=f"{PNADA} (SIDRA 7443 e 7442); a média e o crescimento: cálculo próprio",
         nota=(
             "Renda média do trabalho, a preços do último ano. Primeiro por instrução "
             "concluída; depois, por idade."
@@ -1560,7 +1560,7 @@ def topo_por_centis() -> tuple[list[Cartao], list[Tabela]]:
     um = next(g for g in grupos if g.nome.startswith("1 %"))
     if not (tot.renda and tot.bens):
         raise RuntimeError("centis do IRPF sem renda ou sem bens")
-    fonte = f"{receita_centis.FONTE}, ano-calendário {ano} (tabela V); as fatias: conta nossa"
+    fonte = f"{receita_centis.FONTE}, ano-calendário {ano} (tabela V); as fatias: cálculo próprio"
 
     def media(g: receita_centis.Grupo) -> float:
         """Renda média por declarante, em R$ mil por ano."""

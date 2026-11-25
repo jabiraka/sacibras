@@ -1,4 +1,4 @@
-"""Decomposições: um número oficial repartido nas partes que o formam, por conta nossa.
+"""Decomposições: um número oficial repartido nas partes que o formam, por cálculo próprio.
 
 Nenhuma é previsão: todas usam só dado já publicado e fecham, na soma, com o número oficial.
 

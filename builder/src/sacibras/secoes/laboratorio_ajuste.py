@@ -31,7 +31,7 @@ from sacibras.secoes import estabiliza
 from sacibras.secoes.base import MESES, Contexto, br, grafico, serie
 from sacibras.tipos import Ponto
 
-CONTA = "conta nossa"
+CONTA = "cálculo próprio"
 Pecas = tuple[list[Cartao], list[Grafico], list[Tabela]]
 
 
@@ -157,7 +157,7 @@ def dolar(ctx: Contexto) -> Pecas:
             # e 10 anos, estreita quando o dólar lá fora quase não se mexeu. O real está na
             # cesta com peso pequeno, o que puxa um pouco para "de fora".
             nota=(
-                "Conta nossa: de fora é o dólar contra os emergentes vezes o quanto o real o "
+                "Cálculo próprio: de fora é o dólar contra os emergentes vezes o quanto o real o "
                 "acompanhou em cinco anos; o resto é do Brasil. A parte do Brasil junta contas "
                 "públicas, política, juro e exportações, sem separar uma da outra."
             ),
@@ -284,9 +284,9 @@ def divida(ctx: Contexto) -> Pecas:
             # medem: juro menor com dívida menor (abaixo da linha) e PIB menor por um tempo com
             # o ajuste (acima). Vale para o setor público inteiro; não diz como se chegaria lá.
             nota=(
-                "Conta nossa, não previsão: a dívida refeita trocando só o primário, com juro e "
-                f"PIB como foram ({POUPADO[0]} fica como foi). Fica de fora o efeito do ajuste "
-                "no juro e no PIB, que os dados daqui não medem."
+                "Cálculo próprio, não previsão: a dívida refeita trocando só o primário, com "
+                f"juro e PIB como foram ({POUPADO[0]} fica como foi). Fica de fora o efeito do "
+                "ajuste no juro e no PIB, que os dados daqui não medem."
             ),
         )
     ]
@@ -698,7 +698,7 @@ def esperar(ctx: Contexto) -> Pecas:
         # muda pouco o primário necessário, que cresce na proporção da dívida; muda o nível
         # em que ela para e o juro pago daí em diante.
         nota=(
-            "Conta nossa, não previsão: dívida × (juro − crescimento) ÷ (1 + crescimento), "
+            "Cálculo próprio, não previsão: dívida × (juro − crescimento) ÷ (1 + crescimento), "
             f"real, com o PIB do Focus para {max(pib)} ({br(crescimento)} % ao ano). Não mede "
             "se o juro sobe com a dívida mais alta, o risco de esperar."
         ),
@@ -978,7 +978,7 @@ def meta_da_ldo(ctx: Contexto) -> Pecas:
 # ------------------------------------------------------------------ o projeto da LDO 2027
 
 # Caio, 25/11/2026: *"tem como ver se isso vai estabilizar a dívida"* e *"Pode já colocar,
-# dizendo que ainda não virou lei"*. É o que o governo projeta, não conta nossa: a peça põe a
+# dizendo que ainda não virou lei"*. É o que o governo projeta, não cálculo próprio: a peça põe a
 # meta e a dívida do projeto ao lado do Focus e do primário que estabilizaria a dívida, e
 # diz em que o governo supõe diferente do mercado. Sancionada a lei, a meta de 2027 vai para
 # `leis.METAS_DAS_LDOS` e o "ainda não é lei" sai daqui.
@@ -1111,7 +1111,7 @@ def _simulador_da_ldo(
         ],
         fonte=f"{fonte}; {CONTA}",
         nota=(
-            "Conta nossa, não previsão. Cada controle vale para todos os anos e não mexe nos "
+            "Cálculo próprio, não previsão. Cada controle vale para todos os anos e não mexe nos "
             f"outros. Depois de {max(governo)}, repete as hipóteses do último ano do projeto."
         ),
     )
@@ -1186,7 +1186,7 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
             )
         )
 
-    # A conta nossa: as metas do projeto com o erro que as LDOs já tiveram, e o crescimento
+    # O cálculo próprio: as metas do projeto com o erro que as LDOs já tiveram, e o crescimento
     # e o juro que o mercado espera. Só sai se a peça da meta de cada LDO saiu antes.
     erro = ctx.memo.get("laboratorio_erro_ldo")
     intervalos: list[Intervalo] = []
@@ -1217,7 +1217,7 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
         series.append(
             serie(
                 "historia",
-                "Conta nossa (metas com o erro da história)",
+                "Cálculo próprio (metas com o erro da história)",
                 [inicio] + [(date(a, 1, 1), v) for a, v in central.items()],
                 papel="previsao",
             )
@@ -1230,10 +1230,10 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
             )
         ]
         fonte_conta = f"{fonte}; {CONTA}"
-        frase_nossa = f", conta nossa {br(central[fim])} % ({br(baixo[fim])} a {br(alto[fim])})"
+        frase_nossa = f", cálculo próprio {br(central[fim])} % ({br(baixo[fim])} a {br(alto[fim])})"
         sobra_media = sum(sobra.values()) / len(sobra)
         nota_nossa = [
-            f"Conta nossa, não previsão: as metas do projeto menos {br(medio)} pp, o erro",
+            f"Cálculo próprio, não previsão: as metas do projeto menos {br(medio)} pp, o erro",
             f"médio das LDOs de {de} a {ate} (traços: {br(menor)} a {br(maior)}), com",
             "crescimento e juro do Focus.",
         ]
@@ -1299,7 +1299,7 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
                 fonte=fonte_conta,
                 nota=" ".join(
                     [
-                        "Conta nossa. Com os números do governo, a conta deixa uma sobra de",
+                        "Cálculo próprio. Com os números do governo, a conta deixa uma sobra de",
                         f"{br(sobra_media)} pp por ano, mantida em todos os cenários.",
                         f"Depois de {ATE_O_FOCUS}: crescimento na última mediana do Focus e o",
                         "juro que fecha com a dívida do Focus.",

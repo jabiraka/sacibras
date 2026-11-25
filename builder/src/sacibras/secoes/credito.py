@@ -136,7 +136,6 @@ def montar(ctx: Contexto) -> Secao:
             casas=1,
             detalhe=f"{br(concessoes_var[-1][1])} % contra os 12 meses anteriores",
             fonte=ctx.fonte_sgs("IMOB_CONCESSOES"),
-            procedencia="calculado",
             secao="credito",
             mini=60,
         ),
@@ -254,7 +253,7 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             janela_anos=10,
             fonte=ctx.fonte_sgs("IMOB_CONCESSOES"),
-            nota="Soma de 12 meses, em reais correntes: conta nossa.",
+            nota="Soma de 12 meses, em reais correntes.",
         ),
         grafico(
             "ivgr",
@@ -270,7 +269,7 @@ def montar(ctx: Contexto) -> Secao:
             fonte=ctx.fonte_sgs("IVGR", "IPCA_12M"),
             nota=(
                 "IVG-R: avaliação dos imóveis financiados em 13 regiões metropolitanas. A "
-                "variação em 12 meses é conta nossa."
+                "variação em 12 meses é cálculo próprio."
             ),
         ),
         grafico(

@@ -15,7 +15,7 @@ from sacibras import licencas
 from sacibras.tipos import Periodicidade, Ponto
 
 Procedencia = Literal["oficial", "mercado", "calculado"]
-"""oficial: publicado pelo órgão; mercado: preço ou consenso (Focus); calculado: conta nossa
+"""oficial: publicado pelo órgão; mercado: preço ou consenso (Focus); calculado: cálculo próprio
 sobre dados oficiais, com o método na nota."""
 
 Papel = Literal["realizado", "consenso", "previsao", "referencia"]
@@ -157,7 +157,7 @@ class Grafico(Modelo):
     """O que o gráfico mostra hoje, em uma frase (`manchetes.py`); a tela a põe sob o título."""
     fonte: str
     nota: str = ""
-    """O método em uma frase, quando há conta nossa ou previsão."""
+    """O método em uma frase, quando há cálculo próprio ou previsão."""
     largura: Literal["meia", "inteira"] = "meia"
     piramide: Piramide | None = None
     """Com ela, o site desenha a pirâmide etária no lugar das séries."""
@@ -695,7 +695,7 @@ class MetricaEstados(Modelo):
     """Quando o resultado é um nome (a nota CAPAG): o nome de cada valor. A tela escreve o
     nome no lugar do número."""
     conferencia: str = ""
-    """A conta nossa comparada com número oficial de outra fonte, em uma frase (o PIB
+    """O cálculo próprio comparado com número oficial de outra fonte, em uma frase (o PIB
     trimestral dos estados contra os institutos estaduais que o publicam)."""
     periodos: list[PeriodoDaMetrica] = Field(default_factory=list)
     """A mesma métrica em cada período que a fonte tem, do mais novo ao mais antigo (o

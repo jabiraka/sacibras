@@ -72,7 +72,6 @@ def dividendos(det: dict[str, list[Ponto]], pib: list[Ponto], fonte: str, inicio
                 f"quem mais pagou: {EMPRESAS[maior]}"
             ),
             fonte=fonte,
-            procedencia="calculado",
             secao="fiscal",
             mini=120,
         )
@@ -161,8 +160,7 @@ def conta_do_ano() -> Pecas:
                 f"recebeu {br(x.dividendos_uniao / 1000)}; pôs "
                 f"{br((x.subvencao + x.aporte) / 1000)} em subvenção e capital"
             ),
-            fonte=f"{fonte}; saldo: conta nossa",
-            procedencia="calculado",
+            fonte=fonte,
             secao="fiscal",
             mini=[(d, round(v, 2)) for d, v in pontos(saldo)],
         ),
@@ -203,7 +201,7 @@ def conta_do_ano() -> Pecas:
         unidade="R$ bilhões",
         casas=1,
         periodicidade="A",
-        fonte=f"{fonte}; saldo: conta nossa",
+        fonte=fonte,
         nota=(
             "Os dividendos vêm de quatro empresas; a subvenção vai às dependentes (hospitais, "
             "pesquisa, obras). Valores da época, sem descontar a inflação."
@@ -242,11 +240,11 @@ def conta_do_ano() -> Pecas:
             ),
             linha("Subvenção às estatais dependentes", lambda a: -por_ano[a].subvencao, caixa),
             linha("Aporte de capital", lambda a: -por_ano[a].aporte, caixa),
-            linha("Saldo para a União (conta nossa)", saldo, caixa),
+            linha("Saldo para a União", saldo, caixa),
             linha("Lucro de todas as estatais somadas", lambda a: por_ano[a].lucro, empresas),
             linha("  só das que tiveram prejuízo", lambda a: por_ano[a].prejuizos, empresas),
         ],
-        fonte=f"{fonte}; saldo e soma dos prejuízos: conta nossa",
+        fonte=fonte,
         # Ficam fora do saldo os impostos que as estatais pagam, o lucro que guardam e o valor
         # das ações. O prejuízo de uma não dependente (os Correios) não sai do Tesouro no ano:
         # vira dívida ou perda de patrimônio da empresa, e pode virar aporte depois.
@@ -318,7 +316,6 @@ def primario(
             casas=1,
             detalhe=f"{estado}; sem os bancos, a Petrobras e a Eletrobras",
             fonte=fonte,
-            procedencia="calculado",
             secao="fiscal",
             mini=120,
         )

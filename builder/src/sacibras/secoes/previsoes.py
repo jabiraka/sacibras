@@ -58,7 +58,9 @@ def _juro_de_hoje(ctx: Contexto, dbgg: list[Ponto]) -> tuple[float, bool]:
         ctx.memo["taxa_implicita_dbgg"] = taxa
         return taxa[-1][1], True
     except Exception as erro:
-        print(f"    simulador: sem a taxa implícita do BC, fica a conta nossa ({str(erro)[:100]})")
+        print(
+            f"    simulador: sem a taxa implícita do BC, fica o cálculo próprio ({str(erro)[:100]})"
+        )
     juros_12m = ctx.sgs("NFSP_JUROS_12M", anos=20)
     return juros_12m[-1][1] / dbgg[-1][1] * 100, False
 
@@ -101,7 +103,7 @@ def _simulador(
             f"Focus de {periodo(edicao, 'D')} (PIB, IPCA, Selic, resultado primário e dívida); "
             f"{ctx.fonte_sgs('DBGG', 'DIVIDA_IDX_SELIC')}"
             + (f"; {bcb_fiscal.FONTE_TAXA}" if oficial else "")
-            + "; conta nossa"
+            + "; cálculo próprio"
         ),
         # Parte da dívida que o Focus espera para o fim do ano. A parte atrelada à Selic
         # acompanha a Selic do Focus; crescimento, inflação e primário são medianas do Focus,
@@ -109,7 +111,7 @@ def _simulador(
         # corrigida pelo IPCA e o BC sobe a Selic com a inflação. Não separa a dívida atrelada
         # ao câmbio nem o que entra na dívida sem passar pelo primário.
         nota=(
-            "Conta nossa: dívida × (1 + juro) ÷ ((1 + crescimento) × (1 + inflação)) − "
+            "Cálculo próprio: dívida × (1 + juro) ÷ ((1 + crescimento) × (1 + inflação)) − "
             f"primário, com o juro de hoje ({como_juro}, {br(implicito)} %) e o resto do "
             f"Focus a partir de {ano}. Ordem de grandeza: o juro não reage à inflação, então "
             "mexa nos dois juntos."
@@ -376,7 +378,7 @@ def montar(ctx: Contexto) -> Secao:
                 ],
                 fonte=(
                     "IBGE (SIDRA 5932); Banco Central (IBC-Br, SGS 24363; Focus, "
-                    "ExpectativasMercadoTrimestrais); conta nossa"
+                    "ExpectativasMercadoTrimestrais); cálculo próprio"
                 ),
                 # Reta do crescimento do PIB contra o do IBC-Br médio do trimestre (os dois
                 # contra um ano antes). Erro típico: raiz do erro quadrático médio fora da

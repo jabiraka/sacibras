@@ -585,7 +585,6 @@ def montar(ctx: Contexto) -> Secao:
             periodicidade="M",
             casas=1,
             fonte=ctx.fonte_sgs("BALANCA_COMERCIAL"),
-            procedencia="calculado",
             secao="externo",
             mini=60,
         ),

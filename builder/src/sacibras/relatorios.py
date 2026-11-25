@@ -584,7 +584,7 @@ FONTE_ACORDOS = (
 
 # ------------------------------------------------------------------ conferência do PIB dos estados
 
-# O PIB trimestral por estado é conta nossa (`modelos/pib_estados.py`). Cinco estados publicam
+# O PIB trimestral por estado é cálculo próprio (`modelos/pib_estados.py`). Cinco estados publicam
 # o seu, por órgão oficial de estatística, com método e série em planilha: é o que há para
 # conferir a conta. Lidas em 15/11/2026, todas até o 2º tri/2026:
 # - RS, DEE/SPGG: dee.rs.gov.br/pib-trimestral, "serie-historica-2026-ii.xlsx", aba "Série

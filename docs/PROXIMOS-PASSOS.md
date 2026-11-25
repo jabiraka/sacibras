@@ -39,17 +39,24 @@ tela foi para comentário no código, perto da peça. Ficaram as ressalvas que a
 ("conta nossa", "não é o que a Selic causou", "compara médias", as faixas). O build agora
 avisa **"nota longa"** (mais de duas frases ou 240 letras) em gráfico, variante e tabela
 (`construir.textos_longos`). **Falta o Caio olhar** as telas: da nuvem não abri o site.
-**No mesmo dia, o rótulo "conta nossa" conferido peça por peça** (Caio: *"tem alguns gráficos
-que tá como 'conta nossa' mas talvez não seja realmente"*). Corrigido: o PIB por habitante
-passa a vir pronto do IBGE (SIDRA 6784), com conta nossa só no ano que o IBGE ainda não
-publicou; a linha do IPCA em "Desocupação mais inflação" é a série de 12 meses do IBGE (SGS
-13522), e só a soma é nossa; o cartão da dívida que o Focus espera é "mercado", e a alíquota
-cheia do Comitê Gestor é "oficial"; nos gráficos do Focus no Laboratório e na expectativa
-contra a meta, a fonte diz que só o erro médio ou a meta do prazo é conta nossa; a tabela da
-LDO 2027 ganhou "conta nossa" na coluna do primário que estabiliza pelo Focus, que não dizia.
-"Cálculo próprio" virou "conta nossa" em todo lugar (eram três nomes para a mesma coisa;
-"estimativa nossa" fica para o Laboratório e as perguntas). O que ficou em aberto está no
-[PROPOSTAS](PROPOSTAS.md), "Rótulo de conta nossa".
+**No mesmo dia, o rótulo de cálculo próprio conferido peça por peça** (Caio: *"tem alguns
+gráficos que tá como 'conta nossa' mas talvez não seja realmente"*; depois: *"Pode substituir
+oq pudermos obter número oficial. 'Conta nossa' substitui por 'Cálculo próprio', e se só a soma
+é nossa não precisa falar que é nosso"*). O rótulo na tela é **"cálculo próprio"** (a busca casa
+também "conta nossa"; "estimativa nossa" fica no Laboratório e nas perguntas). Passaram a número
+oficial: o PIB por habitante (IBGE, SIDRA 6784; cálculo próprio só no ano que o IBGE ainda não
+publicou), o IPCA de 12 meses em "Desocupação mais inflação" (SGS 13522), as reservas em meses
+de importação de Brasil no mundo (Banco Mundial, FI.RES.TOTL.MO; o FMI com a conta fica de
+reserva), a parte da carga sobre bens e serviços (OCDE, unidade PT_OTR_SECTOR; a divisão fica
+de reserva), o cartão da dívida que o Focus espera ("mercado") e a alíquota cheia do Comitê
+Gestor. **Soma e diferença não levam rótulo**: desocupação mais inflação, a soma das alíquotas
+da reforma, o saldo das estatais, as vagas do Caged em 12 meses e os cartões de 12 meses que só
+somam meses (balança, dividendos, resultado das estatais, crédito imobiliário, FPE e FPM). Nos
+gráficos do Focus no Laboratório e na expectativa contra a meta, a fonte diz que só o erro
+médio ou a meta do prazo é cálculo próprio; a tabela da LDO 2027 passou a dizê-lo na coluna do
+primário que estabiliza pelo Focus. O SGS 20704 é o imobiliário inteiro (o BC o classifica
+como direcionado); o catálogo diz isso agora. O que ficou está no [PROPOSTAS](PROPOSTAS.md),
+"Rótulo de cálculo próprio".
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA

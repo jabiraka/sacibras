@@ -70,7 +70,9 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
 - **Conta nossa sobre dado oficial entra, dita como nossa** (Caio, 15/11/2026: *"se fizemos
   a conta, é nossa"*, sobre o carrego do PIB; e *"junte no main"*, sobre o PIB trimestral por
   estado e as decomposições). Vale para o que reparte ou junta número já publicado
-  (`modelos/decomposicoes.py`, `modelos/pib_estados.py`): a fonte diz "conta nossa", a soma
+  (`modelos/decomposicoes.py`, `modelos/pib_estados.py`): a fonte diz "cálculo próprio" (Caio,
+  25/11/2026: *"'Conta nossa' substitui por 'Cálculo próprio', e se só a soma é nossa não
+  precisa falar que é nosso"*; onde o órgão publica o número pronto, usa-se o dele), a soma
   fecha com o número oficial, o método vai em uma frase e, onde a conta pode errar, vai a faixa
   de erro medida e a conferência contra quem publica número parecido (os institutos estaduais,
   `relatorios.CONFERENCIA_PIB_ESTADOS`). Previsão do que ainda não aconteceu continua fora

@@ -13,7 +13,7 @@ Em 19/11/2026 entraram três peças sobre pressão e ajuste fiscal, que moram em
 `secoes/laboratorio_ajuste.py`: o dólar repartido entre o mundo e o Brasil, a dívida com outro
 primário desde 2014 e o primário que o Focus esperava contra o que veio.
 
-Nada aqui é número oficial: a fonte de cada peça diz "conta nossa" e o dado de onde ela sai.
+Nada aqui é número oficial: a fonte de cada peça diz "cálculo próprio" e o dado de onde ela sai.
 Onde a conta não dá resposta firme (pouca observação, medida ruim), a tela diz isso.
 """
 
@@ -36,7 +36,7 @@ PIB_SAZONAL = (1621, 584, "c11255/90707")
 """SIDRA 1621: PIB a preços de mercado, índice de volume com ajuste sazonal (1995 = 100),
 trimestral desde 1996 (conferido em 17/11/2026)."""
 INICIO = date(2006, 1, 1)
-CONTA = "conta nossa"
+CONTA = "cálculo próprio"
 
 
 def _trimestre(d: date) -> date:
@@ -738,8 +738,8 @@ def _crescimento(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[Tabel
         # Uma parte maior da população trabalha: mais gente em idade de trabalhar, mais
         # mulheres no mercado. Essa fonte tem limite; a produtividade, não.
         nota=(
-            "Conta nossa: cresce porque cada ocupado produz mais ou porque mais gente trabalha, "
-            "e só a segunda tem limite. Taxas em logaritmo, por isso somam."
+            "Cálculo próprio: cresce porque cada ocupado produz mais ou porque mais gente "
+            "trabalha, e só a segunda tem limite. Taxas em logaritmo, por isso somam."
         ),
     )
     return cartoes, graficos, [tabela]
