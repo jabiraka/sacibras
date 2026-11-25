@@ -156,17 +156,22 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Nota de crédito do país",
         "relatorios.NOTAS",
-        date(2026, 11, 14),
-        date(2026, 12, 14),
-        "sisweb.tesouro.gov.br/apex/f?p=2810:2 (fora do ar em 14/11/2026) e os comunicados do "
-        "Tesouro. Sem calendário: conferir uma vez por mês.",
+        date(2026, 11, 25),
+        date(2027, 5, 25),
+        "O builder lê sozinho o CSV da consulta do Tesouro (fontes/tesouro_notas.py) e "
+        "acrescenta os atos de S&P, Fitch e Moody's depois de ULTIMO_ATO_LIDO. Conferir que a "
+        "nota da tela diz o ato mais novo (sisweb.tesouro.gov.br/apex/f?p=2810:2); passar os "
+        "atos novos para NOTAS, PERSPECTIVA e ULTIMO_ATO_LIDO. A cada seis meses.",
     ),
     Leitura(
         "Teste de estresse dos bancos (REF)",
         "relatorios.ESTRESSE_DOS_BANCOS",
-        date(2026, 11, 14),
-        date(2027, 5, 31),
-        "Relatório de Estabilidade Financeira do BC (maio e outubro).",
+        date(2026, 11, 25),
+        date(2027, 6, 15),
+        "O builder lê sozinho o anexo estatístico da edição mais nova do Relatório de "
+        "Estabilidade Financeira (fontes/bcb_ref.py, gráficos 1.2.5.6 e 1.2.5.7). Depois da "
+        "edição de maio, conferir que a tela a mostra e que a planilha bate com o texto do "
+        "relatório; se bater, passar a frase e ESTRESSE_EDICAO para ela. Duas vezes por ano.",
     ),
     Leitura(
         "Efeito da Selic na inflação e no dólar (modelos do BC)",
@@ -174,7 +179,8 @@ LEITURAS: list[Leitura] = [
         date(2026, 11, 14),
         date(2026, 12, 31),
         "Relatório de Política Monetária de dezembro: procurar nova atualização dos modelos "
-        "semiestruturais. A cada relatório (mar, jun, set, dez).",
+        "semiestruturais; os números saem da planilha anexa (rpmAAAAMManp.xlsx), não do "
+        "gráfico. A cada relatório (mar, jun, set, dez).",
     ),
     Leitura(
         "Faixa de erro do efeito da Selic no IPCA",
@@ -351,20 +357,22 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Valor médio das aposentadorias do INSS",
         "relatorios.INSS_APOSENTADORIA_MEDIA",
-        date(2026, 11, 19),
-        date(2027, 2, 28),
-        "Boletim Estatístico da Previdência Social (gov.br/previdencia, boletins da "
-        "previdência social), quadro 15, linhas Aposentadorias, Idade e Tempo de Contribuição; "
-        "trocar também INSS_EM. Sai todo mês; reler a cada três, e nunca com o mês do 13º.",
+        date(2026, 11, 25),
+        date(2027, 5, 25),
+        "O builder lê sozinho a planilha do Boletim Estatístico da Previdência Social mais "
+        "nova sem o 13º (fontes/beps.py, quadros 15 e 27). Conferir que a tabela dos "
+        "servidores mostra um mês recente; se não, ver se a página dos boletins mudou o nome "
+        "do arquivo. Atualizar a reserva (INSS_*, INSS_EM, TETO_INSS). A cada seis meses.",
     ),
     Leitura(
         "Teto do INSS e teto do serviço público",
         "relatorios.TETO_INSS",
         date(2026, 11, 19),
-        date(2027, 1, 20),
-        "Portaria interministerial MPS/MF de janeiro (art. 2º, o maior salário de benefício); "
-        "e a lista de leis do Senado, para ver se há lei nova do subsídio de ministro do STF. "
-        "Trocar TETO_INSS_ANO. Uma vez por ano.",
+        date(2027, 3, 31),
+        "O do INSS vem sozinho do boletim da Previdência (quadro 27); em março, quando sai o "
+        "boletim de janeiro, conferir que a tela mostra o do ano. O do serviço público é à "
+        "mão: a lista de leis do Senado, para ver se há lei nova do subsídio de ministro do "
+        "STF. Uma vez por ano.",
     ),
     Leitura(
         "Estatais federais: lucro, dividendos à União, subvenção e aporte, por ano",

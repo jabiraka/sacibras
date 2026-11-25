@@ -208,6 +208,18 @@ REGRAS: list[Regra] = [
         nome="PLN 2/2026 (LDO 2027)",
         url="https://www.congressonacional.leg.br/materias/materias-bicamerais/-/ver/pln-2-2026",
     ),
+    # Abertas em 25/11/2026: a página dos boletins (lista a planilha da edição do mês) e a do
+    # Relatório de Estabilidade Financeira.
+    Regra(
+        padrao=r"Boletim Estatístico da Previdência",
+        nome="Boletim Estatístico da Previdência Social",
+        url="https://www.gov.br/previdencia/pt-br/assuntos/previdencia-social/Dados-estatisticos-previdencia-social-e-inss/boletins-da-previdencia-social",
+    ),
+    Regra(
+        padrao=r"Relatório de Estabilidade Financeira",
+        nome="Banco Central, Relatório de Estabilidade Financeira",
+        url="https://www.bcb.gov.br/publicacoes/ref",
+    ),
     Regra(
         padrao=r"Relatório de Inflação",
         nome="Banco Central, Relatório de Inflação",

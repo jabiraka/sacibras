@@ -28,12 +28,14 @@ from sacibras.fontes import (
     banco_mundial,
     bcb_fiscal,
     bcb_focus,
+    bcb_ref,
     bis,
     fmi,
     fred,
     ibge_projecao,
     ons,
     tesouro_direto,
+    tesouro_notas,
     tesouro_rtn,
 )
 from sacibras.modelos import divida, risco
@@ -1374,11 +1376,38 @@ def _liquidez_e_hiato(ctx: Contexto) -> Bloco:
 # ------------------------------------------------------------------ 6. estresse
 
 
+def ref_mais_novo(hoje: date) -> bcb_ref.Estresse | None:
+    """O teste de estresse da edição mais nova do REF, ou None se a planilha falhar."""
+    try:
+        return bcb_ref.estresse(hoje)
+    except Exception as erro:
+        print(f"    riscos: planilha do REF indisponível ({str(erro)[:120]})")
+        return None
+
+
+def estresse_dos_bancos(lido: bcb_ref.Estresse | None) -> tuple[str, str]:
+    """(frase, fonte) do teste de estresse dos bancos. A edição lida à mão usa o texto do
+    relatório (a planilha de out/2026 dá 3,38 % onde o texto diz 3,5 %); uma mais nova, a
+    planilha."""
+    if lido is None or lido.edicao <= relatorios.ESTRESSE_EDICAO:
+        edicao = relatorios.ESTRESSE_EDICAO
+        frase = relatorios.ESTRESSE_DOS_BANCOS
+    else:
+        edicao = lido.edicao
+        frase = (
+            f"No teste do Banco Central ({periodo(edicao, 'M')}), o pior cenário pede capital "
+            f"de {br(lido.crise)} % do patrimônio dos bancos; {br(lido.acima_do_minimo)} % dos "
+            f"ativos seguem acima do mínimo de {br(relatorios.BASILEIA_MINIMO)} %."
+        )
+    return frase, f"{bcb_ref.FONTE} ({periodo(edicao, 'M')})"
+
+
 def _estresse(
     ctx: Contexto,
     base: SimuladorDivida | None,
     anos: dict[int, risco.Choque],
     dolar: list[Ponto],
+    bancos: bcb_ref.Estresse | None = None,
 ) -> Bloco:
     selic = ctx.sgs("SELIC_META", HIST + 2)
     pib = {d.year: v for d, v in ctx.sgs("PIB_VAR_ANUAL", 30)}
@@ -1444,6 +1473,7 @@ def _estresse(
     janelas = "; ".join(
         f"{ep.nome}: {periodo(ep.inicio, 'M')} a {periodo(ep.fim, 'M')}" for ep in EPISODIOS
     )
+    frase_bancos, fonte_bancos = estresse_dos_bancos(bancos)
     bloco.tabelas.append(
         Tabela(
             id="estresse-episodios",
@@ -1451,13 +1481,16 @@ def _estresse(
             subtitulo="Cada crise e o mesmo tranco aplicado a hoje",
             colunas=colunas,
             linhas=linhas,
-            fonte=f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; cálculo próprio",
+            fonte=(
+                f"{ctx.fonte_sgs('DOLAR', 'SELIC_META', 'PIB_VAR_ANUAL')}; cálculo próprio; "
+                f"{fonte_bancos}"
+            ),
             # Alta é a do pior trecho dentro da janela (do ponto mais baixo ao mais alto que veio
             # depois). A linha da dívida só existe onde as séries cobrem o episódio (a dívida
             # bruta na metodologia atual começa em dez/2006).
             nota=(
                 "Não é previsão: trancos que já aconteceram, na escala de hoje (janelas "
-                f"nossas: {janelas}). " + relatorios.ESTRESSE_DOS_BANCOS
+                f"nossas: {janelas}). " + frase_bancos
             ),
         )
     )
@@ -1780,10 +1813,35 @@ def _energia(ctx: Contexto) -> Bloco:
 # ------------------------------------------------------------------ lidos em relatório
 
 
-def degraus(agencia: str, hoje: date) -> list[Ponto]:
+def degraus(
+    agencia: str, hoje: date, historia: dict[str, list[tuple[date, str]]] | None = None
+) -> list[Ponto]:
     """A nota da agência em degraus (0 = menor grau de investimento), até hoje."""
-    pontos = [(d, float(relatorios.DEGRAU[nota])) for d, nota in relatorios.NOTAS[agencia]]
+    linhas = (historia or relatorios.NOTAS)[agencia]
+    pontos = [(d, float(relatorios.DEGRAU[nota])) for d, nota in linhas]
     return [*pontos, (hoje, pontos[-1][1])]
+
+
+def notas_vigentes() -> tesouro_notas.Notas | None:
+    """O histórico lido à mão com os atos novos do CSV do Tesouro, ou None se ele falhar."""
+    try:
+        return tesouro_notas.juntar(
+            relatorios.NOTAS,
+            relatorios.PERSPECTIVA,
+            relatorios.ULTIMO_ATO_LIDO,
+            tesouro_notas.atos(),
+            relatorios.DEGRAU,
+        )
+    except Exception as erro:
+        print(f"    riscos: classificação de risco do Tesouro indisponível ({str(erro)[:120]})")
+        return None
+
+
+def _perspectivas(perspectiva: dict[str, str]) -> str:
+    """'estável nas três' ou 'S&P positiva, Fitch estável, Moody's estável'."""
+    if len(set(perspectiva.values())) == 1:
+        return f"{next(iter(perspectiva.values()))} nas três"
+    return ", ".join(f"{a} {p}" for a, p in perspectiva.items())
 
 
 # O eixo do gráfico com o nome da nota (S&P e Fitch / Moody's) no lugar do degrau.
@@ -1798,8 +1856,17 @@ NOMES_DOS_DEGRAUS = {
 }
 
 
-def _nota(ctx: Contexto) -> Bloco:
-    vigentes = {agencia: historia[-1] for agencia, historia in relatorios.NOTAS.items()}
+def _nota(ctx: Contexto, lido: tesouro_notas.Notas | None = None) -> Bloco:
+    """A nota das três agências: o lido à mão mais os atos novos do CSV do Tesouro (`lido`)."""
+    if lido is not None:
+        historia, perspectiva, ultimo = lido.historia, lido.perspectiva, lido.ultimo
+    else:
+        historia, perspectiva = relatorios.NOTAS, relatorios.PERSPECTIVA
+        ultimo = relatorios.ULTIMO_ATO_LIDO
+    fonte = relatorios.FONTE_NOTAS
+    if lido is not None and lido.novos:
+        fonte += f"; {tesouro_notas.FONTE}, lida em {periodo(ctx.hoje, 'D')}"
+    vigentes = {agencia: linhas[-1] for agencia, linhas in historia.items()}
     abaixo = {a: -relatorios.DEGRAU[nota] for a, (_, nota) in vigentes.items()}
     notas = {a: nota.replace("-", "−") for a, (_, nota) in vigentes.items()}
     # A nota mais comum vai grande; quem diverge vai no detalhe.
@@ -1815,13 +1882,13 @@ def _nota(ctx: Contexto) -> Bloco:
             texto=principal,
             unidade="degraus" if pior != 1 else "degrau",
             casas=0,
-            referencia=relatorios.ULTIMO_ATO_LIDO,
+            referencia=ultimo,
             periodicidade="D",
             detalhe=(
                 f"{pior} {'degrau' if pior == 1 else 'degraus'} abaixo do grau de investimento"
                 + (f"; {', '.join(outras)}" if outras else "")
             ),
-            fonte=relatorios.FONTE_NOTAS,
+            fonte=fonte,
             secao="riscos",
         )
     )
@@ -1830,9 +1897,9 @@ def _nota(ctx: Contexto) -> Bloco:
             "nota-de-credito",
             "A nota de crédito do Brasil nas três agências",
             [
-                serie("sp", "S&P", degraus("S&P", ctx.hoje), casas=0),
-                serie("fitch", "Fitch", degraus("Fitch", ctx.hoje), casas=0),
-                serie("moodys", "Moody's", degraus("Moody's", ctx.hoje), casas=0),
+                serie("sp", "S&P", degraus("S&P", ctx.hoje, historia), casas=0),
+                serie("fitch", "Fitch", degraus("Fitch", ctx.hoje, historia), casas=0),
+                serie("moodys", "Moody's", degraus("Moody's", ctx.hoje, historia), casas=0),
             ],
             subtitulo="De BBB− para cima, grau de investimento",
             tipo="degrau",
@@ -1841,11 +1908,11 @@ def _nota(ctx: Contexto) -> Bloco:
             periodicidade="D",
             linhas=[LinhaRef(valor=0.0, rotulo="grau de investimento (BBB−/Baa3)")],
             marcas_y=[LinhaRef(valor=float(v), rotulo=n) for v, n in NOMES_DOS_DEGRAUS.items()],
-            fonte=relatorios.FONTE_NOTAS,
-            # Lido à mão no Tesouro em 14/11/2026; perspectiva estável nas três.
+            fonte=fonte,
+            # Histórico lido à mão no Tesouro; os atos novos vêm do CSV da consulta.
             nota=(
-                "Dívida de longo prazo em moeda estrangeira; só as mudanças de nota. Sem ato "
-                f"novo depois de {periodo(relatorios.ULTIMO_ATO_LIDO, 'D')}."
+                "Dívida de longo prazo em moeda estrangeira; só as mudanças de nota. Último "
+                f"ato: {periodo(ultimo, 'D')}; perspectiva {_perspectivas(perspectiva)}."
             ),
         )
     )
@@ -2340,12 +2407,14 @@ def montar(ctx: Contexto) -> Secao:
         ("liquidez e hiato de crédito", lambda: _liquidez_e_hiato(ctx)),
         (
             "estresse",
-            lambda: _estresse(ctx, base, anos, dolar) if dolar else Bloco(),
+            lambda: (
+                _estresse(ctx, base, anos, dolar, ref_mais_novo(ctx.hoje)) if dolar else Bloco()
+            ),
         ),
         ("previdência", lambda: _previdencia(ctx)),
         ("envelhecimento", lambda: _envelhecimento(ctx)),
         ("energia", lambda: _energia(ctx)),
-        ("nota de crédito", lambda: _nota(ctx)),
+        ("nota de crédito", lambda: _nota(ctx, notas_vigentes())),
         ("elasticidades", _elasticidades),
         ("juros sobre a receita", lambda: _juros_sobre_receita(ctx)),
         ("vencimento da dívida", lambda: _vencimento(ctx)),

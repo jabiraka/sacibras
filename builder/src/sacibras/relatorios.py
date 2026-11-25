@@ -52,8 +52,12 @@ DEGRAU = {
 #   Archive; o sistema respondia 503 em 14/11/2026);
 # - Moody's de 01/10/2024: comunicado do Tesouro em gov.br/tesouronacional ("elevou a nota de
 #   crédito soberano do Brasil de Ba2 para Ba1").
-# LER DE NOVO quando o sisweb voltar e a cada ato de agência: depois de 30/05/2025 não foi
-# achado comunicado do Tesouro.
+# Depois de 30/05/2025, a consulta do Tesouro em CSV (sisweb.tesouro.gov.br/apex/
+# f?p=2810:2:0:CSV::::, lida em 25/11/2026) traz três atos, todos sem mudar a nota: Fitch em
+# 25/06/2025 e em 16/06/2026 e S&P em 25/06/2026 ("Manutenção da nota e manutenção da
+# perspectiva estável"). O builder lê o CSV e acrescenta sozinho os atos posteriores a
+# ULTIMO_ATO_LIDO (`fontes/tesouro_notas.py`); o histórico daqui fica de reserva e de base (o
+# antigo do CSV é sujo).
 NOTAS: dict[str, list[tuple[date, str]]] = {
     "S&P": [
         (date(1994, 11, 30), "B"),
@@ -112,12 +116,14 @@ NOTAS: dict[str, list[tuple[date, str]]] = {
 # A perspectiva vigente, pelo último ato que o Tesouro publicou (comunicados lidos em
 # 14/11/2026): S&P, 19/12/2023 ("de BB- para BB, com perspectiva estável"); Fitch,
 # 26/07/2023 ("de BB- para BB, com perspectiva estável"); Moody's, 30/05/2025 ("manteve a
-# nota [...] em Ba1, alterando a perspectiva do rating de positiva para estável").
+# nota [...] em Ba1, alterando a perspectiva do rating de positiva para estável"); e, no CSV
+# do Tesouro (lido em 25/11/2026), Fitch em 16/06/2026 e S&P em 25/06/2026, "manutenção da
+# perspectiva estável".
 PERSPECTIVA = {"S&P": "estável", "Fitch": "estável", "Moody's": "estável"}
-ULTIMO_ATO_LIDO = date(2025, 5, 30)
+ULTIMO_ATO_LIDO = date(2026, 6, 25)
 FONTE_NOTAS = (
     "Tesouro Nacional: Histórico da Classificação para a Dívida de Longo Prazo, consulta do "
-    "histórico da classificação de risco e comunicados (lidos em 14/11/2026)"
+    "histórico da classificação de risco e comunicados (lidos em 14 e 25/11/2026)"
 )
 
 
@@ -166,11 +172,15 @@ FONTE_ELASTICIDADES = (
 # continuariam apresentando índices de capitalização acima do mínimo regulamentar de 10,5%";
 # "No cenário de recessão aguda, a necessidade atinge 1,7% do PR". Nota 45: "realizados com
 # 106 instituições, que representam 97,31% do ativo total do sistema".
-# LER DE NOVO a cada edição (duas por ano: maio e outubro).
+# O builder lê sozinho o anexo estatístico (planilha) da edição mais nova
+# (`fontes/bcb_ref.py`). Na de out/2026 a planilha dá 3,38 % para a crise de confiança, e o texto
+# diz 3,5 %: com a mesma edição (ESTRESSE_EDICAO), vale a frase daqui; com uma mais nova, a da
+# planilha. O mínimo de 10,5 % não está na planilha: fica daqui.
 # Relatório de Estabilidade Financeira de out/2026, p. 50: no pior cenário (crise de
 # confiança) a necessidade de capital chega a 3,5 % do patrimônio de referência do sistema,
 # e instituições com 81,9 % dos ativos seguem acima do mínimo de 10,5 %; na recessão aguda,
 # 1,7 %. O teste sai duas vezes por ano.
+ESTRESSE_EDICAO = date(2026, 10, 1)
 ESTRESSE_DOS_BANCOS = (
     "No teste do Banco Central (out/2026), o pior cenário pede capital de 3,5 % do "
     "patrimônio dos bancos; 81,9 % dos ativos seguem acima do mínimo de 10,5 %."
@@ -197,16 +207,18 @@ BASILEIA_MINIMO_FONTE = (
 #   modelo. Além do impacto sobre a demanda agregada e hiato do produto, representado na curva
 #   IS, o choque também afeta a inflação pelo canal de câmbio da equação da UIP e mais
 #   indiretamente via impacto nas expectativas de inflação."
-# Os caminhos trimestre a trimestre (Gráficos 1A, 1B e 1C, p. 105) são desenho vetorial no
-# PDF: os pontos saíram das coordenadas do traço, não do olho, com a escala tirada das marcas
-# dos eixos e conferida pelos 0,27 e 0,24 do texto; arredondados a 0,01. Índice = trimestres
-# depois do começo (0 a 16).
+# Os caminhos trimestre a trimestre (Gráficos 1A, 1B e 1C, p. 105) vêm da planilha anexa ao
+# relatório (bcb.gov.br/content/ri/relatorioinflacao/202406/ri202406anp.xlsx, abas "C2 Boxe3
+# Graf 1A", "1B" e "1C", lidas em 25/11/2026; antes, das coordenadas do traço no PDF, que
+# erravam 0,01 em dois pontos); arredondados a 0,01. A Selic é a do modelo agregado (a do
+# desagregado difere em 0,01 nos trimestres 11 a 13). Índice = trimestres depois do começo
+# (0 a 16).
 # LER DE NOVO quando o BC publicar outra atualização dos modelos (o Relatório de Política
 # Monetária sai em março, junho, setembro e dezembro; procurar o boxe pelo nome).
 EFEITO_SELIC_EM = date(2024, 6, 27)
 SELIC_CAMINHO = [0.0, 1.0, 1.0, 1.0, 1.0, 0.88, 0.70, 0.50, 0.31, 0.15, 0.02]
 SELIC_CAMINHO += [-0.08, -0.15, -0.19, -0.21, -0.22, -0.22]
-IPCA_MODELO_AGREGADO = [0.0, -0.09, -0.15, -0.20, -0.27, -0.24, -0.24, -0.25, -0.24]
+IPCA_MODELO_AGREGADO = [0.0, -0.09, -0.15, -0.20, -0.27, -0.24, -0.25, -0.25, -0.24]
 IPCA_MODELO_AGREGADO += [-0.22, -0.21, -0.20, -0.19, -0.19, -0.18, -0.17, -0.16]
 IPCA_MODELO_DESAGREGADO = [0.0, -0.08, -0.13, -0.18, -0.24, -0.22, -0.22, -0.21, -0.20]
 IPCA_MODELO_DESAGREGADO += [-0.18, -0.17, -0.17, -0.16, -0.16, -0.15, -0.15, -0.14]
@@ -219,17 +231,18 @@ IPCA_MODELO_DESAGREGADO += [-0.18, -0.17, -0.17, -0.16, -0.16, -0.15, -0.15, -0.
 # modelo: "um aumento temporário de 1 p.p. na taxa Selic, com duração de quatro trimestres, gera
 # um efeito máximo de redução na inflação do IPCA, acumulada em quatro trimestres, de
 # aproximadamente 0,33 p.p., alcançado no sexto trimestre após o choque inicial". O Gráfico 2b
-# traz a resposta e o "Intervalo de credibilidade de 90%"; pontos lidos das coordenadas do
-# traço, escala conferida pelo 0,33 do texto. Os dois modelos de 2024 ficam dentro desta faixa
+# traz a resposta e o "Intervalo de credibilidade de 90%"; pontos da planilha anexa
+# (bcb.gov.br/content/ri/relatorioinflacao/202112/ri202112anp.xlsx, aba "C2 Boxe1 Graf 2b",
+# lida em 25/11/2026), arredondados a 0,01. Os dois modelos de 2024 ficam dentro desta faixa
 # nos 16 trimestres (o teste confere).
 # MENOR = a ponta de menos efeito; MAIOR = a de mais efeito.
 FAIXA_DO_IPCA_EM = date(2021, 12, 16)
-IPCA_MODELO_2021 = [0.0, -0.10, -0.15, -0.23, -0.31, -0.30, -0.33, -0.33, -0.33]
+IPCA_MODELO_2021 = [0.0, -0.10, -0.15, -0.23, -0.31, -0.30, -0.33, -0.33, -0.32]
 IPCA_MODELO_2021 += [-0.31, -0.30, -0.28, -0.27, -0.25, -0.23, -0.21, -0.20]
-IPCA_FAIXA_90_MENOR = [0.0, -0.03, -0.06, -0.11, -0.17, -0.19, -0.21, -0.20, -0.19]
-IPCA_FAIXA_90_MENOR += [-0.16, -0.14, -0.11, -0.10, -0.08, -0.07, -0.07, -0.06]
+IPCA_FAIXA_90_MENOR = [0.0, -0.03, -0.06, -0.11, -0.17, -0.19, -0.21, -0.20, -0.18]
+IPCA_FAIXA_90_MENOR += [-0.15, -0.14, -0.11, -0.10, -0.08, -0.07, -0.07, -0.06]
 IPCA_FAIXA_90_MAIOR = [0.0, -0.19, -0.26, -0.40, -0.52, -0.48, -0.53, -0.53, -0.55]
-IPCA_FAIXA_90_MAIOR += [-0.56, -0.56, -0.55, -0.54, -0.53, -0.51, -0.49, -0.47]
+IPCA_FAIXA_90_MAIOR += [-0.55, -0.56, -0.55, -0.54, -0.52, -0.51, -0.49, -0.47]
 
 # A própria estimativa do BC mudou de versão para versão (o efeito máximo de 1 pp por um ano):
 # - Relatório de Inflação de set/2020, boxe "Novo modelo agregado de pequeno porte com
@@ -257,11 +270,12 @@ class EfeitoPorGrupo:
     trimestre: int
 
 
-# Gráfico 1C (p. 105), modelo desagregado: o ponto mais baixo de cada curva.
+# Gráfico 1C (p. 105), modelo desagregado: o ponto mais baixo de cada curva, da planilha anexa
+# (ri202406anp.xlsx, aba "C2 Boxe3 Graf 1C", lida em 25/11/2026).
 IPCA_POR_GRUPO = [
     EfeitoPorGrupo("Serviços", -0.37, 9),
     EfeitoPorGrupo("Alimentação no domicílio", -0.36, 4),
-    EfeitoPorGrupo("Bens industriais", -0.25, 5),
+    EfeitoPorGrupo("Bens industriais", -0.26, 5),
 ]
 
 # O dólar, no mesmo boxe. p. 101, equação (4): "Δe_t = Δe_t^ppc − δ (i_t^dif − i_t−1^dif) +
@@ -269,7 +283,8 @@ IPCA_POR_GRUPO = [
 # com a variação do diferencial de juros domésticos e externos (no caso, a Fed Funds rate),
 # ajustados pelo prêmio de risco [...] As variações Δe_t e Δe_t^ppc são trimestrais, e as taxas
 # i_t, i_t* e CDS_t estão anualizadas." Tabela 1 (p. 103): "δ, Diferencial de taxa de juros
-# interna e externa: moda 1,90; intervalo de credibilidade (90%) [0,77; 3,22]".
+# interna e externa: moda 1,90; intervalo de credibilidade (90%) [0,77; 3,22]" (o mesmo na aba
+# "C2 Boxe3 Tab 1" da planilha anexa, conferida em 25/11/2026).
 # Ou seja: 1 pp a mais de Selic, com o juro de fora e o risco parados, é um dólar 1,90 % mais
 # barato no trimestre da mudança, e ele fica assim enquanto a distância de juros durar.
 DOLAR_POR_PP_DE_SELIC = -1.90
@@ -283,7 +298,10 @@ DOLAR_POR_PP_DE_SELIC_FAIXA = (-3.22, -0.77)
 # bcb.gov.br/content/ri/relatorioinflacao/202603/rpm202603p.pdf): "obtêm-se coeficientes de
 # 0,10 e 0,16 para o índice geral, nos horizontes de 12 e 24 meses, respectivamente. Dessa
 # forma, uma desvalorização de 10% do real implicaria aumentos de 1 p.p. na inflação acumulada
-# nos 12 meses subsequentes e de 1,6 p.p. no acumulado de 24 meses."
+# nos 12 meses subsequentes e de 1,6 p.p. no acumulado de 24 meses." Conferidos em 25/11/2026
+# nas planilhas anexas: 0,96 e 0,87 no 4º trimestre da aba "C2 Boxe3 Graf 2B" do ri202406anp.xlsx;
+# 0,100 e 0,161 nos horizontes 12 e 24 da aba "C1 Boxe8 Graf 1" do rpm202603anp.xlsx
+# (bcb.gov.br/content/ri/relatorioinflacao/202603/rpm202603anp.xlsx).
 # A resposta do IPCA à Selic (acima) já traz este caminho dentro: não se soma de novo.
 IPCA_POR_10_DE_DOLAR_MODELOS = (0.96, 0.87)
 IPCA_POR_10_DE_DOLAR_12M = 1.0
@@ -700,6 +718,8 @@ FONTE_MILITARES = (
 #   "Aposentadorias [...] 2.051,05 2.339,68 1.437,93" (total, urbano, rural)
 #   "Tempo de Contribuição [...] 3.032,35"; "Idade [...] 1.617,72"
 # gov.br/previdencia/.../boletins-da-previdencia-social/2026/beps092026_final.pdf. Mensal.
+# O builder lê sozinho a planilha da edição mais nova sem o 13º (`fontes/beps.py`, quadros 15
+# e 27); estes números e o teto do INSS abaixo ficam de reserva para quando ela falhar.
 INSS_EM = date(2026, 9, 1)
 INSS_APOSENTADORIA_MEDIA = 2_051.05
 INSS_APOSENTADORIA_TEMPO = 3_032.35
