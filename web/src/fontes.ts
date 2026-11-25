@@ -71,8 +71,8 @@ function pendurar(no: HTMLElement): void {
     a.href = e.url;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.textContent = enderecoCurto(e.url);
-    a.title = `Abrir ${e.nome} em outra aba`;
+    a.textContent = e.nome;
+    a.title = e.url;
     a.translate = false;
     links.append(a);
   });
