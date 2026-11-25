@@ -67,7 +67,35 @@ export function anoEmQueCai(s: SimuladorLDO, t: number[]): number | null {
   return null;
 }
 
-export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
+/** Até que ano a pessoa pode levar a simulação (Caio, 25/11/2026: "deixe a pessoa escolher
+ * até quando quer ir"). */
+const ATE = [2030, 2035, 2040, 2050, 2060];
+const ABRE_EM = 2035;
+
+/** O simulador cortado ou esticado até `fim`: depois do último ano do projeto, as hipóteses
+ * do último ano se repetem; o governo e o Focus só têm linha até onde publicam. */
+export function ate(s: SimuladorLDO, fim: number): SimuladorLDO {
+  const primeiro = s.anos[0] ?? s.ano_inicial + 1;
+  const n = Math.max(1, fim - primeiro + 1);
+  const anos = Array.from({ length: n }, (_, i) => primeiro + i);
+  const repete = (v: number[]) => anos.map((_, i) => v[Math.min(i, v.length - 1)] ?? 0);
+  return {
+    ...s,
+    anos,
+    juro: repete(s.juro),
+    crescimento: repete(s.crescimento),
+    deflator: repete(s.deflator),
+    primario: repete(s.primario),
+    sobra: repete(s.sobra),
+    meta: anos.map((_, i) => s.meta[i] ?? null),
+    governo_divida: s.governo_divida.slice(0, n),
+    focus_divida: anos.map((_, i) => s.focus_divida[i] ?? null),
+  };
+}
+
+export function montarSimuladorLDO(inteiro: SimuladorLDO): HTMLElement[] {
+  const publicado = inteiro.anos[inteiro.anos.length - 1] ?? inteiro.ano_inicial;
+  let s = ate(inteiro, Math.min(ABRE_EM, publicado));
   const desvios: Desvios = { crescimento: 0, juro: 0, primario: 0 };
   const painel = el("div", "simulador");
   const resultado = el("p", "posicao");
@@ -77,7 +105,6 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
   const valores = new Map<Id, HTMLElement>();
   const entradas = new Map<Id, HTMLInputElement>();
   const primeiro = s.anos[0] ?? s.ano_inicial + 1;
-  const ultimo = s.anos[s.anos.length - 1] ?? s.ano_inicial;
 
   const botoes = el("div", "simulador-botoes");
   for (const c of s.cenarios) {
@@ -118,8 +145,28 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
     painel.append(linha);
   }
 
+  // Até quando: lista suspensa, com os anos redondos e o último ano do projeto.
+  const anosDaLista = [...new Set([...ATE, publicado])].filter((a) => a > primeiro).sort();
+  const quando = el("label", "controle");
+  quando.append(el("span", "controle-rotulo", "Simular até"));
+  const lista = el("select", "escolha");
+  lista.id = "ldo-ate";
+  for (const a of anosDaLista) {
+    const o = el("option", "", String(a));
+    o.value = String(a);
+    lista.append(o);
+  }
+  lista.value = String(s.anos[s.anos.length - 1]);
+  lista.addEventListener("change", () => {
+    s = ate(inteiro, Number(lista.value));
+    pintar();
+  });
+  quando.append(lista);
+  painel.append(quando);
+
   let pendente = 0;
   function pintar(): void {
+    const ultimo = s.anos[s.anos.length - 1] ?? s.ano_inicial;
     const base: Desvios = {
       crescimento: s.crescimento[0] ?? 0,
       juro: s.juro[0] ?? 0,
@@ -138,7 +185,7 @@ export function montarSimuladorLDO(s: SimuladorLDO): HTMLElement[] {
     }
     const simulada = trajetoriaDaLDO(s, desvios);
     const fim = simulada[simulada.length - 1] ?? s.divida_inicial;
-    const governoFim = s.governo_divida[s.governo_divida.length - 1];
+    const governoFim = s.governo_divida[s.anos.length - 1];
     const focusFim = s.focus_divida[s.focus_divida.length - 1];
     const cai = anoEmQueCai(s, simulada);
     const ao_lado = [

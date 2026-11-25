@@ -55,6 +55,9 @@ três botões (projeto, médias do Focus, Focus com o erro da história) e três
 dívida em 2035, o ano em que para de subir e de quanto a meta teria de ser para a dívida
 voltar ao nível de 2026), mais a faixa do erro das metas. Os controles somam o mesmo tanto
 em todos os anos, então o botão do Focus chega a 102,3 %, não aos 103,0 % do Focus.
+A lista "Simular até" (Caio: *"deixe a pessoa escolher até quando quer ir"*) vai de 2030 a
+2060; depois de 2036, o último ano do projeto, repete as hipóteses dele, e as linhas do
+governo e do Focus param onde eles publicam.
 **Texto curto virou regra** (Caio, 25/11: *"Diminua os textos [...] só informações
 relevantes"*; está no CLAUDE.md): as peças da LDO e o simulador foram encurtados. **Falta
 passar a regra nas peças antigas** (as notas do resto do Laboratório, por exemplo, têm cinco

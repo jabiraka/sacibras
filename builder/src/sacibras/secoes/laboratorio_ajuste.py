@@ -1086,10 +1086,14 @@ def _simulador_da_ldo(
     erro: tuple[float, float, float],
     fonte: str,
 ) -> SimuladorLDO:
-    """A linha de base (o projeto) e os botões. Os controles somam o mesmo tanto em todos os
-    anos: o botão do Focus leva cada um à diferença média entre o Focus e o projeto."""
+    """A linha de base (o projeto, até o último ano dele) e os botões. Os controles somam o
+    mesmo tanto em todos os anos: o botão do Focus leva cada um à diferença média entre o
+    Focus e o projeto. A tela deixa escolher até que ano simular (Caio, 25/11/2026: *"deixe
+    a pessoa escolher até quando quer ir"*); depois do último ano do projeto, ela repete as
+    hipóteses dele."""
     proj = relatorios.PLDO_2027
-    anos = sorted(mercado)
+    do_focus = sorted(mercado)
+    anos = sorted(governo)
 
     def media(valores: list[float]) -> float:
         return round(sum(valores) / len(valores), 1)
@@ -1097,11 +1101,11 @@ def _simulador_da_ldo(
     cresce = media(
         [
             ((1 + mercado[a].nominal / 100) / (1 + proj[a].deflator / 100) - 1) * 100 - proj[a].pib
-            for a in anos
+            for a in do_focus
         ]
     )
-    juro = media([mercado[a].juro - governo[a].juro for a in anos])
-    primario = media([mercado[a].primario - governo[a].primario for a in anos])
+    juro = media([mercado[a].juro - governo[a].juro for a in do_focus])
+    primario = media([mercado[a].primario - governo[a].primario for a in do_focus])
     menor, medio, maior = erro
     return SimuladorLDO(
         projeto="projeto da LDO 2027, ainda não é lei",
@@ -1133,7 +1137,7 @@ def _simulador_da_ldo(
         fonte=f"{fonte}; {CONTA}",
         nota=(
             "Conta nossa, não previsão. Cada controle vale para todos os anos e não mexe nos "
-            "outros."
+            f"outros. Depois de {max(governo)}, repete as hipóteses do último ano do projeto."
         ),
     )
 
