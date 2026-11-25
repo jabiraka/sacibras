@@ -31,7 +31,7 @@ nas dependentes, a subvenção, e o saldo com a União), o gráfico de receita e
 seis atrás da lista (margem e retorno, balanço, com a União, empregados, gasto por empregado,
 investimento) e a tabela de todos os anos. **Fonte**: a planilha do Anexo I do Relatório
 Agregado da Sest (`fontes/sest.py`), baixada no build; o endereço se acha na página do
-relatório (o nome muda a cada edição). **Só 2021 a 2025**, anual: é o que a planilha traz.
+relatório (o nome muda a cada edição). Cada peça leva dois links (Caio: *"Lembra de linkar por onde vc pegar os dados"*): a página do relatório e a planilha; o que cita página do relatório leva o PDF (`links.py`, abertos em 25/11). **Na edição de junho/2027**, o build avisa e é preciso trocar `sest.RESERVA` e `sest.PDF`. **Só 2021 a 2025**, anual: é o que a planilha traz.
 Duas armadilhas da edição de 2026, tratadas no código: o pessoal e os impostos de 2025 vêm em
 R$ mil (corrigido sozinho pela mediana contra 2024) e a remuneração média de 2024–2025 vem
 vazia (fora). As fichas vão num arquivo à parte (`estatais.json`, ~545 KB, lido só quando a

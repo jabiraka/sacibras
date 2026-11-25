@@ -22,6 +22,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from sacibras.fontes import sest
+
 
 class Regra(BaseModel):
     padrao: str
@@ -171,10 +173,24 @@ REGRAS: list[Regra] = [
         nome="Novo Caged (MTE)",
         url="https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/acoes-e-programas/programas-projetos-acoes-obras-e-atividades/estatisticas-trabalho/novo-caged",
     ),
+    # O Relatório Agregado das Estatais (Sest): a página dele, a planilha do anexo I (de onde
+    # vêm as fichas de cada estatal e a conta do ano) e o PDF (as páginas citadas). Os três
+    # abertos em 25/11/2026. A planilha e o PDF mudam de nome a cada edição, em junho: o
+    # build avisa quando a página aponta para uma planilha nova (`sest.endereco`).
     Regra(
-        padrao=r"\(Sest\)|Empresas Estatais Federais",
-        nome="Relatórios das estatais (Sest)",
-        url="https://www.gov.br/gestao/pt-br/central-de-conteudo/relatorios-das-estatais",
+        padrao=r"Relatório Agregado das Empresas Estatais Federais",
+        nome="Relatório Agregado (Sest)",
+        url=sest.PAGINA,
+    ),
+    Regra(
+        padrao=r"Relatório Agregado das Empresas Estatais Federais[^;]*anexo I\b",
+        nome="planilha do anexo I",
+        url=sest.RESERVA,
+    ),
+    Regra(
+        padrao=r"Relatório Agregado das Empresas Estatais Federais[^;]*, p\. \d+",
+        nome="relatório em PDF",
+        url=sest.PDF,
     ),
     Regra(
         padrao=r"\bONS\b",

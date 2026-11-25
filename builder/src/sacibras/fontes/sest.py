@@ -40,6 +40,10 @@ RESERVA = (
     "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/"
     "AnexoISrieshistricasRelatrioAgregadodasEmpresasEstataisFederais2026anobase2025.xlsx"
 )
+PDF = (
+    "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/"
+    "RelatrioAgregadodasEmpresasEstataisFederais2026anobase202506181.pdf"
+)
 FONTE = "Ministério da Gestão (Sest), Relatório Agregado das Empresas Estatais Federais, anexo I"
 
 # Cabeçalho normalizado (sem acento, minúsculas, espaços simples) -> campo.
@@ -170,4 +174,8 @@ def endereco() -> str:
 
 
 def estatais() -> list[EstatalNoAno]:
-    return ler(baixar(endereco()))
+    url = endereco()
+    if url != RESERVA:
+        # O link na tela (`links.py`) aponta para RESERVA: edição nova pede trocar os dois.
+        print(f"    aviso: edição nova do anexo I da Sest ({url}); atualize RESERVA e PDF")
+    return ler(baixar(url))

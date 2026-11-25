@@ -63,3 +63,15 @@ def test_cada_lei_da_ldo_tem_endereco_no_senado() -> None:
 def test_normas_com_sigla_e_por_extenso() -> None:
     assert urls("LC nº 214/2025") == urls("Lei Complementar nº 214/2025")
     assert urls("Resolução CMN nº 5.141/2024")[0].startswith("https://www.bcb.gov.br/")
+
+
+def test_estatais_com_a_pagina_a_planilha_e_o_pdf() -> None:
+    from sacibras.fontes import sest
+
+    ficha = links.enderecos(f"{sest.FONTE}, 2021 a 2025")
+    assert [e.url for e in ficha] == [sest.PAGINA, sest.RESERVA]
+    pagina = links.enderecos(
+        "Ministério da Gestão (Sest), Relatório Agregado das Empresas Estatais Federais 2026, "
+        "ano-base 2025, p. 17"
+    )
+    assert [e.url for e in pagina] == [sest.PAGINA, sest.PDF]
