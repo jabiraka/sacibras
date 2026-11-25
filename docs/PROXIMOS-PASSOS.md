@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 25/11/2026 (a B3 saiu). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 25/11/2026 (a ficha de cada estatal). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,23 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e dólar e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**25/11/2026, uma estatal por dentro** (Caio: *"Na aba das estatais, abra por estatal um
+dashboard com informações mais relevantes, principalmente histórico de performance, receita ou
+prejuízo e outras métricas relevantes para analisar empresas"*). Em Contas públicas › Estatais,
+a caixa "Uma estatal por dentro": lista das 44 estatais de controle direto, por setor (abre na
+Petrobras; `#fiscal/e-<id>` abre outra, e a busca acha cada uma pelo nome). Cada ficha: quatro
+números (lucro ou prejuízo com a posição entre as 44, receita, retorno sobre o patrimônio ou,
+nas dependentes, a subvenção, e o saldo com a União), o gráfico de receita e lucro com outros
+seis atrás da lista (margem e retorno, balanço, com a União, empregados, gasto por empregado,
+investimento) e a tabela de todos os anos. **Fonte**: a planilha do Anexo I do Relatório
+Agregado da Sest (`fontes/sest.py`), baixada no build; o endereço se acha na página do
+relatório (o nome muda a cada edição). **Só 2021 a 2025**, anual: é o que a planilha traz.
+Duas armadilhas da edição de 2026, tratadas no código: o pessoal e os impostos de 2025 vêm em
+R$ mil (corrigido sozinho pela mediana contra 2024) e a remuneração média de 2024–2025 vem
+vazia (fora). As fichas vão num arquivo à parte (`estatais.json`, ~545 KB, lido só quando a
+parte abre). Olhado a 390 e 1280 px; **falta o Caio olhar**. Mais história e números
+trimestrais: [PROPOSTAS](PROPOSTAS.md), "Estatais por dentro".
 
 **25/11/2026, a B3 saiu do site** (Caio: *"não queremos correr esse risco, então retire
 qualquer que for informações da B3"*). Saíram: o Ibovespa (cartões, gráficos, a tabela de

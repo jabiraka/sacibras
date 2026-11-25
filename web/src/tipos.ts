@@ -120,8 +120,18 @@ export interface Cartao {
   procedencia: Procedencia;
   mini: [string, number][];
   secao: string;
-  meta: { centro: number; inferior: number; superior: number; norma: string } | null;
-  ao_vivo: { tipo: "sgs" | "sidra"; codigo: number | null; caminho: string; escala: number } | null;
+  meta: {
+    centro: number;
+    inferior: number;
+    superior: number;
+    norma: string;
+  } | null;
+  ao_vivo: {
+    tipo: "sgs" | "sidra";
+    codigo: number | null;
+    caminho: string;
+    escala: number;
+  } | null;
 }
 
 export interface LinhaTabela {
@@ -250,7 +260,12 @@ export interface SimuladorSelic {
   focus_ipca: number | null;
   focus_dolar: number | null;
   focus_divida: number | null;
-  meta: { centro: number; inferior: number; superior: number; norma: string } | null;
+  meta: {
+    centro: number;
+    inferior: number;
+    superior: number;
+    norma: string;
+  } | null;
   /** O trimestre zero e os 16 seguintes. */
   trimestres: string[];
   selic_caminho: number[];
@@ -292,6 +307,7 @@ export interface Subcategoria {
     | "simulador-ldo"
     | "alertas"
     | "salario-minimo"
+    | "fichas-estatais"
   )[];
   /** Atalhos para partes de outros assuntos ("Veja também"). */
   veja?: Elo[];
@@ -301,6 +317,24 @@ export interface Elo {
   endereco: string;
   titulo: string;
   resumo: string;
+}
+
+/** Uma estatal federal por dentro (Sest, anexo I): quatro números, o gráfico e a tabela. */
+export interface FichaEstatal {
+  id: string;
+  nome: string;
+  nome_completo: string;
+  setor: string;
+  descricao: string;
+  cartoes: Cartao[];
+  grafico: Grafico;
+  tabela: Tabela;
+}
+
+export interface FichasEstatais {
+  fichas: FichaEstatal[];
+  primeira: string;
+  gerado_em: string;
 }
 
 export interface Secao {
@@ -317,6 +351,8 @@ export interface Secao {
   simulador_reforma?: SimuladorReforma | null;
   simulador_ldo?: SimuladorLDO | null;
   salario_minimo?: ComparadorSalario | null;
+  /** Contas públicas › Estatais: o arquivo das fichas, lido só quando a parte abre. */
+  arquivo_estatais?: string;
   alertas?: Alerta[];
   /** Só no resumo: o que saiu por último, contra o Focus (saiu.ts). */
   saiu?: Divulgado[];

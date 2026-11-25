@@ -17,7 +17,11 @@ import { saiuPorUltimo } from "./saiu";
 import { ligarGlossario } from "./glossario";
 import { fonteComEnderecos, ligarEnderecos } from "./fontes";
 import { vistaGlossario } from "./glossario-pagina";
-import { ligarNomesProprios, ligarTraducao, protegerNomeDeEstado } from "./traducao";
+import {
+  ligarNomesProprios,
+  ligarTraducao,
+  protegerNomeDeEstado,
+} from "./traducao";
 import { novoDesdeAUltimaVisita, seloNovo } from "./novidades";
 import { montarEstados } from "./estados";
 import { montarGrafico } from "./grafico";
@@ -31,12 +35,14 @@ import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import { montarSimulador } from "./simulador";
 import { montarSimuladorLDO } from "./simulador-ldo";
+import { montarFichasEstatais } from "./estatais";
 import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
 import { montarComparadorSalario } from "./salario-minimo";
 import type {
   Cartao,
   Estados,
+  FichasEstatais,
   Grafico,
   ItemSecao,
   Mundo,
@@ -71,7 +77,10 @@ function porTema(perguntas: ItemPergunta[]): [string, ItemPergunta[]][] {
 }
 
 /** As listas de perguntas, um título por tema; `primeiro` põe um tema na frente. */
-function listasDePerguntas(perguntas: ItemPergunta[], primeiro = ""): HTMLElement[] {
+function listasDePerguntas(
+  perguntas: ItemPergunta[],
+  primeiro = "",
+): HTMLElement[] {
   const grupos = porTema(perguntas).sort(
     (a, b) => Number(b[0] === primeiro) - Number(a[0] === primeiro),
   );
@@ -83,7 +92,10 @@ function listasDePerguntas(perguntas: ItemPergunta[], primeiro = ""): HTMLElemen
       const li = el("li");
       const a = el("a", "vidro pergunta");
       a.href = `#pergunta/${q.id}`;
-      a.append(el("span", "pergunta-titulo", q.titulo), el("span", "seta", "→"));
+      a.append(
+        el("span", "pergunta-titulo", q.titulo),
+        el("span", "seta", "→"),
+      );
       li.append(a);
       ul.append(li);
     }
@@ -123,7 +135,8 @@ function valorComUnidade(c: Cartao, alvo: HTMLElement): void {
     alvo.textContent = texto;
     return;
   }
-  if (antes.trim()) alvo.append(el("small", "", antes.trim()), document.createTextNode(" "));
+  if (antes.trim())
+    alvo.append(el("small", "", antes.trim()), document.createTextNode(" "));
   alvo.append(document.createTextNode(n));
   if (depois.trim()) alvo.append(el("small", "", depois.trim()));
 }
@@ -143,7 +156,10 @@ function miniatura(pontos: [string, number][]): SVGSVGElement {
   const y1 = Math.max(...ys);
   const px = (t: number) => 2 + ((t - x0) / (x1 - x0 || 1)) * 112;
   const py = (v: number) => 30 - ((v - y0) / (y1 - y0 || 1)) * 26;
-  const d = pontos.map((p, i) => `${i ? "L" : "M"}${px(xs[i] ?? 0).toFixed(1)},${py(p[1]).toFixed(1)}`);
+  const d = pontos.map(
+    (p, i) =>
+      `${i ? "L" : "M"}${px(xs[i] ?? 0).toFixed(1)},${py(p[1]).toFixed(1)}`,
+  );
   const linha = document.createElementNS(ns, "path");
   linha.setAttribute("d", d.join(""));
   linha.setAttribute("fill", "none");
@@ -156,7 +172,10 @@ function miniatura(pontos: [string, number][]): SVGSVGElement {
   if (ultimo) {
     // O ponto de hoje na cor da casa; o passado, discreto.
     const ponta = document.createElementNS(ns, "path");
-    ponta.setAttribute("d", `M${px(xs[xs.length - 1] ?? 0).toFixed(1)},${py(ultimo[1]).toFixed(1)}h0.01`);
+    ponta.setAttribute(
+      "d",
+      `M${px(xs[xs.length - 1] ?? 0).toFixed(1)},${py(ultimo[1]).toFixed(1)}h0.01`,
+    );
     ponta.setAttribute("stroke", "var(--verde)");
     ponta.setAttribute("stroke-width", "6");
     ponta.setAttribute("stroke-linecap", "round");
@@ -177,7 +196,8 @@ function montarCartao(c: Cartao): HTMLElement {
   if (c.mini.length > 1) no.append(miniatura(c.mini));
   const pe = el("span", "cartao-pe");
   const quando = el("span", "", periodo(c.referencia, c.periodicidade));
-  if (novoDesdeAUltimaVisita(c.secao, c.id, c.referencia)) quando.append(seloNovo());
+  if (novoDesdeAUltimaVisita(c.secao, c.id, c.referencia))
+    quando.append(seloNovo());
   pe.append(quando);
   const proc = el("span", `procedencia ${c.procedencia}`);
   proc.append(el("i"), document.createTextNode(c.procedencia));
@@ -188,7 +208,10 @@ function montarCartao(c: Cartao): HTMLElement {
 }
 
 /** As linhas e colunas de uma tabela; linha com `grupo` novo ganha antes uma linha de título. */
-function corpoDaTabela(colunas: string[], linhas: LinhaTabela[]): HTMLTableElement {
+function corpoDaTabela(
+  colunas: string[],
+  linhas: LinhaTabela[],
+): HTMLTableElement {
   const tabela = el("table", "dados");
   const cab = tabela.createTHead().insertRow();
   cab.append(el("th", "", ""));
@@ -214,8 +237,11 @@ function corpoDaTabela(colunas: string[], linhas: LinhaTabela[]): HTMLTableEleme
       // Tabela de textos: o título da coluna alinha à esquerda, como o texto embaixo dele
       // (Caio, 15/11/2026, "Estados perto dos limites": "pode arrumar o lugar das colunas?").
       tabela.classList.add("de-textos");
-      for (const x of l.textos) tr.append(el("td", x.length > 40 ? "texto longo" : "texto", x));
-    } else for (const v of l.valores) tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
+      for (const x of l.textos)
+        tr.append(el("td", x.length > 40 ? "texto longo" : "texto", x));
+    } else
+      for (const v of l.valores)
+        tr.append(el("td", "", v === null ? "–" : numero(v, l.casas)));
   }
   return tabela;
 }
@@ -239,7 +265,11 @@ function montarTabela(t: Tabela): HTMLElement {
       const { caixa: lista } = listaSuspensa(
         `visao-${t.id}`,
         t.rotulo_visoes || "Período",
-        visoes.map((v, i) => ({ valor: String(i), rotulo: v.rotulo, grupo: v.grupo || undefined })),
+        visoes.map((v, i) => ({
+          valor: String(i),
+          rotulo: v.rotulo,
+          grupo: v.grupo || undefined,
+        })),
         "0",
         (valor) => mostrar(Number(valor)),
       );
@@ -261,7 +291,11 @@ function montarTabela(t: Tabela): HTMLElement {
 }
 
 /** O botão que revela o que ficou guardado, e some. */
-function botaoDeAbrir(rotulo: string, quantos: number, abrir: () => void): HTMLElement {
+function botaoDeAbrir(
+  rotulo: string,
+  quantos: number,
+  abrir: () => void,
+): HTMLElement {
   const caixa = el("div", "abrir");
   const botao = el("button", "", rotulo);
   botao.type = "button";
@@ -330,7 +364,9 @@ function caixaDoSimuladorLDO(sim: SimuladorLDO): HTMLElement {
 function montarSecao(s: Secao, alvo: HTMLElement): void {
   if (s.cartoes.length) {
     const grade = el("div", "cartoes");
-    s.cartoes.slice(0, NUMEROS_A_VISTA).forEach((c) => grade.append(montarCartao(c)));
+    s.cartoes
+      .slice(0, NUMEROS_A_VISTA)
+      .forEach((c) => grade.append(montarCartao(c)));
     alvo.append(grade);
     const resto = s.cartoes.slice(NUMEROS_A_VISTA);
     if (resto.length) {
@@ -380,7 +416,11 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
 // ------------------------------------------------------------------ vistas
 
 /** O conteúdo de um dos seis números; `aoVivo` quando o valor veio agora, direto da fonte. */
-function preencherEssencial(item: HTMLElement, c: Cartao, aoVivo: boolean): void {
+function preencherEssencial(
+  item: HTMLElement,
+  c: Cartao,
+  aoVivo: boolean,
+): void {
   item.replaceChildren();
   item.title =
     `${c.detalhe && !aoVivo ? `${c.detalhe}. ` : ""}${fonteComEnderecos(`Fonte: ${c.fonte}`)}` +
@@ -388,7 +428,8 @@ function preencherEssencial(item: HTMLElement, c: Cartao, aoVivo: boolean): void
   const valor = el("strong");
   valorComUnidade(c, valor);
   item.append(valor, el("span", "rotulo", c.rotulo));
-  if (c.meta) item.append(...medidorDaMeta(c.valor, c.meta, c.casas, c.unidade));
+  if (c.meta)
+    item.append(...medidorDaMeta(c.valor, c.meta, c.casas, c.unidade));
   const quando = el("span", "quando", periodo(c.referencia, c.periodicidade));
   const desdeAVisita = novoDesdeAUltimaVisita(c.secao, c.id, c.referencia);
   if (aoVivo) quando.append(el("span", "novo", "novo"));
@@ -406,12 +447,21 @@ function medidorDaMeta(
   unidade = "%",
 ): HTMLElement[] {
   const situacao =
-    valor > meta.superior ? "acima" : valor < meta.inferior ? "abaixo" : "dentro";
-  const texto = { acima: "acima do teto", abaixo: "abaixo do piso", dentro: "dentro da meta" }[
-    situacao
-  ];
+    valor > meta.superior
+      ? "acima"
+      : valor < meta.inferior
+        ? "abaixo"
+        : "dentro";
+  const texto = {
+    acima: "acima do teto",
+    abaixo: "abaixo do piso",
+    dentro: "dentro da meta",
+  }[situacao];
   const selo = el("span", `situacao ${situacao}`);
-  selo.append(el("i", "", situacao === "dentro" ? "✓" : situacao === "acima" ? "▲" : "▼"), document.createTextNode(texto));
+  selo.append(
+    el("i", "", situacao === "dentro" ? "✓" : situacao === "acima" ? "▲" : "▼"),
+    document.createTextNode(texto),
+  );
 
   // Régua com folga de meio intervalo de cada lado (ou até o valor, se ele passar disso).
   const folga = (meta.superior - meta.inferior) / 2 || 1;
@@ -432,7 +482,8 @@ function medidorDaMeta(
 
   const diferenca = valor - meta.centro;
   const emPorcento = unidade.startsWith("%");
-  const curto = (v: number): string => (v === 0 ? "R$ 0" : comUnidade(v, unidade, casas));
+  const curto = (v: number): string =>
+    v === 0 ? "R$ 0" : comUnidade(v, unidade, casas);
   const legenda = el(
     "span",
     "regua-legenda",
@@ -462,12 +513,16 @@ function categorias(painel: Painel): { titulo: string; secoes: ItemSecao[] }[] {
     .filter((c) => c.secoes.length);
   const usados = new Set(lista.flatMap((c) => c.secoes.map((s) => s.id)));
   const resto = assuntos.filter((s) => !usados.has(s.id));
-  if (resto.length) lista.push({ titulo: lista.length ? "Outros" : "Assuntos", secoes: resto });
+  if (resto.length)
+    lista.push({ titulo: lista.length ? "Outros" : "Assuntos", secoes: resto });
   return lista;
 }
 
 function categoriaDe(painel: Painel, id: string): string {
-  return categorias(painel).find((c) => c.secoes.some((s) => s.id === id))?.titulo ?? "";
+  return (
+    categorias(painel).find((c) => c.secoes.some((s) => s.id === id))?.titulo ??
+    ""
+  );
 }
 
 /** O menu lateral: as categorias, os assuntos e, no assunto aberto, as partes dele. */
@@ -509,7 +564,13 @@ function montarMenu(painel: Painel): void {
     const grupo = el("div", "menu-grupo");
     // O Laboratório é um andar, não uma categoria dos Dados.
     const andar = c.titulo === "Laboratório";
-    grupo.append(el("p", andar ? "menu-andar menu-andar-dados" : "menu-categoria", c.titulo));
+    grupo.append(
+      el(
+        "p",
+        andar ? "menu-andar menu-andar-dados" : "menu-categoria",
+        c.titulo,
+      ),
+    );
     const ul = el("ul");
     for (const s of c.secoes) {
       const li = el("li");
@@ -558,7 +619,9 @@ function marcarMenu(assunto: string, parte: string): void {
   for (const ul of menu.querySelectorAll<HTMLElement>(".menu-partes")) {
     ul.classList.toggle("aberto", ul.dataset.assunto === assunto);
   }
-  const perguntas = menu.querySelector<HTMLDetailsElement>("details.menu-perguntas");
+  const perguntas = menu.querySelector<HTMLDetailsElement>(
+    "details.menu-perguntas",
+  );
   if (perguntas && assunto.startsWith("pergunta/")) perguntas.open = true;
   for (const a of menu.querySelectorAll<HTMLAnchorElement>("a[data-parte]")) {
     const aqui = a.dataset.parte === `${assunto}/${parte}`;
@@ -568,7 +631,9 @@ function marcarMenu(assunto: string, parte: string): void {
   }
   // O menu rola por dentro: o assunto aberto (Riscos, no pé) fica à vista, sem mexer na página.
   marcarRolagem(menu);
-  const ativo = menu.querySelector<HTMLElement>("a.ativo[data-parte], a.ativo[data-assunto]");
+  const ativo = menu.querySelector<HTMLElement>(
+    "a.ativo[data-parte], a.ativo[data-assunto]",
+  );
   if (ativo && menu.scrollHeight > menu.clientHeight) {
     const m = menu.getBoundingClientRect();
     const a = ativo.getBoundingClientRect();
@@ -605,7 +670,10 @@ function abrirMenu(abrir: boolean): void {
 function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
   const heroi = el("section", "heroi");
   const selo = el("span", "selo entra");
-  selo.append(el("i", "bolinha"), document.createTextNode(`Atualizado em ${dataHora(painel.gerado_em)}`));
+  selo.append(
+    el("i", "bolinha"),
+    document.createTextNode(`Atualizado em ${dataHora(painel.gerado_em)}`),
+  );
   const titulo = el("h1", "entra");
   titulo.style.setProperty("--i", "1");
   titulo.append(
@@ -635,7 +703,11 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
         // O ponto mais novo, direto da fonte: se vier depois do da última rodada, troca.
         void pontoMaisNovo(c).then((novo) => {
           if (!novo || novo[0] <= c.referencia) return;
-          preencherEssencial(item, { ...c, referencia: novo[0], valor: novo[1] }, true);
+          preencherEssencial(
+            item,
+            { ...c, referencia: novo[0], valor: novo[1] },
+            true,
+          );
         });
       }
     })
@@ -659,7 +731,10 @@ function vistaInicio(painel: Painel, conteudo: HTMLElement): void {
   // Os dados, por assunto, só com o nome: quem quer o número vai direto.
   const dados = el("section", "bloco dados");
   dados.id = "assuntos";
-  dados.append(el("p", "sobretitulo", "Dados"), el("h3", "dados-titulo", "Todos os números, por assunto"));
+  dados.append(
+    el("p", "sobretitulo", "Dados"),
+    el("h3", "dados-titulo", "Todos os números, por assunto"),
+  );
   for (const c of categorias(painel)) {
     const linha = el("p", "dados-linha");
     linha.append(el("span", "dados-categoria", c.titulo));
@@ -705,6 +780,8 @@ function parteDaPeca(
   if (peca === "t-alertas" || peca.startsWith("a-")) {
     return partes.find((p) => p.extras.includes("alertas"));
   }
+  if (peca.startsWith("e-"))
+    return partes.find((p) => p.extras.includes("fichas-estatais"));
   const campos: Record<string, "cartoes" | "graficos" | "tabelas"> = {
     "c-": "cartoes",
     "g-": "graficos",
@@ -719,13 +796,22 @@ function parteDaPeca(
   const lista: { id: string; alternativas?: { id: string }[] }[] =
     campo === "graficos" ? s.graficos : s.tabelas;
   const principal = lista.find((x) => x.alternativas?.some((a) => a.id === id));
-  return principal ? partes.find((p) => p[campo].includes(principal.id)) : undefined;
+  return principal
+    ? partes.find((p) => p[campo].includes(principal.id))
+    : undefined;
 }
 
 /** O que uma parte mostra, inteiro: números, a peça própria, gráficos e tabelas. */
-function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
+function montarParte(
+  s: Secao,
+  p: Subcategoria,
+  alvo: HTMLElement,
+  peca = "",
+): void {
   const pegar = <T extends { id: string }>(lista: T[], ids: string[]): T[] =>
-    ids.map((i) => lista.find((x) => x.id === i)).filter((x): x is T => x !== undefined);
+    ids
+      .map((i) => lista.find((x) => x.id === i))
+      .filter((x): x is T => x !== undefined);
   const cartoes = pegar(s.cartoes, p.cartoes);
   if (cartoes.length) {
     const grade = el("div", "cartoes");
@@ -762,6 +848,21 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   if (p.extras.includes("simulador-ldo") && s.simulador_ldo) {
     alvo.append(caixaDoSimuladorLDO(s.simulador_ldo));
   }
+  if (p.extras.includes("fichas-estatais") && s.arquivo_estatais) {
+    const construtores = {
+      ler: (a: string) => ler<FichasEstatais>(a),
+      cartao: montarCartao,
+      peca: montarPeca,
+      tabela: montarTabela,
+    };
+    alvo.append(
+      montarFichasEstatais(
+        s.arquivo_estatais,
+        construtores,
+        peca.startsWith("e-") ? peca.slice(2) : "",
+      ),
+    );
+  }
   const comparador = s.salario_minimo;
   if (p.extras.includes("salario-minimo") && comparador) {
     const caixa = caixaDoSalarioMinimo(comparador);
@@ -777,15 +878,22 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   // Numa parte com uma tabela só, ela é o assunto da tela: já abre aberta.
   for (const t of pegar(s.tabelas, p.tabelas)) {
     const caixa = montarTabela(t);
-    if (p.tabelas.length === 1 && caixa instanceof HTMLDetailsElement) caixa.open = true;
+    if (p.tabelas.length === 1 && caixa instanceof HTMLDetailsElement)
+      caixa.open = true;
     alvo.append(caixa);
   }
 }
 
 /** As partes do assunto, em cartões, na visão geral. */
-function listaDePartes(id: string, titulo: string, partes: Subcategoria[]): HTMLElement {
+function listaDePartes(
+  id: string,
+  titulo: string,
+  partes: Subcategoria[],
+): HTMLElement {
   const bloco = el("section", "partes");
-  bloco.append(el("h3", "partes-titulo", `${partes.length} partes de ${titulo}`));
+  bloco.append(
+    el("h3", "partes-titulo", `${partes.length} partes de ${titulo}`),
+  );
   const lista = el("ul", "partes-lista");
   for (const p of partes) {
     const li = el("li");
@@ -826,7 +934,12 @@ function vejaTambem(p: Subcategoria): HTMLElement | null {
 }
 
 /** Embaixo de uma parte: a visão geral e as vizinhas. */
-function outrasPartes(id: string, titulo: string, partes: Subcategoria[], atual: string): HTMLElement {
+function outrasPartes(
+  id: string,
+  titulo: string,
+  partes: Subcategoria[],
+  atual: string,
+): HTMLElement {
   const outras = el("nav", "outras-partes");
   outras.setAttribute("aria-label", `Outras partes de ${titulo}`);
   outras.append(el("span", "outras-titulo", `Mais em ${titulo}`));
@@ -842,7 +955,12 @@ function outrasPartes(id: string, titulo: string, partes: Subcategoria[], atual:
   return outras;
 }
 
-function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLElement): void {
+function vistaAssunto(
+  painel: Painel,
+  id: string,
+  peca: string,
+  conteudo: HTMLElement,
+): void {
   const item = painel.secoes.find((s) => s.id === id && s.id !== "resumo");
   if (!item) return;
   const categoria = categoriaDe(painel, id);
@@ -866,19 +984,25 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
     topo.replaceChildren(trilha, el("h2", "", titulo));
   };
   const falhou = (erro: unknown): void => {
-    corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`));
+    corpo.append(
+      el("p", "aviso", `Não foi possível carregar (${String(erro)}).`),
+    );
   };
 
   cabecalho(item.titulo, false);
   marcarMenu(id, "");
   if (!item.ok) {
-    corpo.append(el("p", "aviso", "Este assunto não pôde ser atualizado nesta rodada."));
+    corpo.append(
+      el("p", "aviso", "Este assunto não pôde ser atualizado nesta rodada."),
+    );
     return;
   }
   if (id === "mundo") {
     topo.append(agendaDoAssunto(id));
     void ler<Mundo>(item.arquivo)
-      .then((m) => corpo.append(el("p", "secao-resumo", m.resumo), montarMundo(m)))
+      .then((m) =>
+        corpo.append(el("p", "secao-resumo", m.resumo), montarMundo(m)),
+      )
       .catch(falhou);
     return;
   }
@@ -895,7 +1019,10 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
           marcarMenu(id, parte.id);
           corpo.classList.add("parte-corpo");
           if (parte.resumo) corpo.append(el("p", "secao-resumo", parte.resumo));
-          corpo.append(montarEstados(e, parte.id, uf), outrasPartes(id, item.titulo, partes, parte.id));
+          corpo.append(
+            montarEstados(e, parte.id, uf),
+            outrasPartes(id, item.titulo, partes, parte.id),
+          );
           return;
         }
         topo.append(agendaDoAssunto(id));
@@ -910,7 +1037,8 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
     .then((s) => {
       const partes = s.subcategorias ?? [];
       const parte =
-        partes.find((p) => p.id === peca) ?? (peca ? parteDaPeca(partes, peca, s) : undefined);
+        partes.find((p) => p.id === peca) ??
+        (peca ? parteDaPeca(partes, peca, s) : undefined);
 
       if (!partes.length) {
         // Assunto sem partes: abre inteiro, como antes.
@@ -926,7 +1054,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
         marcarMenu(id, parte.id);
         corpo.classList.add("parte-corpo");
         if (parte.resumo) corpo.append(el("p", "secao-resumo", parte.resumo));
-        montarParte(s, parte, corpo);
+        montarParte(s, parte, corpo, peca);
         const veja = vejaTambem(parte);
         if (veja) corpo.append(veja);
         corpo.append(outrasPartes(id, item.titulo, partes, parte.id));
@@ -938,7 +1066,9 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
       if (s.resumo) corpo.append(el("p", "secao-resumo", s.resumo));
       if (s.cartoes.length) {
         const grade = el("div", "cartoes");
-        s.cartoes.slice(0, NUMEROS_A_VISTA).forEach((c) => grade.append(montarCartao(c)));
+        s.cartoes
+          .slice(0, NUMEROS_A_VISTA)
+          .forEach((c) => grade.append(montarCartao(c)));
         corpo.append(grade);
       }
       corpo.append(listaDePartes(id, item.titulo, partes));
@@ -965,7 +1095,11 @@ function numeroDaPergunta(c: Cartao): HTMLElement {
 
 /** Uma pergunta aberta: a resposta, até três números e as explicações. A primeira explicação
  *  já vem aberta; as outras mostram a frase e abrem o número e o gráfico no clique. */
-function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void {
+function vistaPergunta(
+  painel: Painel,
+  id: string,
+  conteudo: HTMLElement,
+): void {
   const item = painel.perguntas?.find((q) => q.id === id);
   if (!item) {
     location.hash = "";
@@ -987,14 +1121,18 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
 
   void ler<Perguntas>("perguntas.json")
     .then((arquivo) => {
-      const q: Pergunta | undefined = arquivo.perguntas.find((x) => x.id === id);
+      const q: Pergunta | undefined = arquivo.perguntas.find(
+        (x) => x.id === id,
+      );
       if (!q) return;
       if (q.numeros.length) {
         const numeros = el("div", "cartoes pergunta-numeros");
         for (const c of q.numeros) numeros.append(numeroDaPergunta(c));
         corpo.append(numeros);
       }
-      corpo.append(el("h3", "explicacoes-titulo", "As explicações, e o dado de cada uma"));
+      corpo.append(
+        el("h3", "explicacoes-titulo", "As explicações, e o dado de cada uma"),
+      );
       q.blocos.forEach((b, i) => {
         const caixa = el("details", "vidro explicacao");
         const resumo = el("summary");
@@ -1025,7 +1163,11 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
             tabela.removeAttribute("id");
             dentro.append(tabela);
           }
-          const elo = el("a", "grafico-elo", `Mais em ${b.assunto_titulo || "Dados"}`);
+          const elo = el(
+            "a",
+            "grafico-elo",
+            `Mais em ${b.assunto_titulo || "Dados"}`,
+          );
           elo.append(el("span", "seta", "→"));
           elo.href = b.elo;
           dentro.append(elo);
@@ -1049,9 +1191,14 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
       }
       // Recolhidas: a pessoa abre quando quiser trocar de pergunta.
       const outras = el("details", "outras-perguntas");
-      const quantas = (painel.perguntas ?? []).filter((o) => o.id !== id).length;
+      const quantas = (painel.perguntas ?? []).filter(
+        (o) => o.id !== id,
+      ).length;
       const chamada = el("summary", "sobretitulo");
-      chamada.append(el("span", "", "Outras perguntas"), el("small", "", `${quantas}`));
+      chamada.append(
+        el("span", "", "Outras perguntas"),
+        el("small", "", `${quantas}`),
+      );
       outras.append(chamada);
       outras.append(
         ...listasDePerguntas(
@@ -1062,7 +1209,9 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
       corpo.append(outras);
     })
     .catch((erro: unknown) => {
-      corpo.append(el("p", "aviso", `Não foi possível carregar (${String(erro)}).`));
+      corpo.append(
+        el("p", "aviso", `Não foi possível carregar (${String(erro)}).`),
+      );
     });
 }
 
@@ -1074,11 +1223,16 @@ async function iniciar(): Promise<void> {
   ligarGlossario(conteudo);
   ligarEnderecos(conteudo);
   document.querySelector(".menu-botao")?.addEventListener("click", () => {
-    abrirMenu(!document.getElementById("lateral")?.classList.contains("aberta"));
+    abrirMenu(
+      !document.getElementById("lateral")?.classList.contains("aberta"),
+    );
   });
   document.addEventListener("keydown", (ev) => {
     const alvoDoTeclado = ev.target as HTMLElement;
-    if (ev.key === "/" && !/^(INPUT|SELECT|TEXTAREA)$/.test(alvoDoTeclado.tagName)) {
+    if (
+      ev.key === "/" &&
+      !/^(INPUT|SELECT|TEXTAREA)$/.test(alvoDoTeclado.tagName)
+    ) {
       ev.preventDefault();
       abrirBusca();
     }
@@ -1133,7 +1287,8 @@ async function iniciar(): Promise<void> {
         vistaGlossario(conteudo, peca);
         marcarMenu("glossario", "");
         window.scrollTo(0, 0);
-      } else if (peca) document.getElementById(`termo-${peca}`)?.scrollIntoView();
+      } else if (peca)
+        document.getElementById(`termo-${peca}`)?.scrollIntoView();
       return;
     }
     if (alvo === "pergunta" && peca) {

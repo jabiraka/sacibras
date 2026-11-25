@@ -120,7 +120,10 @@ export function numeroNaTela(n: string): string {
 
 /** O número do índice que casa com o digitado: igual (3), ou começando com ele — "13" acha
  *  "13,75", "13,7" também (1,5). */
-function casarNumero(numeros: string[], q: string): { nota: number; numero: string } | null {
+function casarNumero(
+  numeros: string[],
+  q: string,
+): { nota: number; numero: string } | null {
   if (numeros.includes(q)) return { nota: 3, numero: q };
   const parecido = numeros.find(
     (n) => n.startsWith(q) && (q.includes(",") || n.charAt(q.length) === ","),
@@ -159,8 +162,16 @@ export function pontuar(item: Indexado, palavras: string[]): Achado | null {
     if (SEM_ESPACO.test(p)) {
       // Chinês e japonês: o digitado dentro do texto, ou um termo do índice dentro do digitado.
       if (item.titulo.includes(p)) total += 3;
-      else if (item.traducao.includes(p) || item.juntosTitulo.some((t) => p.includes(t))) total += 2;
-      else if (item.resto.includes(p) || item.juntosResto.some((t) => p.includes(t))) total += 1;
+      else if (
+        item.traducao.includes(p) ||
+        item.juntosTitulo.some((t) => p.includes(t))
+      )
+        total += 2;
+      else if (
+        item.resto.includes(p) ||
+        item.juntosResto.some((t) => p.includes(t))
+      )
+        total += 1;
       else return null;
       continue;
     }
@@ -205,13 +216,19 @@ function ordenar(achados: Achado[], limite: number): Achado[] {
     .slice(0, limite);
 }
 
-export function buscar(itens: Indexado[], texto: string, limite = 12, parcial = true): Achado[] {
+export function buscar(
+  itens: Indexado[],
+  texto: string,
+  limite = 12,
+  parcial = true,
+): Achado[] {
   const palavras = palavrasDe(texto);
   if (!palavras.length) return [];
   const todas = itens
     .map((i) => pontuar(i, palavras))
     .filter((x): x is Achado => x !== null && x.nota > 0);
-  if (todas.length || !parcial || palavras.length < 2) return ordenar(todas, limite);
+  if (todas.length || !parcial || palavras.length < 2)
+    return ordenar(todas, limite);
   // Nada com todas as palavras ("PIB de São Paulo", "juros do cartão"): o que casa com mais
   // delas, cada palavra pesando o que pesaria sozinha. Palavra com número fica de fora.
   const avulsas = palavras.filter((p) => comoNumero(p) === null);
@@ -241,7 +258,8 @@ export function buscar(itens: Indexado[], texto: string, limite = 12, parcial = 
 
 const PERGUNTA =
   /^(?:o\s*que\s+(?:e|eh|sao|significa|quer dizer)|oq\s+e|que\s+(?:e|sao)|significado\s+de|definicao\s+de|what\s+(?:is|are)|what's|que\s+(?:es|son)|qu'est-ce\s+que|qu'est-ce\s+qu'|c'est\s+quoi)\s+(.+)$/;
-const ARTIGO = /^(?:o|a|os|as|um|uma|the|an|el|la|los|las|le|les|un|une)\s+|^l'/;
+const ARTIGO =
+  /^(?:o|a|os|as|um|uma|the|an|el|la|los|las|le|les|un|une)\s+|^l'/;
 
 /** "o que é spread", "what is GDP", "qué es el PIB?" → "spread", "gdp", "pib"; senão, null. */
 export function perguntaDeTermo(texto: string): string | null {
@@ -284,7 +302,11 @@ export function distancia(a: string, b: string, teto = 3): number {
     let menor = i;
     for (let j = 1; j <= b.length; j++) {
       const custo = a[i - 1] === b[j - 1] ? 0 : 1;
-      let d = Math.min((antes[j] ?? 0) + 1, (atual[j - 1] ?? 0) + 1, (antes[j - 1] ?? 0) + custo);
+      let d = Math.min(
+        (antes[j] ?? 0) + 1,
+        (atual[j - 1] ?? 0) + 1,
+        (antes[j - 1] ?? 0) + custo,
+      );
       if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
         d = Math.min(d, (antes2[j - 2] ?? 0) + 1);
       }
@@ -319,7 +341,12 @@ function palavrasDoIndice(itens: Indexado[]): Map<string, Palavra> {
     if (ja) {
       ja.conta += 1;
       ja.deFora &&= deFora;
-    } else mapa.set(chave, { forma: forma.toLocaleLowerCase("pt-BR"), conta: 1, deFora });
+    } else
+      mapa.set(chave, {
+        forma: forma.toLocaleLowerCase("pt-BR"),
+        conta: 1,
+        deFora,
+      });
   };
   for (const i of itens) {
     for (const f of i.t.split(/[^\p{L}\p{N}+-]+/u)) contar(f, false);
@@ -349,7 +376,10 @@ function parecidas(
     if (d <= teto + 0.5) candidatas.push({ forma: p.forma, d, conta: p.conta });
   }
   return candidatas
-    .sort((a, b) => a.d - b.d || b.conta - a.conta || a.forma.length - b.forma.length)
+    .sort(
+      (a, b) =>
+        a.d - b.d || b.conta - a.conta || a.forma.length - b.forma.length,
+    )
     .slice(0, quantas)
     .map((c) => c.forma);
 }
@@ -369,13 +399,17 @@ export function sugestoes(
     (p) => comoNumero(p) === null && !buscar(itens, p, 1, false).length,
   );
   if (!falhas.length) return [];
-  const trocas = new Map(falhas.map((f) => [f, parecidas(f, vocab, quantas, deFora)]));
+  const trocas = new Map(
+    falhas.map((f) => [f, parecidas(f, vocab, quantas, deFora)]),
+  );
   const montar = (troca: (p: string) => string): string =>
     palavras.map((p) => (trocas.has(p) ? troca(p) : p)).join(" ");
   const opcoes = [montar((p) => trocas.get(p)?.[0] ?? p)];
   const primeira = falhas[0] ?? "";
   for (const alternativa of (trocas.get(primeira) ?? []).slice(1)) {
-    opcoes.push(montar((p) => (p === primeira ? alternativa : (trocas.get(p)?.[0] ?? p))));
+    opcoes.push(
+      montar((p) => (p === primeira ? alternativa : (trocas.get(p)?.[0] ?? p))),
+    );
   }
   const vistas = new Set<string>([palavras.join(" ")]);
   return opcoes
@@ -388,13 +422,20 @@ export function sugestoes(
 }
 
 /** Os assuntos a oferecer quando nada foi achado: os mais procurados que existirem. */
-const ASSUNTOS_SUGERIDOS = ["#inflacao", "#juros", "#trabalho", "#atividade", "#externo", "#fiscal"];
+const ASSUNTOS_SUGERIDOS = [
+  "#inflacao",
+  "#juros",
+  "#trabalho",
+  "#atividade",
+  "#externo",
+  "#fiscal",
+];
 
 function assuntosSugeridos(itens: Indexado[]): Indexado[] {
   const assuntos = itens.filter((i) => i.o === "Assunto");
-  const preferidos = ASSUNTOS_SUGERIDOS.map((h) => assuntos.find((a) => a.h === h)).filter(
-    (a): a is Indexado => a !== undefined,
-  );
+  const preferidos = ASSUNTOS_SUGERIDOS.map((h) =>
+    assuntos.find((a) => a.h === h),
+  ).filter((a): a is Indexado => a !== undefined);
   const resto = assuntos.filter((a) => !preferidos.includes(a));
   return [...preferidos, ...resto].slice(0, 6);
 }
@@ -404,7 +445,9 @@ function assuntosSugeridos(itens: Indexado[]): Indexado[] {
 /** Põe o cursor no campo da busca, que fica sempre à vista no menu lateral (no celular, no
  *  topo). Atalho: a tecla "/". */
 export function abrirBusca(inicial = ""): void {
-  const campo = document.getElementById("busca-campo") as HTMLInputElement | null;
+  const campo = document.getElementById(
+    "busca-campo",
+  ) as HTMLInputElement | null;
   if (!campo) return;
   if (inicial) {
     campo.value = inicial;
@@ -416,7 +459,9 @@ export function abrirBusca(inicial = ""): void {
 /** Liga o campo fixo aos resultados logo abaixo dele (sem janela por cima da página:
  *  Caio, 14/11/2026, "a pesquisa não precisa abrir um outro negócio, pode manter fixo"). */
 export function ligarBusca(): void {
-  const campo = document.getElementById("busca-campo") as HTMLInputElement | null;
+  const campo = document.getElementById(
+    "busca-campo",
+  ) as HTMLInputElement | null;
   const saida = document.getElementById("busca-saida");
   if (!campo || !saida) return;
   const lista = saida.querySelector(".busca-resultados") as HTMLOListElement;
@@ -432,7 +477,8 @@ export function ligarBusca(): void {
     fechar();
     campo.value = "";
     campo.blur();
-    if (location.hash === h) window.dispatchEvent(new HashChangeEvent("hashchange"));
+    if (location.hash === h)
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
     else location.hash = h;
   };
   const buscarDeNovo = (texto: string): void => {
@@ -440,7 +486,9 @@ export function ligarBusca(): void {
     campo.dispatchEvent(new Event("input"));
     campo.focus();
   };
-  const itens = (): HTMLAnchorElement[] => [...lista.querySelectorAll<HTMLAnchorElement>("a")];
+  const itens = (): HTMLAnchorElement[] => [
+    ...lista.querySelectorAll<HTMLAnchorElement>("a"),
+  ];
 
   /** A definição do glossário no topo ("o que é spread"). */
   const mostrarDefinicao = (v: Verbete | undefined): void => {
@@ -450,8 +498,14 @@ export function ligarBusca(): void {
       return;
     }
     const nome = el("p", "busca-def-nome");
-    nome.append(el("span", "busca-def-rotulo", "Glossário"), document.createTextNode(v.nome));
-    const partes: HTMLElement[] = [nome, el("p", "busca-def-texto", v.definicao)];
+    nome.append(
+      el("span", "busca-def-rotulo", "Glossário"),
+      document.createTextNode(v.nome),
+    );
+    const partes: HTMLElement[] = [
+      nome,
+      el("p", "busca-def-texto", v.definicao),
+    ];
     if (v.elo) {
       const destino = v.elo;
       const elo = el("a", "busca-def-elo", "Ver no painel →");
@@ -508,51 +562,59 @@ export function ligarBusca(): void {
       fechar();
       return;
     }
-    void Promise.all([carregar(), carregarGlossario()]).then(([todos, verbetes]) => {
-      if (meu !== pedido) return;
-      // "o que é spread": a definição em cima e os resultados de "spread" embaixo. A palavra
-      // sozinha, se for o nome de um termo do glossário, também traz a definição.
-      const termo = perguntaDeTermo(texto);
-      const verbete = verbeteDe(verbetes, termo ?? texto, termo !== null);
-      mostrarDefinicao(verbete);
-      const achados = buscar(todos, termo ?? texto);
-      lista.replaceChildren(
-        ...achados.map((a) => {
-          const li = el("li");
-          const elo = el("a", "busca-item");
-          elo.href = a.item.h;
-          elo.addEventListener("click", (ev) => {
-            ev.preventDefault();
-            ir(a.item.h);
-          });
-          const onde = el("span", "busca-onde", a.item.o);
-          if (a.numero) onde.append(el("span", "busca-valor", `mostra ${numeroNaTela(a.numero)}`));
-          elo.append(el("span", "busca-titulo", a.item.t), onde);
-          li.append(elo);
-          return li;
-        }),
-      );
-      const outraLingua = !LINGUAS_DO_INDICE.includes(idiomaAtual().slice(0, 2));
-      const parcial = achados.some((a) => a.parcial);
-      const nada = (!achados.length || parcial) && !verbete;
-      const numerico = palavrasDe(texto).some((p) => comoNumero(p) !== null);
-      aviso.textContent = !nada
-        ? ""
-        : parcial
-          ? "Nada com todas as palavras. Abaixo, o que tem parte delas:"
-          : numerico
-          ? 'Nenhum número da tela é esse. A busca acha o número como ele aparece no cartão ou na tabela ("13,75", "4,5").'
-          : outraLingua
-            ? 'Nada com esse nome. A busca entende português, inglês, espanhol, francês, chinês, japonês e árabe: tente, por exemplo, "inflation" ou "GDP".'
-            : "Nada com esse nome.";
-      if (nada && !parcial) mostrarSugestoes(todos, texto);
-      else outras.hidden = true;
-      saida.hidden = false;
-      campo.setAttribute("aria-expanded", "true");
-    });
+    void Promise.all([carregar(), carregarGlossario()]).then(
+      ([todos, verbetes]) => {
+        if (meu !== pedido) return;
+        // "o que é spread": a definição em cima e os resultados de "spread" embaixo. A palavra
+        // sozinha, se for o nome de um termo do glossário, também traz a definição.
+        const termo = perguntaDeTermo(texto);
+        const verbete = verbeteDe(verbetes, termo ?? texto, termo !== null);
+        mostrarDefinicao(verbete);
+        const achados = buscar(todos, termo ?? texto);
+        lista.replaceChildren(
+          ...achados.map((a) => {
+            const li = el("li");
+            const elo = el("a", "busca-item");
+            elo.href = a.item.h;
+            elo.addEventListener("click", (ev) => {
+              ev.preventDefault();
+              ir(a.item.h);
+            });
+            const onde = el("span", "busca-onde", a.item.o);
+            if (a.numero)
+              onde.append(
+                el("span", "busca-valor", `mostra ${numeroNaTela(a.numero)}`),
+              );
+            elo.append(el("span", "busca-titulo", a.item.t), onde);
+            li.append(elo);
+            return li;
+          }),
+        );
+        const outraLingua = !LINGUAS_DO_INDICE.includes(
+          idiomaAtual().slice(0, 2),
+        );
+        const parcial = achados.some((a) => a.parcial);
+        const nada = (!achados.length || parcial) && !verbete;
+        const numerico = palavrasDe(texto).some((p) => comoNumero(p) !== null);
+        aviso.textContent = !nada
+          ? ""
+          : parcial
+            ? "Nada com todas as palavras. Abaixo, o que tem parte delas:"
+            : numerico
+              ? 'Nenhum número da tela é esse. A busca acha o número como ele aparece no cartão ou na tabela ("13,75", "4,5").'
+              : outraLingua
+                ? 'Nada com esse nome. A busca entende português, inglês, espanhol, francês, chinês, japonês e árabe: tente, por exemplo, "inflation" ou "GDP".'
+                : "Nada com esse nome.";
+        if (nada && !parcial) mostrarSugestoes(todos, texto);
+        else outras.hidden = true;
+        saida.hidden = false;
+        campo.setAttribute("aria-expanded", "true");
+      },
+    );
   });
   campo.addEventListener("focus", () => {
-    const algo = lista.children.length || aviso.textContent || !definicao.hidden;
+    const algo =
+      lista.children.length || aviso.textContent || !definicao.hidden;
     if (campo.value.trim() && algo) saida.hidden = false;
   });
   campo.addEventListener("keydown", (ev) => {
@@ -560,7 +622,8 @@ export function ligarBusca(): void {
       ev.preventDefault();
       const primeiro = itens()[0];
       if (primeiro) ir(primeiro.getAttribute("href") ?? "#");
-      else if (!outras.hidden) outras.querySelector<HTMLButtonElement>("button")?.click();
+      else if (!outras.hidden)
+        outras.querySelector<HTMLButtonElement>("button")?.click();
     } else if (ev.key === "ArrowDown") {
       ev.preventDefault();
       itens()[0]?.focus();
@@ -597,7 +660,9 @@ export function revelar(alvo: string): void {
   let no = document.getElementById(alvo);
   if (!no && alvo.startsWith("m-")) {
     // Métrica de estados ou de países: escolhe na lista suspensa.
-    const lista = document.querySelector<HTMLSelectElement>("#estados-metrica, #mundo-metrica");
+    const lista = document.querySelector<HTMLSelectElement>(
+      "#estados-metrica, #mundo-metrica",
+    );
     const valor = alvo.slice(2);
     if (lista && [...lista.options].some((o) => o.value === valor)) {
       lista.value = valor;
@@ -614,19 +679,35 @@ export function revelar(alvo: string): void {
       no = lista.closest(".painel-mundo") as HTMLElement | null;
     }
   }
-  if (!no && (alvo.startsWith("uf-") || alvo.startsWith("p-"))) {
-    no = document.getElementById(alvo) ?? document.querySelector(".mapa, .ranking-pontos");
+  if (!no && alvo.startsWith("e-")) {
+    // Uma estatal: a ficha já abre nela pelo endereço; se a lista estiver na tela, troca.
+    const lista = document.querySelector<HTMLSelectElement>("#estatais-ficha");
+    if (lista && [...lista.options].some((o) => o.value === alvo.slice(2))) {
+      lista.value = alvo.slice(2);
+      lista.dispatchEvent(new Event("change"));
+    }
+    no = document.getElementById("fichas-estatais");
   }
-  if (!no && (alvo.startsWith("g-") || alvo.startsWith("t-"))) no = escolherAlternativa(alvo);
+  if (!no && (alvo.startsWith("uf-") || alvo.startsWith("p-"))) {
+    no =
+      document.getElementById(alvo) ??
+      document.querySelector(".mapa, .ranking-pontos");
+  }
+  if (!no && (alvo.startsWith("g-") || alvo.startsWith("t-")))
+    no = escolherAlternativa(alvo);
   if (!no) {
     // Pode estar atrás de "Mais números"/"Mais gráficos" ou numa tabela guardada.
-    document.querySelectorAll<HTMLButtonElement>(".abrir button").forEach((b) => b.click());
+    document
+      .querySelectorAll<HTMLButtonElement>(".abrir button")
+      .forEach((b) => b.click());
     no = document.getElementById(alvo);
     const guardado = no?.closest("details");
     if (guardado) guardado.open = true;
   }
   if (!no) {
-    for (const d of document.querySelectorAll<HTMLDetailsElement>("details.guardado")) {
+    for (const d of document.querySelectorAll<HTMLDetailsElement>(
+      "details.guardado",
+    )) {
       if (d.id === alvo) {
         d.open = true;
         no = d;
@@ -636,7 +717,11 @@ export function revelar(alvo: string): void {
   if (!no) return;
   if (no instanceof HTMLDetailsElement) no.open = true; // tabela guardada: abre
   // Dentro de caixas guardadas (o indicador do painel de alerta, num grupo): abre todas.
-  for (let d = no.parentElement?.closest("details"); d; d = d.parentElement?.closest("details")) {
+  for (
+    let d = no.parentElement?.closest("details");
+    d;
+    d = d.parentElement?.closest("details")
+  ) {
     d.open = true;
   }
   const achado = no;

@@ -3205,6 +3205,28 @@ input.escolha[type="number"] {
   gap: 8px;
 }
 
+/* Uma estatal por dentro (Contas públicas › Estatais): a lista, os números, o gráfico e a
+   tabela, um embaixo do outro; a coluna não cresce com a tabela larga. */
+.ficha-estatal {
+  margin-top: 12px;
+}
+
+.ficha-estatal-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.ficha-estatal-nome {
+  margin: 0;
+  font-weight: 500;
+}
+
+.ficha-estatal-cabeca .nota {
+  margin: 2px 0 0;
+}
+
 /* As contas do estado, um bloco de cada vez: as abas em cima. */
 .ficha-abas {
   display: flex;

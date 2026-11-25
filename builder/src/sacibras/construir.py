@@ -167,6 +167,9 @@ def _partes(dados: object) -> list[ItemSubcategoria]:
     ]
 
 
+ARQUIVO_ESTATAIS = "estatais.json"
+
+
 def _gravar(pasta: Path, nome: str, modelo: BaseModel) -> None:
     texto = modelo.model_dump_json()
     json.loads(texto)  # o que vai ao site tem de ser JSON válido
@@ -224,6 +227,10 @@ def completar(secao: BaseModel, caminho: Path) -> list[str]:
             if getattr(secao, campo) is None and getattr(antigo, campo) is not None:
                 setattr(secao, campo, getattr(antigo, campo))
                 mantidos.append(campo)
+        velho = antigo.arquivo_estatais
+        if not secao.arquivo_estatais and velho and (caminho.parent / velho).exists():
+            secao.arquivo_estatais = velho
+            mantidos.append("fichas das estatais")
         if not secao.alertas and antigo.alertas:
             secao.alertas = antigo.alertas
             mantidos.append("alertas")
@@ -295,6 +302,13 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                 except Exception as erro:  # sem o arquivo, a seção sai sem apontar para ele
                     setattr(secao, "arquivo_contas", "")  # noqa: B010
                     print(f"  aviso: {id}: contas não gravadas ({erro})")
+            fichas = ctx.memo.pop(f"{id}_estatais", None)  # uma ficha por estatal, à parte
+            if fichas is not None and isinstance(secao, Secao):
+                try:
+                    _gravar(saida, ARQUIVO_ESTATAIS, fichas)
+                    secao.arquivo_estatais = ARQUIVO_ESTATAIS
+                except Exception as erro:
+                    print(f"  aviso: {id}: fichas das estatais não gravadas ({erro})")
             if isinstance(secao, Secao):
                 sem_lugar = organizacao.aplicar(secao)
                 for g in achatar_graficos(secao.graficos):
