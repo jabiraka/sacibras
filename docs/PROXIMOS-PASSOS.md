@@ -21,6 +21,15 @@ a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e Ibov
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
 
+**25/11/2026, troca suave nas listas dos gráficos** (Caio: *"quando clico num drop down [...]
+as vezes muda do outro lado os gráficos, e o drop down muda um pouco de posição [...] deixe mais
+smooth"*). Nas listas "Gráfico", "Tabela", "Ver em" e "Métrica" (`alternativas.ts`,
+`variantes.ts`), a caixa guarda a maior altura que a peça já teve (a linha da grade e o gráfico
+vizinho não pulam), a cabeça do gráfico com lista de métrica não encolhe (o menu fica no lugar) e
+a peça nova entra com um fade de 0,28 s (`trocarSuave` em `pecas.ts`; sem animação para quem
+pede menos movimento). O build passa, **mas da nuvem não abri o site (sem os dados): falta o
+Caio olhar a 390 e 1280 px**. As outras listas (Estados, Mundo, Retornos) não mudaram.
+
 **25/11/2026, o projeto da LDO 2027 no Laboratório** (Caio: *"tem como ver se isso vai
 estabilizar a dívida [...]?"* e *"Pode já colocar, dizendo que ainda não virou lei [...] a
 gente vai ter que monitorar se algo muda até a sanção"*). **O projeto não foi aprovado**: em

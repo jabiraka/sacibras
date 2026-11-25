@@ -6,7 +6,7 @@
 // dívida.
 
 import { montarGrafico, tema } from "./grafico";
-import { el } from "./pecas";
+import { el, trocarSuave } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import type { Grafico, Serie, VarianteGrafico } from "./tipos";
 
@@ -95,7 +95,8 @@ export function montarComEscolha(g: Grafico): HTMLElement {
     return barra;
   }
 
-  function pintar(): void {
+  let cabecaMax = 0;
+  function pintar(primeira = false): void {
     const series = atual.series
       .filter((s) => !escolhivel(s) || ligadas.has(s.id))
       // Sem fichas, a cor segue a ordem da série, como em qualquer gráfico.
@@ -119,8 +120,13 @@ export function montarComEscolha(g: Grafico): HTMLElement {
     if (cabeca) cabeca.after(barra);
     else grafico.prepend(barra);
     if (vazio) barra.after(el("p", "vazio", "Nenhum episódio escolhido: toque em um acima."));
-    caixa.replaceChildren(grafico);
+    trocarSuave(caixa, grafico, primeira);
+    // O menu fica onde estava: o título e a frase mudam de tamanho, a cabeça não encolhe.
+    if (cabeca) {
+      cabecaMax = Math.max(cabecaMax, cabeca.offsetHeight);
+      cabeca.style.minHeight = `${cabecaMax}px`;
+    }
   }
-  pintar();
+  pintar(true);
   return caixa;
 }

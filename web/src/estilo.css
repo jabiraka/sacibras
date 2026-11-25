@@ -4284,3 +4284,21 @@ details.guardado > .alternativas-barra {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* A troca por uma lista (variantes.ts, alternativas.ts): a peça nova entra com um fade curto. */
+@keyframes troca-entra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.troca-entra {
+  animation: troca-entra 0.28s var(--suave) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .troca-entra {
+    animation: none;
+  }
+}

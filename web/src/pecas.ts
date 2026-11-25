@@ -42,3 +42,18 @@ export function guardar(
   caixa.append(cabeca, dentro);
   return caixa;
 }
+
+/** Troca a peça de uma caixa sem pulo (Caio, 25/11/2026: o menu mudava de lugar e o gráfico
+ *  vizinho se mexia ao escolher outra opção): a caixa guarda a maior altura que a peça já teve,
+ *  então a linha da grade não encolhe; a peça nova entra com um fade curto, só na troca. */
+export function trocarSuave(caixa: HTMLElement, nova: HTMLElement, primeira: boolean): void {
+  const antiga = caixa.firstElementChild as HTMLElement | null;
+  const altura = Math.max(Number(caixa.dataset.altura ?? 0), antiga?.offsetHeight ?? 0);
+  caixa.replaceChildren(nova);
+  if (primeira || !antiga) return;
+  const minima = Math.max(altura, Number(caixa.dataset.altura ?? 0));
+  caixa.dataset.altura = String(minima);
+  nova.style.minHeight = `${minima}px`;
+  nova.classList.add("troca-entra");
+  nova.addEventListener("animationend", () => nova.classList.remove("troca-entra"), { once: true });
+}

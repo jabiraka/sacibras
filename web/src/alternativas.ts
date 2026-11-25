@@ -4,7 +4,7 @@
 // O builder põe as parecidas em `alternativas` do principal; aqui a lista em cima troca a
 // peça inteira, de qualquer tipo (linha, barras, pirâmide, tabela com períodos...).
 
-import { el } from "./pecas";
+import { el, trocarSuave } from "./pecas";
 import { listaSuspensa } from "./pontos";
 
 interface ComAlternativas<T> {
@@ -27,7 +27,7 @@ export function comAlternativas<T extends ComAlternativas<T>>(
   const idLista = `alternativa-${prefixo}-${principal.id}`;
   const nome = prefixo === "g" ? "Gráfico" : "Tabela";
 
-  function mostrar(id: string): void {
+  function mostrar(id: string, primeira = false): void {
     const escolhida = todas.find((x) => x.id === id) ?? principal;
     const peca = montar({ ...escolhida, alternativas: [] });
     const { caixa: lista } = listaSuspensa(
@@ -46,9 +46,9 @@ export function comAlternativas<T extends ComAlternativas<T>>(
     const resumo = peca.querySelector(":scope > summary");
     if (resumo) resumo.after(barra);
     else peca.prepend(barra);
-    caixa.replaceChildren(peca);
+    trocarSuave(caixa, peca, primeira);
   }
-  mostrar(principal.id);
+  mostrar(principal.id, true);
   return caixa;
 }
 
