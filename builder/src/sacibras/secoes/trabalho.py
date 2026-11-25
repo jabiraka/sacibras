@@ -55,6 +55,10 @@ POPULACAO_14 = (6318, 1641, "c629/32385")
 Conferido na API em 15/11/2026: 175.729 mil no trimestre até set/2026."""
 
 
+MTE_CAGED = "Ministério do Trabalho e Emprego, Novo Caged"
+"""O MTE publica o saldo do mês e de 12 meses; o builder lê o estoque no SGS do Banco Central."""
+
+
 def grafico_fatores_da_desocupacao(
     ocupados: list[Ponto], desocupados: list[Ponto], populacao: list[Ponto], inicio: date
 ) -> Grafico | None:
@@ -366,7 +370,9 @@ def _caged_por_setor(ctx: Contexto, total: list[Ponto], inicio: date) -> tuple[G
         [(nome, estoques[chave]) for chave, nome in SETORES_CAGED] + [("Demais serviços", resto)],
         total,
     )
-    fonte = ctx.fonte_sgs(*(c for c, _ in SETORES_CAGED), "EMPREGO_SERVICOS", "EMPREGO_FORMAL")
+    fonte = f"{MTE_CAGED}; " + ctx.fonte_sgs(
+        *(c for c, _ in SETORES_CAGED), "EMPREGO_SERVICOS", "EMPREGO_FORMAL"
+    )
     # Vagas em 12 meses: o estoque contra o mesmo mês do ano anterior.
     nota = (
         "Estoque do Novo Caged (Banco Central), sem ajuste sazonal; vagas em 12 meses: o "
@@ -619,7 +625,7 @@ def montar(ctx: Contexto) -> Secao:
             detalhe=(
                 f"no mês: {br(saldo[-1][1], 0)} mil; média de 3 meses: {br(saldo_3m[-1][1], 0)} mil"
             ),
-            fonte=ctx.fonte_sgs("EMPREGO_FORMAL"),
+            fonte=f"{MTE_CAGED}; {ctx.fonte_sgs('EMPREGO_FORMAL')}",
             secao="trabalho",
             mini=48,
         ),
@@ -655,7 +661,7 @@ def montar(ctx: Contexto) -> Secao:
             casas=0,
             periodicidade="M",
             janela_anos=5,
-            fonte=ctx.fonte_sgs("EMPREGO_FORMAL"),
+            fonte=f"{MTE_CAGED}; {ctx.fonte_sgs('EMPREGO_FORMAL')}",
             nota=(
                 "Diferença mês a mês do estoque do Novo Caged (Banco Central); a linha é a "
                 "média de 3 meses."

@@ -128,6 +128,22 @@ REGRAS: list[Regra] = [
         nome="Comex Stat",
         url="https://comexstat.mdic.gov.br",
     ),
+    # Abertas em 25/11/2026: o painel do ONS e a página do Novo Caged (leva ao mês mais novo).
+    Regra(
+        padrao=r"ONS, energia armazenada",
+        nome="ONS, energia armazenada",
+        url="https://www.ons.org.br/Paginas/resultados-da-operacao/historico-da-operacao/energia_armazenada.aspx",
+    ),
+    Regra(
+        padrao=r"Novo Caged",
+        nome="Novo Caged (MTE)",
+        url="https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/acoes-e-programas/programas-projetos-acoes-obras-e-atividades/estatisticas-trabalho/novo-caged",
+    ),
+    Regra(
+        padrao=r"\(Sest\)|Empresas Estatais Federais",
+        nome="Relatórios das estatais (Sest)",
+        url="https://www.gov.br/gestao/pt-br/central-de-conteudo/relatorios-das-estatais",
+    ),
     Regra(
         padrao=r"\bONS\b",
         nome="ONS",

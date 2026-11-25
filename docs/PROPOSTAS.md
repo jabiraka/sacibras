@@ -194,19 +194,15 @@ Entraram o projeto da LDO 2027 e a conta nossa da dívida por cenário (ver o
 
 ## Rótulo de cálculo próprio (sessão de 25/11/2026)
 
-A auditoria trocou por número oficial o que abria da nuvem (ver o
-[PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)). Ficaram como cálculo próprio, à espera de fonte:
+Onde o órgão publica o número e o builder não lê, a peça é oficial e a fonte aponta para a
+página do número (Caio, 25/11/2026: *"pode colocar como oficial, mas apontando pro site onde
+tá o número"*): reservatórios (painel do ONS), vagas do Caged (página do Novo Caged no MTE) e
+saldo das estatais (relatórios da Sest). Ficaram como cálculo próprio:
 
-- **Reservatórios (`reservatorios`)**: o ONS publica a energia armazenada do SIN no painel e no
-  boletim, não no CSV que o builder lê.
-- **Reservas contra a dívida de curto prazo**: o BC publica o indicador por prazo residual na
-  nota do setor externo (tabela, sem série no SGS); o painel usa o prazo original.
-- **Saldo das estatais, anos antes de 2025**: a Sest publica o de 2025 pronto; os anteriores
-  são reconstrução, e a tabela da p. 86 traz outro aporte.
-- **Razão 10/40 (Palma)**: o IBGE dá o índice na Síntese de Indicadores Sociais (planilha
-  anual), não no SIDRA.
-- **Saldo do Caged em 12 meses**: o MTE publica pronto no PDET; o painel usa a diferença do
-  estoque do SGS, que pode não bater com o saldo divulgado.
+- **Razão 10/40 (Palma)**: o IBGE dá o índice na Síntese de Indicadores Sociais, mas o site do
+  IBGE recusa quem está fora do Brasil; abrir a página do PC e pôr a regra em `links.py`.
+- **Reservas contra a dívida de curto prazo**: o BC publica as duas partes (tabelas do setor
+  externo, xlsx de out/2026), não a razão.
 - Transformações que a fonte não publica prontas (deflacionar, % do PIB em 12 meses, média dos
   núcleos, juro real) seguem como cálculo próprio.
 
