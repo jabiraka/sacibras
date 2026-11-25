@@ -57,8 +57,8 @@ médio ou a meta do prazo é cálculo próprio; a tabela da LDO 2027 passou a di
 primário que estabiliza pelo Focus. O SGS 20704 é o imobiliário inteiro (o BC o classifica
 como direcionado); o catálogo diz isso agora. Onde o órgão publica e o builder não lê, a peça é oficial com o link para a página do
 número (reservatórios: painel do ONS; vagas do Caged: MTE; saldo das estatais: Sest; regras
-em `links.py`), e o aviso na nota onde o número pode diferir do publicado (estatais antes de
-2025; Caged contra o saldo do MTE). **A conferir do PC**: "Só do PC", abaixo. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
+em `links.py`), e o aviso na nota onde o número pode diferir do publicado (o aporte das estatais,
+que a p. 86 do relatório dá maior; o Caged contra o saldo do MTE). **A conferir do PC**: "Só do PC", abaixo. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
 
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
@@ -431,16 +431,16 @@ As próximas:
     fotos usaram um calendário fabricado; conferir do PC que a caixa abre com o de verdade.
 - **Números que a tela dá como oficiais e se conferem na fonte** (25/11/2026; a peça leva o
   aviso até a conferência; ao conferir, tirar o aviso e anotar a data no comentário):
-  - **Saldo das estatais antes de 2025** (`estatais.py`, `relatorios.ESTATAIS_*`): abrir
-    `gov.br/gestao/pt-br/central-de-conteudo/relatorios-das-estatais`, o relatório de cada ano
-    (2024 para 2023 etc.), e copiar o "retorno financeiro" para a União. Se bater com a soma
-    das linhas, sai o aviso; se não, entra o número da Sest. Em 2025 a p. 86 traz outro aporte
-    (3.418,3 contra 1.709,1 no retorno da p. 17): ver qual vale.
-  - **Vagas do Caged** (`trabalho.py`): na página do Novo Caged no MTE (`gov.br/trabalho-e-emprego`
-    › Estatísticas › Novo Caged, que abre no mês mais novo), o "Sumário executivo.pdf" traz o
-    saldo do mês e de 12 meses; comparar com o painel. As tabelas (Tabelas.xlsx) estão numa
-    pasta do Google Drive, que o builder não lê. Se a diferença for pequena, o aviso fica curto;
-    se houver série estável em xlsx ou API, trocar pelo saldo do MTE.
+  - **Aporte das estatais** (`relatorios.ESTATAIS_POR_ANO`): a tela usa a soma das empresas
+    na planilha do anexo I, que dá o retorno de 2025 da p. 17 (R$ 13,1 bi); a tabela-resumo da
+    p. 86 traz aporte maior em todos os anos (2025: 3.418,3 contra 1.709,1), e a nota diz isso.
+    Perguntar à Sest (ou ver o relatório de 2025, ano-base 2024, que não está na página) qual
+    vale. O de 2024 não publica retorno.
+  - **Vagas do Caged** (`trabalho.py`): o link da fonte vai à página do Novo Caged no MTE
+    (abre no mês mais novo, com o "Sumário executivo.pdf" e o "Tabelas.xlsx", que fica numa
+    pasta do Google Drive). Comparar o saldo do mês e de 12 meses do sumário com o painel; se
+    a diferença for pequena, o aviso pode sair. Se o MTE puser as tabelas em endereço fixo,
+    trocar pelo saldo dele.
   - **Reservatórios** (`riscos.py`): o painel de energia armazenada do ONS
     (`ons.org.br/Paginas/resultados-da-operacao/historico-da-operacao/energia_armazenada.aspx`),
     "SIN", contra o cartão do painel no mesmo dia.

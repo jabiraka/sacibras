@@ -203,13 +203,13 @@ def conta_do_ano() -> Pecas:
         periodicidade="A",
         fonte=fonte,
         # Os dividendos vêm de quatro empresas; a subvenção vai às dependentes (hospitais,
-        # pesquisa, obras). O retorno de {ultimo} é o que a Sest publica (p. 17); antes, a soma
-        # das linhas do relatório, que em 2025 traz outro aporte na p. 86 (3.418,3 contra
-        # 1.709,1). Conferir no PC com o relatório de cada ano (docs/PROXIMOS-PASSOS.md).
+        # pesquisa, obras). Todos os números são do anexo I da Sest; o aporte é a soma das
+        # empresas na planilha, o mesmo que dá o retorno de 2025 da p. 17 (R$ 13,1 bi). A
+        # tabela-resumo da p. 86 traz aporte maior em todos os anos (2025: 3.418,3 contra
+        # 1.709,1). O relatório de 2024 não publica retorno (lido em 25/11/2026).
         nota=(
-            "Valores da época, sem descontar a inflação. Antes de "
-            f"{ultimo}, o saldo soma as linhas do relatório e pode diferir do retorno que a "
-            "Sest publicou no ano."
+            "Valores da época, sem descontar a inflação. Aporte pela soma das empresas, como "
+            "no retorno de 2025 da Sest; o resumo da p. 86 traz um valor maior."
         ),
         manchete=(
             f"Em {ultimo}, a União recebeu R$ {br(x.dividendos_uniao / 1000)} bi e pôs "
@@ -255,7 +255,7 @@ def conta_do_ano() -> Pecas:
         # vira dívida ou perda de patrimônio da empresa, e pode virar aporte depois.
         nota=(
             "O saldo é a conta do caixa, a mesma da Sest: não é o lucro nem o valor das "
-            f"empresas. Antes de {ultimo}, pode diferir do retorno que a Sest publicou no ano."
+            "empresas. Aporte pela soma das empresas; o resumo da p. 86 traz um valor maior."
         ),
     )
     subvencoes = Tabela(
