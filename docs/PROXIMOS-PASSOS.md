@@ -25,8 +25,8 @@ ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PR
 [...] como o site era atualizado antes"*): desde 20/11 as cinco rodadas agendadas do Actions
 terminaram *canceladas*, porque o passo "Gerar os JSONs" passou dos 20 min do job e o site nunca
 chegou a ser montado (o no ar é o de 20/11). `build-deploy.yml` agora tem `timeout-minutes: 60`
-e as duas rodadas (9h40 e 19h) valem **todo dia**, não só de segunda a sexta. **Só vale depois
-de ir ao `main`** (o agendamento do GitHub só roda no branch padrão). Vale olhar o tempo do
+e as duas rodadas (9h40 e 19h) seguem de **segunda a sexta** (Caio, 25/11/2026: *"deixa só
+se segunda a sexta mesmo"*). Vale olhar o tempo do
 primeiro build: se passar de uns 40 min, o build pede corte ou paralelismo (Riscos, Estados e
 Mundo são as seções lentas).
 
