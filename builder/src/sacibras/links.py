@@ -31,6 +31,38 @@ class Regra(BaseModel):
     por_numero: bool = False
 
 
+# As leis das LDOs (`leis.METAS_DAS_LDOS`), no Senado: o id vem de
+# legis.senado.leg.br/dadosabertos/legislacao/lista?tipo=LEI&numero=N&ano=A (25/11/2026).
+LEIS_NO_SENADO: dict[str, int] = {
+    "Lei nº 10.266/2001": 552142,
+    "Lei nº 10.524/2002": 552400,
+    "Lei nº 10.707/2003": 552583,
+    "Lei nº 10.934/2004": 552810,
+    "Lei nº 11.178/2005": 572717,
+    "Lei nº 11.439/2006": 572591,
+    "Lei nº 11.514/2007": 572666,
+    "Lei nº 11.768/2008": 582190,
+    "Lei nº 12.017/2009": 580240,
+    "Lei nº 12.309/2010": 575951,
+    "Lei nº 12.465/2011": 584321,
+    "Lei nº 12.708/2012": 588084,
+    "Lei nº 12.919/2013": 591367,
+    "Lei nº 13.080/2015": 584892,
+    "Lei nº 13.242/2015": 602467,
+    "Lei nº 13.408/2016": 602632,
+    "Lei nº 13.473/2017": 17745360,
+    "Lei nº 13.707/2018": 27457218,
+    "Lei nº 13.898/2019": 31666914,
+    "Lei nº 14.116/2020": 33040572,
+    "Lei nº 14.194/2021": 34722181,
+    "Lei nº 14.436/2022": 36225432,
+    "Lei nº 14.791/2023": 38065853,
+    "Lei nº 15.080/2024": 40035025,
+    "Lei nº 15.321/2025": 41912067,
+    "Lei nº 14.520/2023": 36753460,
+}
+
+
 _NUMEROS = r"(\d{1,6}(?:(?:,\s*|\s+e\s+)\d{1,6})*)"
 
 REGRAS: list[Regra] = [
@@ -156,35 +188,94 @@ REGRAS: list[Regra] = [
     # O projeto da LDO 2027 (matéria 173677 no Senado, a mesma de `tramitacao.PROJETOS`); a
     # página abre na ficha do Congresso Nacional (conferida em 25/11/2026).
     Regra(
-        padrao=r"PLN nº 2/2026",
+        padrao=r"PLN nº 2/2026|Projeto da LDO 2027",
         nome="PLN 2/2026 (LDO 2027)",
         url="https://www.congressonacional.leg.br/materias/materias-bicamerais/-/ver/pln-2-2026",
     ),
     Regra(
-        padrao=r"Emenda Constitucional nº 132",
+        padrao=r"Relatório de Inflação",
+        nome="Banco Central, Relatório de Inflação",
+        url="https://www.bcb.gov.br/publicacoes/ri",
+    ),
+    Regra(
+        padrao=r"Relatório de Política Monetária",
+        nome="Banco Central, Relatório de Política Monetária",
+        url="https://www.bcb.gov.br/publicacoes/rpm",
+    ),
+    Regra(
+        padrao=r"Tabelas especiais",
+        nome="Banco Central, Tabelas especiais",
+        url="https://www.bcb.gov.br/estatisticas/tabelasespeciais",
+    ),
+    Regra(
+        padrao=r"Estatísticas fiscais",
+        nome="Banco Central, Estatísticas fiscais",
+        url="https://www.bcb.gov.br/estatisticas/estatisticasfiscais",
+    ),
+    Regra(
+        padrao=r"Classificação para a Dívida de Longo Prazo|Classificação de Risco",
+        nome="Tesouro, classificação de risco",
+        url="https://sisweb.tesouro.gov.br/apex/f?p=2810:2",
+    ),
+    Regra(
+        padrao=r"(?:Emenda Constitucional|\bEC) (?:nº )?132\b",
         nome="EC 132/2023",
-        url="https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc132.htm",
+        url="https://legis.senado.leg.br/norma/37959796",
     ),
     Regra(
-        padrao=r"Lei Complementar nº 214|\bLC 214\b",
+        padrao=r"(?:Lei Complementar|\bLC) (?:nº )?214\b",
         nome="LC 214/2025",
-        url="https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+        url="https://legis.senado.leg.br/norma/40180341",
     ),
     Regra(
-        padrao=r"Lei Complementar nº 200|\bLC 200\b",
+        padrao=r"(?:Lei Complementar|\bLC) (?:nº )?200\b",
         nome="LC 200/2023",
-        url="https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp200.htm",
+        url="https://legis.senado.leg.br/norma/37553820",
     ),
     Regra(
-        padrao=r"Lei Complementar nº 101|\bLRF\b",
-        nome="LRF",
-        url="https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp101.htm",
+        padrao=r"(?:Lei Complementar|\bLC) (?:nº )?101\b|\bLRF\b",
+        nome="LRF (LC 101/2000)",
+        url="https://legis.senado.leg.br/norma/572856",
+    ),
+    Regra(
+        padrao=r"(?:Lei Complementar|\bLC) (?:nº )?227\b",
+        nome="LC 227/2026",
+        url="https://legis.senado.leg.br/norma/42042119",
+    ),
+    Regra(
+        padrao=r"(?:Lei Complementar|\bLC) (?:nº )?206\b",
+        nome="LC 206/2024",
+        url="https://legis.senado.leg.br/norma/38506116",
+    ),
+    Regra(
+        padrao=r"Resolução do Senado nº 40/2001",
+        nome="Resolução do Senado 40/2001",
+        url="https://legis.senado.leg.br/norma/562458",
+    ),
+    Regra(
+        padrao=r"Decreto nº 12\.797",
+        nome="Decreto 12.797/2025",
+        url="https://legis.senado.leg.br/norma/41882097",
+    ),
+    Regra(
+        padrao=r"Resolução CMN nº 5\.141",
+        nome="Resolução CMN 5.141/2024",
+        url="https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Resolu%C3%A7%C3%A3o%20CMN&numero=5141",
     ),
     Regra(
         padrao=r"\bADCT\b",
         nome="Constituição (ADCT)",
         url="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
     ),
+]
+
+REGRAS += [
+    Regra(
+        padrao=re.escape(nome),
+        nome=nome,
+        url=f"https://legis.senado.leg.br/norma/{id_}",
+    )
+    for nome, id_ in LEIS_NO_SENADO.items()
 ]
 
 # Quem fala de "Banco Central" sem série ou relatório próprio cai na página de dados abertos
@@ -239,6 +330,47 @@ def enderecos(fonte: str) -> list[Endereco]:
 
 def sem_endereco(fonte: str) -> bool:
     return bool(fonte.strip()) and not enderecos(fonte)
+
+
+def _textos_de_fonte(no: object) -> list[str]:
+    achados: list[str] = []
+    if isinstance(no, dict):
+        for chave, valor in no.items():
+            if chave in ("fonte", "fonte_piramide") and isinstance(valor, str):
+                achados.append(valor)
+            else:
+                achados += _textos_de_fonte(valor)
+    elif isinstance(no, list):
+        for x in no:
+            achados += _textos_de_fonte(x)
+    return achados
+
+
+def auditar(pasta: Path) -> tuple[list[str], list[str]]:
+    """As fontes dos JSONs gerados sem endereço nenhum e as que só caíram na página geral da
+    instituição (`_GERAIS`). O build avisa as duas listas (Caio, 25/11/2026: toda fonte oficial
+    tem de estar linkada)."""
+    sem: set[str] = set()
+    gerais: set[str] = set()
+    paginas = {r.url for r in _GERAIS}
+    for arquivo in sorted(
+        pasta.glob("*.json")
+    ):  # o painel de alerta é conta nossa sobre linhas já citadas
+        if arquivo.name in ("busca.json", "glossario.json", "fontes.json"):
+            continue
+        try:
+            dados = json.loads(arquivo.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        for texto in _textos_de_fonte(dados):
+            achados = enderecos(texto)
+            if not texto.strip() or texto.startswith("Painel de alerta"):
+                continue
+            if not achados:
+                sem.add(texto)
+            elif all(e.url in paginas for e in achados):
+                gerais.add(texto)
+    return sorted(sem), sorted(gerais)
 
 
 def gravar(saida: Path) -> int:

@@ -50,3 +50,16 @@ def test_projeto_da_ldo_2027_tem_endereco() -> None:
     assert urls(relatorios.FONTE_PLDO_2027) == [
         "https://www.congressonacional.leg.br/materias/materias-bicamerais/-/ver/pln-2-2026"
     ]
+
+
+def test_cada_lei_da_ldo_tem_endereco_no_senado() -> None:
+    from sacibras import leis
+
+    for meta in leis.METAS_DAS_LDOS.values():
+        achados = urls(meta.lei)
+        assert achados and achados[0].startswith("https://legis.senado.leg.br/norma/"), meta.lei
+
+
+def test_normas_com_sigla_e_por_extenso() -> None:
+    assert urls("LC nº 214/2025") == urls("Lei Complementar nº 214/2025")
+    assert urls("Resolução CMN nº 5.141/2024")[0].startswith("https://www.bcb.gov.br/")

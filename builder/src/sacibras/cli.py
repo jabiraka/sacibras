@@ -71,6 +71,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  aviso: índice da busca não gravado ({erro})")
         print(f"  glossário: {glossario.gravar(args.saida)} termos")
         print(f"  endereços das fontes: {links.gravar(args.saida)} regras")
+        sem, gerais = links.auditar(args.saida)
+        for texto in sem:
+            print(f"  aviso: fonte sem endereço: {texto[:150]}")
+        for texto in gerais:
+            print(f"  aviso: fonte só com a página geral: {texto[:150]}")
         for x in leituras_.pendentes(date.today()):
             situacao = leituras_.situacao(x, date.today())
             print(f"  aviso: releitura {situacao} ({x.reler_ate:%d/%m/%Y}): {x.o_que}")
