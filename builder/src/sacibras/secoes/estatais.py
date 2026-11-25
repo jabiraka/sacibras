@@ -93,12 +93,11 @@ def dividendos(det: dict[str, list[Ponto]], pib: list[Ponto], fonte: str, inicio
             periodicidade="M",
             janela_anos=15,
             fonte=fonte,
+            # A União é dona de todo o BNDES e de toda a Caixa, e de parte da Petrobras e do
+            # Banco do Brasil. O dividendo depende do lucro e de quanto a empresa distribui.
             nota=(
-                "O que entrou no caixa do Tesouro, pelo mês do pagamento. A União é dona de "
-                "todo o BNDES e de toda a Caixa, e de parte da Petrobras e do Banco do Brasil: "
-                "nestas duas, os outros acionistas recebem o resto. O dividendo de um ano "
-                "depende do lucro e de quanto a empresa decide distribuir, e por isso oscila "
-                "muito."
+                "O que entrou no caixa do Tesouro, pelo mês do pagamento. Na Petrobras e no "
+                "Banco do Brasil, a União recebe só a parte dela."
             ),
         )
     ]
@@ -206,10 +205,8 @@ def conta_do_ano() -> Pecas:
         periodicidade="A",
         fonte=f"{fonte}; saldo: conta nossa",
         nota=(
-            "Quem paga e quem recebe não são as mesmas empresas: os dividendos vêm de quatro "
-            "(BNDES, Petrobras, Banco do Brasil e Caixa) e a subvenção vai para as dependentes, "
-            "que são na maior parte hospitais, pesquisa e obras, e não vendem o que fazem. "
-            "Valores da época, sem descontar a inflação."
+            "Os dividendos vêm de quatro empresas; a subvenção vai às dependentes (hospitais, "
+            "pesquisa, obras). Valores da época, sem descontar a inflação."
         ),
         manchete=(
             f"Em {ultimo}, a União recebeu R$ {br(x.dividendos_uniao / 1000)} bi e pôs "
@@ -234,7 +231,7 @@ def conta_do_ano() -> Pecas:
     empresas = "O resultado das empresas (não entra no caixa)"
     conta = Tabela(
         id="estatais-conta",
-        titulo="As estatais federais e o caixa da União, ano a ano",
+        titulo="As estatais federais e o caixa da União",
         subtitulo="R$ bilhões, valores da época",
         colunas=[str(a) for a in anos],
         linhas=[
@@ -250,12 +247,12 @@ def conta_do_ano() -> Pecas:
             linha("  só das que tiveram prejuízo", lambda a: por_ano[a].prejuizos, empresas),
         ],
         fonte=f"{fonte}; saldo e soma dos prejuízos: conta nossa",
+        # Ficam fora do saldo os impostos que as estatais pagam, o lucro que guardam e o valor
+        # das ações. O prejuízo de uma não dependente (os Correios) não sai do Tesouro no ano:
+        # vira dívida ou perda de patrimônio da empresa, e pode virar aporte depois.
         nota=(
-            "O saldo é a conta que a própria Sest faz no relatório (dividendos menos subvenção "
-            "e aporte). Ficam fora dela, porque não passam por essas linhas: os impostos que as "
-            "estatais pagam, o lucro que elas guardam e o quanto as ações valem. O prejuízo de uma "
-            "estatal que não é dependente (os Correios) não sai do Tesouro no ano; vira dívida "
-            "ou perda de patrimônio da empresa, e pode virar aporte depois."
+            "O saldo é a conta do caixa, a mesma da Sest: não é o lucro das empresas nem o "
+            "valor delas. Prejuízo de não dependente (os Correios) não sai do Tesouro no ano."
         ),
     )
     subvencoes = Tabela(
@@ -329,7 +326,7 @@ def primario(
     graficos = [
         grafico(
             "estatais-primario",
-            "Resultado primário das estatais: federais, estaduais e municipais",
+            "Primário das estatais, por esfera",
             [
                 serie("federais", "Federais", contas.escalar(federais, -1), desde=inicio),
                 serie("estaduais", "Estaduais", contas.escalar(estaduais, -1), desde=inicio),
@@ -340,12 +337,11 @@ def primario(
             periodicidade="M",
             janela_anos=15,
             fonte=fonte,
+            # Déficit quer dizer que as empresas gastaram e investiram mais do que arrecadaram,
+            # e isso entra no resultado do setor público. Das federais ficam os Correios, etc.
             nota=(
-                "Acima de zero, superávit. É a variação da dívida líquida das empresas, antes "
-                "dos juros: déficit quer dizer que elas gastaram e investiram mais do que "
-                "arrecadaram, e isso entra no resultado do setor público. O Banco Central não "
-                "conta aqui os bancos públicos, a Petrobras nem a Eletrobras; das federais "
-                "ficam empresas como os Correios."
+                "Acima de zero, superávit: a variação da dívida líquida das empresas, antes dos "
+                "juros. Sem os bancos públicos, a Petrobras e a Eletrobras."
             ),
         )
     ]

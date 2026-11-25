@@ -114,11 +114,11 @@ def rigidez(
             periodicidade="M",
             janela_anos=15,
             fonte=fonte,
+            # Obrigatória: benefícios do INSS, pessoal, BPC, abono e seguro-desemprego, os
+            # mínimos de saúde e educação e as demais da tabela 1.1 do Tesouro.
             nota=(
-                "Governo Central. Obrigatória: a que a Constituição ou a lei manda pagar "
-                "(benefícios do INSS, pessoal, BPC, abono e seguro-desemprego, os mínimos de "
-                "saúde e educação e as demais da tabela 1.1 do Tesouro). Discricionária: a que "
-                "o governo decide no ano, como investimento e custeio da máquina."
+                "Governo Central. Obrigatória: a que a lei manda pagar; discricionária: a que o "
+                "governo decide no ano (investimento e custeio)."
             ),
         )
     ]
@@ -156,11 +156,7 @@ def rigidez(
     itens = [
         ("Benefícios do INSS", ultimo(rtn["rgps"]), "Obrigatória"),
         ("Pessoal e encargos", ultimo(rtn["pessoal"]), "Obrigatória"),
-        (
-            "BPC (idosos e pessoas com deficiência de baixa renda)",
-            ultimo(rtn["bpc"]),
-            "Obrigatória",
-        ),
+        ("BPC", ultimo(rtn["bpc"]), "Obrigatória"),
         ("Abono salarial e seguro-desemprego", ultimo(rtn["abono_seguro"]), "Obrigatória"),
         ("Demais obrigatórias (Fundeb, precatórios, subsídios…)", demais, "Obrigatória"),
         (
@@ -172,7 +168,7 @@ def rigidez(
     ]
     tabela = Tabela(
         id="despesa-obrigatoria",
-        titulo="A despesa do Governo Central, do que é obrigatório ao que não é",
+        titulo="Despesa do Governo Central, por tipo",
         subtitulo=f"12 meses até {periodo(quando, 'M')}",
         colunas=["R$ bilhões", "% da despesa", "% do PIB"],
         linhas=[
@@ -186,13 +182,12 @@ def rigidez(
             for nome, v, grupo in itens
         ],
         fonte=fonte,
+        # "Com controle de fluxo": obrigatórias cujo ritmo de pagamento o governo controla no
+        # ano (o Bolsa Família, boa parte da saúde), não o valor do ano. A discricionária também
+        # tem piso: parte dela conta para os mínimos de saúde e educação.
         nota=(
-            "Conta nossa sobre a tabela 1.1 do Tesouro: as linhas somam a despesa total. "
-            '"Obrigatórias com controle de fluxo" são obrigatórias cujo ritmo de pagamento o '
-            "governo controla ao longo do ano (o Bolsa Família e boa parte da saúde, por "
-            "exemplo), não o valor do ano. Cortar a despesa obrigatória pede mudar a lei ou a "
-            "Constituição que a criou; a discricionária se corta no orçamento, mas também tem "
-            "piso: parte dela conta para os mínimos de saúde e educação."
+            "Conta nossa sobre a tabela 1.1 do Tesouro; as linhas somam a despesa total. Cortar "
+            "a obrigatória pede mudar a lei; a discricionária se corta no orçamento."
         ),
     )
     return cartoes, graficos, [tabela]
@@ -262,22 +257,19 @@ def contra_os_paises(
         id="gasto-por-funcao",
         titulo="Onde o governo gasta: o Brasil e os outros países",
         subtitulo=(
-            f"% do PIB, governo geral (União, estados e municípios); Brasil em {ano}; os outros, "
-            f"o ano mais novo de cada um entre {ano - ANOS_DE_FOLGA} e {ano}"
+            f"% do PIB, governo geral; Brasil em {ano}, os outros entre {ano - ANOS_DE_FOLGA} "
+            f"e {ano}"
         ),
         colunas=colunas,
         linhas=linhas,
         fonte=fonte,
+        # Classificação da ONU (COFOG), a mesma para todos. Os juros estão dentro de "Serviços
+        # públicos gerais", e velhice e pensão por morte dentro de "Proteção social"; vêm à
+        # parte porque pesam muito no Brasil, e nelas quem informa zero fica fora da mediana
+        # (quase sempre é quem não abre o total).
         nota=(
-            "Grupos: a mediana dos países de cada grupo do FMI que publicam o gasto por função "
-            "(entre parênteses, quantos). A classificação é a da ONU (COFOG), a mesma para "
-            'todos. Os juros da dívida estão dentro de "Serviços públicos gerais", e a '
-            'velhice e a pensão por morte dentro de "Proteção social"; vêm à parte porque '
-            "pesam muito no Brasil; nelas, quem informa zero fica fora da mediana (quase "
-            "sempre é quem não abre o total). Gastar mais que os outros numa função não diz, "
-            "sozinho, "
-            "que dá para cortar: pode ser escolha (a população envelhecida, a rede de "
-            "proteção) ou ineficiência, e esses dados não separam as duas."
+            "Mediana dos países de cada grupo do FMI (entre parênteses, quantos). Gastar mais "
+            "não quer dizer que dá para cortar: estes dados não medem eficiência."
         ),
     )
     acima.sort(reverse=True)
