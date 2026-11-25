@@ -182,8 +182,8 @@ pergunta da crise; o estudo dos anúncios fiscais foi feito e saiu). Ficou:
 Entraram o projeto da LDO 2027 e a conta nossa da dívida por cenário (ver o
 [PROXIMOS-PASSOS](PROXIMOS-PASSOS.md)). Ficou:
 
-- **Botões no simulador da dívida** que carregam "governo", "Focus" e "história" nos quatro
-  controles (hoje a pessoa digita).
+- **O simulador da LDO com controle por ano** (hoje cada controle soma o mesmo tanto de 2027
+  a 2035) e com a inflação separada do juro.
 - **O erro da meta conforme a antecedência**: a conta usa o mesmo erro (0,6 pp) em todos os
   anos, mas as metas de 2028 a 2030 são indicativas e costumam ser revistas; medir pede ler
   as metas indicativas de cada LDO desde 2024 (antes eram de três anos, nos anexos).

@@ -92,7 +92,13 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   realista do que a estimativa do governo"*; `modelos/ajuste.py`): primeiro refaz a linha
   do governo e a sensibilidade que o Tesouro publica, e diz na tela a sobra; depois troca
   uma hipótese por vez pelas do Focus e roda as metas com o erro que as LDOs já tiveram, em
-  faixa. Sem efeito do ajuste sobre o PIB nem da dívida sobre o juro.
+  faixa. Sem efeito do ajuste sobre o PIB nem da dívida sobre o juro. **E o simulador da
+  LDO** (Caio, mesmo dia: *"deixe um simulador pra pessoa ir mudando os números e vendo
+  como isso afeta a meta"*; `SimuladorLDO`, `web/src/simulador-ldo.ts`), em Laboratório › O
+  prometido e o que veio: a linha de base é o projeto; três controles (crescimento, juro,
+  primário) e botões que carregam o projeto, as médias do Focus e o erro da história. Diz
+  aonde a dívida chega, quando para de subir e de quanto a meta teria de ser para ela
+  voltar ao nível de partida, sempre com a faixa do erro que as metas já tiveram.
 - **Fonte oficial e citada** em todo gráfico. Número de lei (meta de inflação, limites da LRF,
   reforma tributária) vem da lei lida.
 
@@ -298,7 +304,8 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   quanto de IBS e CBS vai numa compra, só com a lei lida (`leis.py`) e as contas oficiais da
   alíquota (`relatorios.py`), com a faixa entre o teto da lei e a soma das contas mais
   recentes; não compara com o imposto de hoje, porque não há número oficial por produto. Fora
-  os três simuladores, cenário montado pela pessoa não entra sem o "sim" do Caio.
+  os três simuladores e o da LDO (no Laboratório), cenário montado pela pessoa não entra sem o
+  "sim" do Caio.
 - **Riscos** (Caio, 14/11/2026): a palavra na tela é *sustentabilidade da dívida*, não
   "calote"; os testes de estresse são cenários fixos, tirados da história, e entram (*"2)
   Entram"*); fonte não oficial fica de fora; e não há nota única de risco: o painel de

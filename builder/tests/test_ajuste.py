@@ -174,3 +174,30 @@ def test_juro_que_fecha_e_reparticao_que_soma() -> None:
     assert abs(sum(partes.values()) - (alvo[2035] - divida[2035])) < 1e-9
     assert all(v > 0 for v in partes.values())
     assert ajuste.trocar(governo, outro, ()) == {a: governo[a] for a in outro}
+
+
+def test_o_simulador_da_ldo_parte_do_projeto_e_tem_os_tres_botoes() -> None:
+    from sacibras.secoes.laboratorio_ajuste import _simulador_da_ldo
+
+    partida, governo, divida = _governo()
+    sobra = ajuste.sobras(partida, governo, divida)
+    mercado = {
+        a: ajuste.AnoDaDivida(x.juro + 0.3, x.nominal - 1.0, x.primario - 0.9)
+        for a, x in governo.items()
+        if a <= 2035
+    }
+    sim = _simulador_da_ldo(
+        partida, governo, mercado, sobra, {2035: 103.0}, {2025: 78.6}, (0.1, 0.6, 1.2), "fonte"
+    )
+    # a conta do navegador, com os controles em zero, é a linha do governo
+    d = sim.divida_inicial
+    for i, alvo in enumerate(sim.governo_divida):
+        cresce = (1 + sim.crescimento[i] / 100) * (1 + sim.deflator[i] / 100)
+        d = d * (1 + sim.juro[i] / 100) / cresce - sim.primario[i] + sim.sobra[i]
+        assert abs(d - alvo) < 0.02
+    assert sim.cenarios[0].rotulo == "Como no projeto"
+    focus, historia = sim.cenarios[1], sim.cenarios[2]
+    assert (focus.juro, focus.primario) == (0.3, -0.9)
+    assert focus.crescimento < 0
+    assert historia.primario == -0.6
+    assert sim.meta[0] == 0.5

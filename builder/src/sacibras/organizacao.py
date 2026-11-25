@@ -17,7 +17,14 @@ from typing import Literal
 
 from sacibras.schema import Categoria, Elo, Grafico, Secao, Subcategoria, Tabela
 
-Extra = Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
+Extra = Literal[
+    "simulador",
+    "simulador-selic",
+    "simulador-reforma",
+    "simulador-ldo",
+    "alertas",
+    "salario-minimo",
+]
 
 CATEGORIAS: list[Categoria] = [
     Categoria(
@@ -498,6 +505,7 @@ PARTES: dict[str, list[Parte]] = {
             cartoes=["ldo-2027", "meta-ldo", "primario-prometido", "divida-esperada"],
             graficos=["meta-ldo", "primario-prometido", "divida-esperada", "ldo-2027-divida"],
             tabelas=["meta-ldo", "primario-erro-horizonte", "ldo-2027-cenarios", "ldo-2027"],
+            extras=["simulador-ldo"],
         ),
         Parte(
             "crescimento",
@@ -1080,6 +1088,8 @@ def aplicar(secao: Secao) -> list[str]:
         extras_da_secao.append("simulador-selic")
     if secao.simulador_reforma:
         extras_da_secao.append("simulador-reforma")
+    if secao.simulador_ldo:
+        extras_da_secao.append("simulador-ldo")
     if secao.alertas:
         extras_da_secao.append("alertas")
     if secao.salario_minimo:

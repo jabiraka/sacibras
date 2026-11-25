@@ -4277,3 +4277,10 @@ summary.menu-andar small,
 details.guardado > .alternativas-barra {
   margin: 12px 0 4px;
 }
+
+/* Os botões do simulador da LDO (projeto, Focus, história), lado a lado. */
+.simulador-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

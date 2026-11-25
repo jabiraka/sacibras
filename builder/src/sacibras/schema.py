@@ -301,6 +301,47 @@ class SimuladorDivida(Modelo):
     nota: str
 
 
+class CenarioDaLDO(Modelo):
+    """Um botão do simulador: onde ele põe os três controles, em pp contra o projeto."""
+
+    rotulo: str
+    crescimento: float
+    juro: float
+    primario: float
+
+
+class SimuladorLDO(Modelo):
+    """A dívida bruta com as metas do projeto da LDO, e o que a pessoa muda (Caio,
+    25/11/2026: *"deixe um simulador pra pessoa ir mudando os números e vendo como isso
+    afeta a meta"*). A linha de base é a do governo; o navegador refaz, ano a ano,
+
+    dívida = anterior × (1 + juro) ÷ ((1 + crescimento) × (1 + deflator)) − primário + sobra
+
+    com os três controles somados ao que o projeto supõe."""
+
+    projeto: str
+    """O nome do projeto e o aviso de que não é lei, para a tela."""
+    ano_inicial: int
+    divida_inicial: float
+    anos: list[int]
+    juro: list[float]
+    crescimento: list[float]
+    deflator: list[float]
+    primario: list[float]
+    """O primário do projeto antes dos descontos, com o dos estados e municípios."""
+    sobra: list[float]
+    meta: list[float | None]
+    """A meta de cada ano (indicativa depois do primeiro); None onde o projeto não tem."""
+    governo_divida: list[float]
+    focus_divida: list[float | None]
+    realizado: list[tuple[date, float]]
+    erro_da_historia: tuple[float, float, float]
+    """Quanto o primário ficou abaixo da meta da LDO: menor, média e maior da faixa de 90 %."""
+    cenarios: list[CenarioDaLDO]
+    fonte: str
+    nota: str
+
+
 class SimuladorSelic(Modelo):
     """O que o Banco Central estima que muda quando a Selic fica diferente por um ano.
 
@@ -474,7 +515,14 @@ class Subcategoria(Modelo):
     graficos: list[str] = Field(default_factory=list)
     tabelas: list[str] = Field(default_factory=list)
     extras: list[
-        Literal["simulador", "simulador-selic", "simulador-reforma", "alertas", "salario-minimo"]
+        Literal[
+            "simulador",
+            "simulador-selic",
+            "simulador-reforma",
+            "simulador-ldo",
+            "alertas",
+            "salario-minimo",
+        ]
     ] = Field(default_factory=list)
     veja: list[Elo] = Field(default_factory=list)
     """Atalhos para partes de outros assuntos que tratam do mesmo ("Veja também")."""
@@ -520,6 +568,7 @@ class Secao(Modelo):
     simulador: SimuladorDivida | None = None
     simulador_selic: SimuladorSelic | None = None
     simulador_reforma: SimuladorReforma | None = None
+    simulador_ldo: SimuladorLDO | None = None
     salario_minimo: ComparadorSalario | None = None
     alertas: list[Alerta] = Field(default_factory=list)
     saiu: list[Divulgado] = Field(default_factory=list)

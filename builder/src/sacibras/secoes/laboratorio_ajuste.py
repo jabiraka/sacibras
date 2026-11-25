@@ -18,7 +18,15 @@ from sacibras import contas, leis, relatorios
 from sacibras.calendario import dia_util
 from sacibras.fontes import bcb_fiscal, bcb_focus, fred, tesouro_direto, tesouro_rtn
 from sacibras.modelos import ajuste, estatistica
-from sacibras.schema import Cartao, Grafico, Intervalo, LinhaTabela, Tabela
+from sacibras.schema import (
+    Cartao,
+    CenarioDaLDO,
+    Grafico,
+    Intervalo,
+    LinhaTabela,
+    SimuladorLDO,
+    Tabela,
+)
 from sacibras.secoes.base import MESES, Contexto, br, grafico, serie
 from sacibras.tipos import Ponto
 
@@ -1067,6 +1075,77 @@ def _conferencia_com_o_tesouro(
     return pior
 
 
+def _simulador_da_ldo(
+    partida: float,
+    governo: dict[int, ajuste.AnoDaDivida],
+    mercado: dict[int, ajuste.AnoDaDivida],
+    sobra: dict[int, float],
+    focus: dict[int, float],
+    realizada: dict[int, float],
+    erro: tuple[float, float, float],
+    fonte: str,
+) -> SimuladorLDO:
+    """A linha de base (o projeto) e os botões. Os controles somam o mesmo tanto em todos os
+    anos: o botão do Focus leva cada um à diferença média entre o Focus e o projeto."""
+    proj = relatorios.PLDO_2027
+    anos = sorted(mercado)
+
+    def media(valores: list[float]) -> float:
+        return round(sum(valores) / len(valores), 1)
+
+    cresce = media(
+        [
+            ((1 + mercado[a].nominal / 100) / (1 + proj[a].deflator / 100) - 1) * 100 - proj[a].pib
+            for a in anos
+        ]
+    )
+    juro = media([mercado[a].juro - governo[a].juro for a in anos])
+    primario = media([mercado[a].primario - governo[a].primario for a in anos])
+    menor, medio, maior = erro
+    return SimuladorLDO(
+        projeto=f"projeto da LDO 2027 ({relatorios.PLDO_2027_PROJETO}), ainda não é lei",
+        ano_inicial=min(proj),
+        divida_inicial=partida,
+        anos=anos,
+        juro=[governo[a].juro for a in anos],
+        crescimento=[proj[a].pib for a in anos],
+        deflator=[proj[a].deflator for a in anos],
+        primario=[round(governo[a].primario, 2) for a in anos],
+        sobra=[round(sobra[a], 3) for a in anos],
+        meta=[proj[a].meta for a in anos],
+        governo_divida=[proj[a].divida for a in anos],
+        focus_divida=[focus.get(a) for a in anos],
+        realizado=[(date(a, 1, 1), v) for a, v in sorted(realizada.items())][-11:],
+        erro_da_historia=(round(menor, 1), round(medio, 1), round(maior, 1)),
+        cenarios=[
+            CenarioDaLDO(rotulo="Como no projeto", crescimento=0, juro=0, primario=0),
+            CenarioDaLDO(
+                rotulo="Médias do Focus", crescimento=cresce, juro=juro, primario=primario
+            ),
+            CenarioDaLDO(
+                rotulo="Focus com o erro da história",
+                crescimento=cresce,
+                juro=juro,
+                primario=-round(medio, 1),
+            ),
+        ],
+        fonte=f"{fonte}; {CONTA}",
+        nota=" ".join(
+            [
+                "Conta nossa, não previsão. A linha de base é a do projeto: a dívida de cada",
+                "ano é a do ano anterior mais os juros, menos o primário, sobre um PIB maior,",
+                "com a sobra que faz a conta chegar à dívida do anexo.",
+                "Cada controle soma o mesmo tanto em todos os anos, de",
+                f"{anos[0]} a {anos[-1]}; por isso o botão do Focus usa as diferenças médias",
+                "e chega perto, não em cima, da dívida que o Focus espera.",
+                "O juro é o juro médio da dívida, que acompanha a Selic com atraso.",
+                "Mexer num controle não mexe nos outros: a conta não mede o efeito do ajuste",
+                "sobre o PIB nem o da dívida sobre o juro.",
+            ]
+        ),
+    )
+
+
 def ldo_proposta(ctx: Contexto) -> Pecas:
     proj = relatorios.PLDO_2027
     realizada = ajuste.ultimo_de_cada_ano(ctx.sgs("DBGG", 30))
@@ -1150,6 +1229,9 @@ def ldo_proposta(ctx: Contexto) -> Pecas:
             )
 
         central, baixo, alto = historia(medio), historia(menor), historia(maior)
+        ctx.memo["laboratorio_simulador_ldo"] = _simulador_da_ldo(
+            partida, governo, mercado, sobra, focus, realizada, (menor, medio, maior), fonte
+        )
         inicio = (date(min(proj), 1, 1), partida)
         series.append(
             serie(

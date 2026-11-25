@@ -194,7 +194,7 @@ def completar(secao: BaseModel, caminho: Path) -> list[str]:
         esperados = organizacao.esperados(secao.id)
         for campo in ("cartoes", "graficos", "tabelas"):
             juntar(campo, esperados[campo])
-        for campo in ("simulador", "simulador_selic", "simulador_reforma"):
+        for campo in ("simulador", "simulador_selic", "simulador_reforma", "simulador_ldo"):
             if getattr(secao, campo) is None and getattr(antigo, campo) is not None:
                 setattr(secao, campo, getattr(antigo, campo))
                 mantidos.append(campo)

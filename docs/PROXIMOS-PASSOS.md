@@ -48,6 +48,13 @@ do juro. **Depois de 2030** o Focus não colhe PIB nem Selic, mas colhe primári
 2035: o crescimento fica na última mediana e o juro é o que fecha a conta com a dívida do
 próprio Focus. Testado e fora: manter a diferença de 2030 entre a Selic do Focus e a do
 governo levava a dívida a 112 % em 2035, 9 pp acima do que o Focus espera.
+E o **simulador da LDO** (Caio: *"deixe um simulador pra pessoa ir mudando os números e
+vendo como isso afeta a meta"*), na mesma parte, guardado atrás do título "Simule a dívida
+com as metas da LDO 2027": três controles contra o projeto (crescimento, juro, primário),
+três botões (projeto, médias do Focus, Focus com o erro da história) e três respostas (a
+dívida em 2035, o ano em que para de subir e de quanto a meta teria de ser para a dívida
+voltar ao nível de 2026), mais a faixa do erro das metas. Os controles somam o mesmo tanto
+em todos os anos, então o botão do Focus chega a 102,3 %, não aos 103,0 % do Focus.
 Olhada a 390 e 1280 px; **falta o Caio olhar**.
 
 **24/11/2026, o site parou de atualizar** (Caio: *"faça com que o sacibras atualize todo dia

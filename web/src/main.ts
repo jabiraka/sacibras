@@ -29,6 +29,7 @@ import { montarComEscolha } from "./variantes";
 import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import { montarSimulador } from "./simulador";
+import { montarSimuladorLDO } from "./simulador-ldo";
 import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
 import { montarComparadorSalario } from "./salario-minimo";
@@ -43,6 +44,7 @@ import type {
   Pergunta,
   Perguntas,
   Secao,
+  SimuladorLDO,
   SimuladorReforma,
   ComparadorSalario,
   SimuladorSelic,
@@ -313,6 +315,17 @@ function caixaDoSimuladorReforma(sim: SimuladorReforma): HTMLElement {
   return caixa;
 }
 
+/** O simulador da dívida com as metas do projeto da LDO (Laboratório › O prometido). */
+function caixaDoSimuladorLDO(sim: SimuladorLDO): HTMLElement {
+  const caixa = guardar(
+    "Simule a dívida com as metas da LDO 2027",
+    "Mude o crescimento, o juro e o quanto da meta se cumpre, e veja a dívida e a meta que seria preciso",
+    () => montarSimuladorLDO(sim),
+  );
+  caixa.id = "simulador-ldo";
+  return caixa;
+}
+
 function montarSecao(s: Secao, alvo: HTMLElement): void {
   if (s.cartoes.length) {
     const grade = el("div", "cartoes");
@@ -357,6 +370,7 @@ function montarSecao(s: Secao, alvo: HTMLElement): void {
   if (simuladorSelic) alvo.append(caixaDoSimuladorSelic(simuladorSelic));
   const simuladorReforma = s.simulador_reforma;
   if (simuladorReforma) alvo.append(caixaDoSimuladorReforma(simuladorReforma));
+  if (s.simulador_ldo) alvo.append(caixaDoSimuladorLDO(s.simulador_ldo));
   const comparador = s.salario_minimo;
   if (comparador) alvo.append(caixaDoSalarioMinimo(comparador));
   for (const t of s.tabelas) alvo.append(montarTabela(t));
@@ -743,6 +757,9 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
     const caixa = caixaDoSimuladorReforma(simuladorReforma);
     if (caixa instanceof HTMLDetailsElement) caixa.open = true;
     alvo.append(caixa);
+  }
+  if (p.extras.includes("simulador-ldo") && s.simulador_ldo) {
+    alvo.append(caixaDoSimuladorLDO(s.simulador_ldo));
   }
   const comparador = s.salario_minimo;
   if (p.extras.includes("salario-minimo") && comparador) {

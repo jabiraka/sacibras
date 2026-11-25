@@ -801,5 +801,6 @@ def montar(ctx: Contexto) -> Secao:
         cartoes=cartoes,
         graficos=graficos,
         tabelas=tabelas,
+        simulador_ldo=ctx.memo.get("laboratorio_simulador_ldo"),
         gerado_em=ctx.agora(),
     )

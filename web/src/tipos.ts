@@ -173,6 +173,36 @@ export interface SimuladorDivida {
   nota: string;
 }
 
+/** Um botão do simulador da LDO: os três controles, em pp contra o projeto. */
+export interface CenarioDaLDO {
+  rotulo: string;
+  crescimento: number;
+  juro: number;
+  primario: number;
+}
+
+/** A dívida com as metas do projeto da LDO; a linha de base é a do governo. */
+export interface SimuladorLDO {
+  projeto: string;
+  ano_inicial: number;
+  divida_inicial: number;
+  anos: number[];
+  juro: number[];
+  crescimento: number[];
+  deflator: number[];
+  primario: number[];
+  sobra: number[];
+  meta: (number | null)[];
+  governo_divida: number[];
+  focus_divida: (number | null)[];
+  realizado: [string, number][];
+  /** Quanto o primário ficou abaixo da meta: menor, média e maior da faixa de 90 %. */
+  erro_da_historia: [number, number, number];
+  cenarios: CenarioDaLDO[];
+  fonte: string;
+  nota: string;
+}
+
 /** Um tipo de compra na reforma do consumo: quanto da alíquota cheia paga e quanto volta. */
 export interface TipoDeCompra {
   id: string;
@@ -255,7 +285,14 @@ export interface Subcategoria {
   cartoes: string[];
   graficos: string[];
   tabelas: string[];
-  extras: ("simulador" | "simulador-selic" | "simulador-reforma" | "alertas" | "salario-minimo")[];
+  extras: (
+    | "simulador"
+    | "simulador-selic"
+    | "simulador-reforma"
+    | "simulador-ldo"
+    | "alertas"
+    | "salario-minimo"
+  )[];
   /** Atalhos para partes de outros assuntos ("Veja também"). */
   veja?: Elo[];
 }
@@ -278,6 +315,7 @@ export interface Secao {
   simulador: SimuladorDivida | null;
   simulador_selic?: SimuladorSelic | null;
   simulador_reforma?: SimuladorReforma | null;
+  simulador_ldo?: SimuladorLDO | null;
   salario_minimo?: ComparadorSalario | null;
   alertas?: Alerta[];
   /** Só no resumo: o que saiu por último, contra o Focus (saiu.ts). */

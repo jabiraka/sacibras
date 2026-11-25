@@ -1320,6 +1320,20 @@ def montar(saida: Path) -> list[Item]:
             alvo = f"{h}/{parte['id']}" if parte else h
             local = f"{nome} › {parte['titulo']}" if parte else nome
             itens.append(_item("E se a Selic mudar?", f"{local} · simulador", alvo))
+        if dados.get("simulador_ldo"):
+            parte = next(
+                (
+                    sub
+                    for sub in dados.get("subcategorias", [])
+                    if "simulador-ldo" in sub.get("extras", [])
+                ),
+                None,
+            )
+            alvo = f"{h}/{parte['id']}" if parte else h
+            local = f"{nome} › {parte['titulo']}" if parte else nome
+            itens.append(
+                _item("Simule a dívida com as metas da LDO 2027", f"{local} · simulador", alvo)
+            )
         if dados.get("simulador_reforma"):
             parte = next(
                 (
