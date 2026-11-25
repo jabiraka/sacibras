@@ -7,6 +7,7 @@
 // ranking; "estado" com a ficha de um estado, um bloco de cada vez; "duas-metricas"; e
 // "tabela". As partes vêm do builder (`organizacao.PARTES_ESTADOS`).
 
+import { fonteComEnderecos } from "./fontes";
 import * as Plot from "@observablehq/plot";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { feature } from "topojson-client";
@@ -385,7 +386,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
         id: `estados-mapa-${metrica.id}`,
         titulo: metrica.nome,
         sub: `${metrica.unidade} · ${metrica.referencia}`,
-        fonte: `Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`,
+        fonte: fonteComEnderecos(`Fonte: ${metrica.fonte}. Malha: IBGE, 2024.`),
         legenda: [
           { nome: `Menor: ${escrito(metrica, Math.min(...valores))}`, chave: "ponto" as const, cor: c.claro },
           { nome: `Maior: ${escrito(metrica, Math.max(...valores))}`, chave: "ponto" as const, cor: c.escuro },
@@ -437,7 +438,7 @@ export function montarEstados(e: Estados, parte: string, ufInicial = ""): HTMLEl
               id: `estados-ranking-${metrica.id}`,
               titulo: `${metrica.nome}: do maior ao menor`,
               sub: `${metrica.unidade} · ${metrica.referencia}`,
-              fonte: `Fonte: ${metrica.fonte}`,
+              fonte: fonteComEnderecos(`Fonte: ${metrica.fonte}`),
               nota: textoSemBotoes(posicao),
               legenda: [],
               desenho: desenhoDoRanking(desenhado.itens, desenhado.regua, metrica.casas),
@@ -596,7 +597,7 @@ function montarDispersao(
       id: `estados-${eixoY.id}-${eixoX.id}`,
       titulo: `${eixoY.nome} contra ${eixoX.nome}`,
       sub: `Um ponto por estado. Na horizontal: ${eixoX.nome} (${eixoX.unidade}); na vertical: ${eixoY.nome} (${eixoY.unidade})`,
-      fonte: fonte(),
+      fonte: fonteComEnderecos(fonte()),
       nota: textoSemBotoes(nota),
       legenda: destaque ? [{ nome: nomes.get(destaque) ?? destaque, chave: "ponto" as const, cor: corDestaque() }] : [],
       svg: tela.querySelector("svg"),

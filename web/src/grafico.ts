@@ -2,6 +2,7 @@
 // Regras da casa: um eixo só, linha de 2 px, grade discreta, legenda quando há duas séries
 // ou mais, tabela, CSV e PNG sempre à mão, consenso e previsão tracejados.
 
+import { fonteComEnderecos } from "./fontes";
 import * as Plot from "@observablehq/plot";
 import { comUnidade, data, eixo, mesCurto, numero, periodo, unidadeCurta } from "./formato";
 import type { Grafico, Serie } from "./tipos";
@@ -272,7 +273,7 @@ export function montarGrafico(g: Grafico): HTMLElement {
       id: g.id,
       titulo: g.titulo,
       sub: [g.subtitulo, g.unidade].filter(Boolean).join(" · "),
-      fonte: `Fonte: ${g.fonte}`,
+      fonte: fonteComEnderecos(`Fonte: ${g.fonte}`),
       legenda: itensDaLegenda(g, cor),
       svg: tela.querySelector("svg"),
     };
@@ -836,7 +837,7 @@ function baixarCsv(g: Grafico): void {
     });
     linhas.push([meses ? String(mesRelativo(iso)) : iso, ...valores].join(";"));
   }
-  linhas.push("", aspas(`Unidade: ${g.unidade}`), aspas(`Fonte: ${g.fonte}`));
+  linhas.push("", aspas(`Unidade: ${g.unidade}`), aspas(fonteComEnderecos(`Fonte: ${g.fonte}`)));
   const blob = new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
