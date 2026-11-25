@@ -64,7 +64,7 @@ do PIB e 2,2% [...] as pessoas ficarão confusas"*): a tabela "Primário que est
 dívida: de hoje ao que o governo supõe" (`secoes/estabiliza.py`) vai de um ao outro, em Riscos
 › A dívida se sustenta? e no Laboratório: 4,7 % com o juro e o PIB de hoje; −2,5 do juro
 (13,0 % → 9,8 %); −0,5 do PIB em reais; +0,5 de emissões que não são déficit; 2,2 % do
-governo para 2027; e 3,7 % pelo Focus. O cartão de Riscos diz "com o juro e o PIB de hoje" e
+governo para 2027; e 3,6 % pelo Focus. O cartão de Riscos diz "com o juro e o PIB de hoje" e
 o da LDO traz os dois números. **O 2,2 % do governo** é o primário do ano mais o quanto a
 dívida sobe (Anexo IV.3, gráfico 2, lido na imagem: `relatorios.PLDO_2027_REQUERIDO`);
 refeito com a tabela do anexo bate em todos os anos menos 2027 (2,4). A sobra de 0,6 pp da
