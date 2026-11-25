@@ -124,9 +124,8 @@ def _gini() -> MetricaEstados:
             nome="Desigualdade da renda (Gini)",
             grupo=estados_economia.TRABALHO,
             descricao=(
-                "Índice de Gini da renda domiciliar por pessoa: 0 é todos com a mesma renda, 1 é "
-                "uma pessoa com toda a renda. Mede a desigualdade dentro do estado; o do Brasil é "
-                "maior porque soma também a distância entre os estados."
+                "Gini da renda domiciliar por pessoa: 0 é todos com a mesma renda, 1 é uma pessoa "
+                "com toda a renda. O do Brasil é maior porque soma a distância entre os estados."
             ),
             unidade="índice",
             casas=3,
@@ -161,9 +160,8 @@ def _pobreza() -> MetricaEstados:
             nome="Pobreza",
             grupo=estados_economia.TRABALHO,
             descricao=(
-                "Parte das pessoas com renda domiciliar por pessoa abaixo de US$ 8,30 por dia, em "
-                "dólares de paridade do poder de compra de 2021: a linha do Banco Mundial que o "
-                "IBGE usa para a pobreza."
+                "Parte das pessoas com renda domiciliar por pessoa abaixo de US$ 8,30 por dia "
+                "(PPC de 2021), a linha do Banco Mundial que o IBGE usa."
             ),
             unidade="% das pessoas",
             casas=1,
@@ -211,9 +209,8 @@ def _fiscais(
         id="pessoal",
         nome="Despesa com pessoal",
         descricao=(
-            "Quanto da receita corrente líquida ajustada o Poder Executivo do estado gasta com "
-            "salários, aposentadorias e encargos, nos últimos 12 meses. As linhas são os "
-            "limites da lei para o Executivo estadual: o máximo, "
+            "Gasto do Executivo com salários, aposentadorias e encargos em 12 meses, em % da "
+            "receita corrente líquida ajustada. Linhas: o máximo, "
             f"{br(leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, 0)} % da RCL "
             f"({leis.PESSOAL_EXECUTIVO_ESTADUAL.referencia}); o prudencial, 95 % dele "
             f"({leis.PESSOAL_PRUDENCIAL.referencia}); o de alerta, 90 % "
@@ -239,9 +236,8 @@ def _fiscais(
         id="divida",
         nome="Dívida consolidada líquida",
         descricao=(
-            "Dívida do estado já descontados o caixa e os haveres, em proporção da receita "
-            "corrente líquida dos últimos 12 meses. Negativo quer dizer que o estado tem mais "
-            "ativos financeiros que dívida. As linhas são o limite, "
+            "Dívida descontados o caixa e os haveres, em % da RCL de 12 meses; negativo é mais "
+            "ativo financeiro que dívida. Linhas: o limite, "
             f"{br(leis.DIVIDA_ESTADUAL.valor, 0)} % da RCL ({leis.DIVIDA_ESTADUAL.referencia}), "
             f"e o de alerta, 90 % dele ({leis.DIVIDA_ALERTA.referencia})."
             + _diferentes(lim_div, leis.DIVIDA_ESTADUAL.valor, 1.0)
@@ -270,8 +266,8 @@ def _fiscais(
         id="rcl_per_capita",
         nome="Receita corrente líquida por habitante",
         descricao=(
-            "Receita corrente líquida do estado nos últimos 12 meses dividida pela população "
-            "estimada. Mostra quanto cada estado arrecada por pessoa, não o quanto gasta bem."
+            "Receita corrente líquida de 12 meses por habitante. Mostra quanto o estado "
+            "arrecada por pessoa, não se gasta bem."
         ),
         unidade="R$ por pessoa",
         casas=0,
@@ -311,13 +307,11 @@ def _rreo(
     primario = MetricaEstados(
         id="primario",
         nome="Resultado primário",
+        # Sem RPPS: é o que a LDO usa como meta e o que melhor compara estados com regimes de
+        # previdência de tamanhos diferentes. Positivo é superávit antes dos juros.
         descricao=(
-            "Receitas menos despesas do estado, sem contar juros, em proporção da receita "
-            "corrente líquida dos últimos 12 meses. É o acumulado do ano até o bimestre, não "
-            "12 meses. Positivo é superávit: sobrou dinheiro antes de pagar juros da dívida. "
-            "Usa o resultado acima da linha sem os fundos de previdência próprios (RPPS), o que "
-            "a LDO usa como meta e o que melhor compara estados com regimes de tamanhos "
-            "diferentes."
+            "Receitas menos despesas, sem juros, no acumulado do ano até o bimestre, em % da RCL "
+            "de 12 meses. Acima da linha e sem os fundos de previdência próprios (RPPS)."
         ),
         unidade="% da RCL",
         casas=1,
@@ -347,9 +341,8 @@ def _rreo(
         id="icms_per_capita",
         nome="ICMS por habitante",
         descricao=(
-            "ICMS que o estado arrecadou nos últimos 12 meses, já descontados o que vai aos "
-            "municípios e ao Fundeb, dividido pela população estimada. Mostra o peso do "
-            "principal imposto estadual, não o quanto é bem gasto."
+            "ICMS de 12 meses por habitante, já descontado o que vai aos municípios e ao "
+            "Fundeb. Mostra o peso do principal imposto estadual, não se é bem gasto."
         ),
         unidade="R$ por pessoa",
         casas=0,
@@ -382,10 +375,8 @@ def _capag(c: tesouro_capag.Capag) -> MetricaEstados:
         id="capag",
         nome="Nota CAPAG do Tesouro",
         descricao=(
-            "A nota de capacidade de pagamento que o Tesouro Nacional dá a cada estado, de A+ "
-            "(a melhor) a D, pela dívida, pela poupança corrente (o que sobra da receita depois "
-            "das despesas do dia a dia) e pelo caixa. É a nota que o Tesouro olha quando o "
-            "estado pede empréstimo com garantia da União."
+            "Nota de capacidade de pagamento do Tesouro, de A+ a D, pela dívida, pela poupança "
+            "corrente e pelo caixa. Conta quando o estado pede empréstimo com garantia da União."
         ),
         unidade="nota",
         casas=0,
@@ -435,12 +426,12 @@ def acordos() -> MetricaEstados:
     return MetricaEstados(
         id="acordo_divida",
         nome="Acordo da dívida com a União",
+        # Fora da tela: o plano do RRF traz teto de gastos; o Propag pede investir em educação
+        # e aportar num fundo dos estados.
         descricao=(
-            "O Regime de Recuperação Fiscal (RRF, Lei Complementar 159/2017) suspende parte "
-            "das parcelas da dívida com a União em troca de um plano de ajuste com teto de "
-            "gastos. O Propag (Lei Complementar 212/2025) refinancia a dívida em até 30 anos "
-            "com juros menores, em troca de investir em educação e aportar num fundo dos "
-            "estados; quem estava no RRF sai dele ao assinar o Propag."
+            "O RRF (Lei Complementar 159/2017) suspende parte das parcelas da dívida com a "
+            "União em troca de um plano de ajuste. O Propag (Lei Complementar 212/2025) a "
+            "refinancia em até 30 anos com juros menores; quem assina sai do RRF."
         ),
         unidade="regime",
         casas=0,
@@ -613,10 +604,10 @@ def _previdencia_anual(a: siconfi.AnoFechado) -> Fracao | None:
     return (r / rcl * 100, r, rcl)
 
 
+# O fundo em capitalização guarda para os servidores mais novos e costuma sobrar.
 NOTA_PREVIDENCIA = (
-    "Fica de fora o fundo em capitalização, que guarda para os servidores mais novos e costuma "
-    "sobrar. Salto de um ano para o outro pode ser mudança no jeito de lançar, não na "
-    "previdência."
+    "Sem o fundo em capitalização; salto de um ano para outro pode ser só mudança no jeito de "
+    "lançar."
 )
 
 HISTORICOS: list[tuple[str, str, str, str, Callable[[siconfi.AnoFechado], Fracao | None]]] = [
@@ -638,18 +629,16 @@ HISTORICOS: list[tuple[str, str, str, str, Callable[[siconfi.AnoFechado], Fracao
         "primario",
         "Resultado primário, com a previdência",
         f"{FONTE_RREO_ANUAL} (Anexo 06) e RGF Anexo 02 (RCL)",
-        "Receitas menos despesas no ano, sem contar juros, em % da receita corrente líquida. "
-        "Conta a previdência dos servidores, a única conta que o relatório trazia antes de "
-        "2023; por isso difere do primário do mapa, que é sem ela.",
+        "Receitas menos despesas no ano, sem juros, em % da RCL. Com a previdência dos "
+        "servidores, única forma do relatório antes de 2023; por isso difere do mapa.",
         _primario_anual,
     ),
     (
         "previdencia",
         "Resultado da previdência dos servidores",
         f"{FONTE_RREO_ANUAL} (Anexo 04) e RGF Anexo 02 (RCL)",
-        "Contribuições menos aposentadorias e pensões dos servidores civis e militares no ano, "
-        "em % da receita corrente líquida; negativo é o que o Tesouro do estado cobre. "
-        + NOTA_PREVIDENCIA,
+        "Contribuições menos benefícios dos servidores civis e militares, em % da RCL; "
+        "negativo é o que o Tesouro do estado cobre. " + NOTA_PREVIDENCIA,
         _previdencia_anual,
     ),
 ]
@@ -721,9 +710,8 @@ def _previdencia(
             id="previdencia",
             nome="Resultado da previdência dos servidores",
             descricao=(
-                "Contribuições menos aposentadorias e pensões dos servidores civis e militares "
-                "do estado no ano, em proporção da receita corrente líquida. Negativo é déficit: "
-                "o que o Tesouro do estado cobre com outras receitas. " + NOTA_PREVIDENCIA
+                "Contribuições menos benefícios dos servidores civis e militares no ano, em % "
+                "da RCL; negativo é o que o Tesouro do estado cobre. " + NOTA_PREVIDENCIA
             ),
             unidade="% da RCL",
             casas=1,
@@ -900,10 +888,10 @@ def perto_dos_limites(metricas: list[MetricaEstados]) -> tuple[Cartao, Tabela] |
         linhas=[linha for _, linha in linhas],
         fonte=fontes,
         nota=(
-            f"Pessoal do Poder Executivo: alerta em {br(leis.PESSOAL_ALERTA.valor)} %, "
+            f"Pessoal do Executivo: alerta em {br(leis.PESSOAL_ALERTA.valor)} %, "
             f"prudencial em {br(leis.PESSOAL_PRUDENCIAL.valor, 2)} % e máximo em "
-            f"{br(leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, 0)} % da receita corrente "
-            f"líquida ({leis.PESSOAL_EXECUTIVO_ESTADUAL.referencia}). Dívida: alerta em "
+            f"{br(leis.PESSOAL_EXECUTIVO_ESTADUAL.valor, 0)} % da RCL "
+            f"({leis.PESSOAL_EXECUTIVO_ESTADUAL.referencia}); dívida: alerta em "
             f"{br(leis.DIVIDA_ALERTA.valor, 0)} % e limite em {br(leis.DIVIDA_ESTADUAL.valor, 0)} "
             f"% ({leis.DIVIDA_ESTADUAL.referencia}). Entra quem passou de um alerta ou tem "
             "CAPAG C ou D."
@@ -911,7 +899,7 @@ def perto_dos_limites(metricas: list[MetricaEstados]) -> tuple[Cartao, Tabela] |
     )
     cartao = Cartao(
         id="estados-no-limite",
-        rotulo="Estados acima do alerta de pessoal ou de dívida",
+        rotulo="Estados acima do alerta (pessoal ou dívida)",
         valor=float(acima),
         unidade=f"de {len(nomes)}",
         casas=0,
@@ -1062,10 +1050,9 @@ def _arrecadacao_federal(populacao: dict[int, float]) -> MetricaEstados:
         id="arrecadacao_federal_per_capita",
         nome="Arrecadação federal por habitante",
         descricao=(
-            "Impostos e contribuições federais (com o INSS) pagos por quem tem endereço fiscal "
-            "no estado, não onde a venda ou o trabalho aconteceu: o Distrito Federal (órgãos "
-            "federais e estatais), São Paulo e Rio de Janeiro (sedes de empresas e bancos) "
-            "aparecem com mais do que a economia local explicaria."
+            "Tributos federais (com o INSS) pelo endereço fiscal de quem paga, não onde a venda "
+            "ou o trabalho aconteceu. Por isso DF, SP e RJ, com órgãos federais e sedes de "
+            "empresas, aparecem acima da economia local."
         ),
         unidade="R$ por habitante",
         casas=0,
@@ -1102,7 +1089,7 @@ def _bloco_receita(r: siconfi.ReceitaAnual, ano: int, sigla: str = "") -> BlocoD
         ("ICMS", r.icms),
         ("IPVA", r.ipva),
         ("ITCMD (herança e doação)", r.itcmd),
-        ("Outros impostos, taxas e contribuições de melhoria", outros_tributos),
+        ("Outros impostos e taxas", outros_tributos),
         ("FPE (Fundo de Participação dos Estados)", r.fpe),
         ("Outras transferências da União", outras_uniao),
         ("Fundeb", r.fundeb),
@@ -1264,9 +1251,9 @@ def _gasto_por_area(anual: siconfi.ColetaAnual) -> list[MetricaEstados]:
                 nome=f"Gasto com {nome.lower() if cod != '06' else 'segurança'}",
                 grupo=CONTAS,
                 descricao=(
-                    f"A parte da despesa do governo do estado que foi para {nome.lower()}, no "
-                    "ano. Sem os encargos especiais (juros e amortização da dívida e repasses "
-                    "aos municípios), que cada estado registra de um jeito; conta nossa."
+                    f"A parte da despesa do estado que foi para {nome.lower()} no ano; conta "
+                    "nossa. Sem os encargos especiais (dívida e repasses aos municípios), que "
+                    "cada estado registra de um jeito."
                 ),
                 unidade="% da despesa",
                 casas=1,
