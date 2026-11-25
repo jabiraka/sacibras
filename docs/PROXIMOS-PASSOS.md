@@ -26,9 +26,9 @@ onde estamos tirando a informação, o site exato"*). As regras moram em `links.
 ganham um endereço por código; as instituições, a página dos dados), vão para `fontes.json` e
 o site (`web/src/fontes.ts`) põe os links no rodapé de gráfico, tabela, mapa e ranking, e o
 endereço por extenso no PNG, no CSV e na dica do cartão. Fonte sem regra cai na página geral da
-instituição (IBGE, Banco Central, Tesouro) ou fica sem link: `links.sem_endereco`. **Falta**:
-abrir o site com dados e conferir a 390 e 1280 px (a nuvem não monta os dados) e abrir os
-endereços das regras do PC (só os SGS/SIDRA vêm das próprias chamadas do builder; os das
+instituição (IBGE, Banco Central, Tesouro) ou fica sem link: `links.sem_endereco`. Cada código de série (SGS, SIDRA) é link no próprio texto; instituição ganha o nome
+linkado depois do texto, e o endereço vai na dica. Olhado a 390 e 1280 px em Inflação e
+Atividade (sem estouro). **Falta**: abrir os endereços das regras do PC (só os SGS/SIDRA vêm das próprias chamadas do builder; os das
 instituições foram escritos de cabeça e não foram abertos daqui).
 
 **25/11/2026, troca suave nas listas dos gráficos** (Caio: *"quando clico num drop down [...]

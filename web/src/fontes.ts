@@ -56,27 +56,63 @@ export function fonteComEnderecos(texto: string): string {
   return urls.length ? `${texto}. Endereço: ${urls.join(" ; ")}` : texto;
 }
 
+function ancora(texto: string, e: Endereco): HTMLAnchorElement {
+  const a = document.createElement("a");
+  a.href = e.url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.textContent = texto;
+  a.title = e.url;
+  a.translate = false;
+  return a;
+}
+
+/** Cada código de série ("SGS 433, 4466") vira link no próprio texto; as instituições, que não
+ *  têm palavra no texto para clicar, ganham o nome ao lado, depois de " · ". */
 function pendurar(no: HTMLElement): void {
   if (no.dataset.fontes === "1") return;
-  const fonte = (no.textContent ?? "").replace(/^Fontes?:\s*/, "");
-  const lista = enderecosDaFonte(fonte);
   no.dataset.fontes = "1";
-  if (!lista.length) return;
-  const links = document.createElement("span");
-  links.className = "fonte-links";
-  links.append(" · ");
-  lista.forEach((e, i) => {
-    if (i) links.append(" · ");
-    const a = document.createElement("a");
-    a.href = e.url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.textContent = e.nome;
-    a.title = e.url;
-    a.translate = false;
-    links.append(a);
-  });
-  no.append(links);
+  const bruto = no.textContent ?? "";
+  const prefixo = /^Fontes?:\s*/.exec(bruto)?.[0] ?? "";
+  const fonte = bruto.slice(prefixo.length);
+  if (!registro) return;
+  const nos: { ini: number; fim: number; e: Endereco }[] = [];
+  const usados = new Set<string>();
+  const percorrer = (regras: Regra[]): void => {
+    for (const r of regras) {
+      for (const m of fonte.matchAll(new RegExp(r.padrao, "g"))) {
+        if (r.por_numero) {
+          const base = m.index + m[0].indexOf(m[1] ?? "");
+          for (const n of (m[1] ?? "").matchAll(/\d+/g)) {
+            const url = r.url.replace("{n}", n[0]);
+            nos.push({ ini: base + n.index, fim: base + n.index + n[0].length, e: { nome: n[0], url } });
+            usados.add(url);
+          }
+        }
+      }
+    }
+  };
+  percorrer(registro.regras);
+  nos.sort((a, b) => a.ini - b.ini);
+  const resto = enderecosDaFonte(fonte).filter((e) => !usados.has(e.url));
+  if (!nos.length && !resto.length) return;
+  const partes: (string | HTMLElement)[] = [prefixo];
+  let pos = 0;
+  for (const n of nos) {
+    if (n.ini < pos) continue;
+    partes.push(fonte.slice(pos, n.ini), ancora(n.e.nome, n.e));
+    pos = n.fim;
+  }
+  partes.push(fonte.slice(pos));
+  if (resto.length) {
+    partes.push(" · ");
+    resto.forEach((e, i) => {
+      if (i) partes.push(", ");
+      partes.push(ancora(e.nome, e));
+    });
+  }
+  no.className += " fonte-links";
+  no.replaceChildren(...partes);
 }
 
 function varrer(raiz: ParentNode): void {

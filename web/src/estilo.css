@@ -4307,7 +4307,7 @@ details.guardado > .alternativas-barra {
 .fonte-links a {
   color: inherit;
   text-decoration: underline;
-  text-decoration-color: var(--borda);
+  text-decoration-color: currentColor;
   text-underline-offset: 2px;
   overflow-wrap: anywhere;
 }
