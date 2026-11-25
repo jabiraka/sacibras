@@ -138,10 +138,13 @@ def test_meta_do_primario_em_reais_com_o_desconto_ao_lado() -> None:
     assert cartao.unidade == "R$ bilhões"
     assert cartao.meta is not None
     assert (round(cartao.meta.inferior, 1), round(cartao.meta.superior, 1)) == (0.0, 68.5)
-    assert "R$ 67,3 bi" in cartao.detalhe
+    assert "R$ 77,0 bi (5º bim.)" in cartao.detalhe
+    assert len(cartao.detalhe) <= 60
     assert grafico.faixa is not None and len(grafico.faixa.pontos) == 12
     ultima = leis.AVALIACOES_2026[-1]
-    assert tabela.linhas[2].valores[-1] == round(ultima.resultado + ultima.deducao, 1) == -13.6
+    assert tabela.linhas[2].valores[-1] == round(ultima.resultado + ultima.deducao, 1) == -12.3
+    assert tabela.colunas == ["3º bimestre", "4º bimestre", "5º bimestre"]
+    assert "5º bimestre de 2026" in tabela.fonte
     assert "abaixo do piso" in tabela.nota
 
 

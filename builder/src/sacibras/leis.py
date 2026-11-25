@@ -190,7 +190,8 @@ class AvaliacaoBimestral:
     """O que o governo projeta para o primário do ano no Relatório de Avaliação de Receitas e
     Despesas Primárias (o que a LDO 2026, art. 73, § 4º, manda publicar), em R$ bilhões.
 
-    Não é número de lei: é a conta oficial da meta, lida à mão, com a data."""
+    Não é número de lei: é a conta oficial da meta. O builder lê a planilha do bimestre mais
+    novo (`fontes/avaliacao_bimestral.py`); a lista daqui é a reserva."""
 
     bimestre: str
     resultado: float
@@ -200,16 +201,19 @@ class AvaliacaoBimestral:
     fonte: str
 
 
-# Lido em 14/11/2026 na Nota Informativa da Consultoria de Orçamentos do Senado (Conorf) de
-# 25/9/2026 sobre o relatório do 4º bimestre de 2026 (www12.senado.leg.br/orcamento/documentos/
-# estudos/tipos-de-estudos/notas-tecnicas-e-informativos/ni_rardp_20260925.pdf), Tabela 1, que
-# reproduz o relatório do Executivo: "5. Resultado Primário -52,0 [3º bim.] -80,9 [4º bim.]";
-# "6. Dedução EC 136, ADPF 1236 e LCs 221, 223 e 235 62,8 67,3"; "7. Resultado Primário após
-# Dedução 10,8 -13,6". Nota 3: precatórios (R$ 54,7 bi), defesa (R$ 5,0 bi), saúde e a ADPF
-# 1236. LER DE NOVO a cada bimestre (o do 5º sai até 22/11).
+# Reserva: o builder lê sozinho a planilha do bimestre mais novo
+# (`fontes/avaliacao_bimestral.py`) e só usa estes números se ela falhar ou for de outro ano.
+# Lidos em 25/11/2026 nas planilhas "quadros de apoio" dos relatórios do 4º e do 5º bimestre
+# de 2026 (gov.br/planejamento/pt-br/assuntos/orcamento/relatorios-de-avaliacao-fiscal), aba
+# "Tabela 1", em R$ milhões: "5. Resultado Primário (3) - (4)" -52.013,9 [3º bim.], -80.936,8
+# [4º], -89.306,5 [5º]; "6. Dedução EC 136, ADPF 1236 e LCs 221, 223 e 235" 62.779,0, 67.291,4,
+# 76.984,7; "8. Centro da Meta" 34.264,6. O 3º e o 4º batem com a Nota Informativa da Conorf
+# (Senado) de 25/9/2026, lida em 14/11/2026. Nota 3 da Conorf: precatórios, defesa, saúde e a
+# ADPF 1236. LER DE NOVO a cada bimestre (o do 1º de 2027 sai até 22/3).
 AVALIACOES_2026 = [
     AvaliacaoBimestral("3º bimestre", -52.0, 62.8, "Relatório de Avaliação do 3º bimestre de 2026"),
     AvaliacaoBimestral("4º bimestre", -80.9, 67.3, "Relatório de Avaliação do 4º bimestre de 2026"),
+    AvaliacaoBimestral("5º bimestre", -89.3, 77.0, "Relatório de Avaliação do 5º bimestre de 2026"),
 ]
 
 # Lidos em 14/11/2026, ainda sem uso na tela (pedem o RREO Anexo 12 e o Anexo 08 de cada

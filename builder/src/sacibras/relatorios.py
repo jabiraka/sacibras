@@ -336,8 +336,16 @@ FONTE_REPASSE_CAMBIAL = (
 #    de 11,3% no ano que vem. O valor da alíquota precisa ser chancelado pelo Senado até
 #    dezembro. Caso isso não ocorra, a alíquota apresentada pelo TCU será efetivada a partir de
 #    1º de janeiro de 2027."; "percentual superior à estimativa de 9,21% considerada
-#    anteriormente"; "a alíquota de referência do IBS ainda não foi definida". O portal do TCU
-#    não abriu daqui: reler o acórdão no PC.
+#    anteriormente"; "a alíquota de referência do IBS ainda não foi definida".
+# 3. O próprio acórdão, lido em 25/11/2026: TCU, Acórdão 2933/2026-Plenário, sessão de
+#    28/10/2026, relator Vital do Rêgo (PDF em contas.tcu.gov.br/sagas/SvlVisualizarRelVotoAc?
+#    codFiltro=SAGAS-SESSAO-ENCERRADA&seOcultaPagina=S&item0=920740, achado pela API
+#    dados-abertos.apps.tcu.gov.br/api/acordao/recupera-acordaos). Sumário: "CÁLCULO DA
+#    ALÍQUOTA DE REFERÊNCIA DA CONTRIBUIÇÃO SOCIAL SOBRE BENS E SERVIÇOS (CBS) PARA 2027 [...]
+#    ALÍQUOTA DE REFERÊNCIA DE 11,3%. REDUTOR DE 44,2%"; no voto: "resultou na alíquota
+#    calculada de 11,3468%"; "a alíquota de referência da CBS para 2027 é de 11,3%". O
+#    `sacibras tramitacao` olha a API e avisa (issue `tramitação`) quando sai acórdão com
+#    alíquota de referência da CBS para outro ano ou com outro número.
 # LER DE NOVO: a resolução do Senado com a CBS de 2027 (o prazo é dezembro de 2026) e, a cada
 # ano, as alíquotas do ano seguinte; o IBS de referência só aparece em 2028, para 2029.
 CBS_REFERENCIA_2027 = 11.3
@@ -348,8 +356,8 @@ IBS_COMITE_GESTOR = 18.7
 ALIQUOTA_COMITE_GESTOR_EM = date(2026, 7, 29)
 FONTE_ALIQUOTA_COMITE = "Comitê Gestor do IBS, Resolução nº 14, de 29/7/2026, anexo, quadro 2"
 FONTE_CBS_2027 = (
-    "Tribunal de Contas da União, cálculo aprovado em 28/10/2026 (Agência Senado, 28/10 e "
-    "3/11/2026); o Senado fixa por resolução"
+    "Tribunal de Contas da União, Acórdão 2933/2026-Plenário (28/10/2026); o Senado fixa por "
+    "resolução"
 )
 
 # ------------------------------------------------------------------ previsto no ano
@@ -367,19 +375,19 @@ class ReceitaPrevista:
     avaliacao: float
 
 
-# Receita de 2026. LOA: planilha "quadros de apoio" do Relatório de Avaliação do 2º bimestre de
-# 2026 (gov.br/planejamento, relatórios de avaliação fiscal), aba "Tabela 1", coluna "LOA 2026",
-# em R$ milhões: "Receita Administrada pela RFB/MF, exceto RGPS e líquida de incentivos
-# fiscais" 2.040.990,1; "Arrecadação Líquida para o RGPS" 793.153,5. Avaliação do 4º bimestre:
-# a mesma Nota Informativa da Conorf/Senado de 25/9/2026 usada em `leis.AVALIACOES_2026`
-# (Tabela 1): "Receita Administrada pela RFB/MF, exceto RGPS e líquida de incentivos fiscais
-# 2.079,8 [3º bim.] 2.065,7 [4º bim.]"; "Arrecadação Líquida para o RGPS 784,0 786,4". Lidos em
-# 14/11/2026. LER DE NOVO a cada bimestre (o do 5º sai até 22/11) e trocar o ano em janeiro.
+# Reserva: o builder lê sozinho a planilha do bimestre mais novo
+# (`fontes/avaliacao_bimestral.py`, a mesma de `leis.AVALIACOES_2026`) e só usa estes números
+# se ela falhar ou for de outro ano. Lidos em 25/11/2026 na planilha "quadros de apoio" do
+# Relatório de Avaliação do 5º bimestre de 2026 (gov.br/planejamento, relatórios de avaliação
+# fiscal), aba "Tabela 1", em R$ milhões: "Receita Administrada pela RFB/MF, exceto RGPS e
+# líquida de incentivos fiscais" 2.040.990,1 (LOA 2026), 2.065.688,3 (4º bim.), 2.064.946,0
+# (5º bim.); "Arrecadação Líquida para o RGPS" 793.153,5, 786.426,5, 777.560,0. LER DE NOVO a
+# cada bimestre e trocar o ano em janeiro.
 ANO_DA_RECEITA_PREVISTA = 2026
-AVALIACAO_DA_RECEITA = "4º bimestre"
+AVALIACAO_DA_RECEITA = "5º bimestre"
 RECEITA_PREVISTA = [
-    ReceitaPrevista("Tributos administrados pela Receita", "receita_rfb", 2041.0, 2065.7),
-    ReceitaPrevista("Contribuição ao INSS", "arrecadacao_rgps", 793.2, 786.4),
+    ReceitaPrevista("Tributos administrados pela Receita", "receita_rfb", 2041.0, 2064.9),
+    ReceitaPrevista("Contribuição ao INSS", "arrecadacao_rgps", 793.2, 777.6),
 ]
 
 # ------------------------------------------------------------------ dívida ativa
@@ -556,8 +564,13 @@ class AcordoDaDivida:
 # Quem está em cada um, lido em 15/11/2026:
 # - Tesouro Nacional, Relatório Mensal de Garantias Honradas (RMGH) de out/2025, publicado em
 #   17/11/2025 (cdn.tesouro.gov.br, "RMGH - 2025_10.pdf", p. 5): "Atualmente se encontram no
-#   RRF os Estados de Goiás, Rio de Janeiro, Rio Grande do Sul e Minas Gerais." O RMGH de 2026
-#   não abriu (o Tesouro Transparente dava "Falha na integração THOT/3PRO").
+#   RRF os Estados de Goiás, Rio de Janeiro, Rio Grande do Sul e Minas Gerais."
+# - RMGH de out/2026, publicado em 16/11/2026 (thot-arquivos.tesouro.gov.br/publicacao/56285,
+#   p. 5), relido em 25/11/2026: "Atualmente, encontra-se no RRF apenas o Estado do Rio Grande
+#   do Sul. Os Estados de Goiás, Minas Gerais e Rio de Janeiro aderiram às condições da LC nº
+#   212/2025, que instituiu o [...] PROPAG, ao assinar aditivos nas datas de 24/12/2025,
+#   31/12/2025 e 22/06/2026, respectivamente. Com isso, os regimes desses Estados foram
+#   encerrados." Bate com a lista abaixo.
 # - Instituição Fiscal Independente (Senado), Relatório de Acompanhamento Fiscal nº 114, jul/2026,
 #   p. 63–65 (www2.senado.leg.br/jspui/bitstream/id/935943/4/RAF114_JUL2026_3_Propag.pdf): "Das
 #   27 unidades da federação, 22 aderiram ao Propag [...] Os cinco entes federativos que não
@@ -595,7 +608,7 @@ ACORDOS: dict[str, AcordoDaDivida] = {
 FONTE_ACORDOS = (
     "Instituição Fiscal Independente (Senado), Relatório de Acompanhamento Fiscal nº 114, "
     "jul/2026, tabela 17 (termos do Propag assinados até 30/06/2026, dados do Ministério da "
-    "Fazenda); Tesouro Nacional, Relatório Mensal de Garantias Honradas de out/2025 (estados "
+    "Fazenda); Tesouro Nacional, Relatório Mensal de Garantias Honradas de out/2026 (estados "
     "no RRF)"
 )
 
@@ -616,8 +629,13 @@ FONTE_ACORDOS = (
 # - ES, IJSN: ijsn.es.gov.br, "PIB Trimestral (dados em Excel)", aba "Planilha4" (taxa contra o
 #   mesmo trimestre do ano anterior), coluna PIB do Espírito Santo.
 # A conta: o crescimento contra o mesmo trimestre do ano anterior de cada órgão menos o nosso,
-# em todos os trimestres desde 2011 (`scripts/conferir_pib_estados.py` refaz). REFAZER uma
-# vez por ano, depois das Contas Regionais (novembro), quando a nossa série muda mais.
+# em todos os trimestres desde 2011 (`scripts/conferir_pib_estados.py` refaz; desde 25/11/2026
+# ele acha e baixa sozinho a planilha mais nova de RS, PR, BA e ES na página de cada órgão; a
+# de MG se baixa à mão e vai com --mg). REFAZER uma vez por ano, depois das Contas Regionais
+# (novembro), quando a nossa série muda mais. Rodado de novo em 25/11/2026 só com quatro (sem
+# MG, que não abre da nuvem; PR com a planilha do 2º tri/2026 baixada na mesma semana, porque
+# a página pediu verificação de robô): 247 trimestres, diferença média de 1,24 pp, 8 em 10
+# entre -1,88 e +2,04. Os números abaixo seguem os de 15/11, com os cinco.
 
 
 @dataclass(frozen=True)

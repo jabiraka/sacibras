@@ -3,7 +3,8 @@ name: Prazos de releitura
 # O que foi lido à mão em lei ou relatório (builder/src/sacibras/leituras.py) tem prazo para
 # ser lido de novo. Quando um prazo vence ou falta uma semana, abre ou atualiza a issue
 # "releitura"; quando tudo está em dia, fecha. Com prazo vencido, a execução fica vermelha.
-# Também olha se os projetos de lei mostrados no painel andaram (issue "tramitação").
+# Também olha se os projetos de lei mostrados no painel andaram e se o TCU publicou cálculo
+# novo da CBS (issue "tramitação").
 on:
   workflow_dispatch:
   schedule:
@@ -67,13 +68,15 @@ jobs:
             await require("./.github/scripts/aviso.js")({ github, context }, {
               rotulo: "tramitação",
               cor: "1d76db",
-              titulo: "Projeto de lei mostrado no painel andou no Congresso",
+              titulo: "Projeto de lei ou cálculo do TCU mostrado no painel mudou",
               explicacao:
                 "O painel mostra um projeto que ainda não é lei (`builder/src/sacibras/" +
                 "tramitacao.py`). Leia o que mudou na fonte e confira se a meta ou os anexos " +
                 "mudaram (`relatorios.py`); depois atualize em `tramitacao.py` a situação e o " +
                 "informe vistos. Sancionada a lei, a meta vai para `leis.py` e o projeto sai " +
-                "da lista. A issue fecha sozinha quando nada mais mudou.",
+                "da lista. Acórdão novo do TCU com a alíquota de referência da CBS: leia-o e " +
+                "atualize `relatorios.CBS_REFERENCIA_2027` e `tramitacao.CBS_LIDA`. A issue " +
+                "fecha sozinha quando nada mais mudou.",
               corpo,
             });
       - name: Vermelho se houver prazo vencido

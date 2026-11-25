@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
 
 import pytest
 
@@ -172,3 +173,72 @@ def test_revisoes_medem_o_quanto_o_trimestre_muda_quando_sai_o_oficial() -> None
     r = d.revisoes(ruim, d.estimar(ruim))
     # B cresce 12,6 % ao ano e o indicador só 8,2 %: a revisão é para cima, e grande.
     assert sum(x for _, x in r["B"]) / len(r["B"]) > 2
+
+
+# ------------------------------------------------------------------ scripts/conferir_pib_estados.py
+
+
+def _script() -> Any:
+    import importlib.util
+    from pathlib import Path
+
+    caminho = Path(__file__).parents[1] / "scripts" / "conferir_pib_estados.py"
+    spec = importlib.util.spec_from_file_location("conferir_pib_estados", caminho)
+    assert spec is not None and spec.loader is not None
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+def test_conferencia_acha_a_planilha_mais_nova_de_cada_estado() -> None:
+    s = _script()
+    rs, padrao_rs = s.PAGINAS["RS"]
+    html_rs = (
+        '<a href="https://admin.dee.rs.gov.br/upload/arquivos/202606/1-serie-historica-2026-i.xlsx">'
+        '<a href="https://admin.dee.rs.gov.br/upload/arquivos/202609/2-serie-historica-2026-ii.xlsx">'
+        '<a href="https://admin.dee.rs.gov.br/upload/arquivos/202512/3-serie-historica-2025-iv.xlsx">'
+    )
+    assert s.planilha_mais_nova(rs, padrao_rs, html_rs).endswith("2-serie-historica-2026-ii.xlsx")
+    pr, padrao_pr = s.PAGINAS["PR"]
+    html_pr = (
+        '<a href="/sites/ipardes/files/documento/2026-10/serie_encadeada_2o_trim_2026.xlsx">'
+        '<a href="/sites/ipardes/files/documento/2026-07/serie_encadeada_1o_trim_2026.xlsx">'
+    )
+    assert s.planilha_mais_nova(pr, padrao_pr, html_pr) == (
+        "https://www.ipardes.pr.gov.br/sites/ipardes/files/documento/2026-10/"
+        "serie_encadeada_2o_trim_2026.xlsx"
+    )
+    ba, padrao_ba = s.PAGINAS["BA"]
+    html_ba = (
+        '<a href="/sei/sites/site-sei/files/2026-06/pib_trimestral_tabelas_completas.xls">'
+        '<a href="/sei/sites/site-sei/files/2026-09/pib_trimestral_tabelas_completas.xls">'
+    )
+    assert "2026-09" in s.planilha_mais_nova(ba, padrao_ba, html_ba)
+    es, padrao_es = s.PAGINAS["ES"]
+    html_es = '<a href="/media/x/PIB%20Trimestral%20%28dados%20em%20Excel%29-1.xlsx?v=1&amp;a=2">'
+    assert s.planilha_mais_nova(es, padrao_es, html_es) == (
+        "https://ijsn.es.gov.br/media/x/PIB%20Trimestral%20%28dados%20em%20Excel%29-1.xlsx?v=1&a=2"
+    )
+    with pytest.raises(RuntimeError):
+        s.planilha_mais_nova(rs, padrao_rs, "<p>verificação de robô</p>")
+
+
+def test_conferencia_le_o_indice_e_tira_a_taxa_em_um_ano() -> None:
+    import io
+
+    import openpyxl  # type: ignore[import-untyped]
+
+    s = _script()
+    livro = openpyxl.Workbook()
+    folha = livro.active
+    folha.title = "Série encadeada"
+    folha.append(["Período", "Agro", "PIB"])
+    folha.append(["2025.I", 1.0, 100.0])
+    folha.append(["2025.II", 1.0, 110.0])
+    folha.append(["2026.I", 1.0, 103.0])
+    folha.append(["Nota", None, None])
+    saida = io.BytesIO()
+    livro.save(saida)
+    linhas = s.linhas_da_aba(saida.getvalue(), "Série encadeada")
+    assert s.ler(linhas, -1, True) == {(2026, 1): pytest.approx(3.0)}
+    assert s.ler(linhas, -1, False)[(2025, 2)] == 110.0

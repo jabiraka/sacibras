@@ -62,10 +62,13 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Avaliação bimestral do primário (o desconto da meta)",
         "leis.AVALIACOES_2026",
-        date(2026, 11, 14),
-        date(2026, 11, 24),
-        "Relatório de Avaliação de Receitas e Despesas Primárias do 5º bimestre (sai até 22/11) "
-        "ou a nota da Conorf no site do Senado. A cada bimestre.",
+        date(2026, 11, 25),
+        date(2027, 3, 31),
+        "O builder lê sozinho a planilha quadros de apoio do bimestre mais novo "
+        "(fontes/avaliacao_bimestral.py, aba Tabela 1) e diz o bimestre na tela. Conferir que "
+        "a tela mostra o último (sai até o dia 22 do mês seguinte ao bimestre) e passar os "
+        "números para a reserva. Com o 1º bimestre de 2027 (março), o build avisa que a "
+        "planilha é de outro ano: trocar a meta e o ano (META_PRIMARIA_2026).",
     ),
     Leitura(
         "Salário mínimo do ano (o decreto de 2027 sai em dezembro)",
@@ -131,8 +134,8 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Estados no RRF e no Propag",
         "relatorios.ACORDOS",
-        date(2026, 11, 15),
-        date(2026, 12, 15),
+        date(2026, 11, 25),
+        date(2026, 12, 23),
         "Tesouro Nacional, Relatório Mensal de Garantias Honradas (tesourotransparente.gov.br/"
         "publicacoes/relatorio-mensal-de-garantias-honradas-rmgh, sai por volta do dia 15; diz "
         "quem está no RRF), e o Relatório de Acompanhamento Fiscal da IFI (Senado) que trouxer "
@@ -261,12 +264,13 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "CBS de 2027: o cálculo do TCU e a resolução do Senado",
         "relatorios.CBS_REFERENCIA_2027",
-        date(2026, 11, 14),
+        date(2026, 11, 25),
         date(2026, 12, 23),
         "Resolução do Senado que fixa a alíquota de referência da CBS de 2027 (prazo: 15 ou "
         '22/12; sem ela, vale o cálculo do TCU). Trocar o número e o texto "o Senado ainda '
-        'fixa" em impostos.py. O acórdão do TCU não abre da nuvem. Depois, todo ano, a '
-        "alíquota do ano seguinte.",
+        'fixa" em impostos.py. O acórdão do TCU (2933/2026-Plenário) foi lido; o `sacibras '
+        "tramitacao` olha a API de acórdãos do TCU e avisa (issue `tramitação`) quando sai o "
+        "cálculo de outro ano. Depois, todo ano, a alíquota do ano seguinte.",
     ),
     Leitura(
         "Alíquota cheia do IBS e da CBS: a conta do Comitê Gestor",
@@ -287,10 +291,11 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Receita prevista para o ano (LOA e avaliação bimestral)",
         "relatorios.RECEITA_PREVISTA",
-        date(2026, 11, 14),
-        date(2026, 11, 24),
-        "O mesmo relatório bimestral de leis.AVALIACOES_2026 (Tabela 1, receita administrada "
-        "e RGPS). A cada bimestre; em janeiro, trocar o ano e a LOA.",
+        date(2026, 11, 25),
+        date(2027, 3, 31),
+        "O builder lê sozinho a mesma planilha de leis.AVALIACOES_2026 (LOA e avaliação mais "
+        "nova da receita administrada e do RGPS). Com o 1º bimestre de 2027, trocar "
+        "ANO_DA_RECEITA_PREVISTA e a reserva; até lá, conferir de vez em quando.",
     ),
     Leitura(
         "Dívida ativa da União: estoque",
@@ -324,10 +329,10 @@ LEITURAS: list[Leitura] = [
         "relatorios.CONFERENCIA_PIB_ESTADOS",
         date(2026, 11, 15),
         date(2027, 11, 30),
-        "Baixar as séries de PIB trimestral de RS (DEE), PR (IPARDES), MG (FJP), BA (SEI) e ES "
-        "(IJSN), nos endereços do comentário em relatorios.py, e rodar "
-        "scripts/conferir_pib_estados.py. Uma vez por ano, depois das Contas Regionais "
-        "(novembro).",
+        "Rodar scripts/conferir_pib_estados.py: ele acha e baixa sozinho a planilha mais nova "
+        "de RS (DEE), PR (IPARDES), BA (SEI) e ES (IJSN); a de MG (FJP) se baixa à mão e vai "
+        "com --mg (o IPARDES às vezes pede verificação de robô: --pr). Não roda no build. Uma "
+        "vez por ano, depois das Contas Regionais (novembro).",
     ),
     Leitura(
         "Dívida ativa da União: recuperado no ano",

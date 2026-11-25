@@ -215,6 +215,19 @@ REGRAS: list[Regra] = [
         nome="Boletim Estatístico da Previdência Social",
         url="https://www.gov.br/previdencia/pt-br/assuntos/previdencia-social/Dados-estatisticos-previdencia-social-e-inss/boletins-da-previdencia-social",
     ),
+    # Abertas em 25/11/2026: a página que lista a planilha "quadros de apoio" de cada
+    # bimestre, e o PDF do Acórdão 2933/2026-Plenário (relatório, voto e acórdão; o endereço
+    # vem do campo urlArquivoPdf da API de dados abertos do TCU).
+    Regra(
+        padrao=r"Relatório de Avaliação de Receitas e Despesas Primárias",
+        nome="Relatórios de avaliação fiscal (MPO)",
+        url="https://www.gov.br/planejamento/pt-br/assuntos/orcamento/relatorios-de-avaliacao-fiscal",
+    ),
+    Regra(
+        padrao=r"Acórdão 2933/2026",
+        nome="TCU, Acórdão 2933/2026-Plenário",
+        url="https://contas.tcu.gov.br/sagas/SvlVisualizarRelVotoAc?codFiltro=SAGAS-SESSAO-ENCERRADA&seOcultaPagina=S&item0=920740",
+    ),
     Regra(
         padrao=r"Relatório de Estabilidade Financeira",
         nome="Banco Central, Relatório de Estabilidade Financeira",
