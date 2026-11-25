@@ -63,7 +63,7 @@ LEITURAS: list[Leitura] = [
         "Avaliação bimestral do primário (o desconto da meta)",
         "leis.AVALIACOES_2026",
         date(2026, 11, 25),
-        date(2027, 3, 31),
+        date(2027, 1, 22),
         "O builder lê sozinho a planilha quadros de apoio do bimestre mais novo "
         "(fontes/avaliacao_bimestral.py, aba Tabela 1) e diz o bimestre na tela. Conferir que "
         "a tela mostra o último (sai até o dia 22 do mês seguinte ao bimestre) e passar os "
@@ -292,7 +292,7 @@ LEITURAS: list[Leitura] = [
         "Receita prevista para o ano (LOA e avaliação bimestral)",
         "relatorios.RECEITA_PREVISTA",
         date(2026, 11, 25),
-        date(2027, 3, 31),
+        date(2027, 1, 22),
         "O builder lê sozinho a mesma planilha de leis.AVALIACOES_2026 (LOA e avaliação mais "
         "nova da receita administrada e do RGPS). Com o 1º bimestre de 2027, trocar "
         "ANO_DA_RECEITA_PREVISTA e a reserva; até lá, conferir de vez em quando.",

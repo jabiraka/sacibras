@@ -10,11 +10,12 @@ from collections.abc import Callable
 from datetime import date
 
 from sacibras import contas, leis
-from sacibras.fontes import avaliacao_bimestral, bcb_fiscal, bcb_focus, fmi, tesouro_rtn
+from sacibras.fontes import avaliacao_bimestral, bcb_fiscal, bcb_focus, fmi, sest, tesouro_rtn
 from sacibras.modelos import decomposicoes
 from sacibras.schema import (
     Cartao,
     Faixa,
+    FichasEstatais,
     Grafico,
     LinhaRef,
     LinhaTabela,
@@ -845,6 +846,15 @@ def montar(ctx: Contexto) -> Secao:
                 tabelas += t_est
             except Exception as erro:
                 print(f"    estatais: {nome} ficou de fora: {str(erro)[:120]}")
+        try:  # uma ficha por estatal (Sest, anexo I), num arquivo à parte
+            fichas = estatais.fichas(*sest.empresas_da_mais_nova())
+            ctx.memo["fiscal_estatais"] = FichasEstatais(
+                fichas=fichas,
+                primeira=next((f.id for f in fichas if f.nome == estatais.PRIMEIRA), fichas[0].id),
+                gerado_em=ctx.agora(),
+            )
+        except Exception as erro:
+            print(f"    estatais: as fichas (Sest) ficaram de fora: {str(erro)[:120]}")
     except Exception as erro:
         print(f"    servidores e estatais ficaram de fora: {str(erro)[:120]}")
 

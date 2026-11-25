@@ -22,6 +22,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from sacibras.fontes import sest
+
 
 class Regra(BaseModel):
     padrao: str
@@ -78,6 +80,23 @@ REGRAS: list[Regra] = [
         padrao=r"SIDRA,?\s*(?:tabelas?\s+)?" + _NUMEROS,
         nome="SIDRA {n}",
         url="https://sidra.ibge.gov.br/tabela/{n}",
+        por_numero=True,
+    ),
+    Regra(
+        padrao=r"SGS(?!\s+\d)",
+        nome="Banco Central, SGS",
+        url="https://www3.bcb.gov.br/sgspub/",
+    ),
+    Regra(
+        padrao=r"SIDRA(?!,?\s*(?:tabelas?\s+)?\d)",
+        nome="IBGE, SIDRA",
+        url="https://sidra.ibge.gov.br",
+    ),
+    # Séries do Ipeadata citadas pelo código, "(PNADCA_TXPNUF)": os valores da própria série.
+    Regra(
+        padrao=r"\((PNAD\w+(?:(?:,\s*|\s+e\s+)PNAD\w+)*)\)",
+        nome="Ipeadata {n}",
+        url="https://www.ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='{n}')",
         por_numero=True,
     ),
     Regra(
@@ -151,7 +170,7 @@ REGRAS: list[Regra] = [
         url="https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9054-contas-regionais-do-brasil.html",
     ),
     Regra(
-        padrao=r"Ipeadata",
+        padrao=r"Ipeadata|IPEADATA",
         nome="Ipeadata",
         url="http://www.ipeadata.gov.br",
     ),
@@ -171,10 +190,24 @@ REGRAS: list[Regra] = [
         nome="Novo Caged (MTE)",
         url="https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/acoes-e-programas/programas-projetos-acoes-obras-e-atividades/estatisticas-trabalho/novo-caged",
     ),
+    # O Relatório Agregado das Estatais (Sest): a página dele, a planilha do anexo I (de onde
+    # vêm as fichas de cada estatal e a conta do ano) e o PDF (as páginas citadas). Os três
+    # abertos em 25/11/2026. A planilha e o PDF mudam de nome a cada edição, em junho: o
+    # build avisa quando a página aponta para uma planilha nova (`sest.endereco`).
     Regra(
-        padrao=r"\(Sest\)|Empresas Estatais Federais",
-        nome="Relatórios das estatais (Sest)",
-        url="https://www.gov.br/gestao/pt-br/central-de-conteudo/relatorios-das-estatais",
+        padrao=r"Relatório Agregado das Empresas Estatais Federais",
+        nome="Relatório Agregado (Sest)",
+        url=sest.PAGINA,
+    ),
+    Regra(
+        padrao=r"Relatório Agregado das Empresas Estatais Federais[^;]*anexo I\b",
+        nome="planilha do anexo I",
+        url=sest.RESERVA,
+    ),
+    Regra(
+        padrao=r"Relatório Agregado das Empresas Estatais Federais[^;]*, p\. \d+",
+        nome="relatório em PDF",
+        url=sest.PDF,
     ),
     Regra(
         padrao=r"\bONS\b",
@@ -196,6 +229,34 @@ REGRAS: list[Regra] = [
         nome="FAO",
         url="https://www.fao.org/publications/home/fao-flagship-publications/the-state-of-food-security-and-nutrition-in-the-world",
     ),
+    # A lista das LDOs por ano (todas as leis de `leis.METAS_DAS_LDOS` estão nela e, uma a uma,
+    # em `LEIS_NO_SENADO`).
+    Regra(
+        padrao=r"LDO de cada ano",
+        nome="Câmara, LDOs de cada ano",
+        url="https://www2.camara.leg.br/orcamento-da-uniao/leis-orcamentarias/ldo",
+    ),
+    Regra(
+        padrao=r"Relatório de Acompanhamento Fiscal",
+        nome="IFI, Relatório de Acompanhamento Fiscal",
+        url="https://www12.senado.leg.br/ifi/publicacoes-1/relatorio-de-acompanhamento-fiscal",
+    ),
+    Regra(
+        # Onde o Relatório Agregado é citado, os três endereços exatos acima bastam.
+        padrao=r"Sest\b(?!\), Relatório Agregado)|SEST\b|Empresas Estatais(?! Federais)",
+        nome="Ministério da Gestão, estatais (Sest)",
+        url="https://www.gov.br/gestao/pt-br/assuntos/estatais",
+    ),
+    Regra(
+        padrao=r"Ministério da Previdência|Boletim Estatístico da Previdência|\bINSS\b",
+        nome="Ministério da Previdência, dados abertos",
+        url="https://www.gov.br/previdencia/pt-br/acesso-a-informacao/dados-abertos",
+    ),
+    Regra(
+        padrao=r"Tribunal de Contas da União",
+        nome="TCU",
+        url="https://portal.tcu.gov.br",
+    ),
     Regra(
         padrao=r"\bIFI\b|Instituição Fiscal Independente",
         nome="IFI",
@@ -204,7 +265,7 @@ REGRAS: list[Regra] = [
     # O projeto da LDO 2027 (matéria 173677 no Senado, a mesma de `tramitacao.PROJETOS`); a
     # página abre na ficha do Congresso Nacional (conferida em 25/11/2026).
     Regra(
-        padrao=r"PLN nº 2/2026|Projeto da LDO 2027",
+        padrao=r"PLN nº 2/2026|Projeto da LDO 2027|PLDO 2027",
         nome="PLN 2/2026 (LDO 2027)",
         url="https://www.congressonacional.leg.br/materias/materias-bicamerais/-/ver/pln-2-2026",
     ),
@@ -339,6 +400,30 @@ _GERAIS: list[Regra] = [
     ),
 ]
 
+# Instituição citada sem que nenhuma regra mais específica tenha dado link dela: entra a página
+# geral (padrão, pedaço do endereço que já a cobre).
+_INSTITUICOES: list[tuple[Regra, str]] = [
+    (_GERAIS[0], "bcb.gov"),
+    (_GERAIS[1], "ibge.gov"),
+    (_GERAIS[2], "tesouro"),
+    (
+        Regra(padrao=r"\bIpea\b", nome="Ipea", url="http://www.ipeadata.gov.br"),
+        "ipeadata",
+    ),
+    (
+        Regra(padrao=r"\bSenado\b", nome="Senado Federal", url="https://www.senado.leg.br"),
+        "senado.leg",
+    ),
+    (
+        Regra(
+            padrao=r"Câmara dos Deputados",
+            nome="Câmara dos Deputados",
+            url="https://www.camara.leg.br",
+        ),
+        "camara.leg",
+    ),
+]
+
 
 class Endereco(BaseModel):
     nome: str
@@ -346,7 +431,7 @@ class Endereco(BaseModel):
 
 
 def _numeros(lista: str) -> list[str]:
-    return list(dict.fromkeys(re.findall(r"\d+", lista)))
+    return list(dict.fromkeys(re.findall(r"[A-Z][A-Z0-9_]*[0-9_][A-Z0-9_]*|\d+", lista)))
 
 
 def enderecos(fonte: str) -> list[Endereco]:
@@ -364,8 +449,9 @@ def enderecos(fonte: str) -> list[Endereco]:
                     achados.setdefault(r.url, Endereco(nome=r.nome, url=r.url))
 
     somar(REGRAS)
-    if not achados:
-        somar(_GERAIS)
+    for regra, dominio in _INSTITUICOES:
+        if not any(dominio in url for url in achados) and re.search(regra.padrao, fonte):
+            somar([regra])
     return list(achados.values())
 
 
@@ -389,11 +475,12 @@ def _textos_de_fonte(no: object) -> list[str]:
 
 def auditar(pasta: Path) -> tuple[list[str], list[str]]:
     """As fontes dos JSONs gerados sem endereço nenhum e as que só caíram na página geral da
-    instituição (`_GERAIS`). O build avisa as duas listas (Caio, 25/11/2026: toda fonte oficial
+    instituição (`_INSTITUICOES`). O build avisa as duas listas (Caio, 25/11/2026: toda fonte
+    oficial
     tem de estar linkada)."""
     sem: set[str] = set()
     gerais: set[str] = set()
-    paginas = {r.url for r in _GERAIS}
+    paginas = {r.url for r, _ in _INSTITUICOES}
     for arquivo in sorted(
         pasta.glob("*.json")
     ):  # o painel de alerta é conta nossa sobre linhas já citadas
@@ -415,11 +502,14 @@ def auditar(pasta: Path) -> tuple[list[str], list[str]]:
 
 
 def gravar(saida: Path) -> int:
-    regras = REGRAS + _GERAIS
+    regras = REGRAS + [r for r, _ in _INSTITUICOES]
     texto = json.dumps(
         {
             "regras": [r.model_dump(exclude_defaults=True) for r in REGRAS],
-            "gerais": [r.model_dump(exclude_defaults=True) for r in _GERAIS],
+            "instituicoes": [
+                {**r.model_dump(exclude_defaults=True), "dominio": dominio}
+                for r, dominio in _INSTITUICOES
+            ],
         },
         ensure_ascii=False,
     )

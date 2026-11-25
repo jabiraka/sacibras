@@ -31,12 +31,14 @@ import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import { montarSimulador } from "./simulador";
 import { montarSimuladorLDO } from "./simulador-ldo";
+import { montarFichasEstatais } from "./estatais";
 import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
 import { montarComparadorSalario } from "./salario-minimo";
 import type {
   Cartao,
   Estados,
+  FichasEstatais,
   Grafico,
   ItemSecao,
   Mundo,
@@ -705,6 +707,7 @@ function parteDaPeca(
   if (peca === "t-alertas" || peca.startsWith("a-")) {
     return partes.find((p) => p.extras.includes("alertas"));
   }
+  if (peca.startsWith("e-")) return partes.find((p) => p.extras.includes("fichas-estatais"));
   const campos: Record<string, "cartoes" | "graficos" | "tabelas"> = {
     "c-": "cartoes",
     "g-": "graficos",
@@ -723,7 +726,7 @@ function parteDaPeca(
 }
 
 /** O que uma parte mostra, inteiro: números, a peça própria, gráficos e tabelas. */
-function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
+function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement, peca = ""): void {
   const pegar = <T extends { id: string }>(lista: T[], ids: string[]): T[] =>
     ids.map((i) => lista.find((x) => x.id === i)).filter((x): x is T => x !== undefined);
   const cartoes = pegar(s.cartoes, p.cartoes);
@@ -761,6 +764,17 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement): void {
   }
   if (p.extras.includes("simulador-ldo") && s.simulador_ldo) {
     alvo.append(caixaDoSimuladorLDO(s.simulador_ldo));
+  }
+  if (p.extras.includes("fichas-estatais") && s.arquivo_estatais) {
+    // Uma estatal por dentro; "#fiscal/e-ect" abre nos Correios.
+    const construtores = {
+      ler: (a: string) => ler<FichasEstatais>(a),
+      cartao: montarCartao,
+      peca: montarPeca,
+      tabela: montarTabela,
+    };
+    const inicial = peca.startsWith("e-") ? peca.slice(2) : "";
+    alvo.append(montarFichasEstatais(s.arquivo_estatais, construtores, inicial));
   }
   const comparador = s.salario_minimo;
   if (p.extras.includes("salario-minimo") && comparador) {
@@ -926,7 +940,7 @@ function vistaAssunto(painel: Painel, id: string, peca: string, conteudo: HTMLEl
         marcarMenu(id, parte.id);
         corpo.classList.add("parte-corpo");
         if (parte.resumo) corpo.append(el("p", "secao-resumo", parte.resumo));
-        montarParte(s, parte, corpo);
+        montarParte(s, parte, corpo, peca);
         const veja = vejaTambem(parte);
         if (veja) corpo.append(veja);
         corpo.append(outrasPartes(id, item.titulo, partes, parte.id));
@@ -1106,6 +1120,7 @@ async function iniciar(): Promise<void> {
     fontes.append(li);
   }
   montarMenu(painel);
+  ligarEnderecos(fontes);
 
   let vistaAtual: string | null = null;
   const desenhar = (): void => {

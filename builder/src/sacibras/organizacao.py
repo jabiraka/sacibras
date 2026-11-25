@@ -24,6 +24,7 @@ Extra = Literal[
     "simulador-ldo",
     "alertas",
     "salario-minimo",
+    "fichas-estatais",
 ]
 
 CATEGORIAS: list[Categoria] = [
@@ -332,7 +333,7 @@ PARTES: dict[str, list[Parte]] = {
             "estatais",
             "Estatais",
             "O que as estatais federais pagam à União em dividendos, o que recebem em "
-            "subvenção e capital, e o resultado das que contam no setor público.",
+            "subvenção e capital, e cada uma por dentro: lucro, receita e balanço.",
             cartoes=["estatais-saldo", "dividendos-12m", "estatais-subvencao", "estatais-primario"],
             graficos=["estatais-conta", "dividendos-por-empresa", "estatais-primario"],
             tabelas=[
@@ -341,6 +342,9 @@ PARTES: dict[str, list[Parte]] = {
                 "estatais-subvencoes",
                 "estatais-lucro",
             ],
+            # Caio, 25/11/2026: "abra por estatal um dashboard". As fichas vêm num arquivo à
+            # parte (`Secao.arquivo_estatais`), uma de cada vez, escolhida numa lista.
+            extras=["fichas-estatais"],
         ),
     ],
     "impostos": [
@@ -1094,6 +1098,8 @@ def aplicar(secao: Secao) -> list[str]:
         extras_da_secao.append("alertas")
     if secao.salario_minimo:
         extras_da_secao.append("salario-minimo")
+    if secao.arquivo_estatais:
+        extras_da_secao.append("fichas-estatais")
     usados: dict[str, set[str]] = {k: set() for k in tem}
     subcategorias: list[Subcategoria] = []
     for p in partes:

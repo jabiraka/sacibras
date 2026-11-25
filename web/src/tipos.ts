@@ -292,6 +292,7 @@ export interface Subcategoria {
     | "simulador-ldo"
     | "alertas"
     | "salario-minimo"
+    | "fichas-estatais"
   )[];
   /** Atalhos para partes de outros assuntos ("Veja também"). */
   veja?: Elo[];
@@ -301,6 +302,24 @@ export interface Elo {
   endereco: string;
   titulo: string;
   resumo: string;
+}
+
+/** Uma estatal federal por dentro (Sest, anexo I): quatro números, o gráfico e a tabela. */
+export interface FichaEstatal {
+  id: string;
+  nome: string;
+  nome_completo: string;
+  setor: string;
+  descricao: string;
+  cartoes: Cartao[];
+  grafico: Grafico;
+  tabela: Tabela;
+}
+
+export interface FichasEstatais {
+  fichas: FichaEstatal[];
+  primeira: string;
+  gerado_em: string;
 }
 
 export interface Secao {
@@ -317,6 +336,8 @@ export interface Secao {
   simulador_reforma?: SimuladorReforma | null;
   simulador_ldo?: SimuladorLDO | null;
   salario_minimo?: ComparadorSalario | null;
+  /** Contas públicas › Estatais: o arquivo das fichas, lido só quando a parte abre. */
+  arquivo_estatais?: string;
   alertas?: Alerta[];
   /** Só no resumo: o que saiu por último, contra o Focus (saiu.ts). */
   saiu?: Divulgado[];

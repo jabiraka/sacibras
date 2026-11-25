@@ -192,6 +192,21 @@ Entraram o projeto da LDO 2027 e a conta nossa da dívida por cenário (ver o
   hipótese para depois de 2030.
 - **A mesma peça a cada PLDO** (abril) e a cada LDO sancionada: hoje os nomes dizem 2027.
 
+## Estatais por dentro (sessão de 25/11/2026)
+
+A ficha de cada estatal saiu só com o Anexo I da Sest (anual, 2021 a 2025). Para ir além:
+
+- **Trimestral e desde 2010, só das listadas** (Petrobras, Banco do Brasil, Banco da Amazônia,
+  Banco do Nordeste, Telebras): os demonstrativos na CVM (`dados.cvm.gov.br`, DFP e ITR,
+  dados abertos do governo; abre da nuvem). Traz também dívida, caixa e o fluxo de caixa,
+  que a Sest não tem. O preço da ação e o valor de mercado ficam fora (vêm da B3).
+- **Os bancos sem ação na bolsa** (Caixa, BNDES): o IF.data do Banco Central, trimestral
+  (API Olinda, abre da nuvem).
+- **2020 e antes**: as edições antigas do Anexo I têm outro desenho (um bloco por empresa);
+  a de 2025 traz 2020, com números de 2023 e 2024 diferentes dos da edição de 2026.
+- **A remuneração média** e a pirâmide de idade dos empregados: a planilha de 2026 traz
+  vazio ou outro número em 2024 e 2025; voltar quando a Sest corrigir.
+
 ## Rótulo de cálculo próprio (sessão de 25/11/2026)
 
 Onde o órgão publica o número e o builder não lê, a peça é oficial e a fonte aponta para a

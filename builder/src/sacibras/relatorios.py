@@ -383,6 +383,7 @@ class ReceitaPrevista:
 # líquida de incentivos fiscais" 2.040.990,1 (LOA 2026), 2.065.688,3 (4º bim.), 2.064.946,0
 # (5º bim.); "Arrecadação Líquida para o RGPS" 793.153,5, 786.426,5, 777.560,0. LER DE NOVO a
 # cada bimestre e trocar o ano em janeiro.
+# Conferido também no PDF do relatório do 5º bimestre (MPO, 24/11/2026), Tabela 1.
 ANO_DA_RECEITA_PREVISTA = 2026
 AVALIACAO_DA_RECEITA = "5º bimestre"
 RECEITA_PREVISTA = [

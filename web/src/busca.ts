@@ -614,6 +614,15 @@ export function revelar(alvo: string): void {
       no = lista.closest(".painel-mundo") as HTMLElement | null;
     }
   }
+  if (!no && alvo.startsWith("e-")) {
+    // Uma estatal: a ficha já abre nela pelo endereço; se a lista estiver na tela, troca.
+    const lista = document.querySelector<HTMLSelectElement>("#estatais-ficha");
+    if (lista && [...lista.options].some((o) => o.value === alvo.slice(2))) {
+      lista.value = alvo.slice(2);
+      lista.dispatchEvent(new Event("change"));
+    }
+    no = document.getElementById("fichas-estatais");
+  }
   if (!no && (alvo.startsWith("uf-") || alvo.startsWith("p-"))) {
     no = document.getElementById(alvo) ?? document.querySelector(".mapa, .ranking-pontos");
   }

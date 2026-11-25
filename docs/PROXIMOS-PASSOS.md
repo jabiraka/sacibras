@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 25/11/2026 (a B3 saiu). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 25/11/2026 (a ficha de cada estatal). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,23 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e dólar e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**25/11/2026, uma estatal por dentro** (Caio: *"Na aba das estatais, abra por estatal um
+dashboard com informações mais relevantes, principalmente histórico de performance, receita ou
+prejuízo e outras métricas relevantes para analisar empresas"*). Em Contas públicas › Estatais,
+a caixa "Uma estatal por dentro": lista das 44 estatais de controle direto, por setor (abre na
+Petrobras; `#fiscal/e-<id>` abre outra, e a busca acha cada uma pelo nome). Cada ficha: quatro
+números (lucro ou prejuízo com a posição entre as 44, receita, retorno sobre o patrimônio ou,
+nas dependentes, a subvenção, e o saldo com a União), o gráfico de receita e lucro com outros
+seis atrás da lista (margem e retorno, balanço, com a União, empregados, gasto por empregado,
+investimento) e a tabela de todos os anos. **Fonte**: a planilha do Anexo I do Relatório
+Agregado da Sest (`fontes/sest.py`), baixada no build; o endereço se acha na página do
+relatório (o nome muda a cada edição). Cada peça leva dois links (Caio: *"Lembra de linkar por onde vc pegar os dados"*): a página do relatório e a planilha; o que cita página do relatório leva o PDF (`links.py`, abertos em 25/11). **Na edição de junho/2027**, o build avisa e é preciso trocar `sest.RESERVA` e `sest.PDF`. **Só 2021 a 2025**, anual: é o que a planilha traz.
+Duas armadilhas da edição de 2026, tratadas no código: o pessoal e os impostos de 2025 vêm em
+R$ mil (corrigido sozinho pela mediana contra 2024) e a remuneração média de 2024–2025 vem
+vazia (fora). As fichas vão num arquivo à parte (`estatais.json`, ~545 KB, lido só quando a
+parte abre). Olhado a 390 e 1280 px; **falta o Caio olhar**. Mais história e números
+trimestrais: [PROPOSTAS](PROPOSTAS.md), "Estatais por dentro".
 
 **25/11/2026, a B3 saiu do site** (Caio: *"não queremos correr esse risco, então retire
 qualquer que for informações da B3"*). Saíram: o Ibovespa (cartões, gráficos, a tabela de
@@ -420,8 +437,6 @@ As próximas:
 - **até 23/12**: o projeto da LDO 2027 (`relatorios.PLDO_2027`), antes se a issue `tramitação` abrir.
 - **até 15/01/2027**: a LDO 2027 no Senado → o ano novo em `leis.METAS_DAS_LDOS`.
 - **até 19/02/2027**: as dez perguntas (`perguntas.LIDAS_EM`).
-- **até 24/11**: relatório do 5º bimestre (sai até 22/11) → `leis.AVALIACOES_2026` e
-  `relatorios.RECEITA_PREVISTA`.
 - **até 03/12**: nota fiscal do BC → `relatorios.ELASTICIDADES`.
 - **até 14/12**: nota de crédito (`relatorios.NOTAS`; o sisweb estava fora do ar).
 - **até 15/12**: quem está no RRF e no Propag (`relatorios.ACORDOS`): o RMGH de 2026 do
@@ -433,6 +448,7 @@ As próximas:
 - **até 10/01/2027**: decreto do salário mínimo de 2027 → `leis.SALARIO_MINIMO_NORMAS`
   (o valor vem do SGS 1619; a tela só cita a norma do ano que estiver no dicionário).
 - **até 20/01/2027**: teto do INSS de 2027 (portaria de janeiro) → `relatorios.TETO_INSS`.
+- **até 22/01/2027**: relatório do 6º bimestre (gov.br/planejamento, relatórios de avaliação fiscal) → `leis.AVALIACOES_2026` e `relatorios.RECEITA_PREVISTA`; em janeiro, trocar também o ano e a LOA da receita. O do 5º foi lido em 25/11/2026 (resultado −89,3 bi, dedução 77,0 bi, após a dedução −12,3 bi; a meta de piso é 0).
 - **até 28/02/2027**: aposentadoria média do INSS (BEPS, quadro 15) →
   `relatorios.INSS_APOSENTADORIA_MEDIA`.
 - **até 15/05/2027**: avaliações atuariais do PLDO 2028 → `relatorios.SERVIDORES_POR_PODER`

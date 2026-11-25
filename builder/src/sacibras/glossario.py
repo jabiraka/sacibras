@@ -1988,7 +1988,39 @@ TERMOS: list[Termo] = [
         "Aporte de capital",
         "Dinheiro que o dono põe na empresa em troca de mais ações. Na conta das estatais, "
         "é o que a União adianta para futuro aumento de capital.",
-        ("aporte de capital", "aumento de capital"),
+        ("aporte de capital", "aumento de capital", "AFAC"),
+        "#fiscal/estatais",
+    ),
+    # Uma estatal por dentro (Caio, 25/11/2026).
+    Termo(
+        "patrimonio-liquido",
+        "Patrimônio líquido",
+        "O que a empresa tem (o ativo) menos o que ela deve (o passivo). Negativo quer dizer "
+        "que deve mais do que tem.",
+        ("patrimônio líquido",),
+        "#fiscal/estatais",
+    ),
+    Termo(
+        "retorno-sobre-o-patrimonio",
+        "Retorno sobre o patrimônio",
+        "O lucro do ano dividido pelo patrimônio líquido: quanto a empresa ganhou para cada "
+        "real que os donos têm nela. Em inglês, ROE.",
+        ("retorno sobre o patrimônio", "ROE"),
+        "#fiscal/estatais",
+    ),
+    Termo(
+        "margem-liquida",
+        "Margem líquida",
+        "O lucro do ano dividido pela receita: quanto de cada real vendido sobra como lucro.",
+        ("margem líquida",),
+        "#fiscal/estatais",
+    ),
+    Termo(
+        "passivo-exigivel",
+        "Passivo exigível",
+        "Tudo o que a empresa deve a terceiros: empréstimos, fornecedores, impostos, "
+        "depósitos (nos bancos).",
+        ("passivo exigível",),
         "#fiscal/estatais",
     ),
     Termo(

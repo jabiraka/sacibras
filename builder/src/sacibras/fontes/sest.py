@@ -12,8 +12,12 @@ dependente e o lucro das maiores. Sai uma vez por ano, em junho.
 from __future__ import annotations
 
 import io
+import itertools
 import re
-from dataclasses import dataclass
+import statistics
+import unicodedata
+from dataclasses import dataclass, field
+from typing import Any
 
 import openpyxl  # type: ignore[import-untyped]
 
@@ -24,6 +28,16 @@ PAGINA = (
     "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/defeso_relatorio%20agregado"
 )
 FONTE = "Ministério da Gestão (Sest), Relatório Agregado das Empresas Estatais Federais"
+# A planilha e o PDF da edição de 2026, abertos em 25/11/2026: são os links da tela
+# (`links.py`). Edição nova muda os dois nomes; o build avisa (`empresas_da_mais_nova`).
+RESERVA = (
+    "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/"
+    "AnexoISrieshistricasRelatrioAgregadodasEmpresasEstataisFederais2026anobase2025.xlsx"
+)
+PDF = (
+    "https://www.gov.br/gestao/pt-br/assuntos/estatais/transparencia/"
+    "RelatrioAgregadodasEmpresasEstataisFederais2026anobase202506181.pdf"
+)
 VALIDADE = 24 * 3600
 
 _PLANILHA = re.compile(r'href="([^"]*AnexoI[^"]*?(\d{4})anobase(\d{4})\.xlsx)"')
@@ -145,3 +159,143 @@ def anexo() -> Anexo:
     if ano_base not in saida.por_ano:
         raise FonteForaDoArError(f"Sest: a planilha {edicao} não traz o ano-base {ano_base}")
     return saida
+
+
+# ------------------------------------------------------------------ cada empresa, ano a ano
+#
+# Caio, 25/11/2026: *"Na aba das estatais, abra por estatal um dashboard com informações mais
+# relevantes, principalmente histórico de performance, receita ou prejuízo e outras métricas
+# relevantes para analisar empresas"*. As mesmas linhas da planilha, empresa por empresa, para
+# a ficha de cada uma (`secoes/estatais.fichas`).
+#
+# Duas armadilhas da edição de 2026, achadas comparando 2025 com 2024 em todas as empresas:
+# - as colunas da demonstração do valor adicionado (pessoal, impostos e as do fim da planilha)
+#   de 2025 vêm em R$ mil, não em reais (mediana de 2025/2024 perto de 0,001).
+#   `_corrigir_escala` acha isso sozinha e multiplica por mil;
+# - a remuneração média, a idade média e o tempo de serviço de 2024 e 2025 vêm vazios ou com
+#   outro número no lugar. Ficam de fora.
+
+# Cabeçalho normalizado (sem acento, minúsculas, espaços simples) -> campo.
+COLUNAS = {
+    "ano": "ano",
+    "abreviacao": "sigla",
+    "nome": "nome",
+    "setor relatorio": "setor",
+    "ministerio supervisor": "ministerio",
+    "dependencia do tesouro nacional": "dependencia",
+    "ano de criacao": "criacao",
+    "ativo": "ativo",
+    "passivo exigivel": "passivo",
+    "patrimonio liquido": "patrimonio",
+    "gasto com pessoal proprio": "pessoal",
+    "impostos, taxas e contribuicoes": "impostos",
+    "faturamento": "faturamento",
+    "resultado liquido": "lucro",
+    "dividendos e jcp pagos": "dividendos",
+    "dividendos e jcp pagos a uniao": "dividendos_uniao",
+    "subvencao": "subvencao",
+    "afac": "afac",
+    "receita da intermediacao financeira": "intermediacao",
+    "receita da prestacao de servicos e tarifas": "tarifas",
+    "orcamento investimento aprovado": "investimento_aprovado",
+    "orcamento investimento executado": "investimento",
+    "qtd_empregados": "empregados",
+}
+TEXTOS = {"ano", "sigla", "nome", "setor", "ministerio", "dependencia", "criacao"}
+NUMEROS = [c for c in COLUNAS.values() if c not in TEXTOS]
+# As que vêm da demonstração do valor adicionado: as que já mudaram de escala.
+DA_DVA = ("pessoal", "impostos")
+
+
+def _normal(texto: object) -> str:
+    sem = unicodedata.normalize("NFKD", str(texto or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"\s+", " ", sem).strip().lower()
+
+
+def _numero(v: Any) -> float | None:
+    if isinstance(v, bool) or v is None:
+        return None
+    if isinstance(v, int | float):
+        return float(v)
+    return None  # "-", "#N/A", ""
+
+
+@dataclass
+class EstatalNoAno:
+    """Uma linha da planilha. Reais; None onde a Sest não traz o número."""
+
+    ano: int
+    sigla: str
+    nome: str
+    setor: str
+    ministerio: str
+    dependente: bool
+    criacao: int | None
+    valores: dict[str, float | None] = field(default_factory=dict)
+
+    def __getitem__(self, campo: str) -> float | None:
+        return self.valores.get(campo)
+
+
+def empresas(conteudo: bytes) -> list[EstatalNoAno]:
+    """As linhas da planilha, empresa por empresa, já com a escala corrigida."""
+    livro = openpyxl.load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
+    linhas = list(livro.worksheets[0].iter_rows(values_only=True))
+    if not linhas:
+        raise FonteForaDoArError("Sest: planilha vazia")
+    cabecalho = [_normal(c) for c in linhas[0]]
+    onde = {campo: cabecalho.index(nome) for nome, campo in COLUNAS.items() if nome in cabecalho}
+    faltam = set(COLUNAS.values()) - set(onde)
+    if faltam:
+        raise FonteForaDoArError(f"Sest: colunas que sumiram: {sorted(faltam)}")
+    saida: list[EstatalNoAno] = []
+    for bruta in linhas[1:]:
+        ano = bruta[onde["ano"]]
+        if not isinstance(ano, int) or not bruta[onde["sigla"]]:
+            continue
+        criacao = bruta[onde["criacao"]]
+        saida.append(
+            EstatalNoAno(
+                ano=ano,
+                sigla=str(bruta[onde["sigla"]]).strip(),
+                nome=str(bruta[onde["nome"]] or "").strip(),
+                setor=str(bruta[onde["setor"]] or "").strip(),
+                ministerio=str(bruta[onde["ministerio"]] or "").strip(),
+                dependente=_normal(bruta[onde["dependencia"]]) == "dependente",
+                criacao=criacao if isinstance(criacao, int) else None,
+                valores={c: _numero(bruta[onde[c]]) for c in NUMEROS},
+            )
+        )
+    _corrigir_escala(saida)
+    return saida
+
+
+def _corrigir_escala(linhas: list[EstatalNoAno]) -> None:
+    """Ano em que uma coluna da DVA veio em R$ mil: a mediana do ano contra o anterior, nas
+    mesmas empresas, fica perto de 1/1000. Aí o ano inteiro daquela coluna vai vezes mil."""
+    por = {(x.ano, x.sigla): x for x in linhas}
+    anos = sorted({x.ano for x in linhas})
+    for campo in DA_DVA:
+        for antes, ano in itertools.pairwise(anos):
+            razoes = []
+            for x in linhas:
+                if x.ano != ano or (antes, x.sigla) not in por:
+                    continue
+                a, b = por[(antes, x.sigla)][campo], x[campo]
+                if a and b and a > 0 and b > 0:
+                    razoes.append(b / a)
+            if len(razoes) >= 5 and statistics.median(razoes) < 0.01:
+                for x in linhas:
+                    v = x[campo]
+                    if x.ano == ano and v is not None:
+                        x.valores[campo] = v * 1000
+
+
+def empresas_da_mais_nova() -> tuple[str, list[EstatalNoAno]]:
+    """A fonte ("..., anexo I") e as linhas da planilha da edição mais nova."""
+    html = baixar(PAGINA, validade=VALIDADE, tempo_limite=60).decode("utf-8", "replace")
+    edicao, ano_base, url = planilha_mais_nova(html)
+    if url != RESERVA:
+        print(f"    aviso: edição nova do anexo I da Sest ({url}); atualize RESERVA e PDF")
+    linhas = empresas(baixar(url, validade=VALIDADE, tempo_limite=120))
+    return f"{FONTE} {edicao}, ano-base {ano_base}, anexo I", linhas

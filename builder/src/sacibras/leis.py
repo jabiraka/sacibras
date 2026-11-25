@@ -209,7 +209,9 @@ class AvaliacaoBimestral:
 # [4º], -89.306,5 [5º]; "6. Dedução EC 136, ADPF 1236 e LCs 221, 223 e 235" 62.779,0, 67.291,4,
 # 76.984,7; "8. Centro da Meta" 34.264,6. O 3º e o 4º batem com a Nota Informativa da Conorf
 # (Senado) de 25/9/2026, lida em 14/11/2026. Nota 3 da Conorf: precatórios, defesa, saúde e a
-# ADPF 1236. LER DE NOVO a cada bimestre (o do 1º de 2027 sai até 22/3).
+# ADPF 1236. LER DE NOVO a cada bimestre (o do 6º sai até 22/1/2027).
+# Conferido também no PDF do relatório do 5º bimestre (MPO, 24/11/2026,
+# relatorio_5__bimestre_2026.pdf, Tabela 1): "7. Resultado Primário após Dedução -12.321,8".
 AVALIACOES_2026 = [
     AvaliacaoBimestral("3º bimestre", -52.0, 62.8, "Relatório de Avaliação do 3º bimestre de 2026"),
     AvaliacaoBimestral("4º bimestre", -80.9, 67.3, "Relatório de Avaliação do 4º bimestre de 2026"),

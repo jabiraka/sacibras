@@ -16,11 +16,15 @@ vai ano a ano. Não é o lucro das empresas nem o valor delas: é o que passou p
 
 from __future__ import annotations
 
+import re
+import unicodedata
+from collections.abc import Callable
 from datetime import date
 
 from sacibras import contas, relatorios
 from sacibras.fontes import sest
-from sacibras.schema import Cartao, Grafico, LinhaTabela, Tabela
+from sacibras.fontes.sest import EstatalNoAno
+from sacibras.schema import Cartao, FichaEstatal, Grafico, LinhaTabela, Serie, Tabela
 from sacibras.secoes.base import br, cartao, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
@@ -362,3 +366,474 @@ def primario(
         )
     ]
     return cartoes, graficos, []
+
+
+# ------------------------------------------------------------------ uma estatal por dentro
+#
+# Caio, 25/11/2026: "abra por estatal um dashboard com informações mais relevantes,
+# principalmente histórico de performance, receita ou prejuízo e outras métricas relevantes
+# para analisar empresas". Tudo do Anexo I da Sest (`fontes/sest.py`), em reais da época. A
+# margem, o retorno sobre o patrimônio, o saldo com a União e o gasto por empregado são
+# divisões e somas dos números dela. Fica de fora o que a Sest não traz: dívida líquida,
+# Ebitda, caixa e o valor de mercado (este vem da bolsa, e a B3 saiu do projeto).
+
+# O nome de todo dia, onde a sigla da Sest não diz nada a quem visita.
+NOMES = {
+    "PETROBRAS (Grupo)": "Petrobras",
+    "BB (Grupo)": "Banco do Brasil",
+    "BNDES (Grupo)": "BNDES",
+    "CAIXA (Grupo)": "Caixa",
+    "ENBPar (Grupo)": "ENBPar (Itaipu e Eletronuclear)",
+    "ECT": "Correios",
+    "BASA": "Banco da Amazônia",
+    "BNB": "Banco do Nordeste",
+    "EBSERH": "Ebserh (hospitais universitários)",
+    "CONCEIÇÃO": "Grupo Hospitalar Conceição",
+    "HCPA": "Hospital de Clínicas de Porto Alegre",
+    "CMB": "Casa da Moeda",
+    "CPRM": "Serviço Geológico (CPRM)",
+    "APS": "Porto de Santos (APS)",
+    "CDRJ": "Portos do Rio (CDRJ)",
+    "CDC": "Portos do Ceará (CDC)",
+    "CDP": "Portos do Pará (CDP)",
+    "CODEBA": "Portos da Bahia (Codeba)",
+    "CODERN": "Portos do RN (Codern)",
+    "CODEVASF": "Codevasf",
+    "CONAB": "Conab",
+    "EMBRAPA": "Embrapa",
+    "INFRAERO": "Infraero",
+    "SERPRO": "Serpro",
+    "DATAPREV": "Dataprev",
+    "TELEBRAS": "Telebras",
+    "TRENSURB": "Trensurb",
+    "FINEP": "Finep",
+    "HEMOBRÁS": "Hemobrás",
+    "IMBEL": "Imbel",
+    "NUCLEP": "Nuclep",
+    "AMAZUL": "Amazul",
+    "CEITEC": "Ceitec",
+    "CEAGESP": "Ceagesp",
+    "CEASAMINAS": "CeasaMinas",
+    "EMGEA": "Emgea",
+    "EMGEPRON": "Emgepron",
+}
+PRIMEIRA = "Petrobras"
+
+
+def _id(sigla: str) -> str:
+    sem = unicodedata.normalize("NFKD", sigla).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", sem.replace("(grupo)", "")).strip("-")
+
+
+def _receita(x: EstatalNoAno) -> float | None:
+    """Faturamento; nos bancos, a Sest põe a receita na intermediação e nas tarifas."""
+    soma = sum(x[c] or 0.0 for c in ("faturamento", "intermediacao", "tarifas"))
+    return soma or None
+
+
+def _razao(a: float | None, b: float | None, positivo: bool = False) -> float | None:
+    if a is None or not b or (positivo and b <= 0):
+        return None
+    return a / b * 100
+
+
+def _saldo(x: EstatalNoAno) -> float:
+    return (x["dividendos_uniao"] or 0.0) - (x["subvencao"] or 0.0) - (x["afac"] or 0.0)
+
+
+def _por_empregado(x: EstatalNoAno) -> float | None:
+    p, n = x["pessoal"], x["empregados"]
+    return p / n / 1000 if p and n else None
+
+
+def ficha(
+    anos: list[EstatalNoAno], todas_do_ano: list[EstatalNoAno], fonte_sest: str
+) -> FichaEstatal:
+    """A ficha de uma estatal; `anos` em ordem, `todas_do_ano` para a posição no ranking."""
+    u = anos[-1]
+    nome = NOMES.get(u.sigla, u.sigla.replace(" (Grupo)", ""))
+    ident = _id(u.sigla)
+    datas = [date(x.ano, 1, 1) for x in anos]
+    tamanho = max(abs(v or 0.0) for x in anos for v in (x["ativo"], _receita(x), x["subvencao"]))
+    if tamanho >= 2e9:
+        escala, unidade, curta = 1e9, "R$ bilhões", "R$ bi"
+    else:
+        escala, unidade, curta = 1e6, "R$ milhões", "R$ mi"
+
+    def em(v: float | None) -> float | None:
+        return None if v is None else round(v / escala, 2)
+
+    def pontos(valor: Callable[[EstatalNoAno], float | None]) -> list[tuple[date, float | None]]:
+        return [(d, valor(x)) for d, x in zip(datas, anos, strict=True)]
+
+    def s(id_: str, rotulo: str, valor: Callable[[EstatalNoAno], float | None]) -> Serie:
+        return Serie(id=id_, nome=rotulo, pontos=pontos(valor))
+
+    def reais(v: float) -> str:
+        return f"{curta.replace('R$ ', 'R$ ' + br(v / escala) + ' ')}"
+
+    fonte = f"{fonte_sest}, {anos[0].ano} a {u.ano}"
+    ultimo = date(u.ano, 1, 1)
+    banco = (u["intermediacao"] or 0.0) > 0
+
+    # --- os quatro números
+    lucro, receita = u["lucro"] or 0.0, _receita(u)
+    posicao = 1 + sum(1 for o in todas_do_ano if (o["lucro"] or 0.0) > lucro)
+    margem = _razao(lucro, receita)
+    cartoes = [
+        Cartao(
+            id=f"estatal-{ident}-lucro",
+            rotulo="Lucro" if lucro >= 0 else "Prejuízo",
+            valor=round(lucro / escala, 2),
+            unidade=unidade,
+            referencia=ultimo,
+            periodicidade="A",
+            detalhe=f"{posicao}º lugar em lucro entre {len(todas_do_ano)} estatais",
+            anterior=em(anos[-2]["lucro"]) if len(anos) > 1 else None,
+            anterior_rotulo=str(anos[-2].ano) if len(anos) > 1 else "",
+            fonte=fonte,
+            secao="fiscal",
+            mini=[
+                (d, round((x["lucro"] or 0.0) / escala, 2))
+                for d, x in zip(datas, anos, strict=True)
+            ],
+        )
+    ]
+    if receita:
+        antes = _receita(anos[-2]) if len(anos) > 1 else None
+        detalhe = "" if margem is None or u.dependente else f"margem de {br(margem)} %"
+        if antes:
+            detalhe += f"{'; ' if detalhe else ''}{br((receita / antes - 1) * 100)} % em um ano"
+        cartoes.append(
+            Cartao(
+                id=f"estatal-{ident}-receita",
+                rotulo="Receita própria" if u.dependente else "Receita",
+                valor=round(receita / escala, 2),
+                unidade=unidade,
+                referencia=ultimo,
+                periodicidade="A",
+                detalhe=detalhe,
+                fonte=fonte,
+                secao="fiscal",
+                mini=[
+                    (d, round((_receita(x) or 0.0) / escala, 2))
+                    for d, x in zip(datas, anos, strict=True)
+                ],
+            )
+        )
+    if u.dependente:
+        sub = u["subvencao"] or 0.0
+        cartoes.append(
+            Cartao(
+                id=f"estatal-{ident}-subvencao",
+                rotulo="Subvenção do Tesouro",
+                valor=round(sub / escala, 2),
+                unidade=unidade,
+                referencia=ultimo,
+                periodicidade="A",
+                detalhe=(
+                    f"{br(sub / receita, 0)} vezes a receita própria"
+                    if receita and sub > receita
+                    else "para pessoal e custeio"
+                ),
+                fonte=fonte,
+                secao="fiscal",
+                mini=[
+                    (d, round((x["subvencao"] or 0.0) / escala, 2))
+                    for d, x in zip(datas, anos, strict=True)
+                ],
+            )
+        )
+    else:
+        roe = _razao(lucro, u["patrimonio"], positivo=True)
+        if roe is not None:
+            validos = [r for x in anos if (r := _razao(x["lucro"], x["patrimonio"], True))]
+            cartoes.append(
+                Cartao(
+                    id=f"estatal-{ident}-roe",
+                    rotulo="Retorno sobre o patrimônio",
+                    valor=round(roe, 2),
+                    unidade="%",
+                    referencia=ultimo,
+                    periodicidade="A",
+                    detalhe=f"média desde {anos[0].ano}: {br(sum(validos) / len(validos))} %",
+                    fonte=fonte,
+                    secao="fiscal",
+                    mini=[
+                        (d, round(r, 2))
+                        for d, r in pontos(lambda x: _razao(x["lucro"], x["patrimonio"], True))
+                        if r is not None
+                    ],
+                )
+            )
+        else:
+            cartoes.append(
+                Cartao(
+                    id=f"estatal-{ident}-patrimonio",
+                    rotulo="Patrimônio líquido",
+                    valor=round((u["patrimonio"] or 0.0) / escala, 2),
+                    unidade=unidade,
+                    referencia=ultimo,
+                    periodicidade="A",
+                    detalhe="negativo: deve mais do que tem",
+                    fonte=fonte,
+                    secao="fiscal",
+                    mini=[
+                        (d, round((x["patrimonio"] or 0.0) / escala, 2))
+                        for d, x in zip(datas, anos, strict=True)
+                    ],
+                )
+            )
+    saldo = _saldo(u)
+    cartoes.append(
+        Cartao(
+            id=f"estatal-{ident}-saldo",
+            texto="" if saldo else "zero",
+            rotulo="Saldo com a União",
+            valor=round(saldo / escala, 2),
+            unidade=unidade,
+            referencia=ultimo,
+            periodicidade="A",
+            detalhe=(
+                f"pagou {reais(u['dividendos_uniao'] or 0.0)}; recebeu "
+                f"{reais((u['subvencao'] or 0.0) + (u['afac'] or 0.0))}"
+                if (u["dividendos_uniao"] or u["subvencao"] or u["afac"])
+                else "nada pago nem recebido no ano"
+            ),
+            fonte=fonte,
+            secao="fiscal",
+            mini=[(d, round(_saldo(x) / escala, 2)) for d, x in zip(datas, anos, strict=True)],
+        )
+    )
+
+    # --- o gráfico principal e os outros atrás da lista "Gráfico"
+    def g(id_: str, opcao: str, titulo: str, series: list[Serie], **extra: object) -> Grafico:
+        return grafico(
+            f"estatal-{ident}-{id_}",
+            titulo,
+            series,
+            unidade=str(extra.pop("unidade", unidade)),
+            periodicidade="A",
+            fonte=fonte,
+            # Barras só com uma série: com duas, a segunda vira linha e fica fora do lugar.
+            tipo=extra.pop("tipo", "barras" if len(series) == 1 else "linha"),
+            casas=extra.pop("casas", 1),
+            rotulo_opcao=opcao,
+            largura="inteira",
+            **extra,
+        )
+
+    def ok(series: list[Serie]) -> bool:
+        return any(v for x in series for _, v in x.pontos)
+
+    principal = g(
+        "resultado",
+        "Receita e lucro",
+        f"{nome}: receita e lucro",
+        [
+            s("receita", "Receita", lambda x: em(_receita(x))),
+            s("lucro", "Lucro ou prejuízo", lambda x: em(x["lucro"])),
+        ],
+        nota=(
+            "Nos bancos, a receita é a de juros mais as tarifas. Grupo consolidado onde a "
+            'Sest diz "Grupo"; valores da época.'
+            if banco
+            else 'Valores da época; nas que têm "Grupo" no nome, o grupo consolidado.'
+        ),
+        manchete=f"{_resultado(u, reais)}"
+        + (
+            f"; {_resultado(anos[-2], reais)[0].lower()}{_resultado(anos[-2], reais)[1:]}."
+            if len(anos) > 1
+            else "."
+        ),
+    )
+    outros: list[Grafico] = []
+    rentab = [
+        s("margem", "Margem líquida", lambda x: _round(_razao(x["lucro"], _receita(x)))),
+        s(
+            "roe",
+            "Retorno sobre o patrimônio",
+            lambda x: _round(_razao(x["lucro"], x["patrimonio"], True)),
+        ),
+    ]
+    if ok(rentab):
+        outros.append(
+            g(
+                "rentabilidade",
+                "Margem e retorno",
+                f"{nome}: margem e retorno sobre o patrimônio",
+                rentab,
+                unidade="%",
+                tipo="linha",
+                nota="Lucro sobre a receita e sobre o patrimônio do ano. Sem retorno quando o "
+                "patrimônio é negativo.",
+            )
+        )
+    outros.append(
+        g(
+            "balanco",
+            "Balanço",
+            f"{nome}: o que tem, o que deve e o patrimônio",
+            [
+                s("ativo", "Ativo", lambda x: em(x["ativo"])),
+                s("passivo", "Passivo exigível", lambda x: em(x["passivo"])),
+                s("patrimonio", "Patrimônio líquido", lambda x: em(x["patrimonio"])),
+            ],
+            nota="Passivo exigível: o que a empresa deve a terceiros. Patrimônio é o ativo "
+            "menos o passivo.",
+        )
+    )
+    uniao = [
+        s("dividendos", "Dividendos à União", lambda x: em(x["dividendos_uniao"])),
+        s(
+            "repasses",
+            "Subvenção e capital",
+            lambda x: em((x["subvencao"] or 0.0) + (x["afac"] or 0.0)),
+        ),
+        s("saldo", "Saldo para a União", lambda x: em(_saldo(x))),
+    ]
+    if ok(uniao):
+        outros.append(
+            g(
+                "uniao",
+                "Com a União",
+                f"{nome}: o que paga à União e o que recebe dela",
+                uniao,
+                nota="Dividendos e juros sobre capital pagos à União, menos a subvenção e o "
+                "aporte de capital (AFAC). É o caixa, não o lucro.",
+            )
+        )
+    pessoal = [s("empregados", "Empregados", lambda x: _round((x["empregados"] or 0) / 1000))]
+    if ok(pessoal):
+        outros.append(
+            g(
+                "pessoal",
+                "Empregados",
+                f"{nome}: empregados",
+                pessoal,
+                unidade="mil pessoas",
+                casas=1,
+                nota="Quadro próprio no fim do ano.",
+            )
+        )
+    por_emp = [s("por-empregado", "Gasto por empregado", lambda x: _round(_por_empregado(x)))]
+    if ok(por_emp):
+        outros.append(
+            g(
+                "gasto-pessoal",
+                "Gasto por empregado",
+                f"{nome}: gasto com pessoal por empregado",
+                por_emp,
+                unidade="R$ mil por ano",
+                casas=0,
+                nota="Salário, encargos e benefícios do ano, divididos pelo quadro do fim do "
+                "ano. Valores da época.",
+            )
+        )
+    invest = [
+        s("aprovado", "Aprovado", lambda x: em(x["investimento_aprovado"])),
+        s("executado", "Executado", lambda x: em(x["investimento"])),
+    ]
+    if ok(invest):
+        outros.append(
+            g(
+                "investimento",
+                "Investimento",
+                f"{nome}: investimento aprovado e executado",
+                invest,
+                nota="Orçamento de investimento das não dependentes. As dependentes investem "
+                "pelo orçamento da União.",
+            )
+        )
+    principal = principal.model_copy(update={"alternativas": outros})
+
+    # --- a tabela de todos os anos
+    def linha(
+        rotulo: str, valor: Callable[[EstatalNoAno], float | None], grupo: str, un: str = curta
+    ) -> LinhaTabela:
+        return LinhaTabela(
+            rotulo=rotulo,
+            valores=[None if (v := valor(x)) is None else round(v, 1) for x in anos],
+            unidade=un,
+            casas=1,
+            grupo=grupo,
+        )
+
+    def din(campo: str) -> Callable[[EstatalNoAno], float | None]:
+        return lambda x: em(x[campo])
+
+    linhas = [
+        linha("Receita", lambda x: em(_receita(x)), "Resultado"),
+        linha("Lucro ou prejuízo", din("lucro"), "Resultado"),
+        linha("Margem líquida", lambda x: _razao(x["lucro"], _receita(x)), "Resultado", "%"),
+        linha(
+            "Retorno sobre o patrimônio",
+            lambda x: _razao(x["lucro"], x["patrimonio"], True),
+            "Resultado",
+            "%",
+        ),
+        linha("Ativo", din("ativo"), "Balanço"),
+        linha("Passivo exigível", din("passivo"), "Balanço"),
+        linha("Patrimônio líquido", din("patrimonio"), "Balanço"),
+        linha("Passivo sobre o ativo", lambda x: _razao(x["passivo"], x["ativo"]), "Balanço", "%"),
+        linha("Dividendos pagos, a todos", din("dividendos"), "Com a União"),
+        linha("Dividendos pagos à União", din("dividendos_uniao"), "Com a União"),
+        linha("Subvenção do Tesouro", din("subvencao"), "Com a União"),
+        linha("Aporte de capital (AFAC)", din("afac"), "Com a União"),
+        linha("Saldo para a União", lambda x: em(_saldo(x)), "Com a União"),
+        linha("Impostos pagos", din("impostos"), "Com a União"),
+        linha("Empregados", lambda x: _round((x["empregados"] or 0) / 1000), "Pessoal", "mil"),
+        linha("Gasto com pessoal", din("pessoal"), "Pessoal"),
+        linha("Gasto por empregado", _por_empregado, "Pessoal", "R$ mil"),
+        linha("Investimento executado", din("investimento"), "Investimento"),
+        linha(
+            "Execução do orçamento",
+            lambda x: _razao(x["investimento"], x["investimento_aprovado"]),
+            "Investimento",
+            "%",
+        ),
+    ]
+    linhas = [x for x in linhas if any(v for v in x.valores)]
+    tabela = Tabela(
+        id=f"estatal-{ident}",
+        titulo=f"{nome}, ano a ano",
+        subtitulo=f"{unidade}, valores da época, salvo onde diz outra unidade",
+        colunas=[str(x.ano) for x in anos],
+        linhas=linhas,
+        fonte=fonte,
+        nota="Margem, retorno, saldo e gasto por empregado: divisões e somas dos números da Sest.",
+    )
+    dependencia = "Dependente do Tesouro" if u.dependente else "Não dependente do Tesouro"
+    partes = [dependencia, u.ministerio, f"criada em {u.criacao}" if u.criacao else ""]
+    return FichaEstatal(
+        id=ident,
+        nome=nome,
+        nome_completo=u.nome,
+        setor=u.setor,
+        descricao=" · ".join(p for p in partes if p),
+        cartoes=cartoes,
+        grafico=principal,
+        tabela=tabela,
+    )
+
+
+def _resultado(x: EstatalNoAno, reais: Callable[[float], str]) -> str:
+    """'Em 2025, lucro de R$ 110,6 bi'."""
+    v = x["lucro"] or 0.0
+    return f"Em {x.ano}, {'lucro' if v >= 0 else 'prejuízo'} de {reais(abs(v))}"
+
+
+def _round(v: float | None) -> float | None:
+    return None if v is None else round(v, 2)
+
+
+def fichas(fonte: str, linhas: list[EstatalNoAno]) -> list[FichaEstatal]:
+    """Uma ficha por estatal que está na edição mais nova, por setor e nome."""
+    ultimo = max(x.ano for x in linhas)
+    do_ultimo = [x for x in linhas if x.ano == ultimo]
+    saida = []
+    for atual in do_ultimo:
+        anos = sorted((x for x in linhas if x.sigla == atual.sigla), key=lambda x: x.ano)
+        saida.append(ficha(anos, do_ultimo, fonte))
+    saida.sort(key=lambda f: (f.setor, f.nome))
+    return saida

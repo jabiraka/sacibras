@@ -522,6 +522,7 @@ class Subcategoria(Modelo):
             "simulador-ldo",
             "alertas",
             "salario-minimo",
+            "fichas-estatais",
         ]
     ] = Field(default_factory=list)
     veja: list[Elo] = Field(default_factory=list)
@@ -556,6 +557,30 @@ class Divulgado(Modelo):
     fonte: str
 
 
+class FichaEstatal(Modelo):
+    """Uma estatal federal por dentro (Caio, 25/11/2026: *"abra por estatal um dashboard [...]
+    histórico de performance, receita ou prejuízo e outras métricas relevantes"*): quatro
+    números, um gráfico com os outros atrás da lista e a tabela de todos os anos."""
+
+    id: str
+    nome: str
+    """O nome de todo dia ("Correios"); `nome_completo`, o da Sest."""
+    nome_completo: str
+    setor: str
+    descricao: str
+    """Uma linha: dependente ou não, ministério, ano de criação."""
+    cartoes: list[Cartao]
+    grafico: Grafico
+    tabela: Tabela
+
+
+class FichasEstatais(Modelo):
+    fichas: list[FichaEstatal]
+    primeira: str
+    """O id da ficha que abre primeiro."""
+    gerado_em: datetime
+
+
 class Secao(Modelo):
     id: str
     titulo: str
@@ -570,6 +595,9 @@ class Secao(Modelo):
     simulador_reforma: SimuladorReforma | None = None
     simulador_ldo: SimuladorLDO | None = None
     salario_minimo: ComparadorSalario | None = None
+    arquivo_estatais: str = ""
+    """Contas públicas › Estatais: o arquivo das fichas de cada empresa (`FichasEstatais`),
+    lido só quando a pessoa abre a parte; vazio, a tela não mostra a ficha."""
     alertas: list[Alerta] = Field(default_factory=list)
     saiu: list[Divulgado] = Field(default_factory=list)
     """Só no resumo: o que saiu por último, contra o Focus."""
