@@ -8,13 +8,7 @@
 import { remarcar } from "./glossario";
 import { el } from "./pecas";
 import { listaSuspensa } from "./pontos";
-import type {
-  Cartao,
-  FichaEstatal,
-  FichasEstatais,
-  Grafico,
-  Tabela,
-} from "./tipos";
+import type { Cartao, FichaEstatal, FichasEstatais, Grafico, Tabela } from "./tipos";
 
 export interface Construtores {
   ler: (arquivo: string) => Promise<FichasEstatais>;
@@ -26,11 +20,7 @@ export interface Construtores {
 export const ID_DA_LISTA = "estatais-ficha";
 
 /** A caixa da ficha; `inicial` é o id da estatal pedida no endereço (`#fiscal/e-ect`). */
-export function montarFichasEstatais(
-  arquivo: string,
-  f: Construtores,
-  inicial: string,
-): HTMLElement {
+export function montarFichasEstatais(arquivo: string, f: Construtores, inicial: string): HTMLElement {
   const painel = el("section", "painel-mundo ficha-estatal");
   painel.id = "fichas-estatais";
   painel.append(el("h3", "ficha-estatal-titulo", "Uma estatal por dentro"));
@@ -71,10 +61,7 @@ export function montarFichasEstatais(
 
 function conteudo(x: FichaEstatal, f: Construtores): HTMLElement[] {
   const cabeca = el("div", "ficha-estatal-cabeca");
-  cabeca.append(
-    el("p", "ficha-estatal-nome", x.nome_completo),
-    el("p", "nota", x.descricao),
-  );
+  cabeca.append(el("p", "ficha-estatal-nome", x.nome_completo), el("p", "nota", x.descricao));
   const cartoes = el("div", "cartoes");
   x.cartoes.forEach((c) => cartoes.append(f.cartao(c)));
   const graficos = el("div", "graficos");

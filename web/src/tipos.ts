@@ -120,18 +120,8 @@ export interface Cartao {
   procedencia: Procedencia;
   mini: [string, number][];
   secao: string;
-  meta: {
-    centro: number;
-    inferior: number;
-    superior: number;
-    norma: string;
-  } | null;
-  ao_vivo: {
-    tipo: "sgs" | "sidra";
-    codigo: number | null;
-    caminho: string;
-    escala: number;
-  } | null;
+  meta: { centro: number; inferior: number; superior: number; norma: string } | null;
+  ao_vivo: { tipo: "sgs" | "sidra"; codigo: number | null; caminho: string; escala: number } | null;
 }
 
 export interface LinhaTabela {
@@ -260,12 +250,7 @@ export interface SimuladorSelic {
   focus_ipca: number | null;
   focus_dolar: number | null;
   focus_divida: number | null;
-  meta: {
-    centro: number;
-    inferior: number;
-    superior: number;
-    norma: string;
-  } | null;
+  meta: { centro: number; inferior: number; superior: number; norma: string } | null;
   /** O trimestre zero e os 16 seguintes. */
   trimestres: string[];
   selic_caminho: number[];
