@@ -169,6 +169,13 @@ REGRAS: list[Regra] = [
         nome="IFI",
         url="https://www12.senado.leg.br/ifi",
     ),
+    # O projeto da LDO 2027 (matéria 173677 no Senado, a mesma de `tramitacao.PROJETOS`); a
+    # página abre na ficha do Congresso Nacional (conferida em 25/11/2026).
+    Regra(
+        padrao=r"PLN nº 2/2026",
+        nome="PLN 2/2026 (LDO 2027)",
+        url="https://www.congressonacional.leg.br/materias/materias-bicamerais/-/ver/pln-2-2026",
+    ),
     Regra(
         padrao=r"Emenda Constitucional nº 132",
         nome="EC 132/2023",

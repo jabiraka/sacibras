@@ -42,3 +42,11 @@ def test_regras_compilam_e_os_enderecos_sao_https_ou_http() -> None:
         re.compile(r.padrao)
         assert r.url.startswith(("https://", "http://"))
         assert ("{n}" in r.url) == r.por_numero
+
+
+def test_projeto_da_ldo_2027_tem_endereco() -> None:
+    from sacibras import relatorios
+
+    assert urls(relatorios.FONTE_PLDO_2027) == [
+        "https://www.congressonacional.leg.br/materias/materias-bicamerais/-/ver/pln-2-2026"
+    ]
