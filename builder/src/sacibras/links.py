@@ -219,6 +219,12 @@ REGRAS: list[Regra] = [
         nome="Receita Federal",
         url="https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/dados-abertos",
     ),
+    # Indicadores do Polo Industrial de Manaus: a página dos cadernos (aberta em 26/11/2026).
+    Regra(
+        padrao=r"Suframa",
+        nome="Indicadores do PIM (Suframa)",
+        url="https://www.gov.br/suframa/pt-br/centrais-de-conteudo/indicadores",
+    ),
     Regra(
         padrao=r"SINISA",
         nome="SINISA",

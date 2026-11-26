@@ -1775,7 +1775,149 @@ def _arredondar_1(x: float | None) -> float | None:
     return None if x is None else round(x, 1)
 
 
+def _zona_franca(ctx: Contexto) -> Pecas:
+    """Pergunta "Vale manter a Zona Franca de Manaus?" (Caio, 26/11/2026): o que a União deixa
+    de cobrar (DGT, o último ano realizado) contra o que o polo fatura e emprega no mesmo ano
+    (Suframa, `relatorios.PIM_*`). A conta por emprego e contra a folha é nossa, com dado
+    oficial dos dois lados; ela não mede o que haveria sem o regime."""
+    nova = receita_gastos.edicoes()[0]
+    nome, gasto = next(
+        ((n, v) for n, v in nova.principais if n.startswith("Zona Franca de Manaus")),
+        ("", 0.0),
+    )
+    ano = nova.ano
+    empregos = relatorios.PIM_EMPREGOS.get(ano)
+    faturamento = relatorios.PIM_FATURAMENTO.get(ano)
+    folha = relatorios.PIM_FOLHA.get(ano)
+    if not nome or not (empregos and faturamento and folha):
+        raise ValueError(f"sem a Zona Franca no DGT {ano} ou sem o polo de {ano} na Suframa")
+    total = sum(v for _, v in nova.principais)
+    gasto_bi = gasto / 1e9
+    por_emprego = gasto / empregos / 1e3  # R$ mil
+    fonte = f"Cálculo próprio com {receita_gastos.FONTE} (edição {ano}) e {relatorios.FONTE_PIM}"
+    quando = date(ano, 1, 1)
+    cartoes = [
+        cartao(
+            "zfm-custo",
+            "Zona Franca: imposto não cobrado",
+            [(quando, gasto_bi)],
+            unidade="R$ bi",
+            casas=1,
+            periodicidade="A",
+            detalhe=f"{br(gasto / total * 100, 0)} % do gasto tributário da União",
+            fonte=receita_gastos.FONTE + f" (edição {ano})",
+            secao="impostos",
+        ),
+        cartao(
+            "zfm-por-emprego",
+            "Zona Franca: custo por emprego",
+            [(quando, por_emprego)],
+            unidade="R$ mil",
+            casas=0,
+            periodicidade="A",
+            detalhe=f"{br(empregos / 1e3, 0)} mil empregos no polo",
+            fonte=fonte,
+            procedencia="calculado",
+            secao="impostos",
+        ),
+    ]
+    anos = sorted(a for a in relatorios.PIM_EMPREGOS if a in relatorios.PIM_FATURAMENTO)
+    g = grafico(
+        "zfm-polo",
+        "O Polo Industrial de Manaus",
+        [
+            serie(
+                "empregos",
+                "Empregos",
+                [(date(a, 1, 1), relatorios.PIM_EMPREGOS[a] / 1e3) for a in anos],
+                casas=1,
+            )
+        ],
+        tipo="barras",
+        unidade="mil empregos",
+        casas=0,
+        periodicidade="A",
+        fonte=relatorios.FONTE_PIM,
+        nota="Média mensal do ano: efetivos, temporários e terceirizados.",
+    )
+    g = com_variantes(
+        g,
+        "Empregos",
+        variante(
+            "faturamento",
+            "Faturamento",
+            "O Polo Industrial de Manaus: faturamento",
+            [
+                serie(
+                    "faturamento",
+                    "Faturamento",
+                    [(date(a, 1, 1), relatorios.PIM_FATURAMENTO[a]) for a in anos],
+                    casas=1,
+                )
+            ],
+            unidade="R$ bi",
+            periodicidade="A",
+            casas=0,
+            nota="Valores correntes das empresas com projeto aprovado; não é valor adicionado.",
+        ),
+        nome_da_lista="Ver",
+    )
+    tabela = Tabela(
+        id="zfm-conta",
+        titulo="A Zona Franca em uma conta",
+        subtitulo=str(ano),
+        colunas=[str(ano)],
+        linhas=[
+            LinhaTabela(
+                rotulo="Imposto federal não cobrado, R$ bi",
+                valores=[round(gasto_bi, 1)],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Faturamento do polo, R$ bi",
+                valores=[faturamento],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Folha do polo (salários e encargos), R$ bi",
+                valores=[folha],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Empregos (média do ano), mil",
+                valores=[round(empregos / 1e3, 1)],
+                unidade="",
+                casas=1,
+            ),
+            LinhaTabela(
+                rotulo="Imposto não cobrado por emprego, R$ mil",
+                valores=[round(por_emprego)],
+                unidade="",
+                casas=0,
+            ),
+            LinhaTabela(
+                rotulo="Imposto não cobrado ÷ folha, vezes",
+                valores=[round(gasto_bi / folha, 1)],
+                unidade="",
+                casas=1,
+            ),
+        ],
+        fonte=fonte,
+        # O DGT é estimativa do que se deixa de arrecadar, sem refazer o comportamento de
+        # quem produz; o ICMS é dos estados e não entra.
+        nota=(
+            "Cálculo próprio com dois dados oficiais. O imposto não cobrado é estimativa da "
+            "Receita, só federal; não diz quanto do emprego existiria sem o regime."
+        ),
+    )
+    return cartoes, [g], [tabela], ""
+
+
 MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
+    ("Zona Franca de Manaus", _zona_franca),
     ("bases contra outros países", _bases_paises),
     ("arrecadação por estado", _por_estado),
     ("FPE e FPM", _transferencias),

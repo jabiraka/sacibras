@@ -215,6 +215,23 @@ A ficha de cada estatal saiu só com o Anexo I da Sest (anual, 2021 a 2025). Par
 - **A remuneração média** e a pirâmide de idade dos empregados: a planilha de 2026 traz
   vazio ou outro número em 2024 e 2025; voltar quando a Sest corrigir.
 
+## Zona Franca de Manaus (sessão de 26/11/2026)
+
+A pergunta "Vale manter a Zona Franca de Manaus?" mostra o custo federal (DGT) e o polo
+(Suframa). O que ficaria para uma segunda rodada, cada um pedindo fonte e conta:
+
+- **O peso do polo no Amazonas**: a parte da indústria no valor adicionado do estado
+  (Contas Regionais, já lidas em Estados) e a de Manaus no PIB do estado (PIB dos municípios,
+  IBGE). Diria o quanto a economia do estado depende do regime.
+- **O ICMS que os estados deixam de cobrar**: o DGT só traz tributo federal; o benefício estadual
+  vem de convênio do Confaz e não tem série oficial única.
+- **Faturamento por subsetor** (eletroeletrônico, duas rodas etc.) e o que o polo compra de
+  insumo e importa: o caderno da Suframa traz; a conta do valor adicionado real não sai dele.
+- **Série do custo**: o DGT traz 2021 a 2026 (realizado até 2023, depois projeção) por tributo;
+  hoje a tela mostra só o último ano realizado, para comparar com o polo do mesmo ano.
+- **Floresta e desmatamento**: o argumento mais usado a favor do regime; sem comparação
+  contrafactual publicada com método regular, fica fora (regra de 15/11/2026).
+
 ## Rótulo de cálculo próprio (sessão de 25/11/2026)
 
 Onde o órgão publica o número e o builder não lê, a peça é oficial e a fonte aponta para a

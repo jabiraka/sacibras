@@ -402,9 +402,9 @@ PARTES: dict[str, list[Parte]] = {
             "O que não entra",
             "O que a União deixa de arrecadar com isenções e o que tem a receber de imposto "
             "não pago.",
-            cartoes=["gasto-tributario", "divida-ativa"],
-            graficos=["gasto-tributario", "divida-ativa"],
-            tabelas=["gasto-tributario", "gasto-tributario-regioes", "divida-ativa"],
+            cartoes=["gasto-tributario", "divida-ativa", "zfm-custo", "zfm-por-emprego"],
+            graficos=["gasto-tributario", "divida-ativa", "zfm-polo"],
+            tabelas=["gasto-tributario", "gasto-tributario-regioes", "divida-ativa", "zfm-conta"],
         ),
         Parte(
             "esferas",

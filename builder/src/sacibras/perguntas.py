@@ -82,6 +82,7 @@ TEMA_DE: dict[str, str] = {
     "crescimento": "crescimento-renda",
     "emprego": "crescimento-renda",
     "desigualdade": "crescimento-renda",
+    "zona-franca": "crescimento-renda",
     "divida": "contas-publicas",
     "imposto": "contas-publicas",
     "cortar-gasto": "contas-publicas",
@@ -770,6 +771,66 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "A desigualdade caiu na base e pouco mudou no topo, e o Brasil segue entre os países "
             "mais desiguais do mundo: isso é claro. Quanto da melhora veio do emprego, do salário"
             " mínimo ou das transferências, os dados daqui não separam."
+        ),
+    ),
+    # Caio, 26/11/2026: "Adicione a pergunta, vale manter a zona franca de Manaus?". Lido em
+    # 26/11/2026: o custo é o do DGT da Receita (R$ 27,5 bi em 2023, o sétimo maior gasto
+    # tributário, 5,1 % do total; só tributos federais) e o polo, o da Suframa (em 2023,
+    # R$ 175,7 bi de faturamento, 113.813 empregos em média e R$ 8,8 bi de salários e
+    # encargos). A conta é nossa: R$ 242 mil por emprego e 3,1 vezes a folha. O prazo, 2073,
+    # é o que o DGT registra (ADCT, art. 92-A, EC 83/2014, lida no Senado). Fica de fora, por
+    # falta de dado no painel, o que haveria sem o regime: emprego que existiria de qualquer
+    # modo, ICMS dos estados e efeito sobre a floresta. **Os números do texto são fixos**:
+    # reler com o DGT de 2027 e o caderno de dezembro da Suframa (`leituras.py`).
+    Definicao(
+        "zona-franca",
+        "Vale manter a Zona Franca de Manaus?",
+        "Os dados mostram um custo alto e um polo grande, mas não dizem se compensa. Em 2023, "
+        "a União deixou de cobrar R$ 27,5 bi, uns R$ 242 mil por emprego do polo. O que haveria "
+        "sem o regime, os dados daqui não medem.",
+        (("impostos", "zfm-custo"), ("impostos", "zfm-por-emprego")),
+        (
+            Bloco(
+                "O que a União deixa de cobrar",
+                "Em 2023, R$ 27,5 bi de imposto federal, 5 % de tudo o que a União deixa de "
+                "arrecadar. O ICMS, que é dos estados, fica de fora.",
+                None,
+                (("impostos", "zfm-custo"),),
+                ("impostos", "gasto-tributario"),
+            ),
+            Bloco(
+                "O que o polo entrega",
+                "O Polo Industrial de Manaus faturou R$ 176 bi em 2023 e empregou 114 mil "
+                "pessoas; em 2025, 132 mil. Subiu quase um quarto desde 2021.",
+                ("impostos", "zfm-polo"),
+            ),
+            Bloco(
+                "A conta por emprego",
+                "São R$ 242 mil por emprego em 2023, três vezes a folha do polo (R$ 8,8 bi). "
+                "Cálculo nosso: não conta o emprego que existiria sem o regime.",
+                None,
+                (("impostos", "zfm-por-emprego"),),
+                ("impostos", "zfm-conta"),
+            ),
+            Bloco(
+                "O que o regime não diz",
+                "Os dados daqui não medem o emprego que existiria sem ele, o ICMS dos estados "
+                "nem o efeito sobre a floresta: é o que a discussão disputa.",
+                ("impostos", "gasto-tributario"),
+            ),
+        ),
+        (
+            "zona franca",
+            "Manaus",
+            "polo industrial de Manaus",
+            "Suframa",
+            "incentivo fiscal da Zona Franca",
+            "benefício fiscal Amazonas",
+        ),
+        conclusao=(
+            "O custo é fato e é alto: R$ 242 mil por emprego, três vezes a folha do polo. Se "
+            "compensa depende do que haveria sem o regime, e isso estes dados não medem. O "
+            "prazo, 2073, está na Constituição: mudar pede emenda."
         ),
     ),
     Definicao(

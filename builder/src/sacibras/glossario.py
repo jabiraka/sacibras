@@ -1392,6 +1392,13 @@ TERMOS: list[Termo] = [
         ("Zona Franca de Manaus", "Zona Franca"),
     ),
     Termo(
+        "suframa",
+        "Suframa",
+        "Órgão federal que cuida da Zona Franca de Manaus: aprova os projetos das fábricas "
+        "que têm direito ao incentivo e publica o faturamento e o emprego do polo.",
+        ("Suframa",),
+    ),
+    Termo(
         "ocde",
         "OCDE",
         "A Organização para a Cooperação e Desenvolvimento Econômico: 38 países, a maioria "

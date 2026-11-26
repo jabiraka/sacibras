@@ -348,3 +348,36 @@ def test_ibs_vai_para_o_destino_pela_conta_do_adct() -> None:
     regras = tabelas[0]
     assert all(len(li.textos) == 2 and li.textos[1] for li in regras.linhas)
     assert any("0,25 %" in li.textos[0] for li in regras.linhas)
+
+
+def test_zona_franca_compara_o_custo_ao_polo_do_mesmo_ano(monkeypatch: pytest.MonkeyPatch) -> None:
+    from sacibras import relatorios
+    from sacibras.secoes import impostos
+
+    edicao = receita_gastos.Edicao(
+        ano=2023,
+        total={2023: 534e9},
+        pct_pib={2023: 5.0},
+        principais=[("Simples Nacional", 110e9), ("Zona Franca de Manaus e Áreas", 27.49e9)],
+        regioes={},
+    )
+    monkeypatch.setattr(receita_gastos, "edicoes", lambda *a, **k: [edicao])
+    cartoes, graficos, tabelas, _ = impostos._zona_franca(None)  # type: ignore[arg-type]
+    por_id = {c.id: c for c in cartoes}
+    assert por_id["zfm-custo"].valor == pytest.approx(27.49)
+    # R$ 27,49 bi para 113.813 empregos (a média de 2023 na Suframa).
+    assert por_id["zfm-por-emprego"].valor == pytest.approx(27.49e9 / 113813 / 1e3, abs=1)
+    assert por_id["zfm-por-emprego"].procedencia == "calculado"
+    assert [g.id for g in graficos] == ["zfm-polo"]
+    assert {v.id for v in graficos[0].variantes} == {"principal", "faturamento"}
+    linhas = {linha.rotulo: linha.valores[0] for linha in tabelas[0].linhas}
+    assert linhas["Imposto não cobrado ÷ folha, vezes"] == pytest.approx(
+        27.49 / relatorios.PIM_FOLHA[2023], abs=0.05
+    )
+    # Sem a Zona Franca no DGT, a peça fica de fora em vez de sair vazia.
+    sem = edicao.__class__(
+        ano=2023, total={}, pct_pib={}, principais=[("Simples Nacional", 1.0)], regioes={}
+    )
+    monkeypatch.setattr(receita_gastos, "edicoes", lambda *a, **k: [sem])
+    with pytest.raises(ValueError):
+        impostos._zona_franca(None)  # type: ignore[arg-type]

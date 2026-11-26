@@ -1141,3 +1141,29 @@ FONTE_PLDO_2027 = (
     "Projeto da LDO 2027 (PLN nº 2/2026, Congresso Nacional), art. 2º e Anexo IV.3 (Metas "
     "Fiscais, STN), e Relatório Preliminar da CMO de 11/11/2026, tabela 2"
 )
+
+# ------------------------------------------------------------------ Polo Industrial de Manaus
+
+# Suframa, Caderno de Indicadores de Desempenho do Polo Industrial de Manaus (PIM), edição de
+# janeiro a setembro de 2026, gerada em 10/11/2026 (gov.br/suframa, centrais de conteúdo,
+# indicadores; o PDF abre da nuvem). Lido em 26/11/2026:
+# - quadro "Principais custos de produção x faturamento e receita total" (valores nominais,
+#   R$): faturamento 159.777.547.071 (2021), 178.056.490.286 (2022), 175.725.567.631 (2023),
+#   205.103.964.714 (2024), 229.418.781.431 (2025); salários (A) e encargos e benefícios sociais
+#   (B), em R$: 3.100.181.509 + 3.834.533.422 (2021), 3.656.631.472 + 4.238.098.690 (2022),
+#   4.043.023.007 + 4.729.217.622 (2023), 4.524.359.057 + 5.834.494.529 (2024),
+#   5.088.310.900 + 6.202.353.413 (2025);
+# - quadro "Evolução da mão-de-obra do PIM", coluna "média mensal de mão-de-obra" (efetiva,
+#   temporária e terceirizada): 105.972 (2021), 111.305 (2022), 113.813 (2023), 124.054
+#   (2024), 132.078 (2025). Em setembro de 2026, 136.123 (o maior da série).
+# O faturamento é o das empresas com projeto aprovado pela Suframa, não o valor adicionado.
+# LER DE NOVO quando sair o caderno de dezembro de 2026 (fevereiro) e a nova edição do DGT
+# (abril), porque o custo da Zona Franca (`secoes/impostos.py`) é comparado ao mesmo ano.
+PIM_EM = date(2026, 11, 26)
+PIM_FATURAMENTO = {2021: 159.8, 2022: 178.1, 2023: 175.7, 2024: 205.1, 2025: 229.4}  # R$ bi
+PIM_FOLHA = {2021: 6.9, 2022: 7.9, 2023: 8.8, 2024: 10.4, 2025: 11.3}  # R$ bi, com encargos
+PIM_EMPREGOS = {2021: 105972, 2022: 111305, 2023: 113813, 2024: 124054, 2025: 132078}
+FONTE_PIM = (
+    "Suframa, Caderno de Indicadores de Desempenho do Polo Industrial de Manaus (jan–set/2026, "
+    "de 10/11/2026)"
+)

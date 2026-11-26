@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 26/11/2026 (as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 26/11/2026 (a pergunta da Zona Franca de Manaus; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,21 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e dólar e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**26/11/2026, a pergunta "Vale manter a Zona Franca de Manaus?"** (Caio: *"Adicione a pergunta,
+vale manter a zona franca de Manaus?"*). Em Crescimento, emprego e renda (quatro de seis). O
+custo é o do DGT da Receita (R$ 27,5 bi em 2023, sétimo maior gasto tributário, só tributos
+federais) e o polo, o da Suframa (`relatorios.PIM_*`, lidos no caderno de jan–set/2026): R$ 176
+bi de faturamento, 114 mil empregos e R$ 8,8 bi de folha em 2023. Peças novas em Impostos › O
+que não entra (`impostos._zona_franca`): cartões `zfm-custo` e `zfm-por-emprego` (R$ 242 mil
+por emprego, cálculo próprio), gráfico `zfm-polo` (empregos, com "Ver" faturamento) e a tabela
+`zfm-conta`. A resposta fica em aberto onde a evidência é fraca: o que haveria sem o regime
+(emprego que existiria, ICMS dos estados, floresta) os dados daqui não medem, e a tela diz. O
+prazo, 2073, é o que o DGT registra (ADCT, art. 92-A, EC 83/2014). **Os números do texto são
+fixos** (R$ 27,5 bi, R$ 242 mil, "três vezes a folha", "sétimo maior"): reler quando sair o
+caderno de dezembro da Suframa (fevereiro) e o DGT de 2027 (`leituras.py`, prazo 15/03/2027).
+Do que ficou de fora, está no [PROPOSTAS](PROPOSTAS.md), "Zona Franca de Manaus". Olhado só no
+código e nos testes; **falta o Caio olhar a tela**.
 
 **25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,
 mostrando os dados que podem sustentar uma conclusão ou outra, pode avaliar vc pelos dados, eu

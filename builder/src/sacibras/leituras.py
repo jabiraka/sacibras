@@ -390,6 +390,18 @@ LEITURAS: list[Leitura] = [
         "(ESTATAIS_POR_ANO, SUBVENCOES_2025, LUCRO_DOS_MAIORES) e a frase da pergunta das "
         "estatais ('o menor em cinco anos').",
     ),
+    Leitura(
+        "Polo Industrial de Manaus: faturamento, folha e empregos por ano (Suframa)",
+        "relatorios.PIM_EMPREGOS",
+        date(2026, 11, 26),
+        date(2027, 3, 15),
+        "Suframa, gov.br/suframa/pt-br/centrais-de-conteudo/indicadores: o caderno de "
+        "dezembro de 2026 (sai em fevereiro), quadros 'Principais custos de produção x "
+        "faturamento' e 'Evolução da mão-de-obra do PIM'. Trocar os três dicionários "
+        "(PIM_*) e PIM_EM, e conferir os números fixos da pergunta da Zona Franca (R$ 27 bi, "
+        "R$ 242 mil por emprego, três vezes a folha). O custo vem do DGT da Receita (abril). "
+        "Uma vez por ano.",
+    ),
 ]
 
 
