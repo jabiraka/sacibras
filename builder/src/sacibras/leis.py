@@ -725,3 +725,17 @@ META_SANEAMENTO = MetaDeSaneamento(
 SALARIO_MINIMO_NORMAS: dict[int, str] = {
     2026: "Decreto nº 12.797, de 23/12/2025, art. 1º",
 }
+
+
+# ------------------------------------------------------------------ nanoempreendedor
+
+# Lei Complementar nº 214/2025, art. 26, IV, no texto atualizado da Câmara (com a LC nº
+# 227/2026), lido em 26/11/2026: não é contribuinte do IBS e da CBS o "nanoempreendedor, assim
+# entendido a pessoa física que tenha auferido receita bruta inferior a 50% (cinquenta por cento)
+# do limite estabelecido para adesão ao regime do MEI previsto no § 1º do art. 18-A [...] e não
+# tenha aderido a esse regime". O limite do MEI no § 1º é de R$ 81 mil (LC 123/2006) e passa a
+# R$ 140 mil em 2028 (LC nº 238, de 21/10/2026, arts. 1º e 10, lida no Senado,
+# legis.senado.leg.br/norma/44276013/publicacao/44280206). O de 2027, R$ 110 mil, está à parte
+# (LC 238, art. 2º), e não no § 1º: por isso a tela usa só os de 2026 e 2028.
+NANO_TETO: dict[int, float] = {2026: 40_500.0, 2028: 70_000.0}
+"""R$ de receita bruta por ano: metade do teto do MEI no § 1º do art. 18-A."""

@@ -1962,7 +1962,41 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
             "restaurante não abate o imposto."
         ),
     )
-    return [], [transicao, destino], [regras, regimes], ""
+    return [], [transicao, destino], [regras, regimes, _isencao_la_fora()], ""
+
+
+def _isencao_la_fora() -> Tabela:
+    """O limite de faturamento que deixa fora do imposto sobre o consumo: o do nanoempreendedor
+    (LC 214, art. 26) contra o limite geral do IVA nos países da OCDE."""
+    la_fora = relatorios.LIMITE_IVA_USD
+    mediana = sorted(la_fora.values())[len(la_fora) // 2]
+    traducao = _nomes()
+    valores = [(nome_do_pais(p, traducao), float(v)) for p, v in la_fora.items()]
+    valores.append((f"Mediana dos {len(la_fora)} países", float(mediana)))
+    for ano in (2026, 2028):
+        reais = leis.NANO_TETO[ano]
+        valores.append(
+            (
+                f"Brasil em {ano}: R$ {br(reais / 1000, 1 if reais % 1000 else 0)} mil",
+                reais / relatorios.PPC_BRASIL,
+            )
+        )
+    return Tabela(
+        id="reforma-isencao-paises",
+        titulo="Até quanto se vende sem o imposto sobre o consumo",
+        subtitulo="faturamento por ano; no Brasil, o do nanoempreendedor",
+        colunas=["US$ mil (PPC)"],
+        linhas=[
+            LinhaTabela(rotulo=nome, valores=[round(v / 1000, 1)], unidade="", casas=1)
+            for nome, v in sorted(valores, key=lambda x: -x[1])
+        ],
+        fonte=relatorios.FONTE_LIMITE_IVA,
+        nota=(
+            f"Países em {relatorios.LIMITE_IVA_ANO}; Brasil pela PPC de "
+            f"{relatorios.PPC_BRASIL_ANO}. Chile, Costa Rica, México e Espanha não têm limite; "
+            "Colômbia e Turquia, só para pessoas físicas."
+        ),
+    )
 
 
 # ------------------------------------------------------- União, estados e municípios

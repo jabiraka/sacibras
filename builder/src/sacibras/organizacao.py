@@ -394,6 +394,7 @@ PARTES: dict[str, list[Parte]] = {
                 "reforma-descontos",
                 "reforma-seletivo-simples",
                 "reforma-regimes",
+                "reforma-isencao-paises",
             ],
             extras=["simulador-reforma"],
         ),
@@ -936,13 +937,18 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
         ),
         "reforma": Agrupar(
             tabelas={
-                "reforma-linha-do-tempo": ["reforma-seletivo-simples", "reforma-regimes"],
+                "reforma-linha-do-tempo": [
+                    "reforma-seletivo-simples",
+                    "reforma-regimes",
+                    "reforma-isencao-paises",
+                ],
                 "reforma-aliquota": ["reforma-descontos"],
             },
             rotulos={
                 "reforma-linha-do-tempo": "Ano a ano",
                 "reforma-seletivo-simples": "Seletivo e Simples",
                 "reforma-regimes": "Regras próprias",
+                "reforma-isencao-paises": "Isenção lá fora",
                 "reforma-aliquota": "Alíquota cheia",
                 "reforma-descontos": "Quem paga menos",
             },

@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 26/11/2026 (o tema escuro; isenções e subsídios: por função, benefício, tributo e os subsídios diretos; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 26/11/2026 (o limite de isenção do consumo contra a OCDE; o tema escuro; isenções e subsídios: por função, benefício, tributo e os subsídios diretos; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -20,6 +20,15 @@ a tabela "PIB por componente" ganhou a lista de trimestre ou ano com os pontos q
 a dica dos gráficos usa a unidade curta e o "Quanto rendeu" abre com CDI e dólar e a pessoa
 escolhe o resto. Em Estados, o mapa e o ranking ganharam a lista do período (trimestre, ano
 ou mês) em treze métricas além do PIB; as que faltam estão no [PROPOSTAS](PROPOSTAS.md).
+
+**26/11/2026, a isenção do consumo contra a OCDE** (Caio: *"Sim, monte"*; *"vai no main ao
+terminar"*). Em Impostos › Reforma do consumo, atrás de "Ano a ano" (lista "Tabela"), "Isenção lá
+fora": o limite do nanoempreendedor (R$ 40,5 mil em 2026, R$ 70 mil em 2028; LC 214, art. 26)
+contra o limite geral do IVA de 31 países da OCDE (Consumption Tax Trends 2024, tabela 2.A.5), em
+dólar de mesmo poder de compra. O Brasil fica abaixo da mediana (US$ 16,5 mil contra 54 mil). **A
+pergunta do Simples não está no `main`** (commit `136cb33`, no branch
+`ccr-b2759f56-6wvlg9`): quando entrar, a frase sobre o nanoempreendedor ainda falta, e o
+`leis.py` terá `MEI_TETO` ao lado de `NANO_TETO`. **Falta o Caio olhar** a tabela.
 
 **26/11/2026, o gasto tributário por função** (Caio: *"Tem como colocar quanto de subsídio ou
 isenção fiscal o governo paga pras empresas e separar por setor?"*; *"Siga sua sugestão, aprovo"*).

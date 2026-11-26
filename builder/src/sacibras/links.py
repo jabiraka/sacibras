@@ -140,6 +140,12 @@ REGRAS: list[Regra] = [
         url="https://data.worldbank.org",
     ),
     Regra(
+        padrao=r"Consumption Tax Trends",
+        nome="OCDE, Consumption Tax Trends 2024",
+        url="https://www.oecd.org/en/publications/consumption-tax-trends-2024_dcd4dd36-en/"
+        "full-report/component-6.html",
+    ),
+    Regra(
         padrao=r"\bOCDE\b",
         nome="OCDE",
         url="https://data-explorer.oecd.org",

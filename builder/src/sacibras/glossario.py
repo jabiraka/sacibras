@@ -1203,6 +1203,13 @@ TERMOS: list[Termo] = [
         "#impostos/gasto-tributario",
     ),
     Termo(
+        "nanoempreendedor",
+        "Nanoempreendedor",
+        "Pessoa física que fatura menos de metade do teto do MEI e não aderiu a ele. Não é "
+        "contribuinte do IBS nem da CBS (LC 214/2025, art. 26).",
+        ("nanoempreendedor",),
+    ),
+    Termo(
         "proagro",
         "Proagro",
         "Seguro público do produtor rural: cobre a perda da lavoura (seca, chuva demais, praga) "

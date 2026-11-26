@@ -665,6 +665,58 @@ FONTE_CONFERENCIA_PIB_ESTADOS = (
 )
 
 
+# ------------------------------------------------------------------ limite de isenção do IVA
+
+# OCDE, Consumption Tax Trends 2024, tabela anexa 2.A.5 ("Annual turnover concessions for VAT
+# registration and collection"), posição em 01/01/2024, limite geral em US$ pela paridade de
+# poder de compra do PIB de 2023. Lida em 26/11/2026 na versão HTML (capítulo 2,
+# .../full-report/component-6.html; o site recusa a nuvem). Ficam fora Chile, Costa Rica,
+# México e Espanha ("None") e Colômbia e Turquia (só para pessoas físicas). Não é o teto de
+# regime simplificado, que o relatório não publica: o do Simples não se compara com estes.
+LIMITE_IVA_ANO = 2024
+LIMITE_IVA_USD: dict[str, int] = {
+    "AUS": 53_957,
+    "AUT": 49_296,
+    "BEL": 35_714,
+    "CAN": 25_641,
+    "CZE": 159_363,
+    "DNK": 8_183,
+    "EST": 71_429,
+    "FIN": 19_737,
+    "FRA": 137_164,
+    "DEU": 31_429,
+    "GRC": 19_231,
+    "HUN": 70_501,
+    "ISL": 14_269,
+    "IRL": 106_667,
+    "ISR": 33_426,
+    "ITA": 141_667,
+    "JPN": 105_619,
+    "KOR": 59_974,
+    "LVA": 98_039,
+    "LTU": 93_750,
+    "LUX": 42_169,
+    "NLD": 27_027,
+    "NZL": 41_096,
+    "NOR": 5_624,
+    "POL": 106_383,
+    "PRT": 27_285,
+    "SVK": 97_627,
+    "SVN": 92_593,
+    "SWE": 9_401,
+    "CHE": 103_093,
+    "GBR": 126_866,
+}
+# Paridade de poder de compra do PIB do Brasil em 2023, reais por dólar: OCDE, fluxo
+# OECD.SDD.NAD,DSD_NAMAIN10@DF_TABLE4, medida PPP_B1GQ, lida em 26/11/2026.
+PPC_BRASIL_ANO = 2023
+PPC_BRASIL = 2.447609
+FONTE_LIMITE_IVA = (
+    "OCDE, Consumption Tax Trends 2024 (tabela 2.A.5) e paridade de poder de compra; "
+    "LC 214/2025, art. 26; LC 238/2026"
+)
+
+
 # ------------------------------------------------------------------ servidores
 
 

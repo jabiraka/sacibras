@@ -231,6 +231,16 @@ A ficha de cada estatal saiu só com o Anexo I da Sest (anual, 2021 a 2025). Par
 - **A remuneração média** e a pirâmide de idade dos empregados: a planilha de 2026 traz
   vazio ou outro número em 2024 e 2025; voltar quando a Sest corrigir.
 
+## Isenção do consumo lá fora (sessão de 26/11/2026)
+
+- **O teto do Simples contra outros países** segue sem comparação: o Consumption Tax Trends da
+  OCDE publica o limite de isenção do IVA, não o teto dos regimes simplificados, e os dois não
+  se comparam. A tabela "Isenção lá fora" compara só o nanoempreendedor.
+- **O limite do nanoempreendedor em 2027**: o teto do MEI desse ano (R$ 110 mil) está no art. 2º
+  da LC 238/2026, fora do § 1º que a LC 214 cita. Ver o que o Comitê Gestor regulamentar.
+- **Vizinhos**: o relatório só traz os da OCDE (Chile, Colômbia, Costa Rica e México, sem limite
+  geral); Argentina, Uruguai e Peru ficam de fora.
+
 ## Rótulo de cálculo próprio (sessão de 25/11/2026)
 
 Onde o órgão publica o número e o builder não lê, a peça é oficial e a fonte aponta para a
