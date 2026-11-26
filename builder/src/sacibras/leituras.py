@@ -398,8 +398,9 @@ LEITURAS: list[Leitura] = [
         "Suframa, gov.br/suframa/pt-br/centrais-de-conteudo/indicadores: o caderno de "
         "dezembro de 2026 (sai em fevereiro), quadros 'Principais custos de produção x "
         "faturamento' e 'Evolução da mão-de-obra do PIM'. Trocar os dicionários "
-        "(PIM_*, inclusive PIM_SUBSETORES) e PIM_EM, e conferir os números fixos da pergunta da Zona Franca (R$ 27 bi, "
-        "R$ 242 mil por emprego, três vezes a folha, 43 % de eletrônicos, 31 % do Amazonas). O custo vem do DGT da Receita (abril). "
+        "(PIM_*, inclusive PIM_SUBSETORES) e PIM_EM, e conferir os números fixos da "
+        "pergunta da Zona Franca (R$ 27 bi, R$ 242 mil por emprego, três vezes a folha, "
+        "43 % de eletrônicos, 31 % do Amazonas). O custo vem do DGT da Receita (abril). "
         "Uma vez por ano.",
     ),
 ]
