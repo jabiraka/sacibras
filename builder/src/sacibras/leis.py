@@ -549,6 +549,73 @@ SELETIVO_E_SIMPLES: list[Regra] = [
 ]
 
 
+# ------------------------------------------------------------------ Simples Nacional e MEI
+#
+# Lei Complementar nº 123/2006, texto atualizado no Senado (legis.senado.leg.br/norma/572878/
+# publicacao/34621013), lida em 26/11/2026:
+# - Art. 3º: microempresa é quem "aufira, em cada ano-calendário, receita bruta igual ou
+#   inferior a R$ 360.000,00"; empresa de pequeno porte, "superior a R$ 360.000,00 [...] e igual
+#   ou inferior a R$ 4.800.000,00".
+# - Art. 18-A, § 1º (redação da LC 188/2021): MEI é "quem tenha auferido receita bruta, no
+#   ano-calendário anterior, de até R$ 81.000,00 [...] que seja optante pelo Simples Nacional".
+# - Art. 13: o Simples "implica o recolhimento mensal, mediante documento único de arrecadação"
+#   do IRPJ, IPI, CSLL, Cofins, PIS, da contribuição patronal previdenciária ("exceto" alguns
+#   serviços do art. 18, § 5º-C), do ICMS e do ISS.
+# - Art. 18: o valor devido sai de "alíquotas efetivas, calculadas a partir das alíquotas
+#   nominais constantes das tabelas dos Anexos I a V", pela receita dos doze meses anteriores.
+# - Art. 18-A, § 3º, V: o MEI recolhe "valor fixo mensal" com a contribuição à Previdência, "R$
+#   1,00" de ICMS e "R$ 5,00" de ISS; VI: "terá isenção dos tributos referidos nos incisos I a
+#   VI do caput" do art. 13 (os federais e a contribuição patronal).
+# Lei Complementar nº 238, de 21/10/2026, no Senado (legis.senado.leg.br/norma/44276013/
+# publicacao/44280206), lida no mesmo dia:
+# - Art. 1º: o art. 18-A, § 1º, passa a "de até R$ 140.000,00 (cento e quarenta mil reais)".
+# - Art. 2º: "Para o ano-calendário de 2027, o limite [...] será de R$ 110.000,00".
+# - Art. 5º: "Fica concedida remissão integral dos créditos de titularidade da União [...] até
+#   13 de outubro de 2026, de responsabilidade de pessoas naturais regularmente enquadradas
+#   como microempreendedor individual (MEI)"; § 4º: a remissão cai se o MEI não pagar em dia a
+#   contribuição dos seis meses seguintes.
+# - Art. 10: efeitos "a partir de: I – 1º de janeiro de 2028, quanto às alterações promovidas
+#   no art. 18-A, §§ 1º e 2º [...]; e II – 1º de janeiro de 2027, quanto aos demais".
+# - Art. 3º: a ampliação "fica condicionada à consideração da respectiva renúncia de receita na
+#   lei orçamentária anual dos exercícios de 2027 a 2029" (a lei não traz o número).
+SIMPLES_TETO_MICROEMPRESA = 360_000.0
+"""R$ de receita bruta por ano (LC 123/2006, art. 3º, I)."""
+SIMPLES_TETO = 4_800_000.0
+"""R$ de receita bruta por ano: o teto do Simples (LC 123/2006, art. 3º, II)."""
+MEI_TETO: dict[int, float] = {2026: 81_000.0, 2027: 110_000.0, 2028: 140_000.0}
+"""R$ de receita bruta no ano anterior, por ano em que vale (LC 123, art. 18-A, § 1º; LC 238/2026,
+arts. 1º, 2º e 10). O de 2028 vale daí em diante."""
+SIMPLES_REGRAS: list[Regra] = [
+    Regra(
+        "Quem pode",
+        "Empresa que fatura até R$ 4,8 mi por ano; até R$ 360 mil, é microempresa.",
+        "LC 123/2006, art. 3º",
+    ),
+    Regra(
+        "Como paga",
+        "Uma guia só, com uma alíquota sobre o faturamento que sobe por faixa, no lugar dos "
+        "impostos federais, do ICMS, do ISS e, quase sempre, da contribuição patronal.",
+        "LC 123/2006, arts. 13 e 18",
+    ),
+    Regra(
+        "MEI",
+        "Até R$ 81 mil por ano, paga um valor fixo por mês: a Previdência, R$ 1 de ICMS e R$ 5 "
+        "de ISS.",
+        "LC 123/2006, art. 18-A, §§ 1º e 3º",
+    ),
+    Regra(
+        "MEI: teto novo",
+        "Sobe para R$ 110 mil em 2027 e para R$ 140 mil a partir de 2028.",
+        "LC 238/2026, arts. 1º, 2º e 10",
+    ),
+    Regra(
+        "MEI: dívidas perdoadas",
+        "Perdoa o que o MEI devia à União até 13/10/2026, se pagar em dia os seis meses seguintes.",
+        "LC 238/2026, art. 5º",
+    ),
+]
+
+
 # ------------------------------------------------------------------ reforma: regimes próprios
 #
 # Lei Complementar nº 214/2025, Título V do Livro I ("Dos regimes específicos do IBS e da CBS",

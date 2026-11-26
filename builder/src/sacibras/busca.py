@@ -130,7 +130,13 @@ SINONIMOS: dict[str, list[str]] = {
         "beneficio fiscal",
         "desoneracao",
     ],
-    "simples nacional": ["pequenas empresas", "mei", "regime simplificado"],
+    "simples nacional": [
+        "pequenas empresas",
+        "mei",
+        "microempreendedor",
+        "regime simplificado",
+        "optantes",
+    ],
     "crescimento": ["imposto e crescimento", "efeito no pib"],
     "reforma do consumo": [
         "reforma tributaria",

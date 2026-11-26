@@ -1199,6 +1199,16 @@ TERMOS: list[Termo] = [
         "O regime de imposto das empresas pequenas: uma guia só, com alíquota menor que a das "
         "regras gerais. É o maior gasto tributário da União.",
         ("Simples Nacional",),
+        "#impostos/gasto-tributario",
+    ),
+    Termo(
+        "mei",
+        "MEI",
+        "Microempreendedor individual: quem trabalha por conta própria e fatura até R$ 81 mil "
+        "por ano (R$ 140 mil a partir de 2028). Paga um valor fixo por mês, quase todo para a "
+        "Previdência.",
+        ("MEI",),
+        "#impostos/gasto-tributario",
     ),
     Termo(
         "cofins",

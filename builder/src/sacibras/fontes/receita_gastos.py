@@ -18,7 +18,7 @@ from __future__ import annotations
 import io
 import re
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import openpyxl  # type: ignore[import-untyped]
 
@@ -47,6 +47,10 @@ class Edicao:
     """Os gastos do último ano, do maior ao menor: (nome, R$)."""
     regioes: dict[str, float]
     """{região: R$} do último ano (aba Q IV, linha TOTAL); vazio se a aba mudou."""
+    simples: dict[int, float] = field(default_factory=dict)
+    """{ano realizado: R$} do Simples Nacional, somado em todos os tributos da aba Q XXVI."""
+    mei: dict[int, float] = field(default_factory=dict)
+    """{ano realizado: R$} do MEI (a contribuição à Previdência menor), aba Q XXVI."""
 
 
 @dataclass(frozen=True)
@@ -56,6 +60,9 @@ class Previsao:
     ano: int
     total: float
     pct_pib: float
+    simples: float | None = None
+    """R$ do Simples Nacional (aba Q X); None se a linha não veio."""
+    mei: float | None = None
 
 
 LISTAGEM_PLOA = LISTAGEM.replace("bases-efetivas", "ploa")
@@ -63,6 +70,11 @@ FONTE_PLOA = "Receita Federal, Demonstrativo dos Gastos Tributários do PLOA"
 PADRAO_PLOA = re.compile(
     r'href="(?P<url>[^"]*/dgt-(?:previsao-)?ploa-(?P<ano>\d{4})-quadros(?:\.xlsx)?)/view"'
 )
+SIMPLES = "SIMPLES NACIONAL"
+MEI = "MEI - MICROEMPREENDEDOR INDIVIDUAL"
+"""Os rótulos das linhas do Simples e do MEI, em caixa alta (`_rotulo`). Na aba Q XXVI o
+Simples aparece uma vez em cada tributo (IRPJ, CSLL, PIS, Cofins, IPI, Previdência): a soma
+das linhas fecha com a aba Q X do mesmo ano (conferido em 26/11/2026: 2017, R$ 71,8 bi)."""
 REGIOES = {
     "NORTE": "Norte",
     "NORDESTE": "Nordeste",
@@ -123,6 +135,14 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
             if i < len(linha) and isinstance(linha[i], (int, float))
         }
 
+    def somar(rotulo: str) -> dict[int, float]:
+        soma: dict[int, float] = {}
+        for linha in serie:
+            if _rotulo(linha[0] if linha else None) == rotulo:
+                for a, v in valores(linha, 1.0).items():
+                    soma[a] = soma.get(a, 0.0) + v
+        return soma
+
     principais: list[tuple[str, float]] = []
     for linha in principais_brutos:
         nome, valor = (*linha, None, None)[:2]
@@ -138,6 +158,8 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
         pct_pib=valores(achadas["GT / PIB"], 100.0),
         principais=principais,
         regioes=ler_regioes(por_regiao),
+        simples=somar(SIMPLES),
+        mei=somar(MEI),
     )
 
 
@@ -169,13 +191,27 @@ def ler_previsao(conteudo: bytes, ano: int) -> Previsao:
         if "Q VI" not in abas:
             raise FonteForaDoArError(f"DGT PLOA {ano}: sem a aba Q VI")
         linhas = list(livro[abas["Q VI"]].iter_rows(values_only=True))
+        principais = list(livro[abas["Q X"]].iter_rows(values_only=True)) if "Q X" in abas else []
     finally:
         livro.close()
+    # Aba Q X: os principais gastos, (nome, R$, fração do total), como na edição realizada.
+    achados: dict[str, float] = {}
+    for linha in principais:
+        r = _rotulo(linha[0] if linha else None)
+        valor = linha[1] if len(linha) > 1 else None
+        if r in (SIMPLES, MEI) and r not in achados and isinstance(valor, (int, float)):
+            achados[r] = float(valor)
     for linha in linhas:
         if _rotulo(linha[0] if linha else None) == "TOTAL":
             valor, pib = (*linha[1:3], None, None)[:2]
             if isinstance(valor, (int, float)) and isinstance(pib, (int, float)):
-                return Previsao(ano=ano, total=float(valor), pct_pib=float(pib))
+                return Previsao(
+                    ano=ano,
+                    total=float(valor),
+                    pct_pib=float(pib),
+                    simples=achados.get(SIMPLES),
+                    mei=achados.get(MEI),
+                )
     raise FonteForaDoArError(f"DGT PLOA {ano}: sem a linha TOTAL na aba Q VI")
 
 

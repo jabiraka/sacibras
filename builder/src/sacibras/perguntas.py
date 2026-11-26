@@ -68,13 +68,15 @@ class Definicao:
 TEMAS: tuple[tuple[str, str], ...] = (
     ("precos-juros", "Preços e juros"),
     ("crescimento-renda", "Crescimento, emprego e renda"),
-    ("contas-publicas", "Governo: dívida, gasto e impostos"),
+    ("contas-publicas", "Governo: dívida e gasto"),
+    ("impostos", "Impostos"),
     ("mercado-riscos", "Mercado e riscos"),
 )
 """As perguntas se agrupam por tema na entrada, no menu e no pé de cada pergunta (Caio,
 19/11/2026: *"podemos incluir mais perguntas com o tempo, entao é bom ter uma sessão própria
 ou organizar melhor as perguntas dentro dos temas"*). Não há mais teto para o total: o teto é
-por tema (`MAXIMO_POR_TEMA`). Tema cheio pede tema novo ou juntar duas perguntas."""
+por tema (`MAXIMO_POR_TEMA`). Tema cheio pede tema novo ou juntar duas perguntas: com a do
+Simples (26/11/2026), Governo estava cheio e os Impostos viraram tema próprio."""
 MAXIMO_POR_TEMA = 6
 TEMA_DE: dict[str, str] = {
     "juro-alto": "precos-juros",
@@ -83,7 +85,8 @@ TEMA_DE: dict[str, str] = {
     "emprego": "crescimento-renda",
     "desigualdade": "crescimento-renda",
     "divida": "contas-publicas",
-    "imposto": "contas-publicas",
+    "imposto": "impostos",
+    "simples": "impostos",
     "cortar-gasto": "contas-publicas",
     "servidores": "contas-publicas",
     "estatais": "contas-publicas",
@@ -770,6 +773,80 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "A desigualdade caiu na base e pouco mudou no topo, e o Brasil segue entre os países "
             "mais desiguais do mundo: isso é claro. Quanto da melhora veio do emprego, do salário"
             " mínimo ou das transferências, os dados daqui não separam."
+        ),
+    ),
+    # Caio, 26/11/2026: "Temos uma discussão de quanto custa o simples, se vale a pena ou não
+    # manter". O custo se mede (gasto tributário da Receita); o retorno em emprego e
+    # formalização, nenhuma fonte oficial publica com regularidade, e o texto diz isso.
+    Definicao(
+        "simples",
+        "Quanto custa o Simples, e vale manter?",
+        "Custa à União mais de R$ 100 bi por ano, o maior dos gastos tributários. Se vale, "
+        "estes dados não decidem: ninguém publica com regularidade quanto emprego e "
+        "formalização ele traz.",
+        (
+            ("impostos", "simples-custo"),
+            ("impostos", "simples-optantes"),
+            ("impostos", "gasto-tributario"),
+        ),
+        (
+            Bloco(
+                "Quanto custa",
+                "É o imposto federal que as empresas do Simples e o MEI pagariam a mais nas "
+                "regras gerais. Cresce com a economia: perto de 1 % do PIB.",
+                ("impostos", "simples-custo"),
+                (("impostos", "simples-custo"),),
+                ("impostos", "simples-ano"),
+            ),
+            Bloco(
+                "O maior da lista",
+                "Nenhuma outra isenção federal custa tanto: o Simples, sozinho, é cerca de um "
+                "quinto de tudo o que a União deixa de cobrar.",
+                ("impostos", "gasto-tributario"),
+                (("impostos", "gasto-tributario"),),
+                ("impostos", "gasto-tributario"),
+            ),
+            Bloco(
+                "Para quem",
+                "Vale para quem fatura até R$ 4,8 mi por ano. Dois em cada três optantes são "
+                "MEI; uma lei de outubro de 2026 sobe o teto dele de R$ 81 mil para R$ 140 mil "
+                "em 2028.",
+                None,
+                (("impostos", "simples-optantes"),),
+                ("impostos", "simples-regras"),
+            ),
+            Bloco(
+                "O que se ganha em troca",
+                "A defesa é que ele tira empresas da informalidade e poupa burocracia. É "
+                "plausível, mas a informalidade mexe com muita coisa e estes dados não separam "
+                "o efeito dele.",
+                ("trabalho", "informalidade"),
+                (("trabalho", "informalidade"),),
+            ),
+            Bloco(
+                "O que muda com a reforma",
+                "O Simples continua, mas quem compra dele abate menos imposto. Por isso a "
+                "empresa pode pagar o IBS e a CBS pelas regras gerais e ficar no Simples no "
+                "resto.",
+                ("impostos", "reforma-transicao"),
+                (),
+                ("impostos", "reforma-seletivo-simples"),
+            ),
+        ),
+        (
+            "simples nacional",
+            "mei",
+            "microempreendedor individual",
+            "pequenas empresas",
+            "custo do simples",
+            "renúncia fiscal",
+            "teto do mei",
+        ),
+        conclusao=(
+            "O custo é claro: mais de R$ 100 bi por ano, perto de 1 % do PIB, a maior isenção "
+            "da União; o teto maior do MEI soma mais, sem número na lei. O ganho em emprego e "
+            "formalização é plausível, mas disputado, e não tem número oficial regular: sem "
+            'ele, "vale a pena" fica em aberto.'
         ),
     ),
     Definicao(

@@ -400,11 +400,17 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "gasto-tributario",
             "O que não entra",
-            "O que a União deixa de arrecadar com isenções e o que tem a receber de imposto "
-            "não pago.",
-            cartoes=["gasto-tributario", "divida-ativa"],
-            graficos=["gasto-tributario", "divida-ativa"],
-            tabelas=["gasto-tributario", "gasto-tributario-regioes", "divida-ativa"],
+            "O que a União deixa de arrecadar com isenções e com o Simples, e o que tem a "
+            'receber de imposto não pago (pergunta "Quanto custa o Simples?").',
+            cartoes=["gasto-tributario", "simples-custo", "simples-optantes", "divida-ativa"],
+            graficos=["gasto-tributario", "simples-custo", "divida-ativa"],
+            tabelas=[
+                "gasto-tributario",
+                "gasto-tributario-regioes",
+                "simples-ano",
+                "simples-regras",
+                "divida-ativa",
+            ],
         ),
         Parte(
             "esferas",
@@ -937,8 +943,21 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             },
         ),
         "gasto-tributario": Agrupar(
-            tabelas={"gasto-tributario": ["gasto-tributario-regioes"]},
-            rotulos={"gasto-tributario": "Os maiores", "gasto-tributario-regioes": "Por região"},
+            graficos={"gasto-tributario": ["simples-custo"]},
+            tabelas={
+                "gasto-tributario": [
+                    "gasto-tributario-regioes",
+                    "simples-ano",
+                    "simples-regras",
+                ]
+            },
+            rotulos={
+                "gasto-tributario": "Os maiores",
+                "gasto-tributario-regioes": "Por região",
+                "simples-custo": "Simples e MEI",
+                "simples-ano": "Simples, ano a ano",
+                "simples-regras": "Simples: quem pode",
+            },
         ),
     },
     "longo-prazo": {

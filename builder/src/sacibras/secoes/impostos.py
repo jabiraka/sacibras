@@ -38,6 +38,7 @@ from sacibras.fontes import (
     receita_arrecadacao,
     receita_gastos,
     receita_irpf,
+    receita_simples,
     siconfi,
     tesouro_rtn,
     tesouro_transferencias,
@@ -55,6 +56,7 @@ from sacibras.schema import (
     PontoDispersao,
     Procedencia,
     Secao,
+    Serie,
     SimuladorReforma,
     Tabela,
     TipoDeCompra,
@@ -840,6 +842,183 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
         "regimes especiais"
     )
     return cartoes, graficos, tabelas, frase + "."
+
+
+# ------------------------------------------------------------------ Simples Nacional
+#
+# Caio, 26/11/2026: "Temos uma discussão de quanto custa o simples, se vale a pena ou não
+# manter". O custo é o que a Receita publica como gasto tributário (o Simples e o MEI, contra o
+# que essas empresas pagariam nas regras gerais), realizado até o último ano e, depois, o
+# previsto em cada projeto de orçamento. Quantas empresas usam, das Estatísticas do Simples.
+# O que o regime dá em troca (emprego, formalização) nenhuma fonte oficial publica com
+# regularidade: a pergunta diz isso.
+
+
+def _simples(ctx: Contexto) -> Pecas:
+    edicoes = receita_gastos.edicoes()
+    simples: dict[int, float] = {}
+    mei: dict[int, float] = {}
+    total: dict[int, float] = {}
+    pib: dict[int, float] = {}
+    for e in reversed(edicoes):  # a edição mais nova prevalece
+        simples.update(e.simples)
+        mei.update(e.mei)
+        total.update(e.total)
+        pib.update({a: e.total[a] / (e.pct_pib[a] / 100) for a in e.total if e.pct_pib.get(a)})
+    anos = sorted(a for a in simples if a in total and a in pib)
+    if not anos:
+        raise RuntimeError("DGT sem a linha do Simples")
+    ultimo = anos[-1]
+    previstos = [p for p in receita_gastos.previsoes(ultimo) if p.simples is not None and p.pct_pib]
+
+    def soma(a: int) -> float:
+        return simples[a] + mei.get(a, 0.0)
+
+    def previsto(p: receita_gastos.Previsao) -> float:
+        return (p.simples or 0.0) + (p.mei or 0.0)
+
+    fonte = f"{receita_gastos.FONTE} (edição {edicoes[0].ano})" + (
+        f"; {receita_gastos.FONTE_PLOA}" if previstos else ""
+    )
+    em_reais = [(date(a, 1, 1), soma(a) / 1e9) for a in anos]
+    no_pib = [(date(a, 1, 1), soma(a) / pib[a] * 100) for a in anos]
+    no_gasto = [(date(a, 1, 1), soma(a) / total[a] * 100) for a in anos]
+    prev_reais = [(date(p.ano, 1, 1), previsto(p) / 1e9) for p in previstos]
+    prev_pib = [(date(p.ano, 1, 1), previsto(p) / (p.total / p.pct_pib)) for p in previstos]
+    prev_gasto = [(date(p.ano, 1, 1), previsto(p) / p.total * 100) for p in previstos]
+    nota = "Imposto federal que essas empresas pagariam a mais nas regras gerais."
+
+    def series(real: list[Ponto], prev: list[Ponto], casas: int) -> list[Serie]:
+        return [
+            serie("realizado", "Realizado", real, casas=casas),
+            *([serie("previsto", "Previsto", prev, papel="previsao", casas=casas)] if prev else []),
+        ]
+
+    g = grafico(
+        "simples-custo",
+        "O que o Simples e o MEI deixam de cobrar",
+        series(em_reais, prev_reais, 1),
+        tipo="barras",
+        unidade="R$ bi",
+        casas=0,
+        periodicidade="A",
+        fonte=fonte,
+        nota=nota + (" Previsto: o do projeto de orçamento de cada ano." if previstos else ""),
+    )
+    g = com_variantes(
+        g,
+        "R$ bilhões",
+        variante(
+            "pib",
+            "% do PIB",
+            "O que o Simples e o MEI deixam de cobrar, em % do PIB",
+            series(no_pib, prev_pib, 2),
+            unidade="% do PIB",
+            periodicidade="A",
+            casas=1,
+            nota=nota,
+        ),
+        variante(
+            "parte",
+            "% do gasto tributário",
+            "O Simples e o MEI no gasto tributário da União",
+            series(no_gasto, prev_gasto, 1),
+            unidade="% do total",
+            periodicidade="A",
+            casas=0,
+            nota="Parte de tudo o que a União deixa de arrecadar com isenções e regimes.",
+        ),
+    )
+    detalhe = f"{br(no_gasto[-1][1], 0)} % do gasto tributário"
+    if previstos:
+        detalhe += f"; {previstos[-1].ano}: R$ {br(prev_reais[-1][1], 0)} bi previsto"
+    cartoes = [
+        cartao(
+            "simples-custo",
+            "Custo do Simples e do MEI",
+            em_reais,
+            unidade="R$ bi",
+            casas=0,
+            periodicidade="A",
+            detalhe=detalhe,
+            fonte=fonte,
+            secao="impostos",
+        )
+    ]
+    linhas = [
+        LinhaTabela(
+            rotulo=str(a),
+            valores=[
+                round(simples[a] / 1e9, 1),
+                round(mei.get(a, 0.0) / 1e9, 1),
+                round(soma(a) / total[a] * 100, 1),
+                round(soma(a) / pib[a] * 100, 2),
+            ],
+            unidade="",
+            casas=1,
+        )
+        for a in anos
+    ] + [
+        LinhaTabela(
+            rotulo=f"{p.ano} (previsto)",
+            valores=[
+                round((p.simples or 0.0) / 1e9, 1),
+                round((p.mei or 0.0) / 1e9, 1),
+                round(previsto(p) / p.total * 100, 1),
+                round(previsto(p) / (p.total / p.pct_pib), 2),
+            ],
+            unidade="",
+            casas=1,
+        )
+        for p in previstos
+    ]
+    tabelas = [
+        Tabela(
+            id="simples-ano",
+            titulo="O custo do Simples, ano a ano",
+            subtitulo="o que a União deixa de arrecadar",
+            colunas=["Simples, R$ bi", "MEI, R$ bi", "% do gasto tributário", "% do PIB"],
+            linhas=linhas[::-1],
+            fonte=fonte,
+            nota=(
+                "Só os tributos federais; o ICMS e o ISS que o regime cobra a menos ficam de "
+                "fora. No MEI, quase tudo é contribuição à Previdência."
+            ),
+        ),
+        Tabela(
+            id="simples-regras",
+            titulo="Quem pode entrar no Simples e no MEI",
+            subtitulo="o teto do MEI sobe em 2027 e em 2028",
+            colunas=["O que a lei diz", "Onde está"],
+            linhas=[
+                LinhaTabela(rotulo=r.tema, valores=[], unidade="", textos=[r.diz, r.norma])
+                for r in leis.SIMPLES_REGRAS
+            ],
+            fonte=(
+                "Lei Complementar nº 123/2006, em texto atualizado, e Lei Complementar nº "
+                "238/2026, lidas no Senado"
+            ),
+            nota="Teto pelo faturamento do ano (no MEI, do ano anterior).",
+        ),
+    ]
+    try:
+        todos, so_mei = receita_simples.optantes("simples"), receita_simples.optantes("mei")
+        cartoes.append(
+            cartao(
+                "simples-optantes",
+                "Empresas no Simples",
+                [(todos.posicao, todos.total / 1e6)],
+                unidade="milhões",
+                casas=1,
+                periodicidade="D",
+                detalhe=f"{br(so_mei.total / 1e6, 1)} mi delas são MEI",
+                fonte=receita_simples.FONTE,
+                secao="impostos",
+            )
+        )
+    except Exception as erro:
+        print(f"    impostos: sem o número de optantes do Simples ({str(erro)[:120]})")
+    return cartoes, [g], tabelas, ""
 
 
 # ------------------------------------------------------------------ seção
@@ -1791,6 +1970,7 @@ MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
     ),
     ("quem paga", _quem_paga),
     ("dívida ativa", _divida_ativa),
+    ("Simples Nacional", _simples),
     ("alíquotas", _aliquotas),
     ("reforma", _reforma),
     ("União, estados e municípios", _esferas),

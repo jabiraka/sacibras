@@ -22,7 +22,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras.fontes import sest
+from sacibras.fontes import receita_gastos, receita_simples, sest
 
 
 class Regra(BaseModel):
@@ -214,6 +214,22 @@ REGRAS: list[Regra] = [
         nome="ONS",
         url="https://dados.ons.org.br",
     ),
+    # Abertos em 26/11/2026: as duas listagens do DGT e a página das estatísticas do Simples.
+    Regra(
+        padrao=r"Demonstrativo dos Gastos Tributários, bases efetivas",
+        nome="Receita Federal, gastos tributários (bases efetivas)",
+        url=receita_gastos.LISTAGEM,
+    ),
+    Regra(
+        padrao=r"Demonstrativo dos Gastos Tributários do PLOA",
+        nome="Receita Federal, gastos tributários do PLOA",
+        url=receita_gastos.LISTAGEM_PLOA,
+    ),
+    Regra(
+        padrao=r"Estatísticas do Simples Nacional",
+        nome="Receita Federal, Estatísticas do Simples Nacional",
+        url=receita_simples.PAGINA,
+    ),
     Regra(
         padrao=r"Receita Federal",
         nome="Receita Federal",
@@ -328,6 +344,17 @@ REGRAS: list[Regra] = [
         padrao=r"(?:Lei Complementar|\bLC) (?:nº )?214\b",
         nome="LC 214/2025",
         url="https://legis.senado.leg.br/norma/40180341",
+    ),
+    # Abertas no Senado em 26/11/2026 (texto atualizado da LC 123; a LC 238 como publicada).
+    Regra(
+        padrao=r"(?:Lei Complementar|\bLC) (?:nº )?123\b",
+        nome="LC 123/2006",
+        url="https://legis.senado.leg.br/norma/572878",
+    ),
+    Regra(
+        padrao=r"(?:Lei Complementar|\bLC) (?:nº )?238\b",
+        nome="LC 238/2026",
+        url="https://legis.senado.leg.br/norma/44276013",
     ),
     Regra(
         padrao=r"(?:Lei Complementar|\bLC) (?:nº )?200\b",

@@ -215,6 +215,27 @@ A ficha de cada estatal saiu só com o Anexo I da Sest (anual, 2021 a 2025). Par
 - **A remuneração média** e a pirâmide de idade dos empregados: a planilha de 2026 traz
   vazio ou outro número em 2024 e 2025; voltar quando a Sest corrigir.
 
+## O Simples (sessão de 26/11/2026)
+
+A pergunta "Quanto custa o Simples, e vale manter?" mede o custo (gasto tributário da
+Receita) e deixa em aberto o retorno. Para fechar a conta do "vale a pena":
+
+- **Emprego nas empresas do Simples**: a RAIS tem a marca de optante (`Ind Simples`) por
+  vínculo, mas só em microdados (vários GB, no FTP do MTE); daria o emprego e o salário no
+  Simples contra fora dele, ano a ano. Não diz o efeito do regime, só o tamanho.
+- **O teto contra outros países**: a OCDE publica o limite de faturamento para o regime
+  simplificado e para o IVA (Consumption Tax Trends, a cada dois anos), mas o site dela recusa
+  a nuvem (403). Abrir do PC; só então dizer se R$ 4,8 mi é alto.
+- **O custo do teto novo do MEI** (LC 238/2026): a lei manda pôr a renúncia nos orçamentos
+  de 2027 a 2029, sem o número. Quando sair o DGT do PLOA 2027, o builder pega sozinho o
+  previsto; conferir se a linha do MEI subiu.
+- **ICMS e ISS**: o custo mostrado é só o federal. Estados e municípios não publicam o
+  deles com regularidade e no mesmo método.
+- **Optantes no tempo**: as Estatísticas do Simples abrem anos anteriores, mas pedem outra
+  volta no formulário (o ano no `Default.aspx`); por ora só a posição do dia.
+- **O degrau do teto** (empresa que segura o faturamento para não sair do regime): só em
+  estudos de uma vez, fora pela regra.
+
 ## Rótulo de cálculo próprio (sessão de 25/11/2026)
 
 Onde o órgão publica o número e o builder não lê, a peça é oficial e a fonte aponta para a

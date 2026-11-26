@@ -253,6 +253,15 @@ LEITURAS: list[Leitura] = [
         "ela, e trocar a linha das alíquotas quando sair. A cada três meses até 2027.",
     ),
     Leitura(
+        "Simples Nacional e MEI: tetos e o perdão das dívidas do MEI (LC 123 e LC 238)",
+        "leis.SIMPLES_REGRAS",
+        date(2026, 11, 26),
+        date(2027, 5, 26),
+        "Senado, LC 123/2006 em texto atualizado (legis.senado.leg.br/norma/572878, arts. 3º, "
+        "13, 18 e 18-A) e a LC 238/2026 (norma/44276013). Ver se lei nova mexeu nos tetos; o "
+        "valor fixo do MEI sobe com o salário mínimo. A cada seis meses.",
+    ),
+    Leitura(
         "Regimes específicos da reforma: combustíveis, bancos, saúde, imóveis (LC 214)",
         "leis.REGIMES_PROPRIOS",
         date(2026, 11, 15),
