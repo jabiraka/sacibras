@@ -24,8 +24,16 @@ from datetime import date
 from sacibras import contas, relatorios
 from sacibras.fontes import sest
 from sacibras.fontes.sest import EstatalNoAno
-from sacibras.schema import Cartao, FichaEstatal, Grafico, LinhaTabela, Serie, Tabela
-from sacibras.secoes.base import br, cartao, grafico, periodo, serie
+from sacibras.schema import (
+    Cartao,
+    FichaEstatal,
+    Grafico,
+    LinhaTabela,
+    Serie,
+    Tabela,
+    VarianteGrafico,
+)
+from sacibras.secoes.base import br, cartao, com_variantes, grafico, periodo, serie
 from sacibras.tipos import Ponto
 
 Pecas = tuple[list[Cartao], list[Grafico], list[Tabela]]
@@ -980,12 +988,6 @@ Alternativa = tuple[str, dict[int, float], str]
 """(nome, retorno % em cada ano, papel da série)."""
 
 
-def _somadas(linhas: list[EstatalNoAno], ano: int, sem: str = "") -> float | None:
-    """Lucro sobre patrimônio das não dependentes, todas juntas (sem a `sem`, se dada)."""
-    x = [y for y in linhas if y.ano == ano and not y.dependente and y.sigla != sem]
-    return _razao(sum(y["lucro"] or 0.0 for y in x), sum(y["patrimonio"] or 0.0 for y in x), True)
-
-
 def alternativas(
     fonte_sest: str,
     linhas: list[EstatalNoAno],
@@ -998,19 +1000,9 @@ def alternativas(
         anos_comuns &= set(retornos)
     anos = sorted(anos_comuns)
     por = {(x.sigla, x.ano): x for x in linhas}
-    estatais: dict[str, Alternativa] = {
-        "somadas": (
-            "Estatais não dependentes",
-            {a: v for a in anos if (v := _somadas(linhas, a)) is not None},
-            "realizado",
-        ),
-        # A Petrobras faz a maior parte do lucro: sem ela, o resto conta outra história.
-        "sem-petrobras": (
-            "Sem a Petrobras",
-            {a: v for a in anos if (v := _somadas(linhas, a, sem="PETROBRAS (Grupo)")) is not None},
-            "realizado",
-        ),
-    }
+    # Empresa a empresa: a média das estatais junta quem lucra com quem custa (Caio,
+    # 26/11/2026: "nessa análise, a média não faz sentido").
+    estatais: dict[str, Alternativa] = {}
     for sigla, nome in GRANDES.items():
         rs = {a: r for a in anos if (x := por.get((sigla, a))) and (r := _roe(x)) is not None}
         if len(rs) == len(anos):
@@ -1031,27 +1023,29 @@ def alternativas(
             saida.append((date(a, 1, 1), round(v, 1)))
         return saida
 
-    no_grafico = ("somadas", "sem-petrobras", "petrobras", "cdi", "divida", "ipca")
+    no_grafico = ("petrobras", "bndes", "bb", "cdi", "divida", "ipca")
     series = [
         Serie(id=k, nome=todas[k][0], pontos=nivel(todas[k][1]), papel=todas[k][2])  # type: ignore[arg-type]
         for k in no_grafico
         if k in todas
     ]
     fonte = f"{fonte_sest}; {fonte_opcoes}"
-    s, sem, cdi = (acumulado(todas[k][1]) for k in ("somadas", "sem-petrobras", "cdi"))
+    em_cada = [
+        f"R$ {br(acumulado(todas[k][1]), 0)} {'no' if k in ('bndes', 'cdi') else 'na'} "
+        f"{todas[k][0]}"
+        for k in ("petrobras", "bndes", "cdi")
+        if k in todas
+    ]
     desenho = grafico(
         "estatais-alternativas",
-        f"R$ 100 nas estatais ou aplicados, de {anos[0]} a {anos[-1]}",
+        f"R$ 100 nas maiores estatais ou aplicados, de {anos[0]} a {anos[-1]}",
         series,
         unidade="R$",
         casas=0,
         periodicidade="A",
         fonte=fonte,
         rotulo_opcao="Ou aplicar no lugar",
-        manchete=(
-            f"Viraram R$ {br(s, 0)} nas não dependentes, R$ {br(sem, 0)} sem a Petrobras e "
-            f"R$ {br(cdi, 0)} no CDI."
-        ),
+        manchete=(f"Viraram {', '.join(em_cada[:-1])} e {em_cada[-1]}."),
         nota=(
             "Estatal: lucro sobre o patrimônio, como se ficasse na empresa (contábil). "
             "Aplicação: preço de mercado, antes de imposto; não é a mesma régua."
@@ -1086,6 +1080,122 @@ def alternativas(
         nota=(
             "Abater dívida: o juro médio da dívida bruta em dezembro. Tesouro: o título de uns "
             "cinco anos, trocado no vencimento."
+        ),
+    )
+    return [], [desenho], [tabela]
+
+
+# ------------------------------------------------------------------ quem ganha e quem custa
+#
+# Caio, 26/11/2026: "Oq dá pra colocar é uma avaliação por estatal, qual delas dá mais
+# prejuízo, podemos colocar o top 3 prejuízos na ênfase, top 3 lucros também pra ficar
+# simétrico [...] nessa análise, a média não faz sentido". A medida é o lucro ou prejuízo do
+# ano; nas dependentes, menos a subvenção, que entra como receita delas e esconderia o custo
+# (a Ebserh fechou 2025 com R$ 0,16 bi de prejuízo contábil e R$ 13,7 bi de subvenção).
+
+DESTAQUES = 3
+
+
+def ganha_ou_custa(x: EstatalNoAno) -> float:
+    """Lucro ou prejuízo do ano, em reais; nas dependentes, menos a subvenção."""
+    return (x["lucro"] or 0.0) - ((x["subvencao"] or 0.0) if x.dependente else 0.0)
+
+
+def ranking(fonte_sest: str, linhas: list[EstatalNoAno]) -> Pecas:
+    """As três que mais ganham e as três que mais custam no último ano, ano a ano."""
+    ultimo = max(x.ano for x in linhas)
+    anos = sorted({x.ano for x in linhas})
+    do_ano = sorted((x for x in linhas if x.ano == ultimo), key=ganha_ou_custa)
+    lucros = [x for x in reversed(do_ano) if ganha_ou_custa(x) > 0][:DESTAQUES]
+    custos = [x for x in do_ano if ganha_ou_custa(x) < 0][:DESTAQUES]
+    por = {(x.sigla, x.ano): x for x in linhas}
+
+    def nome(x: EstatalNoAno) -> str:
+        return NOMES.get(x.sigla, x.sigla.replace(" (Grupo)", ""))
+
+    def valores(x: EstatalNoAno) -> list[float | None]:
+        return [
+            round(ganha_ou_custa(y) / 1e9, 1) if (y := por.get((x.sigla, a))) else None
+            for a in anos
+        ]
+
+    series = [
+        Serie(
+            id=_id(x.sigla),
+            nome=nome(x),
+            pontos=list(zip((date(a, 1, 1) for a in anos), valores(x), strict=True)),
+        )
+        for x in [*lucros, *custos]
+    ]
+
+    def bi(x: EstatalNoAno) -> str:
+        return f"{nome(x)} {br(ganha_ou_custa(x) / 1e9)}"
+
+    fonte = fonte_sest
+    desenho = grafico(
+        "estatais-ranking",
+        "As que mais lucram e as que mais custam",
+        series,
+        unidade="R$ bilhões",
+        casas=1,
+        periodicidade="A",
+        fonte=fonte,
+        rotulo_opcao="Quem lucra e quem custa",
+        manchete=(
+            f"Em {ultimo}, em R$ bi: {', '.join(bi(x) for x in lucros)}; "
+            f"{', '.join(bi(x) for x in custos)}."
+        ),
+        nota=(
+            "Lucro ou prejuízo do ano; nas dependentes do Tesouro, menos a subvenção, que "
+            "entra como receita delas. Valores da época."
+        ),
+    )
+
+    def linha(x: EstatalNoAno, grupo: str) -> LinhaTabela:
+        v = valores(x)
+        return LinhaTabela(
+            rotulo=nome(x),
+            valores=[*v, round(sum(y for y in v if y is not None), 1)],
+            unidade="",
+            casas=1,
+            grupo=grupo,
+        )
+
+    # Cada lado na escala dele: junto, a Petrobras espreme os prejuízos perto do zero.
+    def lado(id_: str, rotulo: str, quais: list[EstatalNoAno]) -> VarianteGrafico:
+        ids = {_id(x.sigla) for x in quais}
+        return VarianteGrafico(
+            id=id_,
+            rotulo=rotulo,
+            titulo=desenho.titulo,
+            unidade=desenho.unidade,
+            casas=1,
+            periodicidade="A",
+            series=[x for x in series if x.id in ids],
+            nota=desenho.nota,
+            fonte=fonte,
+        )
+
+    desenho = com_variantes(
+        desenho,
+        "Os dois lados",
+        lado("lucros", "Os 3 maiores lucros", lucros),
+        lado("prejuizos", "Os 3 maiores prejuízos", custos),
+        nome_da_lista="Ver",
+    )
+    tabela = Tabela(
+        id="estatais-ranking",
+        titulo="As estatais que mais lucram e as que mais custam",
+        subtitulo=f"R$ bilhões; as três de cada lado em {ultimo}",
+        colunas=[*(str(a) for a in anos), "Soma"],
+        linhas=[
+            *(linha(x, f"Maiores lucros em {ultimo}") for x in lucros),
+            *(linha(x, f"Maiores prejuízos em {ultimo}") for x in custos),
+        ],
+        fonte=fonte,
+        nota=(
+            "Nas dependentes do Tesouro, o prejuízo inclui a subvenção. Na Petrobras e no "
+            "Banco do Brasil, parte do lucro é dos outros acionistas."
         ),
     )
     return [], [desenho], [tabela]

@@ -158,4 +158,15 @@ def test_estatais_contra_aplicacoes() -> None:
     assert linhas["CDI"].valores == [10.0, 10.0, 21.0]
     assert linhas["CDI"].grupo == "No lugar delas"
     assert linhas["Inflação (IPCA)"].grupo == "Referência"
-    assert "Sem a Petrobras" in linhas and linhas["Estatais não dependentes"].valores[0] > 0
+    # Empresa a empresa, sem média (Caio, 26/11/2026).
+    assert "Petrobras" in linhas and "Estatais não dependentes" not in linhas
+
+
+def test_tres_que_lucram_e_tres_que_custam() -> None:
+    _, [desenho], [tabela] = estatais.ranking(FONTE, sest.empresas(_planilha()))
+    grupos = [li.grupo for li in tabela.linhas]
+    assert grupos.count("Maiores lucros em 2025") == 3
+    # Só uma custa: a dependente, pela subvenção (8 bi) mais o prejuízo (0,2 bi).
+    custos = [li for li in tabela.linhas if li.grupo == "Maiores prejuízos em 2025"]
+    assert [(li.rotulo, li.valores[-2]) for li in custos] == [("HOSP", -8.2)]
+    assert tabela.linhas[0].rotulo == "Petrobras" and len(desenho.series) == 4

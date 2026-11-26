@@ -581,19 +581,31 @@ PERGUNTAS: tuple[Definicao, ...] = (
     # Depois (mesmo dia: "Compare com oq poderia ser investido ao invés delas"): de 2021 a
     # 2025, R$ 100 viraram R$ 260 nas não dependentes somadas (R$ 199 sem a Petrobras),
     # R$ 168 no CDI, R$ 166 abatendo dívida e R$ 146 no Tesouro IPCA+; em 2025, sem a
-    # Petrobras, 10,3 % contra 14,3 % do CDI.
+    # Petrobras, 10,3 % contra 14,3 % do CDI. Em 26/11/2026 (Caio: "a média não faz
+    # sentido"), empresa a empresa: em 2025, os três maiores lucros (Petrobras 110,6, BNDES
+    # 25,6, BB 17,8: R$ 154 bi) e os três maiores custos, com a subvenção (Ebserh 13,8,
+    # Correios 8,5, Embrapa 4,8: R$ 27 bi). De 2021 a 2025: Petrobras R$ 358, BNDES R$ 256,
+    # BB R$ 209, Caixa R$ 165, CDI R$ 168, abater dívida R$ 166.
     Definicao(
         "manter-estatais",
         "Vale manter as estatais?",
-        "Não todas: 17 vivem do orçamento, os Correios afundam e só 11 das outras 27 "
-        "renderam mais que o juro da dívida em 2025. Mas, somadas, as que vendem renderam "
-        "mais que CDI ou Tesouro desde 2021, puxadas pela Petrobras.",
+        "Não todas. Em 2025, Petrobras, BNDES e Banco do Brasil lucraram R$ 154 bi; Ebserh, "
+        "Correios e Embrapa custaram R$ 27 bi. Só 11 das 27 que vivem do que vendem renderam "
+        "mais que o juro da dívida.",
         (
             ("fiscal", "estatais-saldo"),
             ("fiscal", "estatais-subvencao"),
             ("fiscal", "dividendos-12m"),
         ),
         (
+            Bloco(
+                "Uma a uma: quem lucra e quem custa",
+                "Três lucram muito e três custam muito. Nas dependentes, o custo é a subvenção "
+                "do Tesouro; nos Correios, o prejuízo, que pode virar aporte da União.",
+                ("fiscal", "estatais-ranking"),
+                (),
+                ("fiscal", "estatais-ranking"),
+            ),
             Bloco(
                 "A régua: o juro da dívida",
                 "Vendendo e abatendo dívida, a União pouparia esse juro: vale manter a que rende "
@@ -604,9 +616,8 @@ PERGUNTAS: tuple[Definicao, ...] = (
             ),
             Bloco(
                 "E se o dinheiro fosse aplicado?",
-                "Pelo lucro contábil, as que vendem renderam mais que CDI, Tesouro ou abater "
-                "dívida de 2021 a 2025, mesmo sem a Petrobras. Em 2025, sem ela, ficaram "
-                "abaixo.",
+                "Pelo lucro contábil, Petrobras, BNDES e Banco do Brasil renderam mais que CDI, "
+                "Tesouro ou abater dívida de 2021 a 2025; a Caixa empatou com a dívida.",
                 ("fiscal", "estatais-alternativas"),
                 (),
                 ("fiscal", "estatais-alternativas"),
@@ -618,13 +629,6 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 ("fiscal", "dividendos-por-empresa"),
                 (("fiscal", "dividendos-12m"),),
                 ("fiscal", "estatais-lucro"),
-            ),
-            Bloco(
-                "Contra: os Correios",
-                "Não recebem do Tesouro, mas perderam R$ 8,5 bi em 2025 e devem mais do que "
-                "têm. Prejuízo assim pode virar aporte da União.",
-                ("fiscal", "estatais-primario"),
-                (("fiscal", "estatais-primario"),),
             ),
             Bloco(
                 "Contra: as que vivem do orçamento",
@@ -646,7 +650,7 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ),
         conclusao=(
             "Manter as 44 não se sustenta: muitas rendem menos que o juro da dívida, dão "
-            "prejuízo ou vivem do orçamento. As grandes renderam mais do que o dinheiro "
+            "prejuízo ou vivem do orçamento. Três grandes renderam mais do que o dinheiro "
             "aplicado, pelo lucro contábil; vendê-las só compensa se o preço pagar mais que "
             "isso, e estes dados não o medem."
         ),

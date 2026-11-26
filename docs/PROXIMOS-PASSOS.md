@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 25/11/2026 (a ficha de cada estatal). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 26/11/2026 (as estatais uma a uma na pergunta). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -35,7 +35,14 @@ lugar** (Caio: *"Compare com oq poderia ser investido ao invés delas"*): `estat
 (gráfico "Ou aplicar no lugar" e tabela atrás da do retorno, e uma explicação nova na
 pergunta). R$ 100 de 2021 a 2025: R$ 260 nas não dependentes somadas (R$ 199 sem a
 Petrobras), R$ 168 no CDI, R$ 166 abatendo dívida, R$ 146 no Tesouro IPCA+, R$ 135 a
-inflação; em 2025, sem a Petrobras, 10,3 % contra 14,3 % do CDI. Réguas diferentes (lucro
+inflação. **Em 26/11, sem média** (Caio: *"Oq dá pra colocar é uma avaliação por estatal
+[...] top 3 prejuízos na ênfase, top 3 lucros também [...] a média não faz sentido"*): saíram
+as linhas das não dependentes somadas e "sem a Petrobras"; entrou `estatais-ranking`
+(gráfico "Quem lucra e quem custa", com a lista "Ver": os dois lados, só lucros, só
+prejuízos, e a tabela ano a ano com a soma), que abre a pergunta. Medida: lucro ou prejuízo
+do ano, e nas dependentes menos a subvenção (que entra como receita delas). Em 2025:
+Petrobras 110,6, BNDES 25,6, BB 17,8; Ebserh −13,8, Correios −8,5, Embrapa −4,8 (R$ bi). A
+explicação "Contra: os Correios" foi para dentro da primeira. Réguas diferentes (lucro
 contábil contra preço de mercado), dito na nota; sem bolsa (B3 fora). Os Tesouros são os de
 "Quanto rendeu" (`mercados.carteira_rolada`), começando em dez/2019. Olhado a 390 e 1280 px;
 **falta o Caio olhar**.

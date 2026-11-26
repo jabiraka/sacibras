@@ -341,6 +341,7 @@ PARTES: dict[str, list[Parte]] = {
                 "dividendos-por-empresa",
                 "estatais-subvencoes",
                 "estatais-lucro",
+                "estatais-ranking",
                 "estatais-retorno",
                 "estatais-alternativas",
             ],
@@ -863,10 +864,17 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
         # conta do caixa: as duas medem o que a União ganha com elas.
         # E o que o mesmo dinheiro teria rendido aplicado (Caio, 25/11/2026).
         "estatais": Agrupar(
-            graficos={"estatais-conta": ["estatais-retorno", "estatais-alternativas"]},
+            graficos={
+                "estatais-conta": [
+                    "estatais-ranking",
+                    "estatais-retorno",
+                    "estatais-alternativas",
+                ]
+            },
             tabelas={"estatais-retorno": ["estatais-alternativas"]},
             rotulos={
                 "estatais-conta": "O caixa da União",
+                "estatais-ranking": "Quem lucra e quem custa",
                 "estatais-retorno": "Retorno contra o juro",
                 "estatais-alternativas": "Ou aplicar no lugar",
             },

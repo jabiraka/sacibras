@@ -884,6 +884,9 @@ def montar(ctx: Contexto) -> Secao:
                 )
                 graficos += g_alt
                 tabelas += t_alt
+                _, g_rank, t_rank = estatais.ranking(fonte_sest, linhas_sest)
+                graficos += g_rank
+                tabelas += t_rank
         except Exception as erro:
             print(f"    estatais: o retorno contra o juro ficou de fora: {str(erro)[:120]}")
     except Exception as erro:
