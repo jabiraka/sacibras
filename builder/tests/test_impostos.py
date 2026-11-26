@@ -348,3 +348,40 @@ def test_ibs_vai_para_o_destino_pela_conta_do_adct() -> None:
     regras = tabelas[0]
     assert all(len(li.textos) == 2 and li.textos[1] for li in regras.linhas)
     assert any("0,25 %" in li.textos[0] for li in regras.linhas)
+
+
+def test_dgt_le_funcao_beneficio_e_tributo() -> None:
+    livro = openpyxl.Workbook()
+    v = livro.active
+    v.title = "Q V"
+    v.append(["FUNÇÃO ORÇAMENTÁRIA", "VALOR", "%"])
+    v.append(["Saúde", 30.0, 0.3])
+    v.append(["Indústria", 70.0, 0.7])
+    v.append(["TOTAL", 100.0, 1])
+    iii = livro.create_sheet("Q III")
+    iii.append(["FUNÇÃO ORÇAMENTÁRIA / GASTO TRIBUTÁRIO", "VALOR", "%"])
+    iii.append(["Indústria", 70.0, 0.7])
+    iii.append(["Zona Franca de Manaus", 60.0, 0.6])
+    iii.append(["Rota 2030", 10.0, 0.1])
+    iii.append(["Saúde", 30.0, 0.3])
+    iii.append(["Medicamentos", 30.0, 0.3])
+    iii.append(["TOTAL", 100.0, 1])
+    vi = livro.create_sheet("Q VI")
+    vi.append(["TRIBUTO", "VALOR", "PART. %"])
+    vi.append(["PIB", "ARRECADAÇÃO", "GASTOS TRIBUTÁRIOS"])
+    vi.append(["Imposto sobre a Renda Pessoa Física - IRPF", 40.0, 0.4, 3.0])
+    vi.append(["Contribuição Social para o PIS-PASEP", 60.0, 0.6, 5.0])
+    vi.append(["TOTAL", 100.0, 1.0, 8.0])
+    vi.append(["ARRECADAÇÃO*", 2000.0, 20.0, 100])
+    aba = lambda n: list(livro[n].iter_rows(values_only=True))  # noqa: E731
+    funcoes = receita_gastos.ler_funcoes(aba("Q V"))
+    assert funcoes == [("Indústria", 70.0), ("Saúde", 30.0)]
+    assert receita_gastos.ler_beneficios(aba("Q III"), {n for n, _ in funcoes}) == {
+        "Indústria": [("Zona Franca de Manaus", 60.0), ("Rota 2030", 10.0)],
+        "Saúde": [("Medicamentos", 30.0)],
+    }
+    assert receita_gastos.ler_tributos(aba("Q VI")) == [
+        ("Contribuição Social para o PIS-PASEP", 60.0),
+        ("Imposto sobre a Renda Pessoa Física - IRPF", 40.0),
+    ]
+    assert receita_gastos.ler_funcoes([("sem cabeçalho",)]) == []

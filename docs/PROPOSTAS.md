@@ -51,6 +51,11 @@ repetido no PROXIMOS-PASSOS.
   oficial por estado (só a regra de partilha, que já está no gráfico).
 - Alíquotas do Imposto Seletivo: a LC 214 deixa para lei ordinária; entra quando sair.
 - Gasto tributário antes de 2014: a Receita só publica em PDF; fica fora sem conferência.
+- Gasto tributário por empresa e por setor de atividade (Caio, 26/11/2026): a Receita não publica
+  (sigilo fiscal, art. 198 do CTN). Só alguns programas listam quem recebeu, cada um num lugar:
+  Lei do Bem e Lei de Informática (MCTI), Rouanet (Salic), Zona Franca (Suframa). A conferir do PC,
+  um a um, antes de entrar. Subsídios diretos do Orçamento (subvenções, Proagro, crédito rural) por
+  setor: sem fonte conferida ainda.
 - Multiplicador de receita da SPE: só se sair com regularidade (estudo avulso não entra).
 
 **Decomposições** (feitas em 15/11/2026: IPCA por grupo, PIB pela demanda e pela

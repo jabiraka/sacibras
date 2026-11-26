@@ -835,11 +835,106 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
                 nota="Região de quem deixou de pagar (sede da empresa ou endereço da pessoa).",
             )
         )
+    tabelas += _gasto_por_funcao(nova, fonte)
     frase = (
         f"A União deixou de arrecadar {br(pct[ano])} % do PIB em {ano} com isenções e "
         "regimes especiais"
     )
     return cartoes, graficos, tabelas, frase + "."
+
+
+def _sigla(nome: str) -> str:
+    """ "Contribuição … - COFINS" vira "COFINS"; sem sigla, o próprio nome."""
+    return nome.rsplit(" - ", 1)[-1].strip()
+
+
+def _gasto_por_funcao(nova: receita_gastos.Edicao, fonte: str) -> list[Tabela]:
+    """O gasto tributário do último ano por função orçamentária, por benefício e por tributo.
+
+    A Receita não publica por setor de atividade (CNAE) nem por empresa (sigilo fiscal): a
+    função é o objetivo do benefício. Soma das funções e dos tributos = o total oficial."""
+    tabelas: list[Tabela] = []
+    if nova.funcoes:
+        total = sum(v for _, v in nova.funcoes)
+        grandes, resto = nova.funcoes[:10], nova.funcoes[10:]
+        linhas = [(n, v) for n, v in grandes] + (
+            [("Demais funções", sum(v for _, v in resto))] if resto else []
+        )
+        tabelas.append(
+            Tabela(
+                id="gasto-tributario-funcoes",
+                titulo="O gasto tributário por função",
+                subtitulo=str(nova.ano),
+                colunas=["R$ bi", "% do total"],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=n,
+                        valores=[round(v / 1e9, 1), round(v / total * 100, 1)],
+                        unidade="",
+                        casas=1,
+                    )
+                    for n, v in linhas
+                ],
+                fonte=fonte,
+                nota=(
+                    "Função é o objetivo do benefício, não o setor de quem recebe: a Receita "
+                    "não publica por atividade nem por empresa. Inclui pessoas físicas."
+                ),
+            )
+        )
+        if nova.beneficios:
+            linhas_b: list[LinhaTabela] = []
+            for funcao, _ in nova.funcoes[:6]:
+                itens = [
+                    (n, v) for n, v in nova.beneficios.get(funcao, []) if v > 0 and n != funcao
+                ][:3]
+                linhas_b += [
+                    LinhaTabela(
+                        rotulo=f"{funcao}: {n}",
+                        valores=[round(v / 1e9, 1), round(v / total * 100, 1)],
+                        unidade="",
+                        casas=1,
+                    )
+                    for n, v in itens
+                ]
+            if linhas_b:
+                tabelas.append(
+                    Tabela(
+                        id="gasto-tributario-beneficios",
+                        titulo="Os maiores benefícios de cada função",
+                        subtitulo=str(nova.ano),
+                        colunas=["R$ bi", "% do total"],
+                        linhas=linhas_b,
+                        fonte=fonte,
+                        nota="As seis maiores funções, três benefícios de cada.",
+                    )
+                )
+    if nova.tributos:
+        total_t = sum(v for _, v in nova.tributos)
+        tabelas.append(
+            Tabela(
+                id="gasto-tributario-tributos",
+                titulo="O gasto tributário por tributo",
+                subtitulo=str(nova.ano),
+                colunas=["R$ bi", "% do total"],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=("IRPF (pessoa física)" if _sigla(n) == "IRPF" else _sigla(n)),
+                        valores=[round(v / 1e9, 1), round(v / total_t * 100, 1)],
+                        unidade="",
+                        casas=1,
+                    )
+                    for n, v in nova.tributos
+                    if v >= 1e6
+                ],
+                fonte=fonte,
+                nota=(
+                    "O IRPF é de pessoa física; os outros incidem sobretudo sobre empresas, "
+                    "mas a Receita não separa quem recebe."
+                ),
+            )
+        )
+    return tabelas
 
 
 # ------------------------------------------------------------------ seção

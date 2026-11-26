@@ -404,7 +404,14 @@ PARTES: dict[str, list[Parte]] = {
             "não pago.",
             cartoes=["gasto-tributario", "divida-ativa"],
             graficos=["gasto-tributario", "divida-ativa"],
-            tabelas=["gasto-tributario", "gasto-tributario-regioes", "divida-ativa"],
+            tabelas=[
+                "gasto-tributario",
+                "gasto-tributario-regioes",
+                "gasto-tributario-funcoes",
+                "gasto-tributario-beneficios",
+                "gasto-tributario-tributos",
+                "divida-ativa",
+            ],
         ),
         Parte(
             "esferas",
@@ -937,8 +944,21 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             },
         ),
         "gasto-tributario": Agrupar(
-            tabelas={"gasto-tributario": ["gasto-tributario-regioes"]},
-            rotulos={"gasto-tributario": "Os maiores", "gasto-tributario-regioes": "Por região"},
+            tabelas={
+                "gasto-tributario": [
+                    "gasto-tributario-funcoes",
+                    "gasto-tributario-beneficios",
+                    "gasto-tributario-tributos",
+                    "gasto-tributario-regioes",
+                ]
+            },
+            rotulos={
+                "gasto-tributario": "Os maiores",
+                "gasto-tributario-funcoes": "Por função",
+                "gasto-tributario-beneficios": "Por benefício",
+                "gasto-tributario-tributos": "Por tributo",
+                "gasto-tributario-regioes": "Por região",
+            },
         ),
     },
     "longo-prazo": {
