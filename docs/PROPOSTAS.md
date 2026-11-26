@@ -325,3 +325,11 @@ o IPCA-15 no gráfico dos outros índices. Fica:
   disparada pela issue `releitura` ou por data, lê o PDF, atualiza `relatorios.py`, `leis.py` e
   `leituras.py` e abre PR. Não serve para o que só abre do PC (Planalto); número em imagem no
   PDF pede conferência humana.
+
+## Estatais estaduais, o que ficou de fora (26/11/2026)
+
+O Raio-X do Tesouro traz por empresa também patrimônio líquido, pessoal, empregados,
+investimento, setor e dependência: dá uma ficha por estatal estadual (como a das federais), o
+retorno contra o juro e o bloco das estatais na ficha de cada estado (Estados › Um estado por
+dentro). Os nomes mudam um pouco de uma edição para outra, e juntar os anos de uma empresa pede
+conferência. A coluna "Subvenção (anterior)" da edição 2025 está errada na fonte (R$ 81 bi).

@@ -157,13 +157,13 @@ def test_retorno_contra_o_juro_da_divida() -> None:
     assert [v for _, v in juro.pontos] == [10.0, 13.0]
     petro = next(s for s in desenho.series if s.id == "petrobras")
     assert [v for _, v in petro.pontos] == [15.0, 15.0]  # 6 bi sobre 40 bi
-    assert "acima dele: Petrobras" in desenho.manchete
+    assert "retorno: Petrobras 15" in desenho.manchete
     # Sete não dependentes; a dependente fica fora da tabela.
     assert len(tabela.linhas) == 7
     assert all("HOSP" not in li.rotulo for li in tabela.linhas)
     primeira = tabela.linhas[0]
     assert primeira.grupo.startswith("Renderam acima do juro em 2025")
-    assert primeira.valores[2] == 2.0  # 15 % contra 13 %
+    assert primeira.valores[2] == 115  # 15 % contra 13 %: empata em R$ 115 por R$ 100
 
 
 def test_estatais_contra_aplicacoes() -> None:

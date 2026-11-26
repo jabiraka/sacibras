@@ -17,6 +17,7 @@ from sacibras.fontes import (
     fmi,
     sest,
     tesouro_direto,
+    tesouro_estaduais,
     tesouro_rtn,
 )
 from sacibras.modelos import decomposicoes
@@ -31,7 +32,7 @@ from sacibras.schema import (
     Secao,
     Tabela,
 )
-from sacibras.secoes import estatais, gasto, mercados, servidores
+from sacibras.secoes import estatais, estatais_estaduais, gasto, mercados, servidores
 from sacibras.secoes.base import (
     Contexto,
     br,
@@ -897,6 +898,12 @@ def montar(ctx: Contexto) -> Secao:
                 tabelas += t_est
             except Exception as erro:
                 print(f"    estatais: {nome} ficou de fora: {str(erro)[:120]}")
+        try:  # as estatais dos estados (Caio, 26/11/2026)
+            _, g_uf, t_uf = estatais_estaduais.pecas(*tesouro_estaduais.empresas(ctx.hoje))
+            graficos += g_uf
+            tabelas += t_uf
+        except Exception as erro:
+            print(f"    estatais: as estaduais (Tesouro) ficaram de fora: {str(erro)[:120]}")
         try:  # uma ficha por estatal (Sest, anexo I), num arquivo à parte
             fonte_sest, linhas_sest = sest.empresas_da_mais_nova()
             fichas = estatais.fichas(fonte_sest, linhas_sest)

@@ -47,6 +47,17 @@ fora" da pergunta usa essa tabela (a das regras ficou só em Impostos), e a conc
 para o MEI, o limite é parecido com o de fora e a disputa está na faixa de cima. O cartão
 `simples-optantes` mora em Reforma do consumo (Isenções e subsídios ficou com quatro cartões depois
 dos subsídios). **Falta o Caio olhar** o tema novo e o tom da conclusão.
+**26/11/2026, as estatais dos estados** (Caio: *"Podemos incluir as empresas estaduais
+também?"*). Em Contas públicas › Estatais, atrás de "O caixa da União" (lista "Gráfico" ›
+"Estaduais"): dividendos aos estados contra subvenção e reforço de capital, 2021 a 2024, e três
+tabelas (ano a ano, por estado, as dez que mais lucram e as dez que mais custam). Quinta
+explicação na pergunta "As estatais dão lucro ou prejuízo aos cofres públicos?", e a resposta
+cita as estaduais (**texto fixo**: reler quando sair o ano de 2025). Fonte: Raio-X das empresas
+dos Estados, do Tesouro (`fontes/tesouro_estaduais.py`, CSV do repositório oficial
+`tesouro/empresas-estados`; edição nova entra sozinha, e em 26/11 a de 2025 era a mais nova). Em
+2024: 298 empresas, os estados receberam R$ 5,3 bi e puseram R$ 23,7 bi. É o que cada estado
+declarou ao Siconfi; o Tesouro não garante. Olhado a 390 px; **falta o Caio olhar**.
+
 **26/11/2026, a isenção do consumo contra a OCDE** (Caio: *"Sim, monte"*; *"vai no main ao
 terminar"*). Em Impostos › Reforma do consumo, atrás de "Ano a ano" (lista "Tabela"), "Isenção lá
 fora": o limite do nanoempreendedor (R$ 40,5 mil em 2026, R$ 70 mil em 2028; LC 214, art. 26)
@@ -529,7 +540,8 @@ Na ordem do plano; o que está aqui ainda não foi feito:
    microdados da PNAD: a tabela do SIDRA não cruza posição com instrução); a remuneração
    por poder nos estados (o RGF de cada tribunal e assembleia, 27 × 5 chamadas, e sem
    contagem de servidores); a folha por função (professores, policiais, saúde). **Estatais,
-   o que falta**: as estaduais (só há o primário do BC) e a série da subvenção antes de 2021.
+   o que falta**: a ficha de cada estadual ([PROPOSTAS](PROPOSTAS.md)) e a série da subvenção
+   federal antes de 2021.
 4. **A árvore do diagnóstico de crescimento** e o crédito direcionado nas perguntas.
 5. **Contador de acesso nosso**: espera o projeto Supabase do sacibras.
 6. **Estados e Brasil no mundo** com 6 métricas na lista; Estados › Duas métricas com poucos

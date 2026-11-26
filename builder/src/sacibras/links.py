@@ -22,7 +22,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from sacibras.fontes import receita_gastos, receita_simples, sest
+from sacibras.fontes import receita_gastos, receita_simples, sest, tesouro_estaduais
 
 
 class Regra(BaseModel):
@@ -214,6 +214,11 @@ REGRAS: list[Regra] = [
         padrao=r"Relatório Agregado das Empresas Estatais Federais[^;]*, p\. \d+",
         nome="relatório em PDF",
         url=sest.PDF,
+    ),
+    Regra(
+        padrao=r"Raio-X das empresas dos Estados",
+        nome="Raio-X das empresas dos Estados (Tesouro)",
+        url=tesouro_estaduais.PAGINA,
     ),
     Regra(
         padrao=r"\bONS\b",

@@ -212,6 +212,16 @@ SINONIMOS: dict[str, list[str]] = {
         "ebserh",
     ],
     "dividendos pagos a uniao": ["lucro das estatais", "dividendos da petrobras"],
+    "estatais estaduais": [
+        "empresas estaduais",
+        "estatais dos estados",
+        "cemig",
+        "copasa",
+        "sanepar",
+        "banrisul",
+        "saneamento estadual",
+        "metro",
+    ],
     "subvencao": ["estatais dependentes", "prejuizo das estatais", "rombo das estatais"],
     "icms": ["imposto estadual", "arrecadacao dos estados", "imposto"],
     "arrecadado pela uniao": [

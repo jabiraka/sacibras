@@ -332,8 +332,8 @@ PARTES: dict[str, list[Parte]] = {
         Parte(
             "estatais",
             "Estatais",
-            "O que as estatais federais pagam à União em dividendos, o que recebem em "
-            "subvenção e capital, e cada uma por dentro: lucro, receita e balanço.",
+            "O que as estatais pagam em dividendos à União e aos estados, o que recebem em "
+            "subvenção e capital, e cada federal por dentro.",
             cartoes=["estatais-saldo", "dividendos-12m", "estatais-subvencao", "estatais-primario"],
             graficos=["estatais-conta", "dividendos-por-empresa", "estatais-primario"],
             tabelas=[
@@ -345,6 +345,9 @@ PARTES: dict[str, list[Parte]] = {
                 "estatais-custos",
                 "estatais-retorno",
                 "estatais-alternativas",
+                "estatais-estados",
+                "estatais-estados-uf",
+                "estatais-estados-empresas",
             ],
             # Caio, 25/11/2026: "abra por estatal um dashboard". As fichas vêm num arquivo à
             # parte (`Secao.arquivo_estatais`), uma de cada vez, escolhida numa lista.
@@ -891,11 +894,13 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                     "estatais-custos",
                     "estatais-retorno",
                     "estatais-alternativas",
+                    "estatais-estados",
                 ]
             },
             tabelas={
                 "estatais-ranking": ["estatais-custos"],
                 "estatais-retorno": ["estatais-alternativas"],
+                "estatais-estados": ["estatais-estados-uf", "estatais-estados-empresas"],
             },
             rotulos={
                 "estatais-conta": "O caixa da União",
@@ -903,6 +908,7 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                 "estatais-custos": "Para onde vai o dinheiro",
                 "estatais-retorno": "Retorno contra o juro",
                 "estatais-alternativas": "Ou aplicar no lugar",
+                "estatais-estados": "Estaduais",
             },
         ),
         "gasto": Agrupar(

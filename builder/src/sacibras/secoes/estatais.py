@@ -956,10 +956,11 @@ def retorno(
             papel="referencia",
         )
     )
-    acima = [
-        n
+    # Caio, 26/11/2026: "Essa parte não ficou muito clara". A frase traz o número de cada uma.
+    do_ano = [
+        f"{n} {br(r)} %"
         for s, n in GRANDES.items()
-        if (x := por.get((s, ultimo))) and (r := _roe(x)) and r > juro[ultimo]
+        if (x := por.get((s, ultimo))) and (r := _roe(x)) is not None
     ]
     desenho = grafico(
         "estatais-retorno",
@@ -971,12 +972,11 @@ def retorno(
         fonte=fonte,
         rotulo_opcao="Retorno contra o juro",
         manchete=(
-            f"Em {ultimo}, juro da dívida de {br(juro[ultimo])} %; acima dele: "
-            f"{', '.join(acima) if acima else 'nenhuma das quatro'}."
+            f"Em {ultimo}, juro da dívida de {br(juro[ultimo])} %; retorno: {', '.join(do_ano)}."
         ),
         nota=(
-            "Retorno é o lucro sobre o patrimônio do ano. Vender e abater dívida pouparia o "
-            "juro, mas o ganho depende do preço de venda, que estes dados não têm."
+            "Retorno é o lucro sobre o patrimônio do ano, pelo valor contábil. Juro: o médio "
+            "da dívida bruta em dezembro."
         ),
     )
 
@@ -990,7 +990,8 @@ def retorno(
                 None if r is None else round(r, 1),
                 # Com patrimônio negativo hoje, a média de anos de patrimônio quase zero engana.
                 round(sum(roes) / len(roes), 1) if roes and r is not None else None,
-                None if r is None else round(r - juro[ultimo], 1),
+                # O preço de empate: abater dívida com ele pouparia o lucro de que se abre mão.
+                None if r is None or r <= 0 else round(100 * r / juro[ultimo]),
                 round(sum(_saldo(y) for y in da_empresa) / 1e9, 2),
             ],
             unidade="",
@@ -1023,14 +1024,14 @@ def retorno(
         colunas=[
             str(ultimo),
             f"Média desde {anos[0]}",
-            "Contra o juro, pp",
+            "Empate, R$",
             f"Saldo com a União desde {anos[0]}, R$ bi",
         ],
         linhas=linhas_tabela,
         fonte=fonte,
         nota=(
-            "As não dependentes, da maior para a menor em patrimônio. Saldo: dividendos à "
-            "União menos subvenção e aporte."
+            f"Empate: por R$ 100 de patrimônio, venda acima disso pouparia mais juro que o "
+            f"lucro de {ultimo}. Saldo: dividendos à União menos subvenção e aporte."
         ),
     )
     return [], [desenho], [tabela]

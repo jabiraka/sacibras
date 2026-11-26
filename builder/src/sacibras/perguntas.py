@@ -519,9 +519,9 @@ PERGUNTAS: tuple[Definicao, ...] = (
     Definicao(
         "estatais",
         "As estatais dão lucro ou prejuízo aos cofres públicos?",
-        "No caixa da União, dão mais do que recebem: desde 2021, os dividendos superam a "
-        "subvenção e o capital que o Tesouro põe nelas. O ganho vem de quatro empresas e "
-        "oscila: o saldo de 2025 foi o menor em cinco anos.",
+        "As federais dão à União mais do que recebem desde 2021, por causa de quatro "
+        "empresas; o saldo de 2025 foi o menor em cinco anos. Nas estaduais é o contrário: "
+        "de 2021 a 2024, os estados puseram mais do que receberam.",
         (
             ("fiscal", "estatais-saldo"),
             ("fiscal", "dividendos-12m"),
@@ -559,9 +559,18 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 ("fiscal", "estatais-primario"),
                 (("fiscal", "estatais-primario"),),
             ),
+            Bloco(
+                "E as dos estados",
+                "Somadas, receberam dos estados mais do que pagaram em dividendos em todos os "
+                "anos desde 2021. São números declarados pelos próprios estados.",
+                ("fiscal", "estatais-estados"),
+                (),
+                ("fiscal", "estatais-estados-uf"),
+            ),
         ),
         (
             "estatais dão prejuízo",
+            "estatais estaduais",
             "lucro das estatais",
             "dividendos da Petrobras",
             "prejuízo dos Correios",
@@ -569,8 +578,8 @@ PERGUNTAS: tuple[Definicao, ...] = (
             "empresas públicas",
         ),
         conclusao=(
-            "Como caixa, as estatais ajudam o Tesouro, e a ajuda depende de poucas empresas. "
-            "Se vale a pena o Estado ser dono delas, estes dados não medem."
+            "Como caixa, as federais ajudam a União, apoiadas em poucas empresas, e as "
+            "estaduais custam aos estados. Se vale a pena ser dono delas, estes dados não medem."
         ),
     ),
     # Caio, 25/11/2026: "Adicione agora uma pergunta no painel: Vale manter as estatais? Bem
