@@ -35,6 +35,7 @@ from sacibras.fontes import (
     fmi,
     fmi_cofog,
     ocde_receita,
+    osu,
     receita_arrecadacao,
     receita_gastos,
     receita_irpf,
@@ -840,7 +841,138 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
         f"A União deixou de arrecadar {br(pct[ano])} % do PIB em {ano} com isenções e "
         "regimes especiais"
     )
+    try:
+        c, g, t = _subsidios_da_uniao(osu.subsidios())
+        cartoes += c
+        graficos += g
+        tabelas += t
+    except Exception as erro:
+        print(f"    impostos: sem o Orçamento de Subsídios da União ({str(erro)[:120]})")
     return cartoes, graficos, tabelas, frase + "."
+
+
+def _subsidios_da_uniao(s: osu.Subsidios) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
+    """Os subsídios da União por tipo (tributário, financeiro, creditício) e, nos dois que são
+    gasto direto, por programa e por área. Tudo do anexo do OSU, menos o agrupamento por área
+    (nosso, pelo nome do programa); os programas somam o total do tipo."""
+    ano = s.ultimo_ano
+    fonte = f"{osu.FONTE}, edição {s.edicao}"
+    pct = s.pct_pib.totais
+    nominal = s.nominal.totais
+    total = nominal["TOTAL"][ano]
+    direto = nominal[osu.FINANCEIROS][ano] + nominal[osu.CREDITICIOS][ano]
+    cartoes = [
+        cartao(
+            "subsidios-uniao",
+            "Subsídios da União",
+            _pontos_anuais(pct["TOTAL"]),
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            detalhe=(
+                f"R$ {br(total / 1e6, 0)} bi; {br(nominal[osu.TRIBUTARIOS][ano] / total * 100, 0)}"
+                " % em isenções"
+            ),
+            fonte=fonte,
+            secao="impostos",
+        )
+    ]
+    nomes = {
+        osu.TRIBUTARIOS: ("tributario", "Isenções (tributário)"),
+        osu.CREDITICIOS: ("crediticio", "Crédito subsidiado"),
+        osu.FINANCEIROS: ("financeiro", "Gasto do Orçamento"),
+    }
+    series = [
+        serie(sid, nome, _pontos_anuais(pct[tipo]))
+        for tipo, (sid, nome) in reversed(list(nomes.items()))
+    ]
+    series.append(serie("total", "Total", _pontos_anuais(pct["TOTAL"])))
+    graficos = [
+        grafico(
+            "subsidios-uniao",
+            "Os subsídios da União, por tipo",
+            series,
+            tipo="empilhado",
+            total="total",
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            nota=(
+                "Isenções de 2024 e 2025 são a projeção da Receita. Inclui famílias (FIES, "
+                "Minha Casa, tarifa social), não só empresas."
+            ),
+        )
+    ]
+
+    def bi(v: float) -> float:
+        return round(v / 1e6, 1)
+
+    diretos = [p for p in s.nominal.programas if p.tipo != osu.TRIBUTARIOS]
+    por_area: dict[str, list[float]] = {}
+    for p in diretos:
+        orc, cred = por_area.setdefault(osu.area_do_programa(p.nome), [0.0, 0.0])
+        v = p.valores.get(ano, 0.0)
+        por_area[osu.area_do_programa(p.nome)] = [
+            orc + (v if p.tipo == osu.FINANCEIROS else 0.0),
+            cred + (v if p.tipo == osu.CREDITICIOS else 0.0),
+        ]
+    ordem = sorted(por_area.items(), key=lambda x: (x[0] == osu.OUTROS, -(x[1][0] + x[1][1])))
+    tabelas = [
+        Tabela(
+            id="subsidios-areas",
+            titulo="Os subsídios diretos por área",
+            subtitulo=f"{ano}, R$ bi",
+            colunas=["Orçamento", "Crédito", "Total"],
+            linhas=[
+                LinhaTabela(
+                    rotulo=area,
+                    valores=[bi(orc), bi(cred), bi(orc + cred)],
+                    unidade="",
+                    casas=1,
+                )
+                for area, (orc, cred) in ordem
+            ],
+            fonte=fonte + "; agrupamento por área: cálculo próprio",
+            nota=(
+                f"R$ {br(direto / 1e6, 0)} bi em {ano}, fora as isenções. Área pelo nome do "
+                "programa; quem recebe é de empresas e de famílias."
+            ),
+        )
+    ]
+    for tipo, id_, titulo, nota in (
+        (osu.FINANCEIROS, "subsidios-financeiros", "Subsídios do Orçamento, por programa", ""),
+        (
+            osu.CREDITICIOS,
+            "subsidios-crediticios",
+            "Crédito subsidiado, por programa",
+            "Negativo: no ano, a União cobrou mais do que pagou para captar.",
+        ),
+    ):
+        programas = sorted(
+            (p for p in diretos if p.tipo == tipo and abs(p.valores.get(ano, 0.0)) >= 5e4),
+            key=lambda p: -p.valores.get(ano, 0.0),
+        )
+        tabelas.append(
+            Tabela(
+                id=id_,
+                titulo=titulo,
+                subtitulo="R$ bi",
+                colunas=[str(ano - 1), str(ano)],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=p.nome,
+                        valores=[bi(p.valores.get(ano - 1, 0.0)), bi(p.valores.get(ano, 0.0))],
+                        unidade="",
+                        casas=1,
+                    )
+                    for p in programas
+                ],
+                fonte=fonte,
+                nota=nota,
+            )
+        )
+    return cartoes, graficos, tabelas
 
 
 def _sigla(nome: str) -> str:

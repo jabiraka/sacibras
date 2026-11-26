@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 26/11/2026 (o gasto tributário por função, benefício e tributo; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 26/11/2026 (isenções e subsídios: por função, benefício, tributo e os subsídios diretos; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -30,8 +30,17 @@ Em 2023: Comércio e Serviço R$ 115 bi (Simples 98), Saúde 81, Agricultura 78,
 Receita não publica por setor de atividade (CNAE) nem por empresa** (sigilo fiscal): "função" é o
 objetivo do benefício, e a nota diz isso e que inclui pessoas físicas; o IRPF vem à parte na
 tabela por tributo. Só tabelas, porque o esquema não tem gráfico de barras por categoria.
-**Falta o Caio olhar** as telas (a nuvem não abriu o site). Ficou no
-[PROPOSTAS](PROPOSTAS.md): benefício por empresa e subsídios diretos do Orçamento.
+**E os subsídios diretos** (Caio: *"Entra os subsídios diretos também, procure as fontes"*):
+a fonte é o Orçamento de Subsídios da União do Planejamento (`fontes/osu.py`, XLSX achado na
+página, edição mais nova sozinha). A parte "O que não entra" virou **"Isenções e subsídios"**:
+cartão "Subsídios da União" (R$ 710 bi, 5,6 % do PIB em 2025; 80 % são isenções), o gráfico
+empilhado por tipo atrás do das isenções ("Todos os subsídios") e as tabelas "Por área" (2025:
+regional 32,8, habitação 32,4, trabalho 27,1, agro 18,3 R$ bi), "Do Orçamento" e "Crédito", por
+programa. **A área é agrupamento nosso pelo nome do programa** (`osu.AREAS`; dito na fonte).
+Os tributários de 2024 e 2025 são projeção da Receita; o subsídio inclui famílias (FIES, Minha
+Casa, tarifa social), e a nota diz isso. O `_juntar` aceita rótulo `graficos:<id>` quando o
+mesmo id é de gráfico e tabela. **Falta o Caio olhar** as telas (a nuvem não abriu o site).
+Ficou no [PROPOSTAS](PROPOSTAS.md): benefício por empresa e o Proagro.
 
 **25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,
 mostrando os dados que podem sustentar uma conclusão ou outra, pode avaliar vc pelos dados, eu

@@ -54,8 +54,8 @@ repetido no PROXIMOS-PASSOS.
 - Gasto tributário por empresa e por setor de atividade (Caio, 26/11/2026): a Receita não publica
   (sigilo fiscal, art. 198 do CTN). Só alguns programas listam quem recebeu, cada um num lugar:
   Lei do Bem e Lei de Informática (MCTI), Rouanet (Salic), Zona Franca (Suframa). A conferir do PC,
-  um a um, antes de entrar. Subsídios diretos do Orçamento (subvenções, Proagro, crédito rural) por
-  setor: sem fonte conferida ainda.
+  um a um, antes de entrar. Subsídios diretos: entraram em 26/11 (OSU, por programa e por área). Falta
+  o Proagro e o crédito rural em geral (o OSU só traz a equalização; o Sicor/BC cobre 35 % do volume).
 - Multiplicador de receita da SPE: só se sair com regularidade (estudo avulso não entra).
 
 **Decomposições** (feitas em 15/11/2026: IPCA por grupo, PIB pela demanda e pela

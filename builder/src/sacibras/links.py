@@ -215,6 +215,11 @@ REGRAS: list[Regra] = [
         url="https://dados.ons.org.br",
     ),
     Regra(
+        padrao=r"Orçamento de Subsídios da União",
+        nome="Orçamento de Subsídios da União",
+        url="https://www.gov.br/planejamento/pt-br/assuntos/avaliacao-de-politicas-publicas/orcamento-de-subsidios-da-uniao",
+    ),
+    Regra(
         padrao=r"Receita Federal",
         nome="Receita Federal",
         url="https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/dados-abertos",

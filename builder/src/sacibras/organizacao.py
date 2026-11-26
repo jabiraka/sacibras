@@ -399,10 +399,10 @@ PARTES: dict[str, list[Parte]] = {
         ),
         Parte(
             "gasto-tributario",
-            "O que não entra",
-            "O que a União deixa de arrecadar com isenções e o que tem a receber de imposto "
-            "não pago.",
-            cartoes=["gasto-tributario", "divida-ativa"],
+            "Isenções e subsídios",
+            "O que a União deixa de arrecadar com isenções, o que dá em subsídios e o que tem "
+            "a receber de imposto não pago.",
+            cartoes=["gasto-tributario", "subsidios-uniao", "divida-ativa"],
             graficos=["gasto-tributario", "divida-ativa"],
             tabelas=[
                 "gasto-tributario",
@@ -410,6 +410,9 @@ PARTES: dict[str, list[Parte]] = {
                 "gasto-tributario-funcoes",
                 "gasto-tributario-beneficios",
                 "gasto-tributario-tributos",
+                "subsidios-areas",
+                "subsidios-financeiros",
+                "subsidios-crediticios",
                 "divida-ativa",
             ],
         ),
@@ -950,9 +953,16 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                     "gasto-tributario-beneficios",
                     "gasto-tributario-tributos",
                     "gasto-tributario-regioes",
-                ]
+                ],
+                "subsidios-areas": ["subsidios-financeiros", "subsidios-crediticios"],
             },
+            graficos={"gasto-tributario": ["subsidios-uniao"]},
             rotulos={
+                "subsidios-areas": "Subsídios por área",
+                "subsidios-financeiros": "Do Orçamento",
+                "subsidios-crediticios": "Crédito",
+                "subsidios-uniao": "Todos os subsídios",
+                "graficos:gasto-tributario": "Isenções no tempo",
                 "gasto-tributario": "Os maiores",
                 "gasto-tributario-funcoes": "Por função",
                 "gasto-tributario-beneficios": "Por benefício",
@@ -1110,12 +1120,16 @@ def _juntar[T: (Grafico, Tabela)](
         if x.id in atras:
             continue
         outros = [todos[i] for i in juntos.get(x.id, []) if i in todos and i != x.id]
-        nome = rotulos.get(x.id, x.rotulo_opcao)
+
+        # "graficos:<id>" (ou "tabelas:<id>") vale só para aquele tipo, quando o mesmo id é de
+        # um gráfico e de uma tabela.
+        def rotulo(y: T) -> str:
+            tipo = "graficos" if campo == "juntos" else "tabelas"
+            return rotulos.get(f"{tipo}:{y.id}", rotulos.get(y.id, y.rotulo_opcao))
+
+        nome = rotulo(x)
         if outros:
-            alternativas = [
-                o.model_copy(update={"rotulo_opcao": rotulos.get(o.id, o.rotulo_opcao)})
-                for o in outros
-            ]
+            alternativas = [o.model_copy(update={"rotulo_opcao": rotulo(o)}) for o in outros]
             x = x.model_copy(update={"alternativas": alternativas, "rotulo_opcao": nome})
         saida.append(x)
     return saida
