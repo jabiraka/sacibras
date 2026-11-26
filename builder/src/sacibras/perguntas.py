@@ -631,11 +631,12 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 ("fiscal", "estatais-custos"),
             ),
             Bloco(
-                "A régua: o juro da dívida",
-                "Vendendo e abatendo dívida, a União pouparia esse juro: vale manter a que rende "
-                "mais. Petrobras e BNDES rendem; Banco do Brasil e Caixa ficaram abaixo em 2025.",
+                "Vender e pagar dívida compensaria?",
+                "Depende do preço. Pelos números de 2025, cada R$ 100 de patrimônio teria de "
+                "sair por mais de R$ 73 (Banco do Brasil), R$ 84 (Caixa), R$ 117 (BNDES) ou "
+                "R$ 209 (Petrobras).",
                 ("fiscal", "estatais-retorno"),
-                (("fiscal", "juro-implicito"),),
+                (),
                 ("fiscal", "estatais-retorno"),
             ),
             Bloco(
