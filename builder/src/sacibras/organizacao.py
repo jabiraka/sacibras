@@ -416,6 +416,7 @@ PARTES: dict[str, list[Parte]] = {
                 "divida-ativa",
                 "zfm-conta",
                 "zfm-subsetores",
+                "zfm-origem",
             ],
         ),
         Parte(
@@ -952,7 +953,7 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             graficos={"zfm-polo": ["zfm-custo-serie", "zfm-amazonas"]},
             tabelas={
                 "gasto-tributario": ["gasto-tributario-regioes"],
-                "zfm-conta": ["zfm-subsetores"],
+                "zfm-conta": ["zfm-subsetores", "zfm-origem"],
             },
             rotulos={
                 "gasto-tributario": "Os maiores",
@@ -962,6 +963,7 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                 "zfm-amazonas": "Zona Franca: o Amazonas",
                 "zfm-conta": "Zona Franca: a conta",
                 "zfm-subsetores": "Zona Franca: o que fabrica",
+                "zfm-origem": "Zona Franca: insumos e vendas",
             },
         ),
     },

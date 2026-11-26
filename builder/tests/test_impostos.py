@@ -375,7 +375,7 @@ def test_zona_franca_compara_o_custo_ao_polo_do_mesmo_ano(monkeypatch: pytest.Mo
     assert por_id["zfm-por-emprego"].procedencia == "calculado"
     # Uma edição só: sem a série do custo; sem rede: sem o Amazonas. O polo fica.
     assert [g.id for g in graficos] == ["zfm-polo"]
-    assert [t.id for t in tabelas] == ["zfm-conta", "zfm-subsetores"]
+    assert [t.id for t in tabelas] == ["zfm-conta", "zfm-subsetores", "zfm-origem"]
     assert {v.id for v in graficos[0].variantes} == {"principal", "faturamento"}
     linhas = {linha.rotulo: linha.valores[0] for linha in tabelas[0].linhas}
     assert linhas["Imposto não cobrado ÷ folha, vezes"] == pytest.approx(
@@ -400,11 +400,14 @@ def test_zona_franca_custo_em_pct_do_pib_por_edicao() -> None:
             pct_pib={ano: pct},
             principais=[("Simples Nacional", total - zfm), ("Zona Franca de Manaus", zfm)],
             regioes={},
+            zona_franca={ano: zfm, ano + 1: zfm * 1.1},
         )
 
     g = impostos._zfm_custo_no_tempo(
         [edicao(2023, 27.49e9, 534e9, 4.88), edicao(2019, 30e9, 318e9, 4.3)]
     )
-    pontos = g.series[0].pontos
-    assert [p[0].year for p in pontos] == [2019, 2023]
-    assert pontos[1][1] == pytest.approx(27.49 / 534 * 4.88, abs=0.01)
+    assert [(p[0].year, p[1]) for p in g.series[0].pontos] == [(2023, 27.5)]
+    assert g.series[1].papel == "previsao" and g.series[1].pontos[0][0].year == 2024
+    pib = next(v for v in g.variantes if v.id == "pib").series[0].pontos
+    assert [p[0].year for p in pib] == [2019, 2023]
+    assert pib[1][1] == pytest.approx(27.49 / 534 * 4.88, abs=0.01)

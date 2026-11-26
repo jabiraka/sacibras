@@ -400,7 +400,8 @@ LEITURAS: list[Leitura] = [
         "faturamento' e 'Evolução da mão-de-obra do PIM'. Trocar os dicionários "
         "(PIM_*, inclusive PIM_SUBSETORES) e PIM_EM, e conferir os números fixos da "
         "pergunta da Zona Franca (R$ 27 bi, R$ 242 mil por emprego, três vezes a folha, "
-        "43 % de eletrônicos, 31 % do Amazonas). O custo vem do DGT da Receita (abril). "
+        "62 % dos insumos do exterior, 1,6 % exportado, 31 % do Amazonas, "
+        "79 % de Manaus, R$ 35 bi em 2026). O custo vem do DGT da Receita (abril). "
         "Uma vez por ano.",
     ),
 ]

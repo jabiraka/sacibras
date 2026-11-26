@@ -35,6 +35,7 @@ from sacibras.fontes import (
     fmi,
     fmi_cofog,
     ibge_contas_regionais,
+    ibge_sidra,
     ocde_receita,
     receita_arrecadacao,
     receita_gastos,
@@ -1926,38 +1927,68 @@ def _zona_franca(ctx: Contexto) -> Pecas:
         print(f"    impostos: Zona Franca no Amazonas ficou de fora: {str(erro)[:120]}")
     if ano in relatorios.PIM_SUBSETORES:
         tabelas.append(_zfm_subsetores())
+    if ano in relatorios.PIM_INSUMOS_DE_ONDE:
+        tabelas.append(_zfm_origem())
     return cartoes, graficos, tabelas, ""
 
 
 def _zfm_custo_no_tempo(edicoes: list[receita_gastos.Edicao]) -> Grafico:
-    """O imposto não cobrado, em % do PIB, em cada edição do DGT (o último ano realizado dela):
-    a parte da Zona Franca no gasto tributário vezes o gasto em % do PIB."""
-    pontos: list[tuple[date, float]] = []
+    """O imposto não cobrado, em R$ bi por ano (realizado e previsto da edição mais nova do
+    DGT), e em % do PIB em cada edição (o último ano realizado dela): a parte da Zona Franca
+    no gasto tributário vezes o gasto em % do PIB."""
+    nova = edicoes[0]
+    if not nova.zona_franca:
+        raise ValueError("sem a série da Zona Franca na aba Q XXVI")
+    anos = sorted(nova.zona_franca)
+    realizados = [(date(a, 1, 1), nova.zona_franca[a] / 1e9) for a in anos if a <= nova.ano]
+    previstos = [(date(a, 1, 1), nova.zona_franca[a] / 1e9) for a in anos if a > nova.ano]
+    pct: list[tuple[date, float]] = []
     for e in sorted(edicoes, key=lambda e: e.ano):
         z = next((v for n, v in e.principais if n.startswith("Zona Franca de Manaus")), None)
         soma = sum(v for _, v in e.principais)
         if z is not None and soma and e.ano in e.pct_pib:
-            pontos.append((date(e.ano, 1, 1), z / soma * e.pct_pib[e.ano]))
-    if len(pontos) < 2:
-        raise ValueError("a Zona Franca aparece em menos de duas edições do DGT")
-    return grafico(
+            pct.append((date(e.ano, 1, 1), z / soma * e.pct_pib[e.ano]))
+    fonte = f"Cálculo próprio com {receita_gastos.FONTE} (edição {nova.ano})"
+    g = grafico(
         "zfm-custo-serie",
         "Zona Franca: imposto não cobrado",
-        [serie("zfm", "Zona Franca", pontos, casas=2)],
+        [
+            serie("zfm", "Realizado", realizados, casas=1),
+            *(
+                [serie("zfm-prev", "Previsto", previstos, papel="previsao", casas=1)]
+                if previstos
+                else []
+            ),
+        ],
         tipo="barras",
-        unidade="% do PIB",
-        casas=2,
+        unidade="R$ bi",
+        casas=0,
         periodicidade="A",
-        fonte=f"Cálculo próprio com {receita_gastos.FONTE}",
-        nota=(
-            "Um ponto por edição do DGT (o último ano realizado de cada uma): a parte da Zona "
-            "Franca no gasto tributário vezes o gasto em % do PIB."
+        fonte=fonte,
+        nota="Zona Franca, Áreas de Livre Comércio e Amazônia Ocidental; só tributos federais.",
+    )
+    if len(pct) < 2:
+        return g
+    return com_variantes(
+        g,
+        "R$ bi",
+        variante(
+            "pib",
+            "% do PIB",
+            "Zona Franca: imposto não cobrado, % do PIB",
+            [serie("zfm-pib", "Zona Franca", pct, casas=2)],
+            unidade="% do PIB",
+            periodicidade="A",
+            casas=2,
+            nota="Um ponto por edição do DGT, o último ano realizado de cada uma.",
         ),
+        nome_da_lista="Ver em",
     )
 
 
 def _zfm_no_amazonas() -> Grafico:
-    """A indústria de transformação no valor adicionado do Amazonas e do Brasil (IBGE)."""
+    """A indústria de transformação no valor adicionado do Amazonas e do Brasil (IBGE) e o
+    peso de Manaus no PIB do estado."""
     edicao, _, participacao = ibge_contas_regionais.setores()
     chave = "Indústrias de transformação"
     por_local = {k.strip().lower(): v for k, v in participacao.items()}
@@ -1967,7 +1998,7 @@ def _zfm_no_amazonas() -> Grafico:
         series.append(
             serie(id, nome, [(date(a, 1, 1), v[chave]) for a, v in sorted(anos.items())], casas=1)
         )
-    return grafico(
+    g = grafico(
         "zfm-amazonas",
         "A indústria no Amazonas",
         series,
@@ -1976,6 +2007,63 @@ def _zfm_no_amazonas() -> Grafico:
         periodicidade="A",
         fonte=f"{ibge_contas_regionais.FONTE} (edição {edicao})",
         nota="Indústria de transformação no valor adicionado bruto de cada local.",
+    )
+    try:
+        pib = ibge_sidra.series(5938, 37, nivel="n6/1302603/n3/13", por="Município")
+        manaus, estado = dict(pib["1302603"]), dict(pib["13"])
+        pontos = [(d, manaus[d] / estado[d] * 100) for d in sorted(manaus) if estado.get(d)]
+        if len(pontos) < 2:
+            raise ValueError("PIB de Manaus com menos de dois anos")
+    except Exception as erro:
+        print(f"    impostos: PIB de Manaus ficou de fora: {str(erro)[:120]}")
+        return g
+    return com_variantes(
+        g,
+        "Indústria",
+        variante(
+            "manaus",
+            "Manaus no PIB",
+            "Manaus no PIB do Amazonas",
+            [serie("manaus", "Manaus", pontos, casas=1)],
+            unidade="% do PIB do estado",
+            periodicidade="A",
+            casas=0,
+            fonte="IBGE, PIB dos Municípios (SIDRA 5938)",
+            nota="PIB a preços correntes de Manaus sobre o do Amazonas.",
+        ),
+        nome_da_lista="Ver",
+    )
+
+
+def _zfm_origem() -> Tabela:
+    anos = sorted(relatorios.PIM_INSUMOS_DE_ONDE)
+    nomes_i = ("Da região", "Do resto do Brasil", "Do exterior")
+    nomes_v = ("Na região", "No resto do Brasil", "No exterior")
+    linhas = [
+        LinhaTabela(
+            rotulo=f"Insumos comprados {n[0].lower() + n[1:]}, %",
+            valores=[relatorios.PIM_INSUMOS_DE_ONDE[a][k] for a in anos],
+            unidade="",
+            casas=0,
+        )
+        for k, n in enumerate(nomes_i)
+    ] + [
+        LinhaTabela(
+            rotulo=f"Vendas {n[0].lower() + n[1:]}, %",
+            valores=[relatorios.PIM_VENDAS_PARA_ONDE[a][k] for a in anos],
+            unidade="",
+            casas=0,
+        )
+        for k, n in enumerate(nomes_v)
+    ]
+    return Tabela(
+        id="zfm-origem",
+        titulo="De onde vêm os insumos e para onde vai a venda",
+        subtitulo="polo industrial, % do total do ano",
+        colunas=[str(a) for a in anos],
+        linhas=linhas,
+        fonte=relatorios.FONTE_PIM,
+        nota="Região: a da Zona Franca. Valores correntes das empresas com projeto aprovado.",
     )
 
 

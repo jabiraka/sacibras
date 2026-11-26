@@ -38,8 +38,15 @@ edição do DGT (0,40 % em 2019, 0,25 % em 2023; `zfm-custo-serie`), a indústri
 transformação no valor adicionado do Amazonas contra o Brasil (31 % e 14 % em 2024, IBGE;
 `zfm-amazonas`) e o faturamento por subsetor (`zfm-subsetores`, `relatorios.PIM_SUBSETORES`;
 eletrônicos e informática, 43 %). Os três ficam atrás do gráfico e da tabela do polo (listas
-"Gráfico" e "Tabela"). O que ficou de fora está no [PROPOSTAS](PROPOSTAS.md), "Zona Franca de
-Manaus". Olhado só no
+"Gráfico" e "Tabela"). **Mais três** (Caio: *"Termine com as suas sugestões, busque os outros itens pra ver"*): o
+custo em R$ bi por ano, com a projeção da Receita até 2026 (`receita_gastos.Edicao.zona_franca`,
+soma das linhas da Zona Franca, das Áreas de Livre Comércio e da Amazônia Ocidental na aba
+Q XXVI; fecha com a Q X), em `zfm-custo-serie` (lista "Ver em": % do PIB); Manaus no PIB do
+Amazonas (79 %, SIDRA 5938), na lista "Ver" de `zfm-amazonas`; e a origem dos insumos e o destino
+das vendas (`zfm-origem`, Suframa: 62 % dos insumos vêm do exterior, 1,6 % da venda é exportada).
+**Buscados e deixados de fora:** o ICMS (nenhuma série oficial regular; só estimativa de
+terceiros) e a floresta (o PRODES é oficial, mas o dado não liga o regime ao desmatamento).
+Resto: [PROPOSTAS](PROPOSTAS.md), "Zona Franca de Manaus". Olhado só no
 código e nos testes; **falta o Caio olhar a tela**.
 
 **25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,

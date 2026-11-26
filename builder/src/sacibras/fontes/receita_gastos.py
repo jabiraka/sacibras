@@ -18,7 +18,7 @@ from __future__ import annotations
 import io
 import re
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import openpyxl  # type: ignore[import-untyped]
 
@@ -47,6 +47,9 @@ class Edicao:
     """Os gastos do último ano, do maior ao menor: (nome, R$)."""
     regioes: dict[str, float]
     """{região: R$} do último ano (aba Q IV, linha TOTAL); vazio se a aba mudou."""
+    zona_franca: dict[int, float] = field(default_factory=dict)
+    """{ano: R$} da Zona Franca de Manaus, das Áreas de Livre Comércio e da Amazônia Ocidental
+    (aba Q XXVI), com os anos de projeção; o último realizado fecha com `principais`."""
 
 
 @dataclass(frozen=True)
@@ -108,6 +111,19 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
             break
     if not colunas:
         raise FonteForaDoArError(f"DGT {ano}: sem a linha dos anos na aba Q XXVI")
+    todas = {
+        i: int(v)
+        for linha in serie[:12]
+        for i, v in enumerate(linha)
+        if isinstance(v, (int, float)) and 1990 < v < 2100
+    }
+    zona_franca: dict[int, float] = {}
+    for linha in serie:
+        r = _rotulo(linha[0] if linha else None)
+        if "ZONA FRANCA" in r or "LIVRE COMÉRCIO" in r or "AMAZÔNIA OCIDENTAL" in r:
+            for i, a in todas.items():
+                if i < len(linha) and isinstance(linha[i], (int, float)):
+                    zona_franca[a] = zona_franca.get(a, 0.0) + float(linha[i])
     achadas: dict[str, tuple[object, ...]] = {}
     for linha in serie:
         r = _rotulo(linha[0] if linha else None)
@@ -138,6 +154,7 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
         pct_pib=valores(achadas["GT / PIB"], 100.0),
         principais=principais,
         regioes=ler_regioes(por_regiao),
+        zona_franca=zona_franca,
     )
 
 

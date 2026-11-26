@@ -217,20 +217,19 @@ A ficha de cada estatal saiu só com o Anexo I da Sest (anual, 2021 a 2025). Par
 
 ## Zona Franca de Manaus (sessão de 26/11/2026)
 
-A pergunta "Vale manter a Zona Franca de Manaus?" já mostra o custo federal (DGT, também em %
-do PIB por edição), o polo (Suframa, com os subsetores) e o peso da indústria no Amazonas
-(IBGE). O que ficou para uma segunda rodada, cada um pedindo fonte e conta:
+A pergunta "Vale manter a Zona Franca de Manaus?" mostra o custo federal (DGT, em R$ bi e em %
+do PIB), o polo (Suframa: empregos, faturamento, subsetores, origem dos insumos e destino das
+vendas) e o peso da indústria e de Manaus no Amazonas (IBGE). Buscado em 26/11/2026 e **fora**:
 
-- **O peso de Manaus no PIB do Amazonas**: a parte da cidade no PIB do estado (PIB dos
-  municípios, IBGE), mais direta que a da indústria.
-- **O ICMS que os estados deixam de cobrar**: o DGT só traz tributo federal; o benefício estadual
-  vem de convênio do Confaz e não tem série oficial única.
-- **O que o polo compra e importa**: o caderno da Suframa traz insumos e importação; o valor
-  adicionado real não sai dele.
-- **Custo ano a ano**: o DGT traz 2021 a 2026 por tributo; hoje o gráfico tem um ponto por
-  edição (2016, 2019, 2022, 2023).
-- **Floresta e desmatamento**: o argumento mais usado a favor do regime; sem comparação
-  contrafactual publicada com método regular, fica fora (regra de 15/11/2026).
+- **O ICMS que os estados deixam de cobrar**: não achei demonstrativo oficial regular (o do
+  Amazonas não apareceu; o benefício vem de convênio do Confaz). A única estimativa é um
+  estudo de terceiros (FGV EESP, jun/2025, R$ 5,9 a 9,9 bi), de uma vez só: fora, pela regra
+  de 15/11/2026. Vale olhar o anexo de renúncia do RREO/LDO do Amazonas se o Caio indicar.
+- **Floresta e desmatamento**: o PRODES (INPE, TerraBrasilis) é oficial e regular, por estado,
+  mas só dá para ler pelo serviço WFS e não liga o regime ao desmatamento (falta o
+  contrafactual). Mostrar o número sem essa ligação seria dado pelo dado.
+- **Valor adicionado real do polo**: o caderno da Suframa traz faturamento e insumos, não o
+  valor adicionado; a conta por emprego usa o imposto não cobrado, não o valor criado.
 
 ## Rótulo de cálculo próprio (sessão de 25/11/2026)
 

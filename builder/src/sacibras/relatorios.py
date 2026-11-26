@@ -1194,3 +1194,17 @@ PIM_SUBSETORES: dict[int, dict[str, float]] = {
         "Outros": 14.5,
     },
 }
+
+# Mesmo caderno, quadro "Aquisição de insumos e faturamento do PIM" (lido em 26/11/2026), % do
+# total de cada ano, na ordem região, resto do Brasil, exterior. "Regional" no caderno é a
+# própria região da Zona Franca. 2023: insumos de R$ 87,4 bi, 21,28 % / 17,13 % / 61,59 %;
+# faturamento de R$ 175,7 bi, 13,48 % / 84,95 % / 1,57 %. 2025: insumos de R$ 128,9 bi,
+# 18,68 % / 17,56 % / 63,76 %; faturamento de R$ 229,4 bi, 13,18 % / 85,21 % / 1,61 %.
+PIM_INSUMOS_DE_ONDE: dict[int, tuple[float, float, float]] = {
+    2023: (21.3, 17.1, 61.6),
+    2025: (18.7, 17.6, 63.8),
+}
+PIM_VENDAS_PARA_ONDE: dict[int, tuple[float, float, float]] = {
+    2023: (13.5, 85.0, 1.6),
+    2025: (13.2, 85.2, 1.6),
+}

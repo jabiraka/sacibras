@@ -784,7 +784,11 @@ PERGUNTAS: tuple[Definicao, ...] = (
     # desses, não? Pode incluir"): o custo em % do PIB por edição do DGT (0,40 % em 2019, 0,25 %
     # em 2023), a indústria de transformação no valor adicionado do Amazonas (31,3 % em 2024,
     # contra 14,1 % no Brasil; IBGE) e o faturamento por subsetor (eletroeletrônico e
-    # informática, 43 % em 2023). **Os números do texto são fixos**:
+    # informática, 43 % em 2023). Mesmo dia ("busque os outros itens pra ver"): o custo em R$ bi
+    # por ano com a projeção da Receita (R$ 35 bi em 2026), Manaus no PIB do Amazonas (79 % em
+    # 2023, SIDRA 5938) e a origem dos insumos e o destino das vendas (Suframa, 2023: 61,6 % dos
+    # insumos do exterior, 1,6 % das vendas exportadas). ICMS e floresta ficam fora (PROPOSTAS).
+    # **Os números do texto são fixos**:
     # reler com o DGT de 2027 e o caderno de dezembro da Suframa (`leituras.py`).
     Definicao(
         "zona-franca",
@@ -797,23 +801,23 @@ PERGUNTAS: tuple[Definicao, ...] = (
             Bloco(
                 "O que a União deixa de cobrar",
                 "Em 2023, R$ 27,5 bi de imposto federal: 0,25 % do PIB, contra 0,40 % em 2019. "
-                "O ICMS, que é dos estados, fica de fora.",
+                "A Receita projeta R$ 35 bi em 2026. O ICMS, dos estados, fica de fora.",
                 ("impostos", "zfm-custo-serie"),
                 (("impostos", "zfm-custo"),),
                 ("impostos", "gasto-tributario"),
             ),
             Bloco(
                 "O que o polo entrega",
-                "O polo faturou R$ 176 bi em 2023 e empregou 114 mil pessoas; em 2025, 132 mil, "
-                "quase um quarto a mais que em 2021. Eletrônicos e informática são 43 %.",
+                "O polo faturou R$ 176 bi em 2023 e empregou 114 mil pessoas (132 mil em 2025). "
+                "Mas 62 % dos insumos vêm do exterior e só 1,6 % da venda é exportada.",
                 ("impostos", "zfm-polo"),
                 (),
-                ("impostos", "zfm-subsetores"),
+                ("impostos", "zfm-origem"),
             ),
             Bloco(
                 "O peso no Amazonas",
                 "A indústria de transformação é 31 % do valor adicionado do Amazonas, contra "
-                "14 % no Brasil.",
+                "14 % no Brasil. Manaus é 79 % do PIB do estado.",
                 ("impostos", "zfm-amazonas"),
             ),
             Bloco(
