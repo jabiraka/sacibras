@@ -9,6 +9,22 @@
       content="PIB, inflação, juros, emprego, dólar e dívida do Brasil, por assunto, com fonte oficial e data."
     />
     <meta name="theme-color" content="#f4f2e8" />
+    <!-- O tema (tema.ts): antes da primeira pintura, para não piscar claro no escuro. -->
+    <script>
+      (function () {
+        var t = "claro";
+        try {
+          var g = localStorage.getItem("sacibras-tema");
+          if (g === "claro" || g === "escuro") t = g;
+          else if (window.matchMedia("(prefers-color-scheme: dark)").matches) t = "escuro";
+        } catch (e) {}
+        document.documentElement.setAttribute("data-tema", t);
+        if (t === "escuro") {
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute("content", "#0c1410");
+        }
+      })();
+    </script>
     <!-- O cartão de quem compartilha o link (WhatsApp, redes): a imagem sai de `npm run og`
          e o %ENDERECO% do vite.config.ts (o domínio próprio ainda depende do Caio). -->
     <meta property="og:type" content="website" />

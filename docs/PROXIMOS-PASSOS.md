@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 26/11/2026 (isenções e subsídios: por função, benefício, tributo e os subsídios diretos; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 26/11/2026 (o tema escuro; isenções e subsídios: por função, benefício, tributo e os subsídios diretos; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -51,6 +51,13 @@ Proagro R$ 5,0 bi (9,4 em 2023); crédito rural R$ 308 bi, 55 % com taxa regulad
 nota diz. Os números são oficiais e o agrupamento por área não leva rótulo de cálculo próprio (Caio: *"Se for agrupamento nao é cálculo próprio"*). O crédito
 rural por programa (Pronaf etc.) ficou no [PROPOSTAS](PROPOSTAS.md): o SICOR é lento da nuvem.
 Ficou também lá o benefício por empresa.
+
+**26/11/2026, tema escuro** (Caio: *"Adicione a opção de tema escuro"*). Lista "Tema" no menu
+(Automático, Claro, Escuro), `web/src/tema.ts`; as cores fixas do CSS viraram variáveis e o
+bloco `[data-tema="escuro"]` em `estilo.css` troca os valores. Trocar recarrega a página.
+Da nuvem só vi o menu e o fundo (sem dados): **falta olhar gráficos, mapa, tabelas, alertas e
+simuladores a 390 e 1280 px no escuro**, e **passar as seis cores de série do escuro no
+validador de paleta** (o CLAUDE.md pede ao trocar cor; valores em `--serie-1` a `--serie-6`).
 
 **25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,
 mostrando os dados que podem sustentar uma conclusão ou outra, pode avaliar vc pelos dados, eu

@@ -385,7 +385,7 @@
   height: 6px;
   margin-left: -3px;
   border-radius: 50%;
-  background: rgb(20 38 28 / 14%);
+  background: var(--ponto-par);
 }
 
 /* Contra os países, o nome e a fonte são mais longos: a primeira coluna cresce (só na tela

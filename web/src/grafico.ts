@@ -1085,7 +1085,9 @@ async function pngDaFigura(f: Figura, t: Tema): Promise<Blob | null> {
           ctx.lineTo(x0 + 12, meio + 7);
           ctx.stroke();
         } else {
-          ctx.fillStyle = "rgb(20 38 28 / 16%)";
+          ctx.fillStyle =
+            getComputedStyle(document.documentElement).getPropertyValue("--tinta-sutil").trim() ||
+            "rgb(20 38 28 / 16%)";
           ctx.fillRect(x0 + 4, meio - 6, 8, 12);
         }
         ctx.restore();

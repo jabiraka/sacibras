@@ -255,8 +255,12 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   do topo com a marca, a busca e o botão "Assuntos", que abre o mesmo menu.
 - **O desenho segue o do finjabs** (Caio, 14/11/2026): cartões de vidro,
   Geist, título grande com a segunda metade apagada. O que é só daqui: as luzes de fundo
-  verde, amarela e azul e o losango da marca. **Só o tema claro, sem botão de tema** (Caio,
-  14/11/2026: *"deixe sempre o tema claro sem opção de tema escuro"*).
+  verde, amarela e azul e o losango da marca. **Tema claro e escuro** (Caio, 26/11/2026:
+  *"Adicione a opção de tema escuro"*, que revoga o "só claro" de 14/11): lista "Tema" no menu
+  (Automático segue o sistema, Claro, Escuro; `web/src/tema.ts`), `data-tema` no `<html>` posto
+  por script no `index.html` antes da pintura; trocar recarrega a página, porque os gráficos
+  leem as cores do CSS ao desenhar. Cor nova vai em variável (`:root` e o bloco
+  `[data-tema="escuro"]` de `estilo.css`), nunca fixa no CSS ou no TS.
 - **Número com meta se mostra contra a meta** (Caio, 14/11/2026, o IPCA na entrada): o
   cartão leva `meta` (centro e intervalo, da norma lida) e a tela diz em palavras e na régua
   se está dentro, acima do teto ou abaixo do piso. A meta de primário (Caio, 14/11/2026,

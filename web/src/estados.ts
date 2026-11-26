@@ -56,7 +56,14 @@ function misturar(de: string, ate: string, t: number): string {
   return `#${partes.join("")}`;
 }
 
-function cores(): { claro: string; escuro: string; semDado: string; tinta: string; borda: string } {
+function cores(): {
+  claro: string;
+  escuro: string;
+  semDado: string;
+  tinta: string;
+  borda: string;
+  textoAlto: string;
+} {
   const css = getComputedStyle(document.documentElement);
   const v = (nome: string): string => css.getPropertyValue(nome).trim();
   return {
@@ -65,6 +72,7 @@ function cores(): { claro: string; escuro: string; semDado: string; tinta: strin
     semDado: v("--mapa-sem-dado"),
     tinta: v("--tinta"),
     borda: v("--superficie"),
+    textoAlto: v("--mapa-texto-alto") || "#ffffff",
   };
 }
 
@@ -282,7 +290,7 @@ function desenharMapa(alvo: HTMLElement, metrica: MetricaEstados, nomes: Map<str
   const comValor = estreito ? [] : comRotulo.filter((d) => d.properties.area > 90000);
   const corDoTexto = (d: UFNoMapa): string => {
     const v = valorDe(d);
-    return v !== null && fracao(v) > 0.55 ? "#ffffff" : c.tinta;
+    return v !== null && fracao(v) > 0.55 ? c.textoAlto : c.tinta;
   };
   const texto = (d: UFNoMapa): string => {
     const v = valorDe(d);

@@ -65,8 +65,8 @@
   border: 1px solid var(--borda-forte);
   border-radius: 14px;
   box-shadow:
-    0 12px 32px rgb(20 38 28 / 16%),
-    0 2px 6px rgb(20 38 28 / 8%);
+    0 12px 32px var(--sombra-pop-1),
+    0 2px 6px var(--sombra-pop-2);
   font-size: 0.875rem;
   line-height: 1.5;
   color: var(--tinta);
