@@ -72,7 +72,9 @@ Pedido ou ideia que não entra agora vira linha no [docs/PROPOSTAS.md](docs/PROP
   estado e as decomposições). Vale para o que reparte ou junta número já publicado
   (`modelos/decomposicoes.py`, `modelos/pib_estados.py`): a fonte diz "cálculo próprio" (Caio,
   25/11/2026: *"'Conta nossa' substitui por 'Cálculo próprio', e se só a soma é nossa não
-  precisa falar que é nosso"*; onde o órgão publica o número pronto, usa-se o dele), a soma
+  precisa falar que é nosso"*; e, sobre as áreas dos subsídios, *"Se for agrupamento nao é
+  cálculo próprio"*: soma, diferença e agrupamento não levam o rótulo, a nota só diz como
+  agrupou; onde o órgão publica o número pronto, usa-se o dele), a soma
   fecha com o número oficial, o método vai em uma frase e, onde a conta pode errar, vai a faixa
   de erro medida e a conferência contra quem publica número parecido (os institutos estaduais,
   `relatorios.CONFERENCIA_PIB_ESTADOS`). Previsão do que ainda não aconteceu continua fora
