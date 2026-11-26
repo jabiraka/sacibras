@@ -1037,7 +1037,7 @@ def _subsidios_da_uniao(s: osu.Subsidios) -> tuple[list[Cartao], list[Grafico], 
                 )
                 for area, (orc, cred) in ordem
             ],
-            fonte=fonte + "; agrupamento por área: cálculo próprio",
+            fonte=fonte,
             nota=(
                 f"R$ {br(direto / 1e6, 0)} bi em {ano}, fora as isenções e o Proagro. Área pelo "
                 "nome do programa; quem recebe é de empresas e de famílias."

@@ -36,7 +36,7 @@ página, edição mais nova sozinha). A parte "O que não entra" virou **"Isenç
 cartão "Subsídios da União" (R$ 710 bi, 5,6 % do PIB em 2025; 80 % são isenções), o gráfico
 empilhado por tipo atrás do das isenções ("Todos os subsídios") e as tabelas "Por área" (2025:
 regional 32,8, habitação 32,4, trabalho 27,1, agro 18,3 R$ bi), "Do Orçamento" e "Crédito", por
-programa. **A área é agrupamento nosso pelo nome do programa** (`osu.AREAS`; dito na fonte).
+programa. **A área é agrupamento nosso pelo nome do programa** (`osu.AREAS`; a nota diz; agrupar não é cálculo próprio, então a fonte não leva o rótulo).
 Os tributários de 2024 e 2025 são projeção da Receita; o subsídio inclui famílias (FIES, Minha
 Casa, tarifa social), e a nota diz isso. O `_juntar` aceita rótulo `graficos:<id>` quando o
 mesmo id é de gráfico e tabela. **Falta o Caio olhar** as telas (a nuvem não abriu o site).
@@ -48,7 +48,7 @@ em taxa regulada e de mercado; quatro séries do SGS, 20701, 20689, 20700 e 2068
 26/11) e a tabela "Proagro e crédito rural, ano a ano" (atrás de "Subsídios por área"). Em 2025:
 Proagro R$ 5,0 bi (9,4 em 2023); crédito rural R$ 308 bi, 55 % com taxa regulada (79 % em
 2018). O Proagro **não está no OSU** e fica fora da tabela por área (bases diferentes), o que a
-nota diz. Os números são oficiais; só o agrupamento por área leva "cálculo próprio". O crédito
+nota diz. Os números são oficiais e o agrupamento por área não leva rótulo de cálculo próprio (Caio: *"Se for agrupamento nao é cálculo próprio"*). O crédito
 rural por programa (Pronaf etc.) ficou no [PROPOSTAS](PROPOSTAS.md): o SICOR é lento da nuvem.
 Ficou também lá o benefício por empresa.
 
@@ -132,7 +132,7 @@ publicou), o IPCA de 12 meses em "Desocupação mais inflação" (SGS 13522), as
 de importação de Brasil no mundo (Banco Mundial, FI.RES.TOTL.MO; o FMI com a conta fica de
 reserva), a parte da carga sobre bens e serviços (OCDE, unidade PT_OTR_SECTOR; a divisão fica
 de reserva), o cartão da dívida que o Focus espera ("mercado") e a alíquota cheia do Comitê
-Gestor. **Soma e diferença não levam rótulo**: desocupação mais inflação, a soma das alíquotas
+Gestor. **Soma, diferença e agrupamento não levam rótulo**: desocupação mais inflação, a soma das alíquotas
 da reforma, o saldo das estatais, as vagas do Caged em 12 meses e os cartões de 12 meses que só
 somam meses (balança, dividendos, resultado das estatais, crédito imobiliário, FPE e FPM). Nos
 gráficos do Focus no Laboratório e na expectativa contra a meta, a fonte diz que só o erro
