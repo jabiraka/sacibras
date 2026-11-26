@@ -64,9 +64,11 @@ LEITURAS: list[Leitura] = [
         "leis.AVALIACOES_2026",
         date(2026, 11, 25),
         date(2027, 1, 22),
-        "Relatório de Avaliação de Receitas e Despesas Primárias do 6º bimestre (sai até 22/1; "
-        "gov.br/planejamento, relatórios de avaliação fiscal) ou a nota da Conorf no site do "
-        "Senado. A cada bimestre.",
+        "O builder lê sozinho a planilha quadros de apoio do bimestre mais novo "
+        "(fontes/avaliacao_bimestral.py, aba Tabela 1) e diz o bimestre na tela. Conferir que "
+        "a tela mostra o último (sai até o dia 22 do mês seguinte ao bimestre) e passar os "
+        "números para a reserva. Com o 1º bimestre de 2027 (março), o build avisa que a "
+        "planilha é de outro ano: trocar a meta e o ano (META_PRIMARIA_2026).",
     ),
     Leitura(
         "Salário mínimo do ano (o decreto de 2027 sai em dezembro)",
@@ -132,8 +134,8 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Estados no RRF e no Propag",
         "relatorios.ACORDOS",
-        date(2026, 11, 15),
-        date(2026, 12, 15),
+        date(2026, 11, 25),
+        date(2026, 12, 23),
         "Tesouro Nacional, Relatório Mensal de Garantias Honradas (tesourotransparente.gov.br/"
         "publicacoes/relatorio-mensal-de-garantias-honradas-rmgh, sai por volta do dia 15; diz "
         "quem está no RRF), e o Relatório de Acompanhamento Fiscal da IFI (Senado) que trouxer "
@@ -157,17 +159,22 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Nota de crédito do país",
         "relatorios.NOTAS",
-        date(2026, 11, 14),
-        date(2026, 12, 14),
-        "sisweb.tesouro.gov.br/apex/f?p=2810:2 (fora do ar em 14/11/2026) e os comunicados do "
-        "Tesouro. Sem calendário: conferir uma vez por mês.",
+        date(2026, 11, 25),
+        date(2027, 5, 25),
+        "O builder lê sozinho o CSV da consulta do Tesouro (fontes/tesouro_notas.py) e "
+        "acrescenta os atos de S&P, Fitch e Moody's depois de ULTIMO_ATO_LIDO. Conferir que a "
+        "nota da tela diz o ato mais novo (sisweb.tesouro.gov.br/apex/f?p=2810:2); passar os "
+        "atos novos para NOTAS, PERSPECTIVA e ULTIMO_ATO_LIDO. A cada seis meses.",
     ),
     Leitura(
         "Teste de estresse dos bancos (REF)",
         "relatorios.ESTRESSE_DOS_BANCOS",
-        date(2026, 11, 14),
-        date(2027, 5, 31),
-        "Relatório de Estabilidade Financeira do BC (maio e outubro).",
+        date(2026, 11, 25),
+        date(2027, 6, 15),
+        "O builder lê sozinho o anexo estatístico da edição mais nova do Relatório de "
+        "Estabilidade Financeira (fontes/bcb_ref.py, gráficos 1.2.5.6 e 1.2.5.7). Depois da "
+        "edição de maio, conferir que a tela a mostra e que a planilha bate com o texto do "
+        "relatório; se bater, passar a frase e ESTRESSE_EDICAO para ela. Duas vezes por ano.",
     ),
     Leitura(
         "Efeito da Selic na inflação e no dólar (modelos do BC)",
@@ -175,7 +182,8 @@ LEITURAS: list[Leitura] = [
         date(2026, 11, 14),
         date(2026, 12, 31),
         "Relatório de Política Monetária de dezembro: procurar nova atualização dos modelos "
-        "semiestruturais. A cada relatório (mar, jun, set, dez).",
+        "semiestruturais; os números saem da planilha anexa (rpmAAAAMManp.xlsx), não do "
+        "gráfico. A cada relatório (mar, jun, set, dez).",
     ),
     Leitura(
         "Faixa de erro do efeito da Selic no IPCA",
@@ -256,12 +264,13 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "CBS de 2027: o cálculo do TCU e a resolução do Senado",
         "relatorios.CBS_REFERENCIA_2027",
-        date(2026, 11, 14),
+        date(2026, 11, 25),
         date(2026, 12, 23),
         "Resolução do Senado que fixa a alíquota de referência da CBS de 2027 (prazo: 15 ou "
         '22/12; sem ela, vale o cálculo do TCU). Trocar o número e o texto "o Senado ainda '
-        'fixa" em impostos.py. O acórdão do TCU não abre da nuvem. Depois, todo ano, a '
-        "alíquota do ano seguinte.",
+        'fixa" em impostos.py. O acórdão do TCU (2933/2026-Plenário) foi lido; o `sacibras '
+        "tramitacao` olha a API de acórdãos do TCU e avisa (issue `tramitação`) quando sai o "
+        "cálculo de outro ano. Depois, todo ano, a alíquota do ano seguinte.",
     ),
     Leitura(
         "Alíquota cheia do IBS e da CBS: a conta do Comitê Gestor",
@@ -284,8 +293,9 @@ LEITURAS: list[Leitura] = [
         "relatorios.RECEITA_PREVISTA",
         date(2026, 11, 25),
         date(2027, 1, 22),
-        "O mesmo relatório bimestral de leis.AVALIACOES_2026 (Tabela 1, receita administrada "
-        "e RGPS). A cada bimestre; em janeiro, trocar o ano e a LOA.",
+        "O builder lê sozinho a mesma planilha de leis.AVALIACOES_2026 (LOA e avaliação mais "
+        "nova da receita administrada e do RGPS). Com o 1º bimestre de 2027, trocar "
+        "ANO_DA_RECEITA_PREVISTA e a reserva; até lá, conferir de vez em quando.",
     ),
     Leitura(
         "Dívida ativa da União: estoque",
@@ -319,10 +329,10 @@ LEITURAS: list[Leitura] = [
         "relatorios.CONFERENCIA_PIB_ESTADOS",
         date(2026, 11, 15),
         date(2027, 11, 30),
-        "Baixar as séries de PIB trimestral de RS (DEE), PR (IPARDES), MG (FJP), BA (SEI) e ES "
-        "(IJSN), nos endereços do comentário em relatorios.py, e rodar "
-        "scripts/conferir_pib_estados.py. Uma vez por ano, depois das Contas Regionais "
-        "(novembro).",
+        "Rodar scripts/conferir_pib_estados.py: ele acha e baixa sozinho a planilha mais nova "
+        "de RS (DEE), PR (IPARDES), BA (SEI) e ES (IJSN); a de MG (FJP) se baixa à mão e vai "
+        "com --mg (o IPARDES às vezes pede verificação de robô: --pr). Não roda no build. Uma "
+        "vez por ano, depois das Contas Regionais (novembro).",
     ),
     Leitura(
         "Dívida ativa da União: recuperado no ano",
@@ -352,20 +362,22 @@ LEITURAS: list[Leitura] = [
     Leitura(
         "Valor médio das aposentadorias do INSS",
         "relatorios.INSS_APOSENTADORIA_MEDIA",
-        date(2026, 11, 19),
-        date(2027, 2, 28),
-        "Boletim Estatístico da Previdência Social (gov.br/previdencia, boletins da "
-        "previdência social), quadro 15, linhas Aposentadorias, Idade e Tempo de Contribuição; "
-        "trocar também INSS_EM. Sai todo mês; reler a cada três, e nunca com o mês do 13º.",
+        date(2026, 11, 25),
+        date(2027, 5, 25),
+        "O builder lê sozinho a planilha do Boletim Estatístico da Previdência Social mais "
+        "nova sem o 13º (fontes/beps.py, quadros 15 e 27). Conferir que a tabela dos "
+        "servidores mostra um mês recente; se não, ver se a página dos boletins mudou o nome "
+        "do arquivo. Atualizar a reserva (INSS_*, INSS_EM, TETO_INSS). A cada seis meses.",
     ),
     Leitura(
         "Teto do INSS e teto do serviço público",
         "relatorios.TETO_INSS",
         date(2026, 11, 19),
-        date(2027, 1, 20),
-        "Portaria interministerial MPS/MF de janeiro (art. 2º, o maior salário de benefício); "
-        "e a lista de leis do Senado, para ver se há lei nova do subsídio de ministro do STF. "
-        "Trocar TETO_INSS_ANO. Uma vez por ano.",
+        date(2027, 3, 31),
+        "O do INSS vem sozinho do boletim da Previdência (quadro 27); em março, quando sai o "
+        "boletim de janeiro, conferir que a tela mostra o do ano. O do serviço público é à "
+        "mão: a lista de leis do Senado, para ver se há lei nova do subsídio de ministro do "
+        "STF. Uma vez por ano.",
     ),
     Leitura(
         "Estatais federais: lucro, dividendos à União, subvenção e aporte, por ano",

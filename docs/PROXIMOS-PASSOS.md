@@ -109,6 +109,33 @@ builder abre a página da transparência da Sest, pega a planilha do anexo I de 
 reserva em `relatorios.py`. Os outros números lidos em PDF (`relatorios.py`, `leis.py`) seguem
 com prazo de releitura em `leituras.py`: cada um pede ver se a fonte tem planilha ou série. O que ficou está no [PROPOSTAS](PROPOSTAS.md), "Rótulo de cálculo próprio".
 
+**25/11/2026, o builder lê sozinho a edição mais nova do que antes se lia em PDF** (Caio:
+*"se for atualizar no próximo ano esses PDFs com números, pode botar o builder pra ler o mais
+atualizado?"* e *"Pode fazer"*). Onde a fonte publica planilha, CSV ou API junto do PDF, o
+builder acha a edição mais nova e lê; se falhar, usa os números à mão, que ficam de reserva
+em `relatorios.py` e `leis.py`:
+- Estatais: planilha do anexo I da Sest (`fontes/sest.py`).
+- Aposentadoria média e teto do INSS: Boletim Estatístico da Previdência (`fontes/beps.py`;
+  pula o mês do 13º).
+- Teste de estresse dos bancos: anexo do Relatório de Estabilidade Financeira
+  (`fontes/bcb_ref.py`; na edição de out/2026 fica o texto, 3,5 %, porque a planilha dá 3,38).
+- Nota de crédito: CSV do Tesouro (`fontes/tesouro_notas.py`; acrescenta os atos depois de
+  25/06/2026; o histórico antigo do CSV é sujo e fica o lido à mão).
+- Avaliação bimestral do primário e receita prevista: quadros de apoio do MPO
+  (`fontes/avaliacao_bimestral.py`). **O painel passou ao 5º bimestre**: resultado esperado
+  de −89,3 bi, desconto de 77,0 bi, −12,3 bi depois do desconto. **Na virada do ano** (1º
+  bimestre de 2027, março) o build avisa que a planilha é de outro ano e fica na reserva:
+  trocar `META_PRIMARIA_2026` e `ANO_DA_RECEITA_PREVISTA`.
+- CBS de referência: o `sacibras tramitacao` olha a API do TCU e põe na issue `tramitação`
+  acórdão novo da alíquota; o número que vale segue a resolução do Senado.
+- Boxes dos modelos do BC (efeito da Selic, faixas, repasse): números das planilhas anexas
+  no lugar dos lidos no traço (diferenças de 0,01); saem uma vez só.
+- PIB trimestral dos estados: `scripts/conferir_pib_estados.py` baixa sozinho RS, PR, BA e
+  ES (MG só com `--mg`, do PC; PR às vezes pede verificação de robô). Com quatro estados, em
+  25/11: 1,24 pp de diferença média; o número da tela (cinco estados, 15/11) não mudou.
+Ficam à mão, só em PDF: elasticidades da dívida (o quadro é imagem), RRF e Propag (RMGH de
+out/2026 conferido), anexos do PLDO, recuperado da dívida ativa e a alíquota do Comitê Gestor.
+
 **25/11/2026, o endereço exato de cada fonte** (Caio: *"Em todas as fontes, coloque o site de
 onde estamos tirando a informação, o site exato"*). As regras moram em `links.py` (SGS e SIDRA
 ganham um endereço por código; as instituições, a página dos dados), vão para `fontes.json` e

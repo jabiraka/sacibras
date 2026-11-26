@@ -10,7 +10,15 @@ from collections.abc import Callable
 from datetime import date, timedelta
 
 from sacibras import contas, leis
-from sacibras.fontes import bcb_fiscal, bcb_focus, fmi, sest, tesouro_direto, tesouro_rtn
+from sacibras.fontes import (
+    avaliacao_bimestral,
+    bcb_fiscal,
+    bcb_focus,
+    fmi,
+    sest,
+    tesouro_direto,
+    tesouro_rtn,
+)
 from sacibras.modelos import decomposicoes
 from sacibras.schema import (
     Cartao,
@@ -149,20 +157,50 @@ def despesa_contra_a_faixa(despesa: list[Ponto], ipca: list[Ponto], inicio: date
     ]
 
 
-def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
+RESERVA_DA_AVALIACAO = (
+    "Ministério do Planejamento e Orçamento, Relatório de Avaliação de Receitas e Despesas "
+    "Primárias, {bimestre} de {ano} (quadros de apoio, tabela 1)"
+)
+
+
+def avaliacoes_do_ano(
+    lido: avaliacao_bimestral.Quadros | None, ano: int
+) -> tuple[list[leis.AvaliacaoBimestral], str]:
+    """As avaliações do ano, da mais velha para a mais nova (no máximo três), e a fonte: as
+    lidas à mão, com as da planilha mais nova (`lido`) por cima."""
+    por_bimestre = {a.bimestre: a for a in leis.AVALIACOES_2026}
+    if lido is not None:
+        for a in lido.avaliacoes:
+            por_bimestre[a.rotulo] = leis.AvaliacaoBimestral(
+                a.rotulo, a.resultado, a.deducao, lido.fonte
+            )
+    lista = sorted(por_bimestre.values(), key=lambda a: a.bimestre)[-3:]
+    fonte = (
+        lido.fonte
+        if lido is not None and lido.bimestre >= int(lista[-1].bimestre[0])
+        else RESERVA_DA_AVALIACAO.format(bimestre=lista[-1].bimestre, ano=ano)
+    )
+    return lista, fonte
+
+
+def meta_do_primario(
+    ctx: Contexto, lido: avaliacao_bimestral.Quadros | None = None
+) -> tuple[Cartao, Grafico, Tabela]:
     """O primário do Governo Central em 12 meses, pelo BC, contra a meta da LDO.
 
     Decisão do Caio (14/11/2026, opção "b"): o número de quem apura (o BC, LC 200/2023, art.
     2º, § 4º) contra a meta da lei, com o desconto que a apuração oficial faz dito ao lado,
-    tirado do relatório bimestral do governo. A meta vale para o ano fechado; a soma de 12
-    meses mostra o caminho.
+    tirado do relatório bimestral do governo: da planilha do bimestre mais novo (`lido`) ou,
+    sem ela, dos números lidos à mão. A meta vale para o ano fechado; a soma de 12 meses
+    mostra o caminho.
     """
     meta = leis.META_PRIMARIA_2026
+    avaliacoes, fonte_aval = avaliacoes_do_ano(lido, meta.ano)
     centro, piso, teto = _bi(meta.centro), _bi(meta.inferior), _bi(meta.superior)
     doze = contas.escalar(
         contas.soma_movel(_resultado(ctx.sgs("NFSP_PRIMARIO_GC_MES", 12))), 1 / 1000
     )
-    ultima = leis.AVALIACOES_2026[-1]
+    ultima = avaliacoes[-1]
     apos = ultima.resultado + ultima.deducao
     fonte_bc = ctx.fonte_sgs("NFSP_PRIMARIO_GC_MES")
 
@@ -173,8 +211,11 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         unidade="R$ bilhões",
         periodicidade="M",
         casas=1,
-        detalhe=f"meta de {meta.ano}; a conta oficial desconta R$ {br(ultima.deducao)} bi",
-        fonte=f"{fonte_bc}; meta: {meta.referencia}",
+        detalhe=(
+            f"meta de {meta.ano}; a conta oficial desconta R$ {br(ultima.deducao)} bi "
+            f"({ultima.bimestre[:2]} bim.)"
+        ),
+        fonte=f"{fonte_bc}; meta: {meta.referencia}; desconto: {fonte_aval}",
         secao="fiscal",
         mini=60,
     )
@@ -190,7 +231,7 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         casas=1,
         periodicidade="M",
         janela_anos=5,
-        fonte=f"{fonte_bc}; meta: {meta.referencia}, § 1º",
+        fonte=f"{fonte_bc}; meta: {meta.referencia}, § 1º; desconto: {fonte_aval}",
         faixa=Faixa(
             nome=f"intervalo da meta de {meta.ano} (R$ {br(piso, 0)} a R$ {br(teto)} bi)",
             pontos=[(d, piso, teto) for d in meses_da_meta if d >= inicio_meta],
@@ -200,11 +241,11 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         # tiram da conta, previstos no relatório bimestral.
         nota=(
             "Soma de 12 meses apurada pelo Banco Central; a meta vale para o ano fechado. A "
-            f"conta oficial desconta R$ {br(ultima.deducao)} bi ({ultima.bimestre})."
+            f"conta oficial desconta R$ {br(ultima.deducao)} bi ({ultima.bimestre} de {meta.ano})."
         ),
     )
 
-    colunas = [a.bimestre for a in leis.AVALIACOES_2026]
+    colunas = [a.bimestre for a in avaliacoes]
     t = Tabela(
         id="meta-primario",
         titulo=f"A meta de {meta.ano} pela conta do governo",
@@ -213,17 +254,17 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
         linhas=[
             LinhaTabela(
                 rotulo="Resultado primário projetado",
-                valores=[a.resultado for a in leis.AVALIACOES_2026],
+                valores=[a.resultado for a in avaliacoes],
                 unidade="R$ bi",
             ),
             LinhaTabela(
                 rotulo="Descontos da apuração",
-                valores=[a.deducao for a in leis.AVALIACOES_2026],
+                valores=[a.deducao for a in avaliacoes],
                 unidade="R$ bi",
             ),
             LinhaTabela(
                 rotulo="Resultado para a meta",
-                valores=[round(a.resultado + a.deducao, 1) for a in leis.AVALIACOES_2026],
+                valores=[round(a.resultado + a.deducao, 1) for a in avaliacoes],
                 unidade="R$ bi",
             ),
             LinhaTabela(
@@ -237,11 +278,7 @@ def meta_do_primario(ctx: Contexto) -> tuple[Cartao, Grafico, Tabela]:
                 unidade="R$ bi",
             ),
         ],
-        fonte=(
-            "Relatórios de Avaliação de Receitas e Despesas Primárias do Poder Executivo, "
-            "pela Nota Informativa da Consultoria de Orçamentos do Senado de 25/9/2026; "
-            f"meta: {meta.referencia}"
-        ),
+        fonte=f"{fonte_aval}; meta: {meta.referencia}",
         nota=(
             "Os descontos vêm da EC 136, da ADPF 1236 e das LCs 221, 223 e 235 (precatórios, "
             "defesa, saúde). "
@@ -659,7 +696,9 @@ def montar(ctx: Contexto) -> Secao:
             tabelas.append(t_bc_fmi)
     except Exception as erro:
         print(f"  aviso: fiscal: sem o primário do FMI ({str(erro)[:120]})")
-    c_meta, g_meta, t_meta = meta_do_primario(ctx)
+    c_meta, g_meta, t_meta = meta_do_primario(
+        ctx, avaliacao_bimestral.do_ano(leis.META_PRIMARIA_2026.ano, "fiscal")
+    )
     cartoes.append(c_meta)
     graficos.append(g_meta)
     tabelas.append(t_meta)

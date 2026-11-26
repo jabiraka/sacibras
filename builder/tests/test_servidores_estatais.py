@@ -211,3 +211,146 @@ def test_sest_soma_as_empresas() -> None:
     assert lido.lucros == [("Correios", -2447.2, -8457.8)]
     assert (lido.diretas, lido.dependentes) == (3, 1)
     assert lido.fonte.endswith("2026, ano-base 2025, anexo I")
+
+
+# ------------------------------------------------------------------ boletim da Previdência
+
+
+class _Aba:
+    """Uma aba de .xls de mentira: o que o leitor do boletim usa do xlrd."""
+
+    def __init__(self, nome: str, linhas: list[list[object]]) -> None:
+        self.name = nome
+        self.nrows = len(linhas)
+        self.ncols = max(len(x) for x in linhas)
+        self._linhas = [x + [""] * (self.ncols - len(x)) for x in linhas]
+
+    def cell_value(self, r: int, c: int) -> object:
+        return self._linhas[r][c]
+
+
+class _Livro:
+    datemode = 0
+
+    def __init__(self, abas: dict[str, _Aba]) -> None:
+        self._abas = abas
+
+    def sheet_by_name(self, nome: str) -> _Aba:
+        return self._abas[nome]
+
+
+SET_2026 = 46266.0  # número de série do Excel de 1/9/2026
+
+
+def _livro_do_boletim(media_de_setembro: float) -> _Livro:
+    """Os quadros 14, 15 e 27 no formato do boletim (set/2026), só com o que se lê."""
+    q15 = _Aba(
+        "15",
+        [
+            ["Boletim Estatístico da Previdência Social - Vol. 32 Nº 09", "", "", SET_2026],
+            ["GRUPOS DE ESPÉCIES", "QUANTIDADE", "VALOR (R$)", "VALOR MÉDIO (R$)"],
+            ["", "Total", "Total", "TOTAL"],
+            ["Previdenciários", 35260251.0, 1.0, 1971.92],
+            ["Aposentadorias", 24727767.0, 1.0, 2051.0502678834687],
+            ["Idade", 14180629.0, 1.0, 1617.7198027844884],
+            ["Invalidez", 3445182.0, 1.0, 1811.81],
+            ["Tempo de Contribuição", 7101956.0, 1.0, 3032.348472612334],
+            ["Rendas Mensais Vitalícias", 44357.0, 1.0, 900.0],
+            ["Idade", 1748.0, 1.0, 1.0],
+        ],
+    )
+    q14 = _Aba(
+        "14",
+        [
+            ["Boletim", "", ""],
+            ["ANOS/MESES", "", "VALOR MÉDIO (R$)"],
+            ["2025", "Novembro", 1825.18],
+            ["2026", "Janeiro", 1888.79],
+            ["", "Março", 1888.14],
+            ["", "Abril(1)", 2807.23],
+            ["", "Junho", 1883.65],
+            ["", "Setembro", media_de_setembro],
+            ["", "Subtotal", "–"],
+        ],
+    )
+    q27 = _Aba(
+        "27",
+        [
+            ["Boletim", "", "", ""],
+            ["DISCRIMINAÇÃO", "JUN/18", 46235.0, SET_2026],
+            ["Piso Previdenciário - R$", 954.0, 1621.0, 1621.0],
+            ["Teto do Sal. Benefício e Sal.Contribuição - R$", 5645.8, 8475.55, 8475.55],
+        ],
+    )
+    return _Livro({"14": q14, "15": q15, "27": q27})
+
+
+def test_boletim_da_previdencia_le_os_quadros(monkeypatch: pytest.MonkeyPatch) -> None:
+    from sacibras.fontes import beps
+
+    monkeypatch.setattr(beps.xlrd, "open_workbook", lambda **_: _livro_do_boletim(1884.19))
+    lido = beps.ler(b"", "u")
+    assert lido.mes == date(2026, 9, 1)
+    assert (round(lido.media, 2), round(lido.idade, 2), round(lido.tempo, 2)) == (
+        2051.05,
+        1617.72,
+        3032.35,
+    )
+    assert lido.aposentadorias == 24_727_767
+    assert (lido.teto, lido.teto_em) == (8475.55, date(2026, 9, 1))
+    assert not lido.com_13
+    # Mês com o 13º: o valor médio passa do menor do ano.
+    monkeypatch.setattr(beps.xlrd, "open_workbook", lambda **_: _livro_do_boletim(2807.0))
+    assert beps.ler(b"", "u").com_13
+
+
+def test_mes_do_13_compara_com_o_menor_do_ano() -> None:
+    from sacibras.fontes import beps
+
+    ano = {1: 1888.8, 2: 1889.1, 3: 1888.1, 4: 2807.2, 5: 2803.3, 6: 1883.6}
+    assert not beps.mes_do_13(ano, 1)  # o reajuste de janeiro não conta
+    assert beps.mes_do_13(ano, 4) and beps.mes_do_13(ano, 5)
+    assert not beps.mes_do_13(ano, 6)
+    assert beps.mes_do_13({1: 1859.5, 11: 1917.3}, 11)  # nov/2025: +3 %
+    with pytest.raises(beps.FonteForaDoArError):
+        beps.mes_do_13(ano, 9)
+
+
+def test_edicoes_do_boletim_da_mais_nova_para_tras() -> None:
+    from sacibras.fontes import beps
+
+    base = "https://www.gov.br/previdencia/.../boletins-da-previdencia-social"
+    pagina = f'<a href="{base}/2026/beps092026_final.xls">xls</a> <a href="x.pdf">pdf</a>'
+    anteriores = (
+        f'<a href="{base}/2026/beps062026_final-1.xls">jun</a>'
+        f'<a href="{base}/2025/beps122025_final.xls">dez</a>'
+        f'<a href="{base}/2026/beps092026_final.xls">de novo</a>'
+    )
+    lista = beps.edicoes(pagina, anteriores)
+    assert [m for m, _ in lista] == [date(2026, 9, 1), date(2026, 6, 1), date(2025, 12, 1)]
+    assert lista[1][1].endswith("beps062026_final-1.xls")
+
+
+def test_aposentadoria_com_o_boletim_lido() -> None:
+    from sacibras.fontes import beps
+
+    lido = beps.Boletim(
+        date(2026, 12, 1),
+        "u",
+        25_000_000,
+        2100.0,
+        1650.0,
+        3100.0,
+        8475.55,
+        date(2026, 12, 1),
+        False,
+    )
+    [cartao], [tabela] = servidores.aposentadoria(lido)
+    linhas = {li.rotulo: li.valores for li in tabela.linhas}
+    assert linhas["INSS: todas as aposentadorias"] == [2100, 25_000]
+    assert linhas["INSS: por idade"][0] == 1650
+    assert linhas["Teto do INSS em 2026"][0] == 8476
+    assert "INSS em dez/2026" in (tabela.subtitulo or "")
+    assert "dez/2026, quadros 15 e 27" in tabela.fonte
+    assert "Portaria" not in tabela.fonte and "14.520" in tabela.fonte
+    assert "INSS: R$ 2.100" in cartao.detalhe and len(cartao.detalhe) <= 60

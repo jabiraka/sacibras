@@ -7,16 +7,29 @@ o informe mais recente). O `sacibras tramitacao` pergunta de novo aos dados aber
 (que servem também as matérias do Congresso, como os PLN) e lista o que mudou; o workflow
 "Prazos de releitura" abre a issue `tramitação` com a lista. Ao reler o projeto, atualize o
 número em `relatorios.py` e aqui o que foi visto; sancionada a lei, tire o projeto da lista.
+
+Pelo mesmo caminho vai o cálculo da CBS do TCU (Caio, 25/11/2026: ler sozinho onde a fonte
+publica em API): a API de acórdãos do TCU lista os mais novos primeiro, e o aviso sai quando
+um sumário traz "alíquota de referência" da CBS para outro ano ou com outro número que o lido
+em `relatorios.CBS_REFERENCIA_2027`. O número na tela continua à mão: o que vale em lei é a
+resolução do Senado.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
-from sacibras import rede
+from sacibras import rede, relatorios
 
 SENADO = "https://legis.senado.leg.br/dadosabertos/materia/movimentacoes/{codigo}"
+TCU = "https://dados-abertos.apps.tcu.gov.br/api/acordao/recupera-acordaos"
+PAGINAS_DO_TCU = 2
+"""Páginas de 500 acórdãos, dos mais novos para trás (em nov/2026, umas duas semanas cada): o
+workflow roda todo dia útil, então duas bastam com folga."""
+CBS_LIDA = (2027, relatorios.CBS_REFERENCIA_2027)
+"""(ano, %) da alíquota de referência da CBS lida no acórdão mais novo."""
 
 
 @dataclass(frozen=True)
@@ -71,6 +84,41 @@ def mudancas(p: Projeto, situacao: str, informe: str, texto: str) -> list[str]:
     return saida
 
 
+def cbs_nos_acordaos(acordaos: list[dict[str, Any]]) -> list[tuple[int, float, str, str]]:
+    """(ano, alíquota em %, título, data) de cada acórdão cujo sumário traz a alíquota de
+    referência da CBS de um ano."""
+    saida = []
+    for a in acordaos:
+        sumario = " ".join(str(a.get("sumario") or "").upper().split())
+        aliquota = re.search(r"AL[IÍ]QUOTA DE REFER[EÊ]NCIA DE (\d+(?:,\d+)?) ?%", sumario)
+        ano = re.search(r"\bCBS\)? PARA (\d{4})", sumario)
+        if aliquota and ano:
+            valor = float(aliquota.group(1).replace(",", "."))
+            saida.append((int(ano.group(1)), valor, str(a.get("titulo")), str(a.get("dataSessao"))))
+    return saida
+
+
+def cbs_nova(acordaos: list[dict[str, Any]]) -> list[str]:
+    """O que mudou contra a CBS lida: ano mais novo, ou o mesmo ano com outro número."""
+    ano_lido, lida = CBS_LIDA
+    return [
+        f"{titulo} ({data}): alíquota de referência da CBS de {ano} de "
+        f"{str(valor).replace('.', ',')} %"
+        for ano, valor, titulo, data in cbs_nos_acordaos(acordaos)
+        if ano > ano_lido or (ano == ano_lido and valor != lida)
+    ]
+
+
+def olhar_tcu() -> list[str]:
+    acordaos: list[dict[str, Any]] = []
+    for pagina in range(PAGINAS_DO_TCU):
+        corpo = rede.baixar_json(
+            TCU, params={"inicio": str(pagina * 500), "quantidade": "500"}, validade=0
+        )
+        acordaos += corpo if isinstance(corpo, list) else []
+    return cbs_nova(acordaos)
+
+
 def olhar() -> str:
     """A tabela, em Markdown, dos projetos que andaram (vazia se nenhum andou)."""
     linhas = []
@@ -86,6 +134,12 @@ def olhar() -> str:
             achado = [f"não foi possível ler a matéria ({str(erro)[:120]})"]
         for m in achado:
             linhas.append(f"| {p.nome} | `{p.onde}` | {m} |")
+    try:
+        novos = olhar_tcu()
+    except Exception as erro:
+        novos = [f"não foi possível ler a API do TCU ({str(erro)[:120]})"]
+    for m in novos:
+        linhas.append(f"| Cálculo da CBS (TCU) | `relatorios.CBS_REFERENCIA_2027` | {m} |")
     if not linhas:
         return ""
     return "\n".join(["| Projeto | No painel | O que mudou |", "|---|---|---|", *linhas])

@@ -31,6 +31,7 @@ import pycountry
 from sacibras import contas, leis, relatorios
 from sacibras.contas import a_precos_de, indice_de_precos
 from sacibras.fontes import (
+    avaliacao_bimestral,
     fmi,
     fmi_cofog,
     ocde_receita,
@@ -1095,13 +1096,33 @@ def _por_setor(ctx: Contexto) -> Pecas:
     return [], [], [tabela], ""
 
 
-def _previsto(ctx: Contexto) -> Pecas:
+def previsto_do_ano(
+    lido: avaliacao_bimestral.Quadros | None,
+) -> tuple[list[relatorios.ReceitaPrevista], str, str]:
+    """(LOA e previsão de cada linha, o bimestre, a fonte): da planilha do bimestre mais novo
+    (`lido`) ou, sem ela, dos números lidos à mão."""
+    if lido is None or not lido.loa:
+        fonte = (
+            f"{avaliacao_bimestral.FONTE}, {relatorios.AVALIACAO_DA_RECEITA} de "
+            f"{relatorios.ANO_DA_RECEITA_PREVISTA} (quadros de apoio, tabela 1)"
+        )
+        return relatorios.RECEITA_PREVISTA, relatorios.AVALIACAO_DA_RECEITA, fonte
+    ultima = lido.ultima
+    lista = [
+        relatorios.ReceitaPrevista(r.linha, r.rtn, lido.loa[r.rtn], getattr(ultima, r.rtn))
+        for r in relatorios.RECEITA_PREVISTA
+    ]
+    return lista, ultima.rotulo, lido.fonte
+
+
+def _previsto(ctx: Contexto, lido: avaliacao_bimestral.Quadros | None = None) -> Pecas:
     """O que entrou no ano contra o que o governo previu arrecadar (relatório bimestral)."""
     rtn = tesouro_rtn.serie_historica()
     ano = relatorios.ANO_DA_RECEITA_PREVISTA
+    previstas, bimestre, fonte_aval = previsto_do_ano(lido)
     linhas: list[LinhaTabela] = []
     ate: date | None = None
-    for r in relatorios.RECEITA_PREVISTA:
+    for r in previstas:
         no_ano = [(d, v) for d, v in rtn[r.rtn] if d.year == ano]
         antes = {d.month: v for d, v in rtn[r.rtn] if d.year == ano - 1}
         if not no_ano:
@@ -1133,15 +1154,15 @@ def _previsto(ctx: Contexto) -> Pecas:
         subtitulo=f"R$ bilhões; realizado de {meses}",
         colunas=[
             "orçamento",
-            f"previsão do {relatorios.AVALIACAO_DA_RECEITA}",
+            f"previsão do {bimestre}",
             f"entrou, {meses}",
             "% da previsão",
             f"% do ano em {ano - 1}, mesmos meses",
         ],
         linhas=linhas,
         fonte=(
-            "Relatório de Avaliação de Receitas e Despesas Primárias (orçamento e previsão); "
-            "Tesouro Nacional, Resultado do Tesouro Nacional, tabela 1.1 (realizado)"
+            f"{fonte_aval} (orçamento e previsão); Tesouro Nacional, Resultado do Tesouro "
+            "Nacional, tabela 1.1 (realizado)"
         ),
         # A previsão desconta incentivos fiscais; o realizado do Tesouro pode ter pequena
         # diferença de conceito. A Receita divulga cada mês entre os dias 21 e 30 do mês
@@ -1761,7 +1782,13 @@ MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [
     ("imposto retido na fonte", _quem_paga_retido),
     ("Seletivo, Simples e destino", _reforma_regras),
     ("arrecadação por setor", _por_setor),
-    ("previsto × realizado", _previsto),
+    (
+        "previsto × realizado",
+        lambda ctx: _previsto(
+            ctx,
+            avaliacao_bimestral.do_ano(relatorios.ANO_DA_RECEITA_PREVISTA, "impostos"),
+        ),
+    ),
     ("quem paga", _quem_paga),
     ("dívida ativa", _divida_ativa),
     ("alíquotas", _aliquotas),

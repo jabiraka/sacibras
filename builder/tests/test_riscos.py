@@ -254,3 +254,131 @@ def test_caminho_mensal_pega_o_fim_de_cada_mes_e_a_partida() -> None:
     ]
     assert risco.caminho_mensal(pontos, date(2020, 1, 1), 2) == [10.0, 12.0, 15.0]
     assert risco.caminho_mensal(pontos, date(2020, 1, 1), 3) is None  # falta março
+
+
+# ------------------------------------------------------------------ leitores de relatório
+
+
+def test_ref_le_o_anexo_estatistico() -> None:
+    import io
+
+    import openpyxl
+
+    from sacibras.fontes import bcb_ref
+
+    livro = openpyxl.Workbook()
+    capital = livro.active
+    capital.title = "Graf 1.2.5.6"
+    for linha in [
+        ["Gráfico 1.2.5.6 - Situação de capital"],
+        [None, 202606, None, None, 202906, None],
+        [None, "contagem de IFs", "% de ativos", None, "contagem de IFs", "% de ativos"],
+        ["Insolventes", 1, 0.062, None, 21, 2.583],
+        ["Restrições", 2, 0.093, None, 4, 11.501],
+        ["10,5 - 14", 18, 20.683, None, 11, 30.819],
+        ["14 - 16", 21, 57.001, None, 4, 15.167],
+        ["16 - 18", 12, 5.701, None, 6, 3.141],
+        ["> 18", 50, 13.717, None, 55, 32.766],
+    ]:
+        capital.append(linha)
+    necessidade = livro.create_sheet("Graf 1.2.5.7")
+    necessidade.append([None, 202506, 202606, 202806, 202906])
+    necessidade.append(["NC Recessão aguda", 0, 0.5, 1.32, 1.656])
+    necessidade.append(["NC Crise de confiança", 0, 0.7, 3.38, 2.326])
+    arquivo = io.BytesIO()
+    livro.save(arquivo)
+    lido = bcb_ref.ler(arquivo.getvalue(), date(2026, 10, 1), "u")
+    assert lido.acima_do_minimo == pytest.approx(81.893)
+    assert (lido.crise, lido.recessao) == (3.38, 1.656)
+
+
+def test_ref_procura_as_pastas_do_mes_para_tras(monkeypatch: pytest.MonkeyPatch) -> None:
+    from sacibras.fontes import bcb_ref
+
+    assert bcb_ref.pastas(date(2026, 2, 10), 3) == ["202602", "202601", "202512"]
+    perguntadas: list[str] = []
+
+    def existe(url: str) -> bool:
+        perguntadas.append(url)
+        return "202610" in url
+
+    monkeypatch.setattr(bcb_ref, "_existe", existe)
+    edicao, url = bcb_ref.achar(date(2026, 11, 25))
+    assert edicao == date(2026, 10, 1)
+    assert url.endswith("/ref/202610/RELESTAB202610-refAnexoEstatistico.xlsx")
+    assert len(perguntadas) == 2
+
+
+def test_frase_do_estresse_dos_bancos() -> None:
+    from sacibras import relatorios
+    from sacibras.fontes import bcb_ref
+    from sacibras.secoes import riscos
+
+    # A mesma edição lida à mão: vale o texto do relatório (3,5 %, não os 3,38 da planilha).
+    mesma = bcb_ref.Estresse(relatorios.ESTRESSE_EDICAO, "u", 81.893, 3.38, 1.656)
+    for lido in (None, mesma):
+        frase, fonte = riscos.estresse_dos_bancos(lido)
+        assert frase == relatorios.ESTRESSE_DOS_BANCOS
+        assert fonte == "Banco Central, Relatório de Estabilidade Financeira (out/2026)"
+    nova = bcb_ref.Estresse(date(2027, 5, 1), "u", 84.25, 3.1083, 1.6433)
+    frase, fonte = riscos.estresse_dos_bancos(nova)
+    assert "(mai/2027)" in frase and "3,1 % do patrimônio" in frase and "84,2 % dos" in frase
+    assert fonte.endswith("(mai/2027)")
+
+
+CSV_DO_TESOURO = (
+    '"Última Alteração";"Agência";"Moeda Estrangeira";"Moeda Local";"Ação"\n'
+    '"14-JUL-26";"JCR";"BBB-";"BBB";"Manutenção da nota e manutenção da perspectiva estável"\n'
+    '"25-JUN-26";"Standard & Poor\'s";"BB";"BB";"Manutenção da nota e revisão da perspectiva '
+    'para positiva"\n'
+    '"16-JUN-26";"Fitch";"BB+";"BB+";"Elevação da nota e manutenção da perspectiva estável"\n'
+    '"30-MAI-25";"Moody\'s";"Ba1";"Ba1";"Manutenção da nota e revisão da perspectiva para '
+    'estável"\n'
+    '"17-FEV-16";"Standard & Poor\'s";"BB";"BB";"Rebaixamento da nota"\n'
+).encode("latin-1")
+
+
+def test_notas_do_tesouro_so_acrescentam_os_atos_novos() -> None:
+    from sacibras import relatorios
+    from sacibras.fontes import tesouro_notas
+
+    atos = tesouro_notas.ler(CSV_DO_TESOURO)
+    assert [a.agencia for a in atos] == ["S&P", "Moody's", "Fitch", "S&P"]  # sem a JCR
+    assert atos[0].data == date(2016, 2, 17) and atos[0].perspectiva is None
+    historia = {"S&P": [(date(2023, 12, 19), "BB")], "Fitch": [(date(2023, 7, 26), "BB")]}
+    perspectiva = {"S&P": "estável", "Fitch": "estável"}
+    notas = tesouro_notas.juntar(historia, perspectiva, date(2025, 5, 30), atos, relatorios.DEGRAU)
+    # Só os de depois de 30/05/2025: a S&P mantém a nota (nenhuma linha nova) e muda a
+    # perspectiva; a Fitch sobe.
+    assert [a.data for a in notas.novos] == [date(2026, 6, 16), date(2026, 6, 25)]
+    assert notas.historia["S&P"] == historia["S&P"]
+    assert notas.historia["Fitch"][-1] == (date(2026, 6, 16), "BB+")
+    assert notas.perspectiva == {"S&P": "positiva", "Fitch": "estável"}
+    assert notas.ultimo == date(2026, 6, 25)
+    assert historia["Fitch"] == [(date(2023, 7, 26), "BB")]  # o lido à mão fica intacto
+    with pytest.raises(tesouro_notas.FonteForaDoArError):
+        tesouro_notas.juntar(historia, perspectiva, date(2025, 5, 30), atos, {"BB": -2})
+
+
+def test_nota_de_credito_mostra_o_ato_novo() -> None:
+    from types import SimpleNamespace
+
+    from sacibras import relatorios
+    from sacibras.fontes import tesouro_notas
+    from sacibras.secoes import riscos
+
+    ctx = SimpleNamespace(hoje=date(2026, 11, 25))
+    atos = tesouro_notas.ler(CSV_DO_TESOURO)
+    lido = tesouro_notas.juntar(
+        relatorios.NOTAS, relatorios.PERSPECTIVA, date(2025, 5, 30), atos, relatorios.DEGRAU
+    )
+    bloco = riscos._nota(ctx, lido)  # type: ignore[arg-type]
+    [cartao], [grafico] = bloco.cartoes, bloco.graficos
+    assert cartao.referencia == date(2026, 6, 25)
+    assert cartao.texto == "BB" and "Fitch BB+" in cartao.detalhe
+    assert "S&P positiva, Fitch estável, Moody's estável" in (grafico.nota or "")
+    assert "consulta em CSV" in cartao.fonte
+    # Sem o CSV, o lido à mão.
+    reserva = riscos._nota(ctx)  # type: ignore[arg-type]
+    assert reserva.cartoes[0].referencia == relatorios.ULTIMO_ATO_LIDO
+    assert "perspectiva estável nas três" in (reserva.graficos[0].nota or "")

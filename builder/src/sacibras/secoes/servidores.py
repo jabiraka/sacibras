@@ -21,7 +21,7 @@ from __future__ import annotations
 from datetime import date
 
 from sacibras import contas, relatorios
-from sacibras.fontes import fmi, fmi_pessoal, ibge_sidra, siconfi, tesouro_rtn
+from sacibras.fontes import beps, fmi, fmi_pessoal, ibge_sidra, siconfi, tesouro_rtn
 from sacibras.schema import Cartao, Grafico, LinhaTabela, Tabela
 from sacibras.secoes import gasto
 from sacibras.secoes.base import br, cartao, grafico, periodo, serie
@@ -390,16 +390,36 @@ def por_poder(ano: int, gasto_do_poder: dict[str, tuple[float, int]]) -> list[Ta
     return [gasto_tabela, remuneracao_tabela]
 
 
-def aposentadoria() -> tuple[list[Cartao], list[Tabela]]:
-    """A aposentadoria média do servidor civil da União contra a do INSS (leituras)."""
+def beps_mais_novo() -> beps.Boletim | None:
+    """O boletim da Previdência mais novo sem o 13º, ou None se a fonte falhar."""
+    try:
+        return beps.boletim()
+    except Exception as erro:
+        print(f"  aviso: servidores: boletim da Previdência indisponível ({str(erro)[:120]})")
+        return None
+
+
+def aposentadoria(lido: beps.Boletim | None = None) -> tuple[list[Cartao], list[Tabela]]:
+    """A aposentadoria média do servidor civil da União contra a do INSS: o INSS do boletim
+    da Previdência mais novo (`lido`) ou, sem ele, o lido à mão."""
     civis = relatorios.SERVIDORES_POR_PODER
     aposentados = sum(p.aposentados for p in civis)
     media = sum(p.aposentados * p.provento for p in civis) / aposentados
-    inss = relatorios.INSS_APOSENTADORIA_MEDIA
-    fonte = (
-        f"{relatorios.FONTE_SERVIDORES}; {relatorios.FONTE_INSS} "
-        f"({periodo(relatorios.INSS_EM, 'M')}, quadro 15); {relatorios.FONTE_TETOS}"
-    )
+    if lido is not None:
+        inss, idade, tempo = lido.media, lido.idade, lido.tempo
+        quantos, inss_em = lido.aposentadorias, lido.mes
+        teto, teto_ano = lido.teto, lido.teto_em.year
+        # O teto do INSS vem do boletim: da lista das normas fica só a do subsídio do STF.
+        tetos = f"{beps.FONTE} ({periodo(lido.mes, 'M')}, quadros 15 e 27)"
+        normas = relatorios.FONTE_TETOS.split("; ")[-1]
+    else:
+        inss, idade = relatorios.INSS_APOSENTADORIA_MEDIA, relatorios.INSS_APOSENTADORIA_IDADE
+        tempo, quantos = relatorios.INSS_APOSENTADORIA_TEMPO, relatorios.INSS_APOSENTADORIAS
+        inss_em, teto, teto_ano = relatorios.INSS_EM, relatorios.TETO_INSS, relatorios.TETO_INSS_ANO
+        tetos = f"{relatorios.FONTE_INSS} ({periodo(inss_em, 'M')}, quadro 15)"
+        normas = relatorios.FONTE_TETOS
+    # O teto do serviço público continua lido à mão (a lei do subsídio).
+    fonte = f"{relatorios.FONTE_SERVIDORES}; {tetos}; {normas}"
     card = Cartao(
         id="aposentadoria-servidor",
         rotulo="Aposentadoria média do servidor civil da União",
@@ -439,15 +459,11 @@ def aposentadoria() -> tuple[list[Cartao], list[Tabela]]:
             "INSS: todas as aposentadorias",
             inss,
             "Setor privado (INSS)",
-            relatorios.INSS_APOSENTADORIAS,
+            quantos,
         ),
-        linha(
-            "INSS: por tempo de contribuição",
-            relatorios.INSS_APOSENTADORIA_TEMPO,
-            "Setor privado (INSS)",
-        ),
-        linha("INSS: por idade", relatorios.INSS_APOSENTADORIA_IDADE, "Setor privado (INSS)"),
-        linha(f"Teto do INSS em {relatorios.TETO_INSS_ANO}", relatorios.TETO_INSS, "Os tetos"),
+        linha("INSS: por tempo de contribuição", tempo, "Setor privado (INSS)"),
+        linha("INSS: por idade", idade, "Setor privado (INSS)"),
+        linha(f"Teto do INSS em {teto_ano}", teto, "Os tetos"),
         linha(
             "Teto do serviço público (subsídio de ministro do STF)",
             relatorios.TETO_SERVICO_PUBLICO,
@@ -459,7 +475,7 @@ def aposentadoria() -> tuple[list[Cartao], list[Tabela]]:
         titulo="A aposentadoria do servidor e a do INSS",
         subtitulo=(
             f"Valor médio, R$ por mês; servidores em {periodo(relatorios.SERVIDORES_EM, 'M')}, "
-            f"INSS em {periodo(relatorios.INSS_EM, 'M')}"
+            f"INSS em {periodo(inss_em, 'M')}"
         ),
         colunas=["Valor médio (R$ por mês)", "Aposentados (mil)"],
         linhas=linhas,
@@ -673,7 +689,7 @@ def pecas(pib: list[Ponto], inicio: date, hoje: date) -> Pecas:
         return [], [], por_poder(*achado)
 
     def das_leituras() -> Pecas:
-        c, t = aposentadoria()
+        c, t = aposentadoria(beps_mais_novo())
         return c, [], t
 
     juntar("o FMI", do_fmi)
