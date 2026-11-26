@@ -1400,6 +1400,13 @@ def montar(saida: Path) -> list[Item]:
                 extra = f"{f['nome_completo']} {f['setor']} estatal empresa"
                 local = f"{nome} › Estatais · empresa"
                 itens.append(_item(f["nome"], local, f"{h}/e-{f['id']}", extra))
+        arquivo = dados.get("arquivo_estaduais") or ""
+        if arquivo and (saida / arquivo).exists():
+            fichas = json.loads((saida / arquivo).read_text(encoding="utf-8"))
+            for f in fichas.get("fichas", []):
+                extra = f"{f['nome_completo']} {f['setor']} estatal estadual empresa"
+                local = f"{nome} › Estatais · empresa estadual"
+                itens.append(_item(f["nome"], local, f"{h}/ee-{f['id']}", extra))
         if dados.get("arquivo_contas"):
             local = f"{nome} › Um estado por dentro"
             itens.append(_item("O que o estado vende ao exterior", local, f"{h}/estado"))

@@ -51,8 +51,26 @@ repetido no PROXIMOS-PASSOS.
   oficial por estado (só a regra de partilha, que já está no gráfico).
 - Alíquotas do Imposto Seletivo: a LC 214 deixa para lei ordinária; entra quando sair.
 - Gasto tributário antes de 2014: a Receita só publica em PDF; fica fora sem conferência.
-- Gasto tributário por empresa e por setor de atividade (Caio, 26/11/2026): a Receita não publica
-  (sigilo fiscal, art. 198 do CTN). Dois programas listam quem recebeu (olhado em 26/11, da nuvem):
+- Gasto tributário por empresa e por setor de atividade (Caio, 26/11/2026). **Do PC, em 26/11,
+  o que se dizia abaixo caiu em parte**: a Receita **publica por CNPJ**, em
+  `arquivos.receitafederal.gov.br/index.php/s/gn672Ad4CF8N6TK?dir=/Dados/Obrigacoes_Acessorias`:
+  `DIRBI/renuncia-por-regime-{2024,2025,2026,acumulado}.zip` (107 a 175 MB, com dicionário) e
+  `ECF/renuncia-irpj-csll-ecf.csv` (46 MB). **Lidos em 26/11** (baixam pelo `curl` em
+  `arquivos.receitafederal.gov.br/public.php/dav/files/gn672Ad4CF8N6TK/Dados/…`). ECF: `|`,
+  uma coluna por benefício de IRPJ e CSLL, 2015 a 2025, com `pronac_deducao_ir` (Rouanet;
+  sem Lei do Bem). Dirbi: CSV por mês, com CNPJ, nome, CNAE, `Código_IN`, tributo e valor; a
+  Lei do Bem são os códigos 30 a 43 (lidos em reprodução não oficial do anexo, IN RFB
+  2.241/2024; a oficial não abriu), e a Rouanet não apareceu nos itens lidos. Em 2025, os
+  códigos 30 a 43 somam R$ 17,8 bi; o 30 (despesa operacional) varia entre empresas, por isso
+  o ranking usa 37 e 38. O `ano-base-2021.xlsx` do MCTI tem "Valor Aprovado" por empresa
+  (R$ 21,8 bi, 2.675 empresas; pelo tamanho parece gasto e não imposto, não conferido). A
+  Portaria RFB 745/2026, vista só em notícia, fala em CNPJ, razão social, CNAE e valores, e
+  precisa ser lida na fonte. O MCTI tem o valor aprovado por empresa da Lei do Bem só dos
+  anos-base 2018 a 2021 (`…/lei-do-bem/paginas/mecanismos-de-transparencia`; abre no navegador,
+  403 no `curl`). A Rouanet responde em `api.salic.cultura.gov.br/api/v1/incentivadores?sort=total_doado:desc`
+  (114 mil incentivadores, total desde o início, em reais correntes; `projetos/<pronac>` traz as
+  captações com data; o endereço `…/doacoes` de cada incentivador dá 404). O Salic Comparar dá
+  403 no `curl`. O que segue é o que se viu antes, da nuvem:
   **Lei do Bem** (MCTI): planilhas consolidadas dos relatórios anuais (RDA) com valor do benefício e
   da renúncia por empresa, em `gov.br/mcti/pt-br/acompanhe-o-mcti/lei-do-bem` (e `…/lei-de-tics`,
   dicionário de dados); a página põe captcha a quem não é navegador, então **só do PC**. Agregado
@@ -329,7 +347,7 @@ o IPCA-15 no gráfico dos outros índices. Fica:
 ## Estatais estaduais, o que ficou de fora (26/11/2026)
 
 O Raio-X do Tesouro traz por empresa também patrimônio líquido, pessoal, empregados,
-investimento, setor e dependência: dá uma ficha por estatal estadual (como a das federais), o
-retorno contra o juro e o bloco das estatais na ficha de cada estado (Estados › Um estado por
-dentro). Os nomes mudam um pouco de uma edição para outra, e juntar os anos de uma empresa pede
-conferência. A coluna "Subvenção (anterior)" da edição 2025 está errada na fonte (R$ 81 bi).
+investimento, setor e dependência. A ficha por empresa entrou em 26/11; ficam o retorno contra o
+juro, o bloco das estatais na ficha de cada estado (Estados › Um estado por dentro), o setor na
+ficha e o link da carta anual de cada uma. A coluna "Subvenção (anterior)" da edição 2025 está
+errada na fonte (R$ 81 bi).

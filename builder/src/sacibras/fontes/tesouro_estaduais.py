@@ -43,6 +43,10 @@ class EmpresaEstadual:
     subvencao: float
     capital: float
     """Reforço de capital que o estado pôs na empresa no ano."""
+    patrimonio: float | None = None
+    empregados: float | None = None
+    pessoal: float | None = None
+    investimento: float | None = None
 
 
 def _numero(texto: str | None) -> float:
@@ -53,11 +57,16 @@ def _numero(texto: str | None) -> float:
         return 0.0
 
 
+def _informado(texto: str | None) -> float | None:
+    """Nas colunas só da ficha, vazio, "NA" e zero querem dizer não informado."""
+    return _numero(texto) or None
+
+
 def ler(conteudo: bytes, ano: int) -> list[EmpresaEstadual]:
     texto = conteudo.decode("utf-8-sig", "replace")
     linhas = list(csv.DictReader(io.StringIO(texto), delimiter=";"))
     pedidas = {"Estado", "Nome_estado", "emp", "dep", "lucros", "Dividendos", "Subvenção"}
-    pedidas.add("Reforço de Capital")
+    pedidas |= {"Reforço de Capital", "PL", "qde_empregados", "desp_pessoal", "desp_investimento"}
     if not linhas or not pedidas <= set(linhas[0]):
         raise FonteForaDoArError(f"Tesouro, estatais dos estados: o arquivo de {ano} mudou")
     return [
@@ -72,6 +81,10 @@ def ler(conteudo: bytes, ano: int) -> list[EmpresaEstadual]:
             dividendos=_numero(li["Dividendos"]),
             subvencao=_numero(li["Subvenção"]),
             capital=_numero(li["Reforço de Capital"]),
+            patrimonio=_informado(li["PL"]),
+            empregados=_informado(li["qde_empregados"]),
+            pessoal=_informado(li["desp_pessoal"]),
+            investimento=_informado(li["desp_investimento"]),
         )
         for li in linhas
     ]

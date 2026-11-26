@@ -33,6 +33,7 @@ from sacibras.schema import (
     Tabela,
 )
 from sacibras.secoes import estatais, estatais_estaduais, gasto, mercados, servidores
+from sacibras.secoes import estatais_estaduais_fichas as estaduais_fichas
 from sacibras.secoes.base import (
     Contexto,
     br,
@@ -899,9 +900,16 @@ def montar(ctx: Contexto) -> Secao:
             except Exception as erro:
                 print(f"    estatais: {nome} ficou de fora: {str(erro)[:120]}")
         try:  # as estatais dos estados (Caio, 26/11/2026)
-            _, g_uf, t_uf = estatais_estaduais.pecas(*tesouro_estaduais.empresas(ctx.hoje))
+            fonte_uf, linhas_uf = tesouro_estaduais.empresas(ctx.hoje)
+            _, g_uf, t_uf = estatais_estaduais.pecas(fonte_uf, linhas_uf)
             graficos += g_uf
             tabelas += t_uf
+            fichas_uf = estaduais_fichas.fichas(fonte_uf, linhas_uf)
+            ctx.memo["fiscal_estaduais"] = FichasEstatais(
+                fichas=fichas_uf,
+                primeira=estaduais_fichas.primeira(linhas_uf, fichas_uf),
+                gerado_em=ctx.agora(),
+            )
         except Exception as erro:
             print(f"    estatais: as estaduais (Tesouro) ficaram de fora: {str(erro)[:120]}")
         try:  # uma ficha por estatal (Sest, anexo I), num arquivo à parte

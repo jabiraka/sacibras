@@ -293,6 +293,7 @@ export interface Subcategoria {
     | "alertas"
     | "salario-minimo"
     | "fichas-estatais"
+    | "fichas-estaduais"
   )[];
   /** Atalhos para partes de outros assuntos ("Veja também"). */
   veja?: Elo[];
@@ -338,6 +339,8 @@ export interface Secao {
   salario_minimo?: ComparadorSalario | null;
   /** Contas públicas › Estatais: o arquivo das fichas, lido só quando a parte abre. */
   arquivo_estatais?: string;
+  /** O mesmo para as estatais dos estados, lido só quando a caixa delas abre. */
+  arquivo_estaduais?: string;
   alertas?: Alerta[];
   /** Só no resumo: o que saiu por último, contra o Focus (saiu.ts). */
   saiu?: Divulgado[];

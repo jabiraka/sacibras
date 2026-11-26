@@ -168,6 +168,7 @@ def _partes(dados: object) -> list[ItemSubcategoria]:
 
 
 ARQUIVO_ESTATAIS = "estatais.json"
+ARQUIVO_ESTADUAIS = "estatais-estaduais.json"
 
 
 def _gravar(pasta: Path, nome: str, modelo: BaseModel) -> None:
@@ -231,6 +232,10 @@ def completar(secao: BaseModel, caminho: Path) -> list[str]:
         if not secao.arquivo_estatais and velho and (caminho.parent / velho).exists():
             secao.arquivo_estatais = velho
             mantidos.append("fichas das estatais")
+        velho = antigo.arquivo_estaduais
+        if not secao.arquivo_estaduais and velho and (caminho.parent / velho).exists():
+            secao.arquivo_estaduais = velho
+            mantidos.append("fichas das estatais estaduais")
         if not secao.alertas and antigo.alertas:
             secao.alertas = antigo.alertas
             mantidos.append("alertas")
@@ -309,6 +314,13 @@ def construir(saida: Path, so: list[str] | None = None) -> Painel:
                     secao.arquivo_estatais = ARQUIVO_ESTATAIS
                 except Exception as erro:
                     print(f"  aviso: {id}: fichas das estatais não gravadas ({erro})")
+            fichas = ctx.memo.pop(f"{id}_estaduais", None)
+            if fichas is not None and isinstance(secao, Secao):
+                try:
+                    _gravar(saida, ARQUIVO_ESTADUAIS, fichas)
+                    secao.arquivo_estaduais = ARQUIVO_ESTADUAIS
+                except Exception as erro:
+                    print(f"  aviso: {id}: fichas das estaduais não gravadas ({erro})")
             if isinstance(secao, Secao):
                 sem_lugar = organizacao.aplicar(secao)
                 for g in achatar_graficos(secao.graficos):

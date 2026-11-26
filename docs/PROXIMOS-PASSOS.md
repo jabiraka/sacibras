@@ -57,6 +57,16 @@ dos Estados, do Tesouro (`fontes/tesouro_estaduais.py`, CSV do repositório ofic
 `tesouro/empresas-estados`; edição nova entra sozinha, e em 26/11 a de 2025 era a mais nova). Em
 2024: 298 empresas, os estados receberam R$ 5,3 bi e puseram R$ 23,7 bi. É o que cada estado
 declarou ao Siconfi; o Tesouro não garante. Olhado a 390 px; **falta o Caio olhar**.
+**E a ficha de cada uma** (Caio: *"podemos pegar o histórico mas pulando se tiver um erro muito
+óbvio"*): caixa "Uma estatal estadual por dentro", 298 empresas, 2021 a 2024
+(`secoes/estatais_estaduais_fichas.py`; arquivo `estatais-estaduais.json`, ~2,5 MB, lido só
+quando a caixa abre; `#fiscal/ee-<id>`, e a busca acha pelo nome). A empresa é casada entre os
+anos pela semelhança do nome (272 têm os quatro anos). Ficam em branco: patrimônio ou folha em
+outra unidade, ano que destoa dos dois vizinhos, folha abaixo de R$ 15 mil por empregado no ano e
+a Cemig de 2021 e 2022 (57 empregados e folha só da controladora). São 33 empresas com algum
+número em branco. **Os agregados por estado não foram limpos**: repetem o que o Tesouro publica,
+e a nota da tabela anual avisa que 2021 e 2022 contam em dobro subsidiárias da Cemig. Olhado a
+390 e 1280 px; **falta o Caio olhar**.
 
 **26/11/2026, a isenção do consumo contra a OCDE** (Caio: *"Sim, monte"*; *"vai no main ao
 terminar"*). Em Impostos › Reforma do consumo, atrás de "Ano a ano" (lista "Tabela"), "Isenção lá
@@ -585,10 +595,14 @@ As próximas:
 - Nota de crédito no `sisweb.tesouro.gov.br` (fora do ar em 14/11), para confirmar o
   histórico depois de mai/2025.
 - Fontes que recusam a nuvem, para testar e, se abrirem, pôr no painel:
-  - **Lei do Bem** (MCTI, planilhas dos RDA com benefício e renúncia por empresa) e **Rouanet**
-    (Salic Comparar, total incentivado por empresa e por projeto): ver o formato e se há
-    exportação regular ([PROPOSTAS](PROPOSTAS.md), "Gasto tributário por empresa"). Pedido do
-    Caio, 26/11/2026: *"quem mais recebe com isso"*.
+  - **Quem mais recebe: Lei do Bem e Rouanet** (Caio, 26/11/2026). Baixado do PC e lido no
+    mesmo dia ([PROPOSTAS](PROPOSTAS.md), "Gasto tributário por empresa"). Rouanet, dedução do
+    IR de empresas na ECF: R$ 2,98 bi em 2025 (R$ 18,3 bi de 2015 a 2025, correntes). Lei do
+    Bem, Dirbi 2025, códigos 37 e 38 (exclusão adicional): R$ 11,4 bi, 3.074 empresas. Quem
+    capta pela Rouanet ficou fora (Caio: *"deixe assim mesmo no ranking"*). **Falta** o Caio
+    decidir se vai à tela, conferir os códigos da Dirbi no anexo oficial e **corrigir a nota
+    de Impostos › Isenções e subsídios, que diz que a Receita não publica por empresa**
+    (`secoes/impostos.py`).
   - Caged por UF (Ministério do Trabalho) e a tabela do SIDRA dos contribuintes da previdência
     (Demografia: contribuintes por beneficiário).
   - SIOPS e SIOPE: mínimos de saúde e educação dos estados (o TabNet do SIOPS derruba a

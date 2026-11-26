@@ -17,13 +17,39 @@ export interface Construtores {
   tabela: (t: Tabela) => HTMLElement;
 }
 
-export const ID_DA_LISTA = "estatais-ficha";
+/** As duas caixas: a das federais, aberta, e a das estaduais, atrás do título. */
+export interface Caixa {
+  id: string;
+  lista: string;
+  titulo: string;
+  rotulo: string;
+}
+
+export const FEDERAIS: Caixa = {
+  id: "fichas-estatais",
+  lista: "estatais-ficha",
+  titulo: "Uma estatal por dentro",
+  rotulo: "Estatal",
+};
+
+export const ESTADUAIS: Caixa = {
+  id: "fichas-estaduais",
+  lista: "estaduais-ficha",
+  titulo: "",
+  rotulo: "Estatal estadual",
+};
 
 /** A caixa da ficha; `inicial` é o id da estatal pedida no endereço (`#fiscal/e-ect`). */
-export function montarFichasEstatais(arquivo: string, f: Construtores, inicial: string): HTMLElement {
+export function montarFichasEstatais(
+  arquivo: string,
+  f: Construtores,
+  inicial: string,
+  qual: Caixa = FEDERAIS,
+): HTMLElement {
   const painel = el("section", "painel-mundo ficha-estatal");
-  painel.id = "fichas-estatais";
-  painel.append(el("h3", "ficha-estatal-titulo", "Uma estatal por dentro"));
+  painel.id = qual.id;
+  // Guardada, o título já está na caixa que abre.
+  if (qual.titulo) painel.append(el("h3", "ficha-estatal-titulo", qual.titulo));
   const carregando = el("p", "nota", "Carregando as estatais…");
   painel.append(carregando);
   f.ler(arquivo)
@@ -38,8 +64,8 @@ export function montarFichasEstatais(arquivo: string, f: Construtores, inicial: 
       };
       const primeira = porId.has(inicial) ? inicial : dados.primeira;
       const { caixa } = listaSuspensa(
-        ID_DA_LISTA,
-        "Estatal",
+        qual.lista,
+        qual.rotulo,
         dados.fichas.map((x) => ({
           valor: x.id,
           rotulo: x.nome,

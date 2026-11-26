@@ -32,7 +32,7 @@ import { el, guardar } from "./pecas";
 import { listaSuspensa } from "./pontos";
 import { montarSimulador } from "./simulador";
 import { montarSimuladorLDO } from "./simulador-ldo";
-import { montarFichasEstatais } from "./estatais";
+import { ESTADUAIS, montarFichasEstatais } from "./estatais";
 import { montarSimuladorReforma } from "./simulador-reforma";
 import { montarSimuladorSelic } from "./simulador-selic";
 import { montarComparadorSalario } from "./salario-minimo";
@@ -709,6 +709,7 @@ function parteDaPeca(
     return partes.find((p) => p.extras.includes("alertas"));
   }
   if (peca.startsWith("e-")) return partes.find((p) => p.extras.includes("fichas-estatais"));
+  if (peca.startsWith("ee-")) return partes.find((p) => p.extras.includes("fichas-estaduais"));
   const campos: Record<string, "cartoes" | "graficos" | "tabelas"> = {
     "c-": "cartoes",
     "g-": "graficos",
@@ -776,6 +777,25 @@ function montarParte(s: Secao, p: Subcategoria, alvo: HTMLElement, peca = ""): v
     };
     const inicial = peca.startsWith("e-") ? peca.slice(2) : "";
     alvo.append(montarFichasEstatais(s.arquivo_estatais, construtores, inicial));
+  }
+  const estaduais = s.arquivo_estaduais;
+  if (p.extras.includes("fichas-estaduais") && estaduais) {
+    // O arquivo das estaduais só é lido quando a caixa abre; "#fiscal/ee-…" já abre nela.
+    const construtores = {
+      ler: (a: string) => ler<FichasEstatais>(a),
+      cartao: montarCartao,
+      peca: montarPeca,
+      tabela: montarTabela,
+    };
+    const inicial = peca.startsWith("ee-") ? peca.slice(3) : "";
+    const caixa = guardar(
+      "Uma estatal estadual por dentro",
+      "Lucro, patrimônio, empregados e o que passa pelo estado, empresa por empresa",
+      () => [montarFichasEstatais(estaduais, construtores, inicial, ESTADUAIS)],
+    );
+    caixa.id = "caixa-estaduais";
+    if (caixa instanceof HTMLDetailsElement && inicial) caixa.open = true;
+    alvo.append(caixa);
   }
   const comparador = s.salario_minimo;
   if (p.extras.includes("salario-minimo") && comparador) {

@@ -106,7 +106,12 @@ def pecas(fonte: str, linhas: list[EmpresaEstadual]) -> Pecas:
             ),
         ],
         fonte=fonte,
-        nota=nota,
+        # Em 2021 e 2022 a Cemig vem com o lucro do grupo e as duas maiores subsidiárias em
+        # linhas à parte (conferido no arquivo em 26/11/2026). A soma é a que o Tesouro publica.
+        nota=(
+            "Soma do declarado pelos estados, sem garantia do Tesouro. A Sabesp saiu em 2024; "
+            "o lucro de 2021 e 2022 conta em dobro subsidiárias da Cemig."
+        ),
         rotulo_opcao="Estaduais, ano a ano",
     )
 

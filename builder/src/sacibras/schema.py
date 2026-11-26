@@ -523,6 +523,7 @@ class Subcategoria(Modelo):
             "alertas",
             "salario-minimo",
             "fichas-estatais",
+            "fichas-estaduais",
         ]
     ] = Field(default_factory=list)
     veja: list[Elo] = Field(default_factory=list)
@@ -598,6 +599,8 @@ class Secao(Modelo):
     arquivo_estatais: str = ""
     """Contas públicas › Estatais: o arquivo das fichas de cada empresa (`FichasEstatais`),
     lido só quando a pessoa abre a parte; vazio, a tela não mostra a ficha."""
+    arquivo_estaduais: str = ""
+    """O mesmo para as estatais dos estados, lido só quando a pessoa abre a caixa delas."""
     alertas: list[Alerta] = Field(default_factory=list)
     saiu: list[Divulgado] = Field(default_factory=list)
     """Só no resumo: o que saiu por último, contra o Focus."""

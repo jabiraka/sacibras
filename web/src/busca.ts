@@ -623,6 +623,16 @@ export function revelar(alvo: string): void {
     }
     no = document.getElementById("fichas-estatais");
   }
+  if (!no && alvo.startsWith("ee-")) {
+    // Uma estatal estadual: abre a caixa; se a lista já estiver na tela, troca.
+    const lista = document.querySelector<HTMLSelectElement>("#estaduais-ficha");
+    if (lista && [...lista.options].some((o) => o.value === alvo.slice(3))) {
+      lista.value = alvo.slice(3);
+      lista.dispatchEvent(new Event("change"));
+    }
+    no = document.getElementById("caixa-estaduais");
+    if (no instanceof HTMLDetailsElement) no.open = true;
+  }
   if (!no && (alvo.startsWith("uf-") || alvo.startsWith("p-"))) {
     no = document.getElementById(alvo) ?? document.querySelector(".mapa, .ranking-pontos");
   }
