@@ -2177,11 +2177,10 @@ def _isencao_la_fora() -> Tabela:
         ],
         fonte=relatorios.FONTE_LIMITE_IVA,
         nota=(
-            f"Países em {relatorios.LIMITE_IVA_ANO}; Brasil pela PPC de "
-            f"{relatorios.PPC_BRASIL_ANO}. Chile, Costa Rica, México e Espanha não têm limite; "
-            "Colômbia e Turquia, só para pessoas físicas. O MEI paga R$ 6 por mês de ICMS "
-            f"e ISS. O teto do Simples (R$ 4,8 mi, US$ {br(simples, 1)} mi) não entra: o "
-            "Simples cobra menos, não isenta."
+            f"Países em {relatorios.LIMITE_IVA_ANO}, Brasil pela PPC de "
+            f"{relatorios.PPC_BRASIL_ANO}; sem limite no Chile, Costa Rica, México e Espanha. O "
+            f"MEI paga R$ 6 por mês de ICMS e ISS; o Simples (até US$ {br(simples, 1)} mi) cobra "
+            "menos, não isenta."
         ),
     )
 
