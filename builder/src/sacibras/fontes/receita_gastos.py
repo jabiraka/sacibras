@@ -51,6 +51,12 @@ class Edicao:
     """{ano realizado: R$} do Simples Nacional, somado em todos os tributos da aba Q XXVI."""
     mei: dict[int, float] = field(default_factory=dict)
     """{ano realizado: R$} do MEI (a contribuição à Previdência menor), aba Q XXVI."""
+    funcoes: list[tuple[str, float]] = field(default_factory=list)
+    """Do último ano, por função orçamentária (aba Q V), da maior à menor: (nome, R$)."""
+    beneficios: dict[str, list[tuple[str, float]]] = field(default_factory=dict)
+    """{função: [(benefício, R$)]} do último ano (aba Q III), do maior ao menor."""
+    tributos: list[tuple[str, float]] = field(default_factory=list)
+    """Do último ano, por tributo (aba Q VI): (nome, R$)."""
 
 
 @dataclass(frozen=True)
@@ -105,6 +111,11 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
         serie = list(livro[abas["Q XXVI"]].iter_rows(values_only=True))
         principais_brutos = list(livro[abas["Q X"]].iter_rows(values_only=True))
         por_regiao = list(livro[abas["Q IV"]].iter_rows(values_only=True)) if "Q IV" in abas else []
+
+        def aba(nome: str) -> list[tuple[object, ...]]:
+            return list(livro[abas[nome]].iter_rows(values_only=True)) if nome in abas else []
+
+        q_v, q_iii, q_vi = aba("Q V"), aba("Q III"), aba("Q VI")
     finally:
         livro.close()
 
@@ -160,7 +171,51 @@ def ler_edicao(conteudo: bytes, ano: int) -> Edicao:
         regioes=ler_regioes(por_regiao),
         simples=somar(SIMPLES),
         mei=somar(MEI),
+        funcoes=ler_funcoes(q_v),
+        beneficios=ler_beneficios(q_iii, {n for n, _ in ler_funcoes(q_v)}),
+        tributos=ler_tributos(q_vi),
     )
+
+
+def _linhas_com_valor(linhas: list[tuple[object, ...]]) -> list[tuple[str, float]]:
+    """(rótulo, valor) das linhas com texto na 1ª coluna e número na 2ª, até a linha TOTAL."""
+    saida: list[tuple[str, float]] = []
+    for linha in linhas:
+        nome, valor = (*linha, None, None)[:2]
+        r = _rotulo(nome)
+        if r == "TOTAL":
+            break
+        if r and isinstance(valor, (int, float)) and not isinstance(valor, bool):
+            saida.append((" ".join(str(nome).split()), float(valor)))
+    return saida
+
+
+def ler_funcoes(linhas: list[tuple[object, ...]]) -> list[tuple[str, float]]:
+    """Aba Q V ("consolidação por função orçamentária"), da maior à menor; vazio se mudou."""
+    return sorted(_linhas_com_valor(linhas), key=lambda x: -x[1])
+
+
+def ler_tributos(linhas: list[tuple[object, ...]]) -> list[tuple[str, float]]:
+    """Aba Q VI: o gasto de cada tributo (sem as linhas de PIB e arrecadação), do maior ao
+    menor; vazio se a aba mudou."""
+    achadas = [(n, v) for n, v in _linhas_com_valor(linhas) if not n.upper().startswith("ARRECADA")]
+    return sorted(achadas, key=lambda x: -x[1])
+
+
+def ler_beneficios(
+    linhas: list[tuple[object, ...]], funcoes: set[str]
+) -> dict[str, list[tuple[str, float]]]:
+    """Aba Q III: sob cada função (a linha cujo nome está em `funcoes`), os benefícios dela,
+    do maior ao menor. Vazio se a aba mudou."""
+    saida: dict[str, list[tuple[str, float]]] = {}
+    atual: str | None = None
+    for nome, valor in _linhas_com_valor(linhas):
+        if nome in funcoes:
+            atual = nome
+            saida[atual] = []
+        elif atual is not None:
+            saida[atual].append((nome, valor))
+    return {f: sorted(b, key=lambda x: -x[1]) for f, b in saida.items()}
 
 
 def ler_regioes(linhas: list[tuple[object, ...]]) -> dict[str, float]:

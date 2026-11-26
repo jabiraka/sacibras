@@ -21,6 +21,7 @@ from sacibras.fontes import (
     fmi,
     ibge_sidra,
     ocde_receita,
+    osu,
     pwt,
     receita_arrecadacao,
     receita_gastos,
@@ -102,6 +103,7 @@ FONTES: list[tuple[str, Callable[[], str]]] = [
     ),
     ("Receita, arrecadação por estado (CSV)", _texto(receita_arrecadacao.URL, tempo_limite=120)),
     ("Receita, gastos tributários (lista)", _texto(receita_gastos.LISTAGEM)),
+    ("Planejamento, Orçamento de Subsídios da União (lista)", _texto(osu.PAGINA)),
     ("Receita, arrecadação por setor (CSV)", _texto(receita_arrecadacao.URL_SETORES)),
     ("Receita, Grandes Números do IRPF (lista)", _texto(receita_irpf.LISTAGEM)),
     (

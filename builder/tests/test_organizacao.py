@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from sacibras import busca, construir, leis, organizacao
+from sacibras.organizacao import Agrupar, Parte
 from sacibras.schema import Cartao, Grafico, Secao, Serie, SimuladorDivida, Tabela
 from sacibras.secoes import fiscal
 
@@ -270,4 +271,16 @@ def test_agrupar_aponta_para_partes_que_existem() -> None:
         for a in por_parte.values():
             nomeados = {*a.graficos, *a.tabelas, *(i for v in a.graficos.values() for i in v)}
             nomeados |= {i for v in a.tabelas.values() for i in v}
-            assert set(a.rotulos) <= nomeados, (assunto, set(a.rotulos) - nomeados)
+            chaves = {r.split(":", 1)[-1] for r in a.rotulos}  # "graficos:<id>" vale por tipo
+            assert chaves <= nomeados, (assunto, chaves - nomeados)
+
+
+def test_rotulo_por_tipo_quando_grafico_e_tabela_tem_o_mesmo_id() -> None:
+    def g(i: str) -> Grafico:
+        return Grafico(id=i, titulo=i, series=[], unidade="", periodicidade="A", fonte="")
+
+    # O mesmo id "x" em gráfico e tabela: o rótulo de "graficos:x" só vale para o gráfico.
+    a = Agrupar(graficos={"x": ["y"]}, rotulos={"x": "Da tabela", "graficos:x": "Do gráfico"})
+    partes = [Parte("p", "P", "", rotulos=a.rotulos, juntos=a.graficos)]
+    [saida] = organizacao._juntar([g("x")], {"x": g("x"), "y": g("y")}, partes, "juntos")
+    assert saida.rotulo_opcao == "Do gráfico"

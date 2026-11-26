@@ -17,6 +17,7 @@ import { saiuPorUltimo } from "./saiu";
 import { ligarGlossario } from "./glossario";
 import { fonteComEnderecos, ligarEnderecos } from "./fontes";
 import { vistaGlossario } from "./glossario-pagina";
+import { ligarTema } from "./tema";
 import { ligarNomesProprios, ligarTraducao, protegerNomeDeEstado } from "./traducao";
 import { novoDesdeAUltimaVisita, seloNovo } from "./novidades";
 import { montarEstados } from "./estados";
@@ -1083,6 +1084,7 @@ function vistaPergunta(painel: Painel, id: string, conteudo: HTMLElement): void 
 async function iniciar(): Promise<void> {
   const conteudo = document.getElementById("conteudo") as HTMLElement;
   ligarTraducao();
+  ligarTema();
   ligarNomesProprios();
   ligarBusca();
   ligarGlossario(conteudo);

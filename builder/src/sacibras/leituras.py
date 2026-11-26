@@ -32,6 +32,16 @@ class Leitura:
 
 
 LEITURAS: list[Leitura] = [
+    Leitura(
+        "Limite de isenção do IVA nos países da OCDE e a paridade de compra do Brasil",
+        "relatorios.LIMITE_IVA_USD",
+        date(2026, 11, 26),
+        date(2027, 1, 31),
+        "OCDE, Consumption Tax Trends, tabela 2.A.5 (a cada dois anos; a edição 2026 ainda não "
+        "tinha saído em 26/11). O site recusa a nuvem. Trocar também PPC_BRASIL e o link em "
+        "links.py.",
+        do_pc=True,
+    ),
     # ------------------------------------------------------------- leis e normas
     Leitura(
         "Meta de primário da LDO (o ano que vem pede a LDO nova)",

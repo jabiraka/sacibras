@@ -1194,6 +1194,36 @@ TERMOS: list[Termo] = [
         "#impostos/gasto-tributario",
     ),
     Termo(
+        "subsidios-da-uniao",
+        "Subsídio da União",
+        "Ajuda do governo federal a um setor ou grupo, de três jeitos: imposto que deixa de "
+        "cobrar (tributário), dinheiro do Orçamento (financeiro) ou juro abaixo do que o "
+        "governo paga para captar (creditício).",
+        ("subsídios da União", "subsídio da União"),
+        "#impostos/gasto-tributario",
+    ),
+    Termo(
+        "nanoempreendedor",
+        "Nanoempreendedor",
+        "Pessoa física que fatura menos de metade do teto do MEI e não aderiu a ele. Não é "
+        "contribuinte do IBS nem da CBS (LC 214/2025, art. 26).",
+        ("nanoempreendedor",),
+    ),
+    Termo(
+        "proagro",
+        "Proagro",
+        "Seguro público do produtor rural: cobre a perda da lavoura (seca, chuva demais, praga) "
+        "quando o crédito não é pago. O Tesouro cobre parte do custo.",
+        ("Proagro",),
+    ),
+    Termo(
+        "equalizacao",
+        "Equalização de juros",
+        "O Tesouro paga ao banco a diferença entre o juro que o banco cobra do tomador, mais "
+        "baixo, e o custo dele para emprestar. Ex.: o Pronaf, crédito rural.",
+        ("equalização",),
+    ),
+    Termo(
         "simples-nacional",
         "Simples Nacional",
         "O regime de imposto das empresas pequenas: uma guia só, com alíquota menor que a das "

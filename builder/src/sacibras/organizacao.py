@@ -386,7 +386,12 @@ PARTES: dict[str, list[Parte]] = {
             "O que muda no imposto das compras de 2026 a 2033, quanto vai numa compra, o "
             "Imposto Seletivo, o Simples, os setores com regra própria e o IBS indo para o "
             "destino.",
-            cartoes=["reforma-cbs-2027", "reforma-aliquota-cheia", "reforma-icms-iss"],
+            cartoes=[
+                "reforma-cbs-2027",
+                "reforma-aliquota-cheia",
+                "reforma-icms-iss",
+                "simples-optantes",
+            ],
             graficos=["reforma-transicao", "reforma-destino"],
             tabelas=[
                 "reforma-linha-do-tempo",
@@ -394,21 +399,30 @@ PARTES: dict[str, list[Parte]] = {
                 "reforma-descontos",
                 "reforma-seletivo-simples",
                 "reforma-regimes",
+                "reforma-isencao-paises",
             ],
             extras=["simulador-reforma"],
         ),
         Parte(
             "gasto-tributario",
-            "O que não entra",
-            "O que a União deixa de arrecadar com isenções e com o Simples, e o que tem a "
-            'receber de imposto não pago (pergunta "Quanto custa o Simples?").',
-            cartoes=["gasto-tributario", "simples-custo", "simples-optantes", "divida-ativa"],
-            graficos=["gasto-tributario", "simples-custo", "divida-ativa"],
+            "Isenções e subsídios",
+            "O que a União deixa de arrecadar com isenções e com o Simples, o que dá em "
+            'subsídios e o que tem a receber de imposto não pago (pergunta "Quanto custa o '
+            'Simples?").',
+            cartoes=["gasto-tributario", "simples-custo", "subsidios-uniao", "divida-ativa"],
+            graficos=["gasto-tributario", "divida-ativa"],
             tabelas=[
                 "gasto-tributario",
                 "gasto-tributario-regioes",
+                "gasto-tributario-funcoes",
+                "gasto-tributario-beneficios",
+                "gasto-tributario-tributos",
                 "simples-ano",
                 "simples-regras",
+                "subsidios-areas",
+                "subsidios-financeiros",
+                "subsidios-crediticios",
+                "proagro-credito-rural",
                 "divida-ativa",
             ],
         ),
@@ -931,28 +945,54 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
         ),
         "reforma": Agrupar(
             tabelas={
-                "reforma-linha-do-tempo": ["reforma-seletivo-simples", "reforma-regimes"],
+                "reforma-linha-do-tempo": [
+                    "reforma-seletivo-simples",
+                    "reforma-regimes",
+                    "reforma-isencao-paises",
+                ],
                 "reforma-aliquota": ["reforma-descontos"],
             },
             rotulos={
                 "reforma-linha-do-tempo": "Ano a ano",
                 "reforma-seletivo-simples": "Seletivo e Simples",
                 "reforma-regimes": "Regras próprias",
+                "reforma-isencao-paises": "Isenção lá fora",
                 "reforma-aliquota": "Alíquota cheia",
                 "reforma-descontos": "Quem paga menos",
             },
         ),
         "gasto-tributario": Agrupar(
-            graficos={"gasto-tributario": ["simples-custo"]},
             tabelas={
                 "gasto-tributario": [
+                    "gasto-tributario-funcoes",
+                    "gasto-tributario-beneficios",
+                    "gasto-tributario-tributos",
                     "gasto-tributario-regioes",
                     "simples-ano",
                     "simples-regras",
-                ]
+                ],
+                "subsidios-areas": [
+                    "subsidios-financeiros",
+                    "subsidios-crediticios",
+                    "proagro-credito-rural",
+                ],
+            },
+            graficos={
+                "gasto-tributario": ["simples-custo", "subsidios-uniao", "proagro", "credito-rural"]
             },
             rotulos={
+                "subsidios-areas": "Subsídios por área",
+                "subsidios-financeiros": "Do Orçamento",
+                "subsidios-crediticios": "Crédito",
+                "subsidios-uniao": "Todos os subsídios",
+                "proagro": "Proagro",
+                "credito-rural": "Crédito rural",
+                "proagro-credito-rural": "Proagro e crédito rural",
+                "graficos:gasto-tributario": "Isenções no tempo",
                 "gasto-tributario": "Os maiores",
+                "gasto-tributario-funcoes": "Por função",
+                "gasto-tributario-beneficios": "Por benefício",
+                "gasto-tributario-tributos": "Por tributo",
                 "gasto-tributario-regioes": "Por região",
                 "simples-custo": "Simples e MEI",
                 "simples-ano": "Simples, ano a ano",
@@ -1109,12 +1149,16 @@ def _juntar[T: (Grafico, Tabela)](
         if x.id in atras:
             continue
         outros = [todos[i] for i in juntos.get(x.id, []) if i in todos and i != x.id]
-        nome = rotulos.get(x.id, x.rotulo_opcao)
+
+        # "graficos:<id>" (ou "tabelas:<id>") vale só para aquele tipo, quando o mesmo id é de
+        # um gráfico e de uma tabela.
+        def rotulo(y: T) -> str:
+            tipo = "graficos" if campo == "juntos" else "tabelas"
+            return rotulos.get(f"{tipo}:{y.id}", rotulos.get(y.id, y.rotulo_opcao))
+
+        nome = rotulo(x)
         if outros:
-            alternativas = [
-                o.model_copy(update={"rotulo_opcao": rotulos.get(o.id, o.rotulo_opcao)})
-                for o in outros
-            ]
+            alternativas = [o.model_copy(update={"rotulo_opcao": rotulo(o)}) for o in outros]
             x = x.model_copy(update={"alternativas": alternativas, "rotulo_opcao": nome})
         saida.append(x)
     return saida

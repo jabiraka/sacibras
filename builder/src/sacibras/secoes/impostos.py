@@ -35,6 +35,7 @@ from sacibras.fontes import (
     fmi,
     fmi_cofog,
     ocde_receita,
+    osu,
     receita_arrecadacao,
     receita_gastos,
     receita_irpf,
@@ -837,11 +838,341 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
                 nota="Região de quem deixou de pagar (sede da empresa ou endereço da pessoa).",
             )
         )
+    tabelas += _gasto_por_funcao(nova, fonte)
     frase = (
         f"A União deixou de arrecadar {br(pct[ano])} % do PIB em {ano} com isenções e "
         "regimes especiais"
     )
+    try:
+        c, g, t = _subsidios_da_uniao(osu.subsidios())
+        cartoes += c
+        graficos += g
+        tabelas += t
+    except Exception as erro:
+        print(f"    impostos: sem o Orçamento de Subsídios da União ({str(erro)[:120]})")
+    try:
+        g, t = _proagro_e_credito_rural(ctx)
+        graficos += g
+        tabelas += t
+    except Exception as erro:
+        print(f"    impostos: sem o Proagro e o crédito rural ({str(erro)[:120]})")
     return cartoes, graficos, tabelas, frase + "."
+
+
+def _por_ano_completo(mensal: list[Ponto]) -> dict[int, float]:
+    """A soma de cada ano que tem os 12 meses."""
+    meses: dict[int, list[float]] = {}
+    for d, v in mensal:
+        meses.setdefault(d.year, []).append(v)
+    return {a: sum(v) for a, v in meses.items() if len(v) == 12}
+
+
+def _proagro_e_credito_rural(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
+    """O que o OSU não traz: o Proagro (a despesa do Tesouro, do RTN) e o crédito rural
+    concedido (SGS), com quanto vai a taxa regulada. Soma e diferença do que o órgão publica."""
+    proagro = tesouro_rtn.detalhes()["proagro"]
+    pf, pj = ctx.sgs("RURAL_PF_TOTAL", 16), ctx.sgs("RURAL_PJ_TOTAL", 16)
+    reg_pf, reg_pj = ctx.sgs("RURAL_PF_REGULADA", 16), ctx.sgs("RURAL_PJ_REGULADA", 16)
+
+    def somar(a: list[Ponto], b: list[Ponto]) -> list[Ponto]:
+        outro = dict(b)
+        return [(d, v + outro[d]) for d, v in a if d in outro]
+
+    total = somar(pf, pj)
+    regulada = somar(reg_pf, reg_pj)
+    mercado = [(d, t - dict(regulada)[d]) for d, t in total if d in dict(regulada)]
+    indice = indice_de_precos(ctx.sgs("IPCA", 16))
+    ultimo = min(max(d for d, _ in proagro), max(d for d, _ in total))
+    base = max(d for d in indice if d <= ultimo)
+    quando = periodo(base, "M")
+
+    def real_12m(mensal: list[Ponto]) -> list[Ponto]:
+        mensal = [(d, v) for d, v in mensal if d <= base]
+        return [(d, v / 1000) for d, v in contas.soma_movel(a_precos_de(mensal, indice, base))]
+
+    fonte_proagro = (
+        f"Tesouro Nacional, Resultado do Tesouro Nacional (linha Proagro); "
+        f"IPCA: {ctx.fonte_sgs('IPCA')}"
+    )
+    chaves_rural = ("RURAL_PF_TOTAL", "RURAL_PJ_TOTAL", "RURAL_PF_REGULADA", "RURAL_PJ_REGULADA")
+    fonte_credito = f"{ctx.fonte_sgs(*chaves_rural)}; IPCA: {ctx.fonte_sgs('IPCA')}"
+    graficos = [
+        grafico(
+            "proagro",
+            "O Proagro: o que o Tesouro paga",
+            [serie("proagro", "Proagro", real_12m(proagro))],
+            tipo="area",
+            unidade="R$ bi",
+            casas=1,
+            periodicidade="M",
+            fonte=fonte_proagro,
+            nota=f"Soma de 12 meses, a preços de {quando}, pelo IPCA.",
+        ),
+        grafico(
+            "credito-rural",
+            "O crédito rural concedido",
+            [
+                serie("regulada", "Taxa regulada", real_12m(regulada)),
+                serie("mercado", "Taxa de mercado", real_12m(mercado)),
+                serie("total", "Total", real_12m(total)),
+            ],
+            tipo="empilhado",
+            total="total",
+            unidade="R$ bi",
+            casas=0,
+            periodicidade="M",
+            fonte=fonte_credito,
+            nota=(
+                "Taxa regulada: juro com teto fixado pelo governo; o Tesouro paga parte da "
+                f"diferença. Soma de 12 meses, a preços de {quando}."
+            ),
+        ),
+    ]
+    anual_proagro = _por_ano_completo(proagro)
+    anual_total = _por_ano_completo(total)
+    anual_reg = _por_ano_completo(regulada)
+    anos = sorted(set(anual_proagro) & set(anual_total) & set(anual_reg))[-8:]
+    tabela = Tabela(
+        id="proagro-credito-rural",
+        titulo="Proagro e crédito rural, ano a ano",
+        subtitulo="R$ bi correntes",
+        colunas=["Proagro", "Crédito concedido", "Com taxa regulada", "% regulada"],
+        linhas=[
+            LinhaTabela(
+                rotulo=str(a),
+                valores=[
+                    round(anual_proagro[a] / 1000, 1),
+                    round(anual_total[a] / 1000, 0),
+                    round(anual_reg[a] / 1000, 0),
+                    round(anual_reg[a] / anual_total[a] * 100, 0),
+                ],
+                unidade="",
+                casas=1,
+            )
+            for a in reversed(anos)
+        ],
+        fonte=f"{fonte_proagro.split('; IPCA')[0]}; {fonte_credito.split('; IPCA')[0]}",
+        nota="Proagro é a despesa do Tesouro no ano; o crédito é o que os bancos concederam.",
+    )
+    return graficos, [tabela]
+
+
+def _subsidios_da_uniao(s: osu.Subsidios) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
+    """Os subsídios da União por tipo (tributário, financeiro, creditício) e, nos dois que são
+    gasto direto, por programa e por área. Tudo do anexo do OSU, menos o agrupamento por área
+    (nosso, pelo nome do programa); os programas somam o total do tipo."""
+    ano = s.ultimo_ano
+    fonte = f"{osu.FONTE}, edição {s.edicao}"
+    pct = s.pct_pib.totais
+    nominal = s.nominal.totais
+    total = nominal["TOTAL"][ano]
+    direto = nominal[osu.FINANCEIROS][ano] + nominal[osu.CREDITICIOS][ano]
+    cartoes = [
+        cartao(
+            "subsidios-uniao",
+            "Subsídios da União",
+            _pontos_anuais(pct["TOTAL"]),
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            detalhe=(
+                f"R$ {br(total / 1e6, 0)} bi; {br(nominal[osu.TRIBUTARIOS][ano] / total * 100, 0)}"
+                " % em isenções"
+            ),
+            fonte=fonte,
+            secao="impostos",
+        )
+    ]
+    nomes = {
+        osu.TRIBUTARIOS: ("tributario", "Isenções (tributário)"),
+        osu.CREDITICIOS: ("crediticio", "Crédito subsidiado"),
+        osu.FINANCEIROS: ("financeiro", "Gasto do Orçamento"),
+    }
+    series = [
+        serie(sid, nome, _pontos_anuais(pct[tipo]))
+        for tipo, (sid, nome) in reversed(list(nomes.items()))
+    ]
+    series.append(serie("total", "Total", _pontos_anuais(pct["TOTAL"])))
+    graficos = [
+        grafico(
+            "subsidios-uniao",
+            "Os subsídios da União, por tipo",
+            series,
+            tipo="empilhado",
+            total="total",
+            unidade="% do PIB",
+            casas=1,
+            periodicidade="A",
+            fonte=fonte,
+            nota=(
+                "Isenções de 2024 e 2025 são a projeção da Receita. Inclui famílias (FIES, "
+                "Minha Casa, tarifa social), não só empresas."
+            ),
+        )
+    ]
+
+    def bi(v: float) -> float:
+        return round(v / 1e6, 1)
+
+    diretos = [p for p in s.nominal.programas if p.tipo != osu.TRIBUTARIOS]
+    por_area: dict[str, list[float]] = {}
+    for p in diretos:
+        orc, cred = por_area.setdefault(osu.area_do_programa(p.nome), [0.0, 0.0])
+        v = p.valores.get(ano, 0.0)
+        por_area[osu.area_do_programa(p.nome)] = [
+            orc + (v if p.tipo == osu.FINANCEIROS else 0.0),
+            cred + (v if p.tipo == osu.CREDITICIOS else 0.0),
+        ]
+    ordem = sorted(por_area.items(), key=lambda x: (x[0] == osu.OUTROS, -(x[1][0] + x[1][1])))
+    tabelas = [
+        Tabela(
+            id="subsidios-areas",
+            titulo="Os subsídios diretos por área",
+            subtitulo=f"{ano}, R$ bi",
+            colunas=["Orçamento", "Crédito", "Total"],
+            linhas=[
+                LinhaTabela(
+                    rotulo=area,
+                    valores=[bi(orc), bi(cred), bi(orc + cred)],
+                    unidade="",
+                    casas=1,
+                )
+                for area, (orc, cred) in ordem
+            ],
+            fonte=fonte,
+            nota=(
+                f"R$ {br(direto / 1e6, 0)} bi em {ano}, fora as isenções e o Proagro. Área pelo "
+                "nome do programa; quem recebe é de empresas e de famílias."
+            ),
+        )
+    ]
+    for tipo, id_, titulo, nota in (
+        (osu.FINANCEIROS, "subsidios-financeiros", "Subsídios do Orçamento, por programa", ""),
+        (
+            osu.CREDITICIOS,
+            "subsidios-crediticios",
+            "Crédito subsidiado, por programa",
+            "Negativo: no ano, a União cobrou mais do que pagou para captar.",
+        ),
+    ):
+        programas = sorted(
+            (p for p in diretos if p.tipo == tipo and abs(p.valores.get(ano, 0.0)) >= 5e4),
+            key=lambda p: -p.valores.get(ano, 0.0),
+        )
+        tabelas.append(
+            Tabela(
+                id=id_,
+                titulo=titulo,
+                subtitulo="R$ bi",
+                colunas=[str(ano - 1), str(ano)],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=p.nome,
+                        valores=[bi(p.valores.get(ano - 1, 0.0)), bi(p.valores.get(ano, 0.0))],
+                        unidade="",
+                        casas=1,
+                    )
+                    for p in programas
+                ],
+                fonte=fonte,
+                nota=nota,
+            )
+        )
+    return cartoes, graficos, tabelas
+
+
+def _sigla(nome: str) -> str:
+    """ "Contribuição … - COFINS" vira "COFINS"; sem sigla, o próprio nome."""
+    return nome.rsplit(" - ", 1)[-1].strip()
+
+
+def _gasto_por_funcao(nova: receita_gastos.Edicao, fonte: str) -> list[Tabela]:
+    """O gasto tributário do último ano por função orçamentária, por benefício e por tributo.
+
+    A Receita não publica por setor de atividade (CNAE) nem por empresa (sigilo fiscal): a
+    função é o objetivo do benefício. Soma das funções e dos tributos = o total oficial."""
+    tabelas: list[Tabela] = []
+    if nova.funcoes:
+        total = sum(v for _, v in nova.funcoes)
+        grandes, resto = nova.funcoes[:10], nova.funcoes[10:]
+        linhas = [(n, v) for n, v in grandes] + (
+            [("Demais funções", sum(v for _, v in resto))] if resto else []
+        )
+        tabelas.append(
+            Tabela(
+                id="gasto-tributario-funcoes",
+                titulo="O gasto tributário por função",
+                subtitulo=str(nova.ano),
+                colunas=["R$ bi", "% do total"],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=n,
+                        valores=[round(v / 1e9, 1), round(v / total * 100, 1)],
+                        unidade="",
+                        casas=1,
+                    )
+                    for n, v in linhas
+                ],
+                fonte=fonte,
+                nota=(
+                    "Função é o objetivo do benefício, não o setor de quem recebe: a Receita "
+                    "não publica por atividade nem por empresa. Inclui pessoas físicas."
+                ),
+            )
+        )
+        if nova.beneficios:
+            linhas_b: list[LinhaTabela] = []
+            for funcao, _ in nova.funcoes[:6]:
+                itens = [
+                    (n, v) for n, v in nova.beneficios.get(funcao, []) if v > 0 and n != funcao
+                ][:3]
+                linhas_b += [
+                    LinhaTabela(
+                        rotulo=f"{funcao}: {n}",
+                        valores=[round(v / 1e9, 1), round(v / total * 100, 1)],
+                        unidade="",
+                        casas=1,
+                    )
+                    for n, v in itens
+                ]
+            if linhas_b:
+                tabelas.append(
+                    Tabela(
+                        id="gasto-tributario-beneficios",
+                        titulo="Os maiores benefícios de cada função",
+                        subtitulo=str(nova.ano),
+                        colunas=["R$ bi", "% do total"],
+                        linhas=linhas_b,
+                        fonte=fonte,
+                        nota="As seis maiores funções, três benefícios de cada.",
+                    )
+                )
+    if nova.tributos:
+        total_t = sum(v for _, v in nova.tributos)
+        tabelas.append(
+            Tabela(
+                id="gasto-tributario-tributos",
+                titulo="O gasto tributário por tributo",
+                subtitulo=str(nova.ano),
+                colunas=["R$ bi", "% do total"],
+                linhas=[
+                    LinhaTabela(
+                        rotulo=("IRPF (pessoa física)" if _sigla(n) == "IRPF" else _sigla(n)),
+                        valores=[round(v / 1e9, 1), round(v / total_t * 100, 1)],
+                        unidade="",
+                        casas=1,
+                    )
+                    for n, v in nova.tributos
+                    if v >= 1e6
+                ],
+                fonte=fonte,
+                nota=(
+                    "O IRPF é de pessoa física; os outros incidem sobretudo sobre empresas, "
+                    "mas a Receita não separa quem recebe."
+                ),
+            )
+        )
+    return tabelas
 
 
 # ------------------------------------------------------------------ Simples Nacional
@@ -1810,7 +2141,49 @@ def _reforma_regras(ctx: Contexto) -> Pecas:
             "restaurante não abate o imposto."
         ),
     )
-    return [], [transicao, destino], [regras, regimes], ""
+    return [], [transicao, destino], [regras, regimes, _isencao_la_fora()], ""
+
+
+def _isencao_la_fora() -> Tabela:
+    """O limite de faturamento que deixa fora do imposto sobre o consumo: o do nanoempreendedor
+    (LC 214, art. 26) contra o limite geral do IVA nos países da OCDE."""
+    la_fora = relatorios.LIMITE_IVA_USD
+    mediana = sorted(la_fora.values())[len(la_fora) // 2]
+    traducao = _nomes()
+    valores = [(nome_do_pais(p, traducao), float(v)) for p, v in la_fora.items()]
+    valores.append((f"Mediana dos {len(la_fora)} países", float(mediana)))
+    # O MEI entra ao lado (Caio, 26/11/2026: "inclua esse detalhe da comparação com o MEI e a
+    # diferença do simples"): não é isento, mas paga só R$ 6 por mês de ICMS e ISS (LC 123,
+    # art. 18-A, § 3º, V), o mais perto de uma isenção do consumo que o Brasil tem acima do
+    # nanoempreendedor. O teto do Simples fica na nota: o regime cobra menos, não isenta.
+    for quem, tetos in (("nanoempreendedor", leis.NANO_TETO), ("MEI", leis.MEI_TETO)):
+        for ano in (2026, 2028):
+            reais = tetos[ano]
+            valores.append(
+                (
+                    f"Brasil, {quem}, {ano}: R$ {br(reais / 1000, 1 if reais % 1000 else 0)} mil",
+                    reais / relatorios.PPC_BRASIL,
+                )
+            )
+    simples = leis.SIMPLES_TETO / relatorios.PPC_BRASIL / 1e6
+    return Tabela(
+        id="reforma-isencao-paises",
+        titulo="Até quanto se vende sem o imposto sobre o consumo",
+        subtitulo="faturamento por ano; no Brasil, o nanoempreendedor e o MEI",
+        colunas=["US$ mil (PPC)"],
+        linhas=[
+            LinhaTabela(rotulo=nome, valores=[round(v / 1000, 1)], unidade="", casas=1)
+            for nome, v in sorted(valores, key=lambda x: -x[1])
+        ],
+        fonte=relatorios.FONTE_LIMITE_IVA,
+        nota=(
+            f"Países em {relatorios.LIMITE_IVA_ANO}; Brasil pela PPC de "
+            f"{relatorios.PPC_BRASIL_ANO}. Chile, Costa Rica, México e Espanha não têm limite; "
+            "Colômbia e Turquia, só para pessoas físicas. O MEI paga R$ 6 por mês de ICMS "
+            f"e ISS. O teto do Simples (R$ 4,8 mi, US$ {br(simples, 1)} mi) não entra: o "
+            "Simples cobra menos, não isenta."
+        ),
+    )
 
 
 # ------------------------------------------------------- União, estados e municípios

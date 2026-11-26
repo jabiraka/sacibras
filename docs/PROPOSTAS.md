@@ -51,6 +51,22 @@ repetido no PROXIMOS-PASSOS.
   oficial por estado (só a regra de partilha, que já está no gráfico).
 - Alíquotas do Imposto Seletivo: a LC 214 deixa para lei ordinária; entra quando sair.
 - Gasto tributário antes de 2014: a Receita só publica em PDF; fica fora sem conferência.
+- Gasto tributário por empresa e por setor de atividade (Caio, 26/11/2026): a Receita não publica
+  (sigilo fiscal, art. 198 do CTN). Dois programas listam quem recebeu (olhado em 26/11, da nuvem):
+  **Lei do Bem** (MCTI): planilhas consolidadas dos relatórios anuais (RDA) com valor do benefício e
+  da renúncia por empresa, em `gov.br/mcti/pt-br/acompanhe-o-mcti/lei-do-bem` (e `…/lei-de-tics`,
+  dicionário de dados); a página põe captcha a quem não é navegador, então **só do PC**. Agregado
+  noticiado: 4.598 empresas e R$ 15,8 bi de renúncia no ano-base 2025 (a conferir na fonte).
+  **Rouanet** (Cultura): o catálogo aberto (`dados.turismo.gov.br`, Salic) parou em 25/01/2022 e a
+  API `v1` saiu do ar; o dado vivo está no Salic Comparar (`aplicacoes.cultura.gov.br/comparar/
+  salicnet`, 403 da nuvem) e no VerSalic. O CSV de 2022 traz o total incentivado por empresa
+  (R$ 20,3 bi desde o início; Petrobras 1,66, BNDES 0,57, BB 0,57, Vale 0,56) e não entra: é de
+  uma vez só, sem atualização. Entra se o Salic Comparar tiver exportação regular. Zona Franca
+  (Suframa) não olhado. Subsídios diretos: entraram em 26/11 (OSU, por programa e por área). O Proagro e o crédito rural
+  entraram também (SGS e RTN). Crédito rural por programa e fonte de recurso (Pronaf, Pronamp,
+  poupança rural, LCA…): o SICOR do BC (`olinda.bcb.gov.br/…/SICOR/versao/v2/odata`, conjunto
+  `FonteRecursos` ou `ProgramaSubprograma`) abre da nuvem, mas cada consulta leva mais de 100 s
+  ou dá 504/500; testar do PC, por mês, ou pelo CSV da Matriz de Dados do Crédito Rural (MDCR).
 - Multiplicador de receita da SPE: só se sair com regularidade (estudo avulso não entra).
 
 **Decomposições** (feitas em 15/11/2026: IPCA por grupo, PIB pela demanda e pela
@@ -235,6 +251,15 @@ Receita) e deixa em aberto o retorno. Para fechar a conta do "vale a pena":
   volta no formulário (o ano no `Default.aspx`); por ora só a posição do dia.
 - **O degrau do teto** (empresa que segura o faturamento para não sair do regime): só em
   estudos de uma vez, fora pela regra.
+## Isenção do consumo lá fora (sessão de 26/11/2026)
+
+- **O teto do Simples contra outros países** segue sem comparação: o Consumption Tax Trends da
+  OCDE publica o limite de isenção do IVA, não o teto dos regimes simplificados, e os dois não
+  se comparam. A tabela "Isenção lá fora" compara só o nanoempreendedor.
+- **O limite do nanoempreendedor em 2027**: o teto do MEI desse ano (R$ 110 mil) está no art. 2º
+  da LC 238/2026, fora do § 1º que a LC 214 cita. Ver o que o Comitê Gestor regulamentar.
+- **Vizinhos**: o relatório só traz os da OCDE (Chile, Colômbia, Costa Rica e México, sem limite
+  geral); Argentina, Uruguai e Peru ficam de fora.
 
 ## Rótulo de cálculo próprio (sessão de 25/11/2026)
 

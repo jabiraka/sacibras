@@ -140,6 +140,12 @@ REGRAS: list[Regra] = [
         url="https://data.worldbank.org",
     ),
     Regra(
+        padrao=r"Consumption Tax Trends",
+        nome="OCDE, Consumption Tax Trends 2024",
+        url="https://www.oecd.org/en/publications/consumption-tax-trends-2024_dcd4dd36-en/"
+        "full-report/component-6.html",
+    ),
+    Regra(
         padrao=r"\bOCDE\b",
         nome="OCDE",
         url="https://data-explorer.oecd.org",
@@ -229,6 +235,11 @@ REGRAS: list[Regra] = [
         padrao=r"Estatísticas do Simples Nacional",
         nome="Receita Federal, Estatísticas do Simples Nacional",
         url=receita_simples.PAGINA,
+    ),
+    Regra(
+        padrao=r"Orçamento de Subsídios da União",
+        nome="Orçamento de Subsídios da União",
+        url="https://www.gov.br/planejamento/pt-br/assuntos/avaliacao-de-politicas-publicas/orcamento-de-subsidios-da-uniao",
     ),
     Regra(
         padrao=r"Receita Federal",

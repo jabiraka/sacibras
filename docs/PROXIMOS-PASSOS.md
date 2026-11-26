@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 26/11/2026 (a pergunta do Simples). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 26/11/2026 (a pergunta do Simples, com o MEI contra a OCDE; o limite de isenção do consumo contra a OCDE; o tema escuro; isenções e subsídios: por função, benefício, tributo e os subsídios diretos; antes, as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -31,15 +31,67 @@ que o regime traz em emprego e formalização (o que daria para buscar está no
 [PROPOSTAS](PROPOSTAS.md), "O Simples"). **Novidade lida na lei**: a LC 238, de 21/10/2026,
 sobe o teto do MEI de R$ 81 mil para R$ 110 mil em 2027 e R$ 140 mil a partir de 2028, e
 perdoa o que o MEI devia à União até 13/10/2026 (`leis.SIMPLES_REGRAS`, com a LC 123).
-Peças novas em Impostos › O que não entra: cartões `simples-custo` e `simples-optantes`, o
+Peças novas em Impostos › Isenções e subsídios: cartões `simples-custo` e `simples-optantes`, o
 gráfico `simples-custo` atrás do gasto tributário (em R$, % do PIB e % do gasto tributário,
 com o previsto de cada PLOA) e as tabelas `simples-ano` e `simples-regras`. Fontes: o DGT da
 Receita (agora lido também por linha: o Simples soma os seis tributos da aba Q XXVI e fecha
 com a Q X) e as Estatísticas do Simples Nacional (`fontes/receita_simples.py`, um
 formulário ASP.NET; se recusar o Actions, fica o número anterior). **Tema novo**: Governo
 estava cheio (seis), e os Impostos viraram tema próprio, com "Para onde vai o imposto" e esta;
-Governo passou a "Governo: dívida e gasto". **Falta o Caio olhar** o tema novo e o tom da
-conclusão.
+Governo passou a "Governo: dívida e gasto". **Depois, o MEI contra a OCDE** (Caio: *"inclua
+esse detalhe da comparação com o MEI e a diferença do simples"*): a tabela "Isenção lá fora"
+ganhou o MEI (R$ 81 mil, US$ 33 mil PPC; R$ 140 mil em 2028, US$ 57 mil) ao lado do
+nanoempreendedor e da mediana de 31 países (US$ 54 mil), e a nota diz que o teto do Simples
+(US$ 2 mi PPC) não entra porque o regime cobra menos, não isenta. A explicação "Para quem, e lá
+fora" da pergunta usa essa tabela (a das regras ficou só em Impostos), e a conclusão diz que,
+para o MEI, o limite é parecido com o de fora e a disputa está na faixa de cima. O cartão
+`simples-optantes` mora em Reforma do consumo (Isenções e subsídios ficou com quatro cartões depois
+dos subsídios). **Falta o Caio olhar** o tema novo e o tom da conclusão.
+**26/11/2026, a isenção do consumo contra a OCDE** (Caio: *"Sim, monte"*; *"vai no main ao
+terminar"*). Em Impostos › Reforma do consumo, atrás de "Ano a ano" (lista "Tabela"), "Isenção lá
+fora": o limite do nanoempreendedor (R$ 40,5 mil em 2026, R$ 70 mil em 2028; LC 214, art. 26)
+contra o limite geral do IVA de 31 países da OCDE (Consumption Tax Trends 2024, tabela 2.A.5), em
+dólar de mesmo poder de compra. O Brasil fica abaixo da mediana (US$ 16,5 mil contra 54 mil). A
+pergunta do Simples entrou depois no `main` e usa esta tabela, agora com o MEI (ver acima).
+**Falta o Caio olhar** a tabela.
+
+**26/11/2026, o gasto tributário por função** (Caio: *"Tem como colocar quanto de subsídio ou
+isenção fiscal o governo paga pras empresas e separar por setor?"*; *"Siga sua sugestão, aprovo"*).
+Em Impostos › O que não entra, atrás de "Os maiores" (lista "Tabela"): "Por função", "Por
+benefício" (três maiores de cada uma das seis maiores funções) e "Por tributo", do mesmo DGT da
+Receita (abas Q V, Q III e Q VI; `receita_gastos.ler_funcoes`, `ler_beneficios`, `ler_tributos`).
+Em 2023: Comércio e Serviço R$ 115 bi (Simples 98), Saúde 81, Agricultura 78, Indústria 63. **A
+Receita não publica por setor de atividade (CNAE) nem por empresa** (sigilo fiscal): "função" é o
+objetivo do benefício, e a nota diz isso e que inclui pessoas físicas; o IRPF vem à parte na
+tabela por tributo. Só tabelas, porque o esquema não tem gráfico de barras por categoria.
+**E os subsídios diretos** (Caio: *"Entra os subsídios diretos também, procure as fontes"*):
+a fonte é o Orçamento de Subsídios da União do Planejamento (`fontes/osu.py`, XLSX achado na
+página, edição mais nova sozinha). A parte "O que não entra" virou **"Isenções e subsídios"**:
+cartão "Subsídios da União" (R$ 710 bi, 5,6 % do PIB em 2025; 80 % são isenções), o gráfico
+empilhado por tipo atrás do das isenções ("Todos os subsídios") e as tabelas "Por área" (2025:
+regional 32,8, habitação 32,4, trabalho 27,1, agro 18,3 R$ bi), "Do Orçamento" e "Crédito", por
+programa. **A área é agrupamento nosso pelo nome do programa** (`osu.AREAS`; a nota diz; agrupar não é cálculo próprio, então a fonte não leva o rótulo).
+Os tributários de 2024 e 2025 são projeção da Receita; o subsídio inclui famílias (FIES, Minha
+Casa, tarifa social), e a nota diz isso. O `_juntar` aceita rótulo `graficos:<id>` quando o
+mesmo id é de gráfico e tabela. **Falta o Caio olhar** as telas (a nuvem não abriu o site).
+**E o Proagro e o crédito rural** (Caio: *"Inclua o proagro e crédito rural. Não é cálculo
+próprio, só o agrupamento é próprio"*): atrás da lista de gráficos de "Isenções e subsídios",
+"Proagro" (o que o Tesouro paga, 12 meses a preços de hoje; linha 4.3.15.2 da aba 1.2 do RTN,
+`tesouro_rtn.LINHAS_PROAGRO`) e "Crédito rural" (concedido com recursos direcionados, empilhado
+em taxa regulada e de mercado; quatro séries do SGS, 20701, 20689, 20700 e 20688, conferidas em
+26/11) e a tabela "Proagro e crédito rural, ano a ano" (atrás de "Subsídios por área"). Em 2025:
+Proagro R$ 5,0 bi (9,4 em 2023); crédito rural R$ 308 bi, 55 % com taxa regulada (79 % em
+2018). O Proagro **não está no OSU** e fica fora da tabela por área (bases diferentes), o que a
+nota diz. Os números são oficiais e o agrupamento por área não leva rótulo de cálculo próprio (Caio: *"Se for agrupamento nao é cálculo próprio"*). O crédito
+rural por programa (Pronaf etc.) ficou no [PROPOSTAS](PROPOSTAS.md): o SICOR é lento da nuvem.
+Ficou também lá o benefício por empresa.
+
+**26/11/2026, tema escuro** (Caio: *"Adicione a opção de tema escuro"*). Lista "Tema" no menu
+(Automático, Claro, Escuro), `web/src/tema.ts`; as cores fixas do CSS viraram variáveis e o
+bloco `[data-tema="escuro"]` em `estilo.css` troca os valores. Trocar recarrega a página.
+Da nuvem só vi o menu e o fundo (sem dados): **falta olhar gráficos, mapa, tabelas, alertas e
+simuladores a 390 e 1280 px no escuro**, e **passar as seis cores de série do escuro no
+validador de paleta** (o CLAUDE.md pede ao trocar cor; valores em `--serie-1` a `--serie-6`).
 
 **25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,
 mostrando os dados que podem sustentar uma conclusão ou outra, pode avaliar vc pelos dados, eu
@@ -121,7 +173,7 @@ publicou), o IPCA de 12 meses em "Desocupação mais inflação" (SGS 13522), as
 de importação de Brasil no mundo (Banco Mundial, FI.RES.TOTL.MO; o FMI com a conta fica de
 reserva), a parte da carga sobre bens e serviços (OCDE, unidade PT_OTR_SECTOR; a divisão fica
 de reserva), o cartão da dívida que o Focus espera ("mercado") e a alíquota cheia do Comitê
-Gestor. **Soma e diferença não levam rótulo**: desocupação mais inflação, a soma das alíquotas
+Gestor. **Soma, diferença e agrupamento não levam rótulo**: desocupação mais inflação, a soma das alíquotas
 da reforma, o saldo das estatais, as vagas do Caged em 12 meses e os cartões de 12 meses que só
 somam meses (balança, dividendos, resultado das estatais, crédito imobiliário, FPE e FPM). Nos
 gráficos do Focus no Laboratório e na expectativa contra a meta, a fonte diz que só o erro
@@ -521,6 +573,10 @@ As próximas:
 - Nota de crédito no `sisweb.tesouro.gov.br` (fora do ar em 14/11), para confirmar o
   histórico depois de mai/2025.
 - Fontes que recusam a nuvem, para testar e, se abrirem, pôr no painel:
+  - **Lei do Bem** (MCTI, planilhas dos RDA com benefício e renúncia por empresa) e **Rouanet**
+    (Salic Comparar, total incentivado por empresa e por projeto): ver o formato e se há
+    exportação regular ([PROPOSTAS](PROPOSTAS.md), "Gasto tributário por empresa"). Pedido do
+    Caio, 26/11/2026: *"quem mais recebe com isso"*.
   - Caged por UF (Ministério do Trabalho) e a tabela do SIDRA dos contribuintes da previdência
     (Demografia: contribuintes por beneficiário).
   - SIOPS e SIOPE: mínimos de saúde e educação dos estados (o TabNet do SIOPS derruba a

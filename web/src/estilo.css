@@ -2,8 +2,9 @@
 
    O desenho segue o do finjabs (Caio, 14/11/2026: "pode deixar o site um pouco parecido com
    o finjabs"): cartões de vidro, cabeçalho em pílula, título grande e poucos números. O tema
-   é só o claro (Caio, 14/11/2026: "deixe sempre o tema claro sem opção de tema escuro"). O
-   que é só daqui: as luzes de fundo verde, amarela e azul, e a marca é o losango. A página
+   nasceu só claro (Caio, 14/11/2026) e ganhou o escuro em 26/11/2026 ("Adicione a opção de
+   tema escuro"): `data-tema` no <html>, posto antes da pintura (`web/src/tema.ts` e o script do
+   index.html), segue o sistema até a pessoa escolher. O que é só daqui: as luzes de fundo verde, amarela e azul, e a marca é o losango. A página
    inicial mostra o essencial; o resto abre no clique.
 
    As seis cores de série passaram no validador de paleta (luminosidade, croma, separação
@@ -45,9 +46,73 @@
   --serie-5: #d1432f;
   --serie-6: #0e9aa7;
   --neutro-barra: rgb(20 38 28 / 22%);
+  --tinta-sutil: rgb(20 38 28 / 16%);
+  --ponto-par: rgb(20 38 28 / 14%);
+  --campo: #fff;
+  --selo-tinta: #7a5a00;
+  --selo-fundo: rgb(255 212 0 / 26%);
+  --nota-fundo: rgb(255 212 0 / 14%);
+  --nota-borda: rgb(189 135 0 / 22%);
+  --sombra-rolagem: var(--sombra-rolagem);
+  --sombra-pop: rgb(20 38 28 / 18%);
+  --sombra-pop-1: rgb(20 38 28 / 16%);
+  --sombra-pop-2: rgb(20 38 28 / 8%);
+  --selecao: rgb(46 207 124 / 30%);
+  --mapa-texto-alto: #fff;
   --raio: 20px;
   --suave: cubic-bezier(0.2, 0.7, 0.2, 1);
   --fonte: "Geist Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* O tema escuro: mesmas funções, outros valores. Fundo verde-preto, vidro escuro, tinta clara.
+   As séries ficam mais claras para ler sobre o escuro; **falta passar de novo no validador de
+   paleta para daltônicos** (CLAUDE.md pede isso ao trocar uma cor de série). */
+:root[data-tema="escuro"] {
+  color-scheme: dark;
+  --fundo: #0c1410;
+  --superficie: #141d18;
+  --vidro: rgb(30 44 37 / 62%);
+  --vidro-sutil: rgb(30 44 37 / 40%);
+  --vidro-forte: rgb(20 29 24 / 88%);
+  --borda: rgb(236 244 238 / 10%);
+  --borda-forte: rgb(236 244 238 / 22%);
+  --brilho-topo: inset 0 1px 0 rgb(255 255 255 / 7%);
+  --tinta: #e9f0eb;
+  --tinta-2: rgb(233 240 235 / 74%);
+  --tinta-3: rgb(233 240 235 / 52%);
+  --fio: rgb(233 240 235 / 9%);
+  --eixo: rgb(233 240 235 / 30%);
+  --verde: #3ccf7d;
+  --verde-claro: rgb(60 207 125 / 15%);
+  --amarelo: #ffd400;
+  --azul: #6c97ff;
+  --vermelho: #ff7a66;
+  --mapa-claro: #1f3a2b;
+  --mapa-escuro: #3ccf7d;
+  --mapa-sem-dado: #222d27;
+  --alerta: #ff9a52;
+  --faixa: #d9ae00;
+  --luz-forca: 0.3;
+  --serie-1: #3ccf7d;
+  --serie-2: #6c97ff;
+  --serie-3: #e3b02a;
+  --serie-4: #b78cf2;
+  --serie-5: #ff7a66;
+  --serie-6: #3cc4d1;
+  --neutro-barra: rgb(233 240 235 / 26%);
+  --tinta-sutil: rgb(233 240 235 / 20%);
+  --ponto-par: rgb(233 240 235 / 22%);
+  --campo: #1a251f;
+  --selo-tinta: #ffd95a;
+  --selo-fundo: rgb(255 212 0 / 18%);
+  --nota-fundo: rgb(255 212 0 / 10%);
+  --nota-borda: rgb(255 212 0 / 24%);
+  --sombra-rolagem: rgb(0 0 0 / 0.5);
+  --sombra-pop: rgb(0 0 0 / 55%);
+  --sombra-pop-1: rgb(0 0 0 / 50%);
+  --sombra-pop-2: rgb(0 0 0 / 30%);
+  --selecao: rgb(60 207 125 / 35%);
+  --mapa-texto-alto: #06210f;
 }
 
 * {
@@ -90,7 +155,7 @@ button {
 }
 
 ::selection {
-  background: rgb(46 207 124 / 30%);
+  background: var(--selecao);
 }
 
 :focus-visible {
@@ -739,8 +804,8 @@ main {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #7a5a00;
-  background: rgb(255 212 0 / 26%);
+  color: var(--selo-tinta);
+  background: var(--selo-fundo);
   white-space: nowrap;
 }
 
@@ -1419,7 +1484,7 @@ main {
   height: 12px;
   border: 0;
   border-radius: 4px;
-  background: rgb(20 38 28 / 16%);
+  background: var(--tinta-sutil);
 }
 
 .tela {
@@ -1549,9 +1614,9 @@ main {
      tabelas rolavam para o lado sem sinal). A primeira camada anda com o conteúdo e cobre a
      sombra quando se chega ao fim; sem nada a rolar, cobre desde o começo. */
   background:
-    linear-gradient(to left, var(--superficie) 40%, rgb(253 252 247 / 0)) right center / 36px
+    linear-gradient(to left, var(--superficie) 40%, transparent) right center / 36px
       100% no-repeat local,
-    linear-gradient(to left, rgb(0 0 0 / 0.13), rgb(0 0 0 / 0)) right center / 18px 100%
+    linear-gradient(to left, var(--sombra-rolagem), rgb(0 0 0 / 0)) right center / 18px 100%
       no-repeat scroll,
     var(--superficie);
 }
@@ -3002,7 +3067,7 @@ input.escolha[type="number"] {
   padding: 8px 12px 8px 34px;
   border-radius: 999px;
   border: 1px solid var(--borda-forte);
-  background: #fff;
+  background: var(--campo);
   color: var(--tinta);
 }
 
@@ -3029,7 +3094,7 @@ input.escolha[type="number"] {
   border: 1px solid var(--borda-forte);
   border-radius: 16px;
   background: var(--superficie);
-  box-shadow: 0 24px 60px rgb(20 38 28 / 18%);
+  box-shadow: 0 24px 60px var(--sombra-pop);
 }
 
 .busca-saida[hidden] {
@@ -3103,8 +3168,8 @@ input.escolha[type="number"] {
   margin: 4px 4px 8px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgb(255 212 0 / 14%);
-  border: 1px solid rgb(189 135 0 / 22%);
+  background: var(--nota-fundo);
+  border: 1px solid var(--nota-borda);
 }
 
 .busca-definicao[hidden],
@@ -4337,4 +4402,13 @@ details.guardado > .alternativas-barra {
 .fonte-links a:hover {
   color: var(--tinta-2);
   text-decoration-color: currentColor;
+}
+
+/* A lista "Tema" fica acima do "Idioma", no mesmo bloco do menu. */
+.idioma .tema-lista {
+  margin-bottom: 10px;
+}
+
+:root[data-tema="escuro"] select.escolha {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233ccf7d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }

@@ -807,13 +807,12 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 ("impostos", "gasto-tributario"),
             ),
             Bloco(
-                "Para quem",
-                "Vale para quem fatura até R$ 4,8 mi por ano. Dois em cada três optantes são "
-                "MEI; uma lei de outubro de 2026 sobe o teto dele de R$ 81 mil para R$ 140 mil "
-                "em 2028.",
+                "Para quem, e lá fora",
+                "Dois em cada três optantes são MEI. O teto dele, R$ 140 mil em 2028, fica perto "
+                "da isenção mediana da OCDE; o do Simples, R$ 4,8 mi, não isenta e não tem par lá.",
                 None,
                 (("impostos", "simples-optantes"),),
-                ("impostos", "simples-regras"),
+                ("impostos", "reforma-isencao-paises"),
             ),
             Bloco(
                 "O que se ganha em troca",
@@ -844,9 +843,9 @@ PERGUNTAS: tuple[Definicao, ...] = (
         ),
         conclusao=(
             "O custo é claro: mais de R$ 100 bi por ano, perto de 1 % do PIB, a maior isenção "
-            "da União; o teto maior do MEI soma mais, sem número na lei. O ganho em emprego e "
-            "formalização é plausível, mas disputado, e não tem número oficial regular: sem "
-            'ele, "vale a pena" fica em aberto.'
+            "da União. Para o MEI, o limite é parecido com o de fora; a disputa está na faixa "
+            "de cima. O ganho em emprego e formalização é plausível, mas sem número oficial "
+            'regular: "vale a pena" fica em aberto.'
         ),
     ),
     Definicao(

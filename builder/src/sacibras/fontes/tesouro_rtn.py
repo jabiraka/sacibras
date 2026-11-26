@@ -64,6 +64,10 @@ LINHAS_DIVIDENDOS = {
     "petrobras": "div_petrobras",
     "demais dividendos e participacoes": "div_demais",
 }
+# A despesa do Tesouro com o Proagro, mensal, na mesma aba 1.2 (linha "4.3.15.2 Proagro", lida
+# no arquivo de jul/2026 em 26/11/2026; Caio: "Inclua o proagro e crédito rural").
+LINHAS_PROAGRO = {"proagro": "proagro"}
+
 ABA_INVESTIMENTO = "1.3"
 """Investimento e inversões financeiras: o dinheiro que a União põe no capital das estatais."""
 LINHAS_INVESTIMENTO = {
@@ -173,7 +177,7 @@ def ler_detalhes(conteudo: bytes) -> dict[str, list[Ponto]]:
     try:
         saida: dict[str, list[Ponto]] = {}
         for aba, rotulos in (
-            (ABA_DIVIDENDOS, LINHAS_DIVIDENDOS),
+            (ABA_DIVIDENDOS, LINHAS_DIVIDENDOS | LINHAS_PROAGRO),
             (ABA_INVESTIMENTO, LINHAS_INVESTIMENTO),
             (ABA_PAGO, LINHAS_PESSOAL),
         ):
