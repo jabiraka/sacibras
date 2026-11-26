@@ -904,6 +904,7 @@ def montar(ctx: Contexto) -> Secao:
             _, g_uf, t_uf = estatais_estaduais.pecas(fonte_uf, linhas_uf)
             graficos += g_uf
             tabelas += t_uf
+            graficos += estaduais_fichas.ranking(fonte_uf, linhas_uf)[1]
             fichas_uf = estaduais_fichas.fichas(fonte_uf, linhas_uf)
             ctx.memo["fiscal_estaduais"] = FichasEstatais(
                 fichas=fichas_uf,

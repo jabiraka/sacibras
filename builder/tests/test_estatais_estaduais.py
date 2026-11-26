@@ -88,3 +88,19 @@ def test_erro_obvio_fica_em_branco() -> None:
     assert linhas["Empregados"] == [20000, None, 20000, 20000]
     assert linhas["Lucro ou prejuízo"] == [None, 0.1, -0.5, 0.1]
     assert "em branco" in ficha.tabela.nota
+
+
+def test_ranking_das_estaduais() -> None:
+    linhas = [
+        _linha(2023, "Companhia Energética de Minas Gerais", lucro=5e9),
+        _linha(2024, "Companhia Energética de Minas Gerais", lucro=7e9),
+        _linha(2023, "Companhia de Armazéns", lucro=-1e9),
+        _linha(2024, "Companhia de Armazéns", lucro=-2e9),
+    ]
+    _, [desenho], _ = estatais_estaduais_fichas.ranking("teste", linhas)
+    assert [s.nome for s in desenho.series] == ["Cemig (MG)", "Companhia de Armazéns (MG)"]
+    assert [v for _, v in desenho.series[0].pontos] == [5.0, 7.0]
+    assert [v.rotulo for v in desenho.variantes][1:] == [
+        "Os 3 maiores lucros",
+        "Os 3 maiores custos",
+    ]

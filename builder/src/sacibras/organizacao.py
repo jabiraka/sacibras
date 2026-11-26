@@ -896,6 +896,7 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                     "estatais-retorno",
                     "estatais-alternativas",
                     "estatais-estados",
+                    "estatais-estados-ranking",
                 ]
             },
             tabelas={
@@ -910,6 +911,7 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
                 "estatais-retorno": "Retorno contra o juro",
                 "estatais-alternativas": "Ou aplicar no lugar",
                 "estatais-estados": "Estaduais",
+                "estatais-estados-ranking": "Estaduais: quem lucra e quem custa",
             },
         ),
         "gasto": Agrupar(

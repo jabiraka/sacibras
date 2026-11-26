@@ -23,9 +23,18 @@ from dataclasses import dataclass, replace
 from datetime import date
 
 from sacibras.fontes.tesouro_estaduais import EmpresaEstadual
-from sacibras.schema import Cartao, FichaEstatal, Grafico, LinhaTabela, Serie, Tabela
-from sacibras.secoes.base import br, grafico
-from sacibras.secoes.estatais_estaduais import nome_legivel
+from sacibras.schema import (
+    Cartao,
+    FichaEstatal,
+    Grafico,
+    LinhaTabela,
+    Serie,
+    Tabela,
+    VarianteGrafico,
+)
+from sacibras.secoes.base import br, com_variantes, grafico
+from sacibras.secoes.estatais import Pecas
+from sacibras.secoes.estatais_estaduais import custo_ou_ganho, nome_legivel
 
 MESMA = 0.5
 """Semelhança mínima para dois nomes serem a mesma empresa."""
@@ -374,3 +383,97 @@ def primeira(linhas: list[EmpresaEstadual], prontas: list[FichaEstatal]) -> str:
     maior = max((x for x in linhas if x.ano == ultimo), key=lambda x: x.lucro)
     ident = _id(maior)
     return ident if any(f.id == ident for f in prontas) else prontas[0].id
+
+
+# ------------------------------------------------------------------ quem ganha e quem custa
+#
+# Caio, 26/11/2026: "dá pra ver o ranking de quais estaduais dão mais lucros ou prejuízos?" e
+# "sim, ponha". A mesma conta do das federais: o lucro; nas dependentes, menos a subvenção.
+
+DESTAQUES = 3
+
+APELIDOS: tuple[tuple[str, frozenset[str], str], ...] = (
+    ("MG", frozenset({"energetica", "minas"}), "Cemig"),
+    ("MG", frozenset({"desenvolvimento", "economico", "minas"}), "Codemig"),
+    ("PR", frozenset({"saneamento", "parana"}), "Sanepar"),
+    ("DF", frozenset({"urbanizadora", "capital"}), "Novacap"),
+    ("SP", frozenset({"paulista", "trens"}), "CPTM"),
+    ("SC", frozenset({"santa", "catarina", "participacao"}), "SC Participações"),
+)
+"""O nome curto, para a legenda, das que estavam nos extremos em 26/11/2026; quem não está
+aqui aparece com o nome declarado."""
+
+
+def apelido(x: EmpresaEstadual) -> str:
+    palavras = set(_palavras(x.nome))
+    curto = next((a for uf, p, a in APELIDOS if uf == x.uf and p <= palavras), None)
+    return f"{curto or nome_legivel(x.nome)} ({x.uf})"
+
+
+def ranking(fonte: str, linhas: list[EmpresaEstadual]) -> Pecas:
+    """As três que mais ganham e as três que mais custam no último ano, ano a ano."""
+    ultimo = max(x.ano for x in linhas)
+    anos = sorted({x.ano for x in linhas})
+    cadeias = casar(linhas)
+    ordem = sorted(cadeias, key=lambda c: custo_ou_ganho(c[-1]))
+    ganham = [c for c in reversed(ordem) if custo_ou_ganho(c[-1]) > 0][:DESTAQUES]
+    custam = [c for c in ordem if custo_ou_ganho(c[-1]) < 0][:DESTAQUES]
+
+    def serie_de(cadeia: list[EmpresaEstadual]) -> Serie:
+        fora = limpar(cadeia).fora
+        por_ano = {
+            x.ano: round(custo_ou_ganho(x) / 1e9, 2)
+            for x in cadeia
+            if "lucro" not in fora.get(x.ano, set())
+        }
+        return Serie(
+            id=_id(cadeia[-1]),
+            nome=apelido(cadeia[-1]),
+            pontos=[(date(a, 1, 1), por_ano.get(a)) for a in anos],
+        )
+
+    lucros = [serie_de(c) for c in ganham]
+    custos = [serie_de(c) for c in custam]
+    nota = (
+        "Lucro ou prejuízo do ano; nas dependentes do estado, menos a subvenção. Declarado "
+        "pelos estados, em valores da época."
+    )
+
+    def em_texto(cadeias_: list[list[EmpresaEstadual]]) -> str:
+        return ", ".join(f"{apelido(c[-1])} {br(custo_ou_ganho(c[-1]) / 1e9)}" for c in cadeias_)
+
+    desenho = grafico(
+        "estatais-estados-ranking",
+        "As estaduais que mais lucram e as que mais custam",
+        [*lucros, *custos],
+        unidade="R$ bilhões",
+        casas=1,
+        periodicidade="A",
+        fonte=fonte,
+        rotulo_opcao="Estaduais: quem lucra e quem custa",
+        manchete=f"Em {ultimo}, em R$ bi: {em_texto(ganham)}; {em_texto(custam)}.",
+        nota=nota,
+    )
+
+    # Cada lado na escala dele, como no das federais.
+    def lado(id_: str, rotulo: str, series: list[Serie]) -> VarianteGrafico:
+        return VarianteGrafico(
+            id=id_,
+            rotulo=rotulo,
+            titulo=desenho.titulo,
+            unidade=desenho.unidade,
+            casas=1,
+            periodicidade="A",
+            series=series,
+            nota=nota,
+            fonte=fonte,
+        )
+
+    desenho = com_variantes(
+        desenho,
+        "Os dois lados",
+        lado("lucros", "Os 3 maiores lucros", lucros),
+        lado("custos", "Os 3 maiores custos", custos),
+        nome_da_lista="Ver",
+    )
+    return [], [desenho], []

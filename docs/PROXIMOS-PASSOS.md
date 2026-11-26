@@ -67,6 +67,10 @@ a Cemig de 2021 e 2022 (57 empregados e folha só da controladora). São 33 empr
 número em branco. **Os agregados por estado não foram limpos**: repetem o que o Tesouro publica,
 e a nota da tabela anual avisa que 2021 e 2022 contam em dobro subsidiárias da Cemig. Olhado a
 390 e 1280 px; **falta o Caio olhar**.
+**E o ranking em gráfico** (Caio: *"dá pra ver o ranking [...]?"* e *"sim, ponha"*): atrás de
+"O caixa da União", "Estaduais: quem lucra e quem custa", as três de cada lado em 2024, ano a
+ano, com a lista "Ver". Os nomes curtos da legenda estão em `estatais_estaduais_fichas.APELIDOS`;
+empresa nova nos extremos aparece com o nome declarado. Olhado a 390 px.
 
 **26/11/2026, a isenção do consumo contra a OCDE** (Caio: *"Sim, monte"*; *"vai no main ao
 terminar"*). Em Impostos › Reforma do consumo, atrás de "Ano a ano" (lista "Tabela"), "Isenção lá
