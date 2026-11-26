@@ -522,6 +522,10 @@ As próximas:
 - Nota de crédito no `sisweb.tesouro.gov.br` (fora do ar em 14/11), para confirmar o
   histórico depois de mai/2025.
 - Fontes que recusam a nuvem, para testar e, se abrirem, pôr no painel:
+  - **Lei do Bem** (MCTI, planilhas dos RDA com benefício e renúncia por empresa) e **Rouanet**
+    (Salic Comparar, total incentivado por empresa e por projeto): ver o formato e se há
+    exportação regular ([PROPOSTAS](PROPOSTAS.md), "Gasto tributário por empresa"). Pedido do
+    Caio, 26/11/2026: *"quem mais recebe com isso"*.
   - Caged por UF (Ministério do Trabalho) e a tabela do SIDRA dos contribuintes da previdência
     (Demografia: contribuintes por beneficiário).
   - SIOPS e SIOPE: mínimos de saúde e educação dos estados (o TabNet do SIOPS derruba a

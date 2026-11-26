@@ -52,9 +52,17 @@ repetido no PROXIMOS-PASSOS.
 - Alíquotas do Imposto Seletivo: a LC 214 deixa para lei ordinária; entra quando sair.
 - Gasto tributário antes de 2014: a Receita só publica em PDF; fica fora sem conferência.
 - Gasto tributário por empresa e por setor de atividade (Caio, 26/11/2026): a Receita não publica
-  (sigilo fiscal, art. 198 do CTN). Só alguns programas listam quem recebeu, cada um num lugar:
-  Lei do Bem e Lei de Informática (MCTI), Rouanet (Salic), Zona Franca (Suframa). A conferir do PC,
-  um a um, antes de entrar. Subsídios diretos: entraram em 26/11 (OSU, por programa e por área). Falta
+  (sigilo fiscal, art. 198 do CTN). Dois programas listam quem recebeu (olhado em 26/11, da nuvem):
+  **Lei do Bem** (MCTI): planilhas consolidadas dos relatórios anuais (RDA) com valor do benefício e
+  da renúncia por empresa, em `gov.br/mcti/pt-br/acompanhe-o-mcti/lei-do-bem` (e `…/lei-de-tics`,
+  dicionário de dados); a página põe captcha a quem não é navegador, então **só do PC**. Agregado
+  noticiado: 4.598 empresas e R$ 15,8 bi de renúncia no ano-base 2025 (a conferir na fonte).
+  **Rouanet** (Cultura): o catálogo aberto (`dados.turismo.gov.br`, Salic) parou em 25/01/2022 e a
+  API `v1` saiu do ar; o dado vivo está no Salic Comparar (`aplicacoes.cultura.gov.br/comparar/
+  salicnet`, 403 da nuvem) e no VerSalic. O CSV de 2022 traz o total incentivado por empresa
+  (R$ 20,3 bi desde o início; Petrobras 1,66, BNDES 0,57, BB 0,57, Vale 0,56) e não entra: é de
+  uma vez só, sem atualização. Entra se o Salic Comparar tiver exportação regular. Zona Franca
+  (Suframa) não olhado. Subsídios diretos: entraram em 26/11 (OSU, por programa e por área). Falta
   o Proagro e o crédito rural em geral (o OSU só traz a equalização; o Sicor/BC cobre 35 % do volume).
 - Multiplicador de receita da SPE: só se sair com regularidade (estudo avulso não entra).
 
