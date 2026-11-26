@@ -848,7 +848,111 @@ def _gasto_tributario(ctx: Contexto) -> tuple[list[Cartao], list[Grafico], list[
         tabelas += t
     except Exception as erro:
         print(f"    impostos: sem o Orçamento de Subsídios da União ({str(erro)[:120]})")
+    try:
+        g, t = _proagro_e_credito_rural(ctx)
+        graficos += g
+        tabelas += t
+    except Exception as erro:
+        print(f"    impostos: sem o Proagro e o crédito rural ({str(erro)[:120]})")
     return cartoes, graficos, tabelas, frase + "."
+
+
+def _por_ano_completo(mensal: list[Ponto]) -> dict[int, float]:
+    """A soma de cada ano que tem os 12 meses."""
+    meses: dict[int, list[float]] = {}
+    for d, v in mensal:
+        meses.setdefault(d.year, []).append(v)
+    return {a: sum(v) for a, v in meses.items() if len(v) == 12}
+
+
+def _proagro_e_credito_rural(ctx: Contexto) -> tuple[list[Grafico], list[Tabela]]:
+    """O que o OSU não traz: o Proagro (a despesa do Tesouro, do RTN) e o crédito rural
+    concedido (SGS), com quanto vai a taxa regulada. Soma e diferença do que o órgão publica."""
+    proagro = tesouro_rtn.detalhes()["proagro"]
+    pf, pj = ctx.sgs("RURAL_PF_TOTAL", 16), ctx.sgs("RURAL_PJ_TOTAL", 16)
+    reg_pf, reg_pj = ctx.sgs("RURAL_PF_REGULADA", 16), ctx.sgs("RURAL_PJ_REGULADA", 16)
+
+    def somar(a: list[Ponto], b: list[Ponto]) -> list[Ponto]:
+        outro = dict(b)
+        return [(d, v + outro[d]) for d, v in a if d in outro]
+
+    total = somar(pf, pj)
+    regulada = somar(reg_pf, reg_pj)
+    mercado = [(d, t - dict(regulada)[d]) for d, t in total if d in dict(regulada)]
+    indice = indice_de_precos(ctx.sgs("IPCA", 16))
+    ultimo = min(max(d for d, _ in proagro), max(d for d, _ in total))
+    base = max(d for d in indice if d <= ultimo)
+    quando = periodo(base, "M")
+
+    def real_12m(mensal: list[Ponto]) -> list[Ponto]:
+        mensal = [(d, v) for d, v in mensal if d <= base]
+        return [(d, v / 1000) for d, v in contas.soma_movel(a_precos_de(mensal, indice, base))]
+
+    fonte_proagro = (
+        f"Tesouro Nacional, Resultado do Tesouro Nacional (linha Proagro); "
+        f"IPCA: {ctx.fonte_sgs('IPCA')}"
+    )
+    chaves_rural = ("RURAL_PF_TOTAL", "RURAL_PJ_TOTAL", "RURAL_PF_REGULADA", "RURAL_PJ_REGULADA")
+    fonte_credito = f"{ctx.fonte_sgs(*chaves_rural)}; IPCA: {ctx.fonte_sgs('IPCA')}"
+    graficos = [
+        grafico(
+            "proagro",
+            "O Proagro: o que o Tesouro paga",
+            [serie("proagro", "Proagro", real_12m(proagro))],
+            tipo="area",
+            unidade="R$ bi",
+            casas=1,
+            periodicidade="M",
+            fonte=fonte_proagro,
+            nota=f"Soma de 12 meses, a preços de {quando}, pelo IPCA.",
+        ),
+        grafico(
+            "credito-rural",
+            "O crédito rural concedido",
+            [
+                serie("regulada", "Taxa regulada", real_12m(regulada)),
+                serie("mercado", "Taxa de mercado", real_12m(mercado)),
+                serie("total", "Total", real_12m(total)),
+            ],
+            tipo="empilhado",
+            total="total",
+            unidade="R$ bi",
+            casas=0,
+            periodicidade="M",
+            fonte=fonte_credito,
+            nota=(
+                "Taxa regulada: juro com teto fixado pelo governo; o Tesouro paga parte da "
+                f"diferença. Soma de 12 meses, a preços de {quando}."
+            ),
+        ),
+    ]
+    anual_proagro = _por_ano_completo(proagro)
+    anual_total = _por_ano_completo(total)
+    anual_reg = _por_ano_completo(regulada)
+    anos = sorted(set(anual_proagro) & set(anual_total) & set(anual_reg))[-8:]
+    tabela = Tabela(
+        id="proagro-credito-rural",
+        titulo="Proagro e crédito rural, ano a ano",
+        subtitulo="R$ bi correntes",
+        colunas=["Proagro", "Crédito concedido", "Com taxa regulada", "% regulada"],
+        linhas=[
+            LinhaTabela(
+                rotulo=str(a),
+                valores=[
+                    round(anual_proagro[a] / 1000, 1),
+                    round(anual_total[a] / 1000, 0),
+                    round(anual_reg[a] / 1000, 0),
+                    round(anual_reg[a] / anual_total[a] * 100, 0),
+                ],
+                unidade="",
+                casas=1,
+            )
+            for a in reversed(anos)
+        ],
+        fonte=f"{fonte_proagro.split('; IPCA')[0]}; {fonte_credito.split('; IPCA')[0]}",
+        nota="Proagro é a despesa do Tesouro no ano; o crédito é o que os bancos concederam.",
+    )
+    return graficos, [tabela]
 
 
 def _subsidios_da_uniao(s: osu.Subsidios) -> tuple[list[Cartao], list[Grafico], list[Tabela]]:
@@ -935,8 +1039,8 @@ def _subsidios_da_uniao(s: osu.Subsidios) -> tuple[list[Cartao], list[Grafico], 
             ],
             fonte=fonte + "; agrupamento por área: cálculo próprio",
             nota=(
-                f"R$ {br(direto / 1e6, 0)} bi em {ano}, fora as isenções. Área pelo nome do "
-                "programa; quem recebe é de empresas e de famílias."
+                f"R$ {br(direto / 1e6, 0)} bi em {ano}, fora as isenções e o Proagro. Área pelo "
+                "nome do programa; quem recebe é de empresas e de famílias."
             ),
         )
     ]

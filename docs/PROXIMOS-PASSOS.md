@@ -40,7 +40,17 @@ programa. **A área é agrupamento nosso pelo nome do programa** (`osu.AREAS`; d
 Os tributários de 2024 e 2025 são projeção da Receita; o subsídio inclui famílias (FIES, Minha
 Casa, tarifa social), e a nota diz isso. O `_juntar` aceita rótulo `graficos:<id>` quando o
 mesmo id é de gráfico e tabela. **Falta o Caio olhar** as telas (a nuvem não abriu o site).
-Ficou no [PROPOSTAS](PROPOSTAS.md): benefício por empresa e o Proagro.
+**E o Proagro e o crédito rural** (Caio: *"Inclua o proagro e crédito rural. Não é cálculo
+próprio, só o agrupamento é próprio"*): atrás da lista de gráficos de "Isenções e subsídios",
+"Proagro" (o que o Tesouro paga, 12 meses a preços de hoje; linha 4.3.15.2 da aba 1.2 do RTN,
+`tesouro_rtn.LINHAS_PROAGRO`) e "Crédito rural" (concedido com recursos direcionados, empilhado
+em taxa regulada e de mercado; quatro séries do SGS, 20701, 20689, 20700 e 20688, conferidas em
+26/11) e a tabela "Proagro e crédito rural, ano a ano" (atrás de "Subsídios por área"). Em 2025:
+Proagro R$ 5,0 bi (9,4 em 2023); crédito rural R$ 308 bi, 55 % com taxa regulada (79 % em
+2018). O Proagro **não está no OSU** e fica fora da tabela por área (bases diferentes), o que a
+nota diz. Os números são oficiais; só o agrupamento por área leva "cálculo próprio". O crédito
+rural por programa (Pronaf etc.) ficou no [PROPOSTAS](PROPOSTAS.md): o SICOR é lento da nuvem.
+Ficou também lá o benefício por empresa.
 
 **25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,
 mostrando os dados que podem sustentar uma conclusão ou outra, pode avaliar vc pelos dados, eu

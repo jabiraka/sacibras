@@ -1203,6 +1203,13 @@ TERMOS: list[Termo] = [
         "#impostos/gasto-tributario",
     ),
     Termo(
+        "proagro",
+        "Proagro",
+        "Seguro público do produtor rural: cobre a perda da lavoura (seca, chuva demais, praga) "
+        "quando o crédito não é pago. O Tesouro cobre parte do custo.",
+        ("Proagro",),
+    ),
+    Termo(
         "equalizacao",
         "Equalização de juros",
         "O Tesouro paga ao banco a diferença entre o juro que o banco cobra do tomador, mais "

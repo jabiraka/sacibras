@@ -137,6 +137,8 @@ SINONIMOS: dict[str, list[str]] = {
         "por setor",
         "por funcao",
     ],
+    "proagro": ["seguro rural", "seca", "quebra de safra", "perda da lavoura"],
+    "credito rural": ["pronaf", "plano safra", "agricultor", "financiamento agricola", "agro"],
     "simples nacional": ["pequenas empresas", "mei", "regime simplificado"],
     "crescimento": ["imposto e crescimento", "efeito no pib"],
     "reforma do consumo": [

@@ -385,3 +385,8 @@ def test_dgt_le_funcao_beneficio_e_tributo() -> None:
         ("Imposto sobre a Renda Pessoa Física - IRPF", 40.0),
     ]
     assert receita_gastos.ler_funcoes([("sem cabeçalho",)]) == []
+
+
+def test_soma_so_dos_anos_completos() -> None:
+    meses = [(date(2024, m, 1), 1.0) for m in range(1, 13)] + [(date(2025, 1, 1), 5.0)]
+    assert impostos._por_ano_completo(meses) == {2024: 12.0}

@@ -379,6 +379,39 @@ SGS: dict[str, SerieSGS] = {
     "CREDITO_CONCESSOES": SerieSGS(
         20631, "Concessões de crédito, total", "R$ milhões", "M", "14/11/2026"
     ),
+    # Crédito rural, concessões com recursos direcionados, mensal (R$ milhões). Os quatro
+    # códigos foram conferidos no CKAN do BC em 26/11/2026 (Caio: "Inclua o proagro e crédito
+    # rural"): total e "com taxas reguladas", de pessoas físicas e jurídicas.
+    "RURAL_PF_TOTAL": SerieSGS(
+        20701,
+        "Concessões de crédito com recursos direcionados, pessoas físicas, crédito rural total",
+        "R$ milhões",
+        "M",
+        "26/11/2026",
+    ),
+    "RURAL_PJ_TOTAL": SerieSGS(
+        20689,
+        "Concessões de crédito com recursos direcionados, pessoas jurídicas, crédito rural total",
+        "R$ milhões",
+        "M",
+        "26/11/2026",
+    ),
+    "RURAL_PF_REGULADA": SerieSGS(
+        20700,
+        "Concessões de crédito com recursos direcionados, pessoas físicas, crédito rural com "
+        "taxas reguladas",
+        "R$ milhões",
+        "M",
+        "26/11/2026",
+    ),
+    "RURAL_PJ_REGULADA": SerieSGS(
+        20688,
+        "Concessões de crédito com recursos direcionados, pessoas jurídicas, crédito rural com "
+        "taxas reguladas",
+        "R$ milhões",
+        "M",
+        "26/11/2026",
+    ),
     "CREDITO_TAXA": SerieSGS(
         20714, "Taxa média de juros das operações de crédito, total", "% a.a.", "M", "13/11/2026"
     ),

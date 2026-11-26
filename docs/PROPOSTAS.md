@@ -62,8 +62,11 @@ repetido no PROXIMOS-PASSOS.
   salicnet`, 403 da nuvem) e no VerSalic. O CSV de 2022 traz o total incentivado por empresa
   (R$ 20,3 bi desde o início; Petrobras 1,66, BNDES 0,57, BB 0,57, Vale 0,56) e não entra: é de
   uma vez só, sem atualização. Entra se o Salic Comparar tiver exportação regular. Zona Franca
-  (Suframa) não olhado. Subsídios diretos: entraram em 26/11 (OSU, por programa e por área). Falta
-  o Proagro e o crédito rural em geral (o OSU só traz a equalização; o Sicor/BC cobre 35 % do volume).
+  (Suframa) não olhado. Subsídios diretos: entraram em 26/11 (OSU, por programa e por área). O Proagro e o crédito rural
+  entraram também (SGS e RTN). Crédito rural por programa e fonte de recurso (Pronaf, Pronamp,
+  poupança rural, LCA…): o SICOR do BC (`olinda.bcb.gov.br/…/SICOR/versao/v2/odata`, conjunto
+  `FonteRecursos` ou `ProgramaSubprograma`) abre da nuvem, mas cada consulta leva mais de 100 s
+  ou dá 504/500; testar do PC, por mês, ou pelo CSV da Matriz de Dados do Crédito Rural (MDCR).
 - Multiplicador de receita da SPE: só se sair com regularidade (estudo avulso não entra).
 
 **Decomposições** (feitas em 15/11/2026: IPCA por grupo, PIB pela demanda e pela
