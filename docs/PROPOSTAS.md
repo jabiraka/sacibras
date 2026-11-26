@@ -204,6 +204,14 @@ A ficha de cada estatal saiu só com o Anexo I da Sest (anual, 2021 a 2025). Par
   (API Olinda, abre da nuvem).
 - **2020 e antes**: as edições antigas do Anexo I têm outro desenho (um bloco por empresa);
   a de 2025 traz 2020, com números de 2023 e 2024 diferentes dos da edição de 2026.
+- **O custo por dentro, além da DVA** (Caio, 26/11/2026: *"Ver quais foram os maiores
+  custos dela"*): a DVA da Sest separa folha, compras, impostos, juros e depreciação, mas não
+  abre a folha (salário, benefícios, previdência), nem o custo por atividade (no Correios, a
+  entrega universal contra a encomenda), nem a qualidade do serviço. Para as listadas, a DRE
+  na CVM separa custo dos produtos, despesas de vendas e administrativas; para os Correios, só
+  as demonstrações em PDF no site deles (uma por ano, lidas à mão). O salto da folha dos
+  Correios em 2025 (de 54 % para 81 % dos recursos) merece a nota explicativa deles antes de
+  ir à tela com causa.
 - **A remuneração média** e a pirâmide de idade dos empregados: a planilha de 2026 traz
   vazio ou outro número em 2024 e 2025; voltar quando a Sest corrigir.
 

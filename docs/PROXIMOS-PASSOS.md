@@ -4,7 +4,7 @@
 aberto: o que foi feito sai (a história está no git), as ideias em espera ficam no
 [PROPOSTAS](PROPOSTAS.md) e os limites conhecidos no [PLANO](PLANO.md#12-limites-conhecidos).
 
-Última atualização: 26/11/2026 (as estatais uma a uma na pergunta). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
+Última atualização: 26/11/2026 (as estatais uma a uma e por dentro). A sessão da nuvem de 15/11 fez tudo o que dava para fazer de
 fora do Brasil; uma segunda olhou todas as telas a 390 e 1280 px e a busca com 65 termos (o
 que ficou está no [PROPOSTAS](PROPOSTAS.md), "Achados da revisão das telas"). Depois entrou a
 Penn World Table (Demografia › Eficiência (PTF), com a PTF estendida até 2025 por conta nossa
@@ -42,7 +42,16 @@ as linhas das não dependentes somadas e "sem a Petrobras"; entrou `estatais-ran
 prejuízos, e a tabela ano a ano com a soma), que abre a pergunta. Medida: lucro ou prejuízo
 do ano, e nas dependentes menos a subvenção (que entra como receita delas). Em 2025:
 Petrobras 110,6, BNDES 25,6, BB 17,8; Ebserh −13,8, Correios −8,5, Embrapa −4,8 (R$ bi). A
-explicação "Contra: os Correios" foi para dentro da primeira. Réguas diferentes (lucro
+explicação "Contra: os Correios" foi para dentro da primeira. **E por dentro** (Caio: *"Ver quais foram os maiores custos
+dela [...] queremos responder completamente a pergunta"*): a planilha da Sest traz a
+demonstração do valor adicionado (DVA) de cada uma; `fontes/sest.py` passou a ler receitas,
+valor recebido, insumos, despesas financeiras, retenções e juros e aluguéis (2025 vem em R$ mil
+e com os custos negativos: corrigido). Fecha a menos de 2 % em 215 de 225 linhas; o resto vai
+em "Outros". Entraram: na ficha de cada estatal, o gráfico "Para onde vai o dinheiro"
+(empilhado) e o bloco da tabela; em Estatais e na pergunta, `estatais-custos` (o peso de cada
+custo nas seis em destaque, lista "Custo", e a tabela de 2025). Em 2025, a folha levou 81 % dos
+recursos nos Correios (54 % em 2024), 75 % na Embrapa e 72 % na Ebserh; 6 % na Petrobras, 4 %
+no BNDES e 9 % no BB. O que a Sest não abre está no PROPOSTAS ("Estatais por dentro"). Réguas diferentes (lucro
 contábil contra preço de mercado), dito na nota; sem bolsa (B3 fora). Os Tesouros são os de
 "Quanto rendeu" (`mercados.carteira_rolada`), começando em dez/2019. Olhado a 390 e 1280 px;
 **falta o Caio olhar**.

@@ -454,6 +454,41 @@ def _por_empregado(x: EstatalNoAno) -> float | None:
     return p / n / 1000 if p and n else None
 
 
+# Para onde vai o dinheiro de cada uma (Caio, 26/11/2026: "Ver quais foram os maiores custos
+# dela"): a DVA da Sest. Os recursos são a receita mais o valor recebido (nas dependentes, a
+# subvenção; nas outras, receitas financeiras e de participações). O que não fecha vai em
+# "Outros".
+DESTINOS = (
+    ("pessoal", "Pessoal"),
+    ("compras", "Compras e serviços"),
+    ("impostos", "Impostos"),
+    ("juros", "Juros e aluguéis"),
+    ("depreciacao", "Depreciação"),
+    ("resultado", "Lucro ou prejuízo"),
+)
+
+
+def recursos(x: EstatalNoAno) -> float | None:
+    if x["receitas_dva"] is None:
+        return None
+    return (x["receitas_dva"] or 0.0) + (x["recebido"] or 0.0)
+
+
+def destinos(x: EstatalNoAno) -> dict[str, float]:
+    """Para onde foram os recursos do ano, em reais; "outros" fecha a conta."""
+    d = {
+        "pessoal": x["pessoal"] or 0.0,
+        "compras": x["insumos"] or 0.0,
+        "impostos": x["impostos"] or 0.0,
+        # Nos bancos, a despesa de intermediação: os juros que pagam aos depositantes.
+        "juros": (x["terceiros"] or 0.0) + (x["despesas_financeiras"] or 0.0),
+        "depreciacao": x["retencoes"] or 0.0,
+        "resultado": x["lucro"] or 0.0,
+    }
+    d["outros"] = (recursos(x) or 0.0) - sum(d.values())
+    return d
+
+
 def ficha(
     anos: list[EstatalNoAno], todas_do_ano: list[EstatalNoAno], fonte_sest: str
 ) -> FichaEstatal:
@@ -753,6 +788,21 @@ def ficha(
                 "pelo orçamento da União.",
             )
         )
+    if all(recursos(x) for x in anos):
+        outros.append(
+            g(
+                "destinos",
+                "Para onde vai o dinheiro",
+                f"{nome}: para onde vai o dinheiro",
+                [
+                    s(chave, rotulo, lambda x, c=chave: em(destinos(x)[c]))  # type: ignore[misc]
+                    for chave, rotulo in DESTINOS
+                ],
+                tipo="empilhado",
+                nota="Receita mais o que recebe (nas dependentes, a subvenção), repartida pela "
+                "demonstração do valor adicionado. Prejuízo fica abaixo do zero.",
+            )
+        )
     principal = principal.model_copy(update={"alternativas": outros})
 
     # --- a tabela de todos os anos
@@ -793,6 +843,16 @@ def ficha(
         linha("Empregados", lambda x: _round((x["empregados"] or 0) / 1000), "Pessoal", "mil"),
         linha("Gasto com pessoal", din("pessoal"), "Pessoal"),
         linha("Gasto por empregado", _por_empregado, "Pessoal", "R$ mil"),
+        linha("Recursos do ano", lambda x: em(recursos(x)), "Para onde vai o dinheiro"),
+        *(
+            linha(
+                rotulo,
+                lambda x, c=chave: _razao(destinos(x)[c], recursos(x), True),  # type: ignore[misc]
+                "Para onde vai o dinheiro",
+                "% dos recursos",
+            )
+            for chave, rotulo in (*DESTINOS, ("outros", "Outros"))
+        ),
         linha("Investimento executado", din("investimento"), "Investimento"),
         linha(
             "Execução do orçamento",
@@ -1101,13 +1161,20 @@ def ganha_ou_custa(x: EstatalNoAno) -> float:
     return (x["lucro"] or 0.0) - ((x["subvencao"] or 0.0) if x.dependente else 0.0)
 
 
+def destaques(linhas: list[EstatalNoAno]) -> tuple[list[EstatalNoAno], list[EstatalNoAno]]:
+    """As três que mais lucram e as três que mais custam no último ano."""
+    ultimo = max(x.ano for x in linhas)
+    do_ano = sorted((x for x in linhas if x.ano == ultimo), key=ganha_ou_custa)
+    lucros = [x for x in reversed(do_ano) if ganha_ou_custa(x) > 0][:DESTAQUES]
+    custos = [x for x in do_ano if ganha_ou_custa(x) < 0][:DESTAQUES]
+    return lucros, custos
+
+
 def ranking(fonte_sest: str, linhas: list[EstatalNoAno]) -> Pecas:
     """As três que mais ganham e as três que mais custam no último ano, ano a ano."""
     ultimo = max(x.ano for x in linhas)
     anos = sorted({x.ano for x in linhas})
-    do_ano = sorted((x for x in linhas if x.ano == ultimo), key=ganha_ou_custa)
-    lucros = [x for x in reversed(do_ano) if ganha_ou_custa(x) > 0][:DESTAQUES]
-    custos = [x for x in do_ano if ganha_ou_custa(x) < 0][:DESTAQUES]
+    lucros, custos = destaques(linhas)
     por = {(x.sigla, x.ano): x for x in linhas}
 
     def nome(x: EstatalNoAno) -> str:
@@ -1197,5 +1264,106 @@ def ranking(fonte_sest: str, linhas: list[EstatalNoAno]) -> Pecas:
             "Nas dependentes do Tesouro, o prejuízo inclui a subvenção. Na Petrobras e no "
             "Banco do Brasil, parte do lucro é dos outros acionistas."
         ),
+    )
+    return [], [desenho], [tabela]
+
+
+def custos(fonte_sest: str, linhas: list[EstatalNoAno]) -> Pecas:
+    """Para onde vai o dinheiro das três que mais lucram e das três que mais custam: o peso
+    de cada custo nos recursos do ano, ano a ano (gráfico) e no último ano (tabela)."""
+    lucros, caras = destaques(linhas)
+    seis = [x for x in (*lucros, *caras) if recursos(x)]
+    ultimo = max(x.ano for x in linhas)
+    anos = sorted({x.ano for x in linhas})
+    por = {(x.sigla, x.ano): x for x in linhas}
+
+    def nome(x: EstatalNoAno) -> str:
+        return NOMES.get(x.sigla, x.sigla.replace(" (Grupo)", ""))
+
+    def peso(x: EstatalNoAno | None, chave: str) -> float | None:
+        if x is None or not recursos(x):
+            return None
+        return _round(_razao(destinos(x)[chave], recursos(x), True))
+
+    def series(chave: str) -> list[Serie]:
+        return [
+            Serie(
+                id=_id(x.sigla),
+                nome=nome(x),
+                pontos=[(date(a, 1, 1), peso(por.get((x.sigla, a)), chave)) for a in anos],
+            )
+            for x in seis
+        ]
+
+    fonte = f"{fonte_sest}; cálculo próprio"
+    nota = (
+        "Recursos: receita mais o que a empresa recebe (nas dependentes, a subvenção). "
+        "Nos bancos, juros inclui o que pagam aos depositantes."
+    )
+    folha = sorted(seis, key=lambda x: -(peso(x, "pessoal") or 0.0))
+    desenho = grafico(
+        "estatais-custos",
+        "Quanto do dinheiro vai para cada custo",
+        series("pessoal"),
+        unidade="% dos recursos",
+        casas=1,
+        periodicidade="A",
+        fonte=fonte,
+        rotulo_opcao="Para onde vai o dinheiro",
+        manchete=(
+            f"Em {ultimo}, a folha levou de {br(peso(folha[-1], 'pessoal') or 0.0, 0)} % "
+            f"({nome(folha[-1])}) a {br(peso(folha[0], 'pessoal') or 0.0, 0)} % "
+            f"({nome(folha[0])}) dos recursos."
+        ),
+        nota=nota,
+    )
+    desenho = com_variantes(
+        desenho,
+        "Pessoal",
+        *(
+            VarianteGrafico(
+                id=chave,
+                rotulo=rotulo,
+                titulo=desenho.titulo,
+                unidade="% dos recursos",
+                casas=1,
+                periodicidade="A",
+                series=series(chave),
+                nota=nota,
+                fonte=fonte,
+            )
+            for chave, rotulo in DESTINOS[1:]
+        ),
+        nome_da_lista="Custo",
+    )
+    tabela = Tabela(
+        id="estatais-custos",
+        titulo=f"Para onde foi o dinheiro em {ultimo}",
+        subtitulo="% dos recursos do ano; recursos em R$ bilhões",
+        colunas=[
+            "Recursos",
+            *(r for _, r in DESTINOS),
+            "Outros",
+        ],
+        linhas=[
+            LinhaTabela(
+                rotulo=nome(x),
+                valores=[
+                    round((recursos(x) or 0.0) / 1e9, 1),
+                    *(peso(x, c) for c, _ in (*DESTINOS, ("outros", ""))),
+                ],
+                unidade="",
+                casas=1,
+                grupo=grupo,
+            )
+            for grupo, quais in (
+                (f"Maiores lucros em {ultimo}", lucros),
+                (f"Maiores prejuízos em {ultimo}", caras),
+            )
+            for x in quais
+            if recursos(x)
+        ],
+        fonte=fonte,
+        nota=nota,
     )
     return [], [desenho], [tabela]

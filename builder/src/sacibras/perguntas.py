@@ -585,7 +585,10 @@ PERGUNTAS: tuple[Definicao, ...] = (
     # sentido"), empresa a empresa: em 2025, os três maiores lucros (Petrobras 110,6, BNDES
     # 25,6, BB 17,8: R$ 154 bi) e os três maiores custos, com a subvenção (Ebserh 13,8,
     # Correios 8,5, Embrapa 4,8: R$ 27 bi). De 2021 a 2025: Petrobras R$ 358, BNDES R$ 256,
-    # BB R$ 209, Caixa R$ 165, CDI R$ 168, abater dívida R$ 166.
+    # BB R$ 209, Caixa R$ 165, CDI R$ 168, abater dívida R$ 166. E por dentro (mesmo dia: "Ver
+    # quais foram os maiores custos dela"), pela DVA da Sest, em 2025: a folha levou 81 % dos
+    # recursos nos Correios (54 % em 2024), 75 % na Embrapa, 72 % na Ebserh; 6 % na
+    # Petrobras (compras 38 %, impostos 27 %), 4 % no BNDES e 9 % no BB (juros 58 % e 76 %).
     Definicao(
         "manter-estatais",
         "Vale manter as estatais?",
@@ -605,6 +608,15 @@ PERGUNTAS: tuple[Definicao, ...] = (
                 ("fiscal", "estatais-ranking"),
                 (),
                 ("fiscal", "estatais-ranking"),
+            ),
+            Bloco(
+                "Por dentro: o que mais pesa",
+                "Nas três que mais custam, a folha leva de 72 % a 81 % do dinheiro; nas que "
+                "mais lucram, menos de 10 %. Lá pesam compras e impostos (Petrobras) e juros "
+                "(bancos).",
+                ("fiscal", "estatais-custos"),
+                (),
+                ("fiscal", "estatais-custos"),
             ),
             Bloco(
                 "A régua: o juro da dívida",

@@ -168,10 +168,12 @@ def anexo() -> Anexo:
 # relevantes para analisar empresas"*. As mesmas linhas da planilha, empresa por empresa, para
 # a ficha de cada uma (`secoes/estatais.fichas`).
 #
-# Duas armadilhas da edição de 2026, achadas comparando 2025 com 2024 em todas as empresas:
+# Três armadilhas da edição de 2026, achadas comparando 2025 com 2024 em todas as empresas:
 # - as colunas da demonstração do valor adicionado (pessoal, impostos e as do fim da planilha)
 #   de 2025 vêm em R$ mil, não em reais (mediana de 2025/2024 perto de 0,001).
 #   `_corrigir_escala` acha isso sozinha e multiplica por mil;
+# - os custos da DVA de 2025 (insumos, despesas financeiras, retenções) vêm negativos, e antes
+#   positivos: vão sempre positivos (`CUSTOS_DA_DVA`);
 # - a remuneração média, a idade média e o tempo de serviço de 2024 e 2025 vêm vazios ou com
 #   outro número no lugar. Ficam de fora.
 
@@ -200,16 +202,44 @@ COLUNAS = {
     "orcamento investimento aprovado": "investimento_aprovado",
     "orcamento investimento executado": "investimento",
     "qtd_empregados": "empregados",
+    # A demonstração do valor adicionado (DVA): de onde vem o dinheiro e para onde vai
+    # (Caio, 26/11/2026: "Ver quais foram os maiores custos dela"). Fecha, empresa a empresa:
+    # receitas + valor recebido = insumos + despesas financeiras + retenções + pessoal +
+    # impostos + juros e aluguéis + resultado (conferido nos Correios, Petrobras, Ebserh e
+    # Caixa, 2024 e 2025, em 26/11/2026; nos bancos sobra até 1 %).
+    "receitas": "receitas_dva",
+    "valor adicionado recebido": "recebido",
+    "insumos adquiridos": "insumos",
+    "despesas": "despesas_financeiras",
+    "retencoes": "retencoes",
+    "fornecedores e outros": "terceiros",
 }
 TEXTOS = {"ano", "sigla", "nome", "setor", "ministerio", "dependencia", "criacao"}
 NUMEROS = [c for c in COLUNAS.values() if c not in TEXTOS]
 # As que vêm da demonstração do valor adicionado: as que já mudaram de escala.
-DA_DVA = ("pessoal", "impostos")
+DA_DVA = (
+    "pessoal",
+    "impostos",
+    "receitas_dva",
+    "recebido",
+    "insumos",
+    "despesas_financeiras",
+    "retencoes",
+    "terceiros",
+)
+# Custos que a edição de 2026 traz com sinal negativo em 2025 e positivo antes: vão sempre
+# positivos (são o que sai).
+CUSTOS_DA_DVA = ("insumos", "despesas_financeiras", "retencoes")
 
 
 def _normal(texto: object) -> str:
     sem = unicodedata.normalize("NFKD", str(texto or "")).encode("ascii", "ignore").decode()
     return re.sub(r"\s+", " ", sem).strip().lower()
+
+
+def _valor(campo: str, bruto: Any) -> float | None:
+    v = _numero(bruto)
+    return abs(v) if v is not None and campo in CUSTOS_DA_DVA else v
 
 
 def _numero(v: Any) -> float | None:
@@ -263,7 +293,7 @@ def empresas(conteudo: bytes) -> list[EstatalNoAno]:
                 ministerio=str(bruta[onde["ministerio"]] or "").strip(),
                 dependente=_normal(bruta[onde["dependencia"]]) == "dependente",
                 criacao=criacao if isinstance(criacao, int) else None,
-                valores={c: _numero(bruta[onde[c]]) for c in NUMEROS},
+                valores={c: _valor(c, bruta[onde[c]]) for c in NUMEROS},
             )
         )
     _corrigir_escala(saida)
@@ -282,8 +312,8 @@ def _corrigir_escala(linhas: list[EstatalNoAno]) -> None:
                 if x.ano != ano or (antes, x.sigla) not in por:
                     continue
                 a, b = por[(antes, x.sigla)][campo], x[campo]
-                if a and b and a > 0 and b > 0:
-                    razoes.append(b / a)
+                if a and b:
+                    razoes.append(abs(b / a))
             if len(razoes) >= 5 and statistics.median(razoes) < 0.01:
                 for x in linhas:
                     v = x[campo]

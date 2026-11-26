@@ -34,6 +34,12 @@ CABECALHO = [
     " ORÇAMENTO INVESTIMENTO APROVADO ",
     " ORÇAMENTO INVESTIMENTO EXECUTADO ",
     "QTD_EMPREGADOS",
+    "RECEITAS",
+    "VALOR ADICIONADO RECEBIDO",
+    "INSUMOS ADQUIRIDOS",
+    "DESPESAS",
+    "RETENÇÕES",
+    "FORNECEDORES E OUTROS",
 ]
 
 
@@ -63,7 +69,21 @@ def _linha(ano: int, sigla: str, dep: str, lucro: float, pessoal: float, **x: fl
         "-",
         "#N/A",
         1000,
+        # A DVA: em 2025, em R$ mil e com os custos negativos, como na edição de 2026.
+        *_dva(ano, pessoal, lucro, x.get("subvencao", 0) + 1e8),
     ]
+
+
+def _dva(ano: int, pessoal: float, lucro: float, recebido: float) -> list[float]:
+    """Receitas, recebido, insumos, despesas, retenções e juros que fecham com o resto."""
+    pessoal_reais = pessoal if ano < 2025 else pessoal * 1000
+    impostos = 1e9
+    insumos, juros, retencoes = 10e9, 2e9, 1e9
+    receitas = insumos + juros + retencoes + pessoal_reais + impostos + lucro - recebido
+    linha = [receitas, recebido, insumos, 0.0, retencoes, juros]
+    if ano < 2025:
+        return linha
+    return [linha[0] / 1000, linha[1] / 1000, -insumos / 1000, 0.0, -retencoes / 1000, juros / 1000]
 
 
 def _planilha() -> bytes:
@@ -170,3 +190,15 @@ def test_tres_que_lucram_e_tres_que_custam() -> None:
     custos = [li for li in tabela.linhas if li.grupo == "Maiores prejuízos em 2025"]
     assert [(li.rotulo, li.valores[-2]) for li in custos] == [("HOSP", -8.2)]
     assert tabela.linhas[0].rotulo == "Petrobras" and len(desenho.series) == 4
+
+
+def test_para_onde_vai_o_dinheiro() -> None:
+    linhas = sest.empresas(_planilha())
+    x = next(y for y in linhas if y.sigla == "A" and y.ano == 2025)
+    assert x["insumos"] == 10e9 and x["retencoes"] == 1e9  # positivos e em reais
+    d = estatais.destinos(x)
+    assert d["pessoal"] == 2.1e9 and abs(d["outros"]) < 1
+    _, [desenho], [tabela] = estatais.custos(FONTE, linhas)
+    assert [v.rotulo for v in desenho.variantes][:2] == ["Pessoal", "Compras e serviços"]
+    hosp = next(li for li in tabela.linhas if li.rotulo == "HOSP")
+    assert hosp.grupo == "Maiores prejuízos em 2025" and hosp.valores[-1] == 0.0
