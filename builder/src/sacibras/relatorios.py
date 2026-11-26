@@ -1167,3 +1167,30 @@ FONTE_PIM = (
     "Suframa, Caderno de Indicadores de Desempenho do Polo Industrial de Manaus (jan–set/2026, "
     "de 10/11/2026)"
 )
+
+# Mesmo caderno, quadros "Faturamento por subsetores de atividades" (R$ nominais, linha TOTAIS
+# de cada subsetor), lidos em 26/11/2026, em R$ bilhões. Eletroeletrônico é o subsetor
+# "Eletroeletrônico (exceto bens de informática)" mais "Bens de informática do polo
+# eletroeletrônico". 2023: 32,8 + 42,8; 2025: 38,5 + 48,1. Duas rodas: 30,7 (2023) e 44,7
+# (2025). "Outros" é o que sobra do faturamento total (bebidas, papel, naval etc.), e a soma
+# fecha com PIM_FATURAMENTO.
+PIM_SUBSETORES: dict[int, dict[str, float]] = {
+    2023: {
+        "Eletroeletrônico e informática": 75.6,
+        "Duas rodas": 30.7,
+        "Químico": 17.9,
+        "Termoplástico": 15.0,
+        "Metalúrgico": 13.3,
+        "Mecânico": 11.1,
+        "Outros": 12.1,
+    },
+    2025: {
+        "Eletroeletrônico e informática": 86.6,
+        "Duas rodas": 44.7,
+        "Químico": 23.8,
+        "Termoplástico": 20.4,
+        "Metalúrgico": 18.6,
+        "Mecânico": 20.8,
+        "Outros": 14.5,
+    },
+}

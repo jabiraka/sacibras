@@ -362,13 +362,20 @@ def test_zona_franca_compara_o_custo_ao_polo_do_mesmo_ano(monkeypatch: pytest.Mo
         regioes={},
     )
     monkeypatch.setattr(receita_gastos, "edicoes", lambda *a, **k: [edicao])
+
+    def sem_rede() -> None:
+        raise OSError("sem rede no teste")
+
+    monkeypatch.setattr(impostos, "_zfm_no_amazonas", sem_rede)
     cartoes, graficos, tabelas, _ = impostos._zona_franca(None)  # type: ignore[arg-type]
     por_id = {c.id: c for c in cartoes}
     assert por_id["zfm-custo"].valor == pytest.approx(27.49)
     # R$ 27,49 bi para 113.813 empregos (a média de 2023 na Suframa).
     assert por_id["zfm-por-emprego"].valor == pytest.approx(27.49e9 / 113813 / 1e3, abs=1)
     assert por_id["zfm-por-emprego"].procedencia == "calculado"
+    # Uma edição só: sem a série do custo; sem rede: sem o Amazonas. O polo fica.
     assert [g.id for g in graficos] == ["zfm-polo"]
+    assert [t.id for t in tabelas] == ["zfm-conta", "zfm-subsetores"]
     assert {v.id for v in graficos[0].variantes} == {"principal", "faturamento"}
     linhas = {linha.rotulo: linha.valores[0] for linha in tabelas[0].linhas}
     assert linhas["Imposto não cobrado ÷ folha, vezes"] == pytest.approx(
@@ -381,3 +388,23 @@ def test_zona_franca_compara_o_custo_ao_polo_do_mesmo_ano(monkeypatch: pytest.Mo
     monkeypatch.setattr(receita_gastos, "edicoes", lambda *a, **k: [sem])
     with pytest.raises(ValueError):
         impostos._zona_franca(None)  # type: ignore[arg-type]
+
+
+def test_zona_franca_custo_em_pct_do_pib_por_edicao() -> None:
+    from sacibras.secoes import impostos
+
+    def edicao(ano: int, zfm: float, total: float, pct: float) -> receita_gastos.Edicao:
+        return receita_gastos.Edicao(
+            ano=ano,
+            total={ano: total},
+            pct_pib={ano: pct},
+            principais=[("Simples Nacional", total - zfm), ("Zona Franca de Manaus", zfm)],
+            regioes={},
+        )
+
+    g = impostos._zfm_custo_no_tempo(
+        [edicao(2023, 27.49e9, 534e9, 4.88), edicao(2019, 30e9, 318e9, 4.3)]
+    )
+    pontos = g.series[0].pontos
+    assert [p[0].year for p in pontos] == [2019, 2023]
+    assert pontos[1][1] == pytest.approx(27.49 / 534 * 4.88, abs=0.01)

@@ -780,7 +780,11 @@ PERGUNTAS: tuple[Definicao, ...] = (
     # encargos). A conta é nossa: R$ 242 mil por emprego e 3,1 vezes a folha. O prazo, 2073,
     # é o que o DGT registra (ADCT, art. 92-A, EC 83/2014, lida no Senado). Fica de fora, por
     # falta de dado no painel, o que haveria sem o regime: emprego que existiria de qualquer
-    # modo, ICMS dos estados e efeito sobre a floresta. **Os números do texto são fixos**:
+    # modo, ICMS dos estados e efeito sobre a floresta. Depois (mesmo dia: "Já temos alguns
+    # desses, não? Pode incluir"): o custo em % do PIB por edição do DGT (0,40 % em 2019, 0,25 %
+    # em 2023), a indústria de transformação no valor adicionado do Amazonas (31,3 % em 2024,
+    # contra 14,1 % no Brasil; IBGE) e o faturamento por subsetor (eletroeletrônico e
+    # informática, 43 % em 2023). **Os números do texto são fixos**:
     # reler com o DGT de 2027 e o caderno de dezembro da Suframa (`leituras.py`).
     Definicao(
         "zona-franca",
@@ -792,17 +796,25 @@ PERGUNTAS: tuple[Definicao, ...] = (
         (
             Bloco(
                 "O que a União deixa de cobrar",
-                "Em 2023, R$ 27,5 bi de imposto federal, 5 % de tudo o que a União deixa de "
-                "arrecadar. O ICMS, que é dos estados, fica de fora.",
-                None,
+                "Em 2023, R$ 27,5 bi de imposto federal: 0,25 % do PIB, contra 0,40 % em 2019. "
+                "O ICMS, que é dos estados, fica de fora.",
+                ("impostos", "zfm-custo-serie"),
                 (("impostos", "zfm-custo"),),
                 ("impostos", "gasto-tributario"),
             ),
             Bloco(
                 "O que o polo entrega",
-                "O Polo Industrial de Manaus faturou R$ 176 bi em 2023 e empregou 114 mil "
-                "pessoas; em 2025, 132 mil. Subiu quase um quarto desde 2021.",
+                "O polo faturou R$ 176 bi em 2023 e empregou 114 mil pessoas; em 2025, 132 mil, "
+                "quase um quarto a mais que em 2021. Eletrônicos e informática são 43 %.",
                 ("impostos", "zfm-polo"),
+                (),
+                ("impostos", "zfm-subsetores"),
+            ),
+            Bloco(
+                "O peso no Amazonas",
+                "A indústria de transformação é 31 % do valor adicionado do Amazonas, contra "
+                "14 % no Brasil.",
+                ("impostos", "zfm-amazonas"),
             ),
             Bloco(
                 "A conta por emprego",

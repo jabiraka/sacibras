@@ -34,6 +34,7 @@ from sacibras.fontes import (
     avaliacao_bimestral,
     fmi,
     fmi_cofog,
+    ibge_contas_regionais,
     ocde_receita,
     receita_arrecadacao,
     receita_gastos,
@@ -1913,7 +1914,98 @@ def _zona_franca(ctx: Contexto) -> Pecas:
             "Receita, só federal; não diz quanto do emprego existiria sem o regime."
         ),
     )
-    return cartoes, [g], [tabela], ""
+    graficos = [g]
+    tabelas = [tabela]
+    try:
+        graficos.append(_zfm_custo_no_tempo(receita_gastos.edicoes()))
+    except Exception as erro:
+        print(f"    impostos: custo da Zona Franca no tempo ficou de fora: {str(erro)[:120]}")
+    try:
+        graficos.append(_zfm_no_amazonas())
+    except Exception as erro:
+        print(f"    impostos: Zona Franca no Amazonas ficou de fora: {str(erro)[:120]}")
+    if ano in relatorios.PIM_SUBSETORES:
+        tabelas.append(_zfm_subsetores())
+    return cartoes, graficos, tabelas, ""
+
+
+def _zfm_custo_no_tempo(edicoes: list[receita_gastos.Edicao]) -> Grafico:
+    """O imposto não cobrado, em % do PIB, em cada edição do DGT (o último ano realizado dela):
+    a parte da Zona Franca no gasto tributário vezes o gasto em % do PIB."""
+    pontos: list[tuple[date, float]] = []
+    for e in sorted(edicoes, key=lambda e: e.ano):
+        z = next((v for n, v in e.principais if n.startswith("Zona Franca de Manaus")), None)
+        soma = sum(v for _, v in e.principais)
+        if z is not None and soma and e.ano in e.pct_pib:
+            pontos.append((date(e.ano, 1, 1), z / soma * e.pct_pib[e.ano]))
+    if len(pontos) < 2:
+        raise ValueError("a Zona Franca aparece em menos de duas edições do DGT")
+    return grafico(
+        "zfm-custo-serie",
+        "Zona Franca: imposto não cobrado",
+        [serie("zfm", "Zona Franca", pontos, casas=2)],
+        tipo="barras",
+        unidade="% do PIB",
+        casas=2,
+        periodicidade="A",
+        fonte=f"Cálculo próprio com {receita_gastos.FONTE}",
+        nota=(
+            "Um ponto por edição do DGT (o último ano realizado de cada uma): a parte da Zona "
+            "Franca no gasto tributário vezes o gasto em % do PIB."
+        ),
+    )
+
+
+def _zfm_no_amazonas() -> Grafico:
+    """A indústria de transformação no valor adicionado do Amazonas e do Brasil (IBGE)."""
+    edicao, _, participacao = ibge_contas_regionais.setores()
+    chave = "Indústrias de transformação"
+    por_local = {k.strip().lower(): v for k, v in participacao.items()}
+    series = []
+    for id, nome in (("am", "Amazonas"), ("br", "Brasil")):
+        anos = por_local[nome.lower()]
+        series.append(
+            serie(id, nome, [(date(a, 1, 1), v[chave]) for a, v in sorted(anos.items())], casas=1)
+        )
+    return grafico(
+        "zfm-amazonas",
+        "A indústria no Amazonas",
+        series,
+        unidade="% do valor adicionado",
+        casas=0,
+        periodicidade="A",
+        fonte=f"{ibge_contas_regionais.FONTE} (edição {edicao})",
+        nota="Indústria de transformação no valor adicionado bruto de cada local.",
+    )
+
+
+def _zfm_subsetores() -> Tabela:
+    anos = sorted(relatorios.PIM_SUBSETORES)
+    nomes = list(relatorios.PIM_SUBSETORES[anos[0]])
+    linhas = [
+        LinhaTabela(
+            rotulo=nome,
+            valores=[
+                *(relatorios.PIM_SUBSETORES[a][nome] for a in anos),
+                *(
+                    round(relatorios.PIM_SUBSETORES[a][nome] / relatorios.PIM_FATURAMENTO[a] * 100)
+                    for a in anos
+                ),
+            ],
+            unidade="",
+            casas=1,
+        )
+        for nome in nomes
+    ]
+    return Tabela(
+        id="zfm-subsetores",
+        titulo="O que o polo fabrica",
+        subtitulo="faturamento por subsetor",
+        colunas=[f"{a}, R$ bi" for a in anos] + [f"{a}, %" for a in anos],
+        linhas=linhas,
+        fonte=relatorios.FONTE_PIM,
+        nota="Valores correntes das empresas com projeto aprovado.",
+    )
 
 
 MAIS_PARTES: list[tuple[str, Callable[[Contexto], Pecas]]] = [

@@ -403,8 +403,20 @@ PARTES: dict[str, list[Parte]] = {
             "O que a União deixa de arrecadar com isenções e o que tem a receber de imposto "
             "não pago.",
             cartoes=["gasto-tributario", "divida-ativa", "zfm-custo", "zfm-por-emprego"],
-            graficos=["gasto-tributario", "divida-ativa", "zfm-polo"],
-            tabelas=["gasto-tributario", "gasto-tributario-regioes", "divida-ativa", "zfm-conta"],
+            graficos=[
+                "gasto-tributario",
+                "divida-ativa",
+                "zfm-polo",
+                "zfm-custo-serie",
+                "zfm-amazonas",
+            ],
+            tabelas=[
+                "gasto-tributario",
+                "gasto-tributario-regioes",
+                "divida-ativa",
+                "zfm-conta",
+                "zfm-subsetores",
+            ],
         ),
         Parte(
             "esferas",
@@ -937,8 +949,20 @@ AGRUPAR: dict[str, dict[str, Agrupar]] = {
             },
         ),
         "gasto-tributario": Agrupar(
-            tabelas={"gasto-tributario": ["gasto-tributario-regioes"]},
-            rotulos={"gasto-tributario": "Os maiores", "gasto-tributario-regioes": "Por região"},
+            graficos={"zfm-polo": ["zfm-custo-serie", "zfm-amazonas"]},
+            tabelas={
+                "gasto-tributario": ["gasto-tributario-regioes"],
+                "zfm-conta": ["zfm-subsetores"],
+            },
+            rotulos={
+                "gasto-tributario": "Os maiores",
+                "gasto-tributario-regioes": "Por região",
+                "zfm-polo": "Zona Franca: o polo",
+                "zfm-custo-serie": "Zona Franca: o custo",
+                "zfm-amazonas": "Zona Franca: o Amazonas",
+                "zfm-conta": "Zona Franca: a conta",
+                "zfm-subsetores": "Zona Franca: o que fabrica",
+            },
         ),
     },
     "longo-prazo": {

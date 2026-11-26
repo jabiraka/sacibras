@@ -33,7 +33,13 @@ por emprego, cálculo próprio), gráfico `zfm-polo` (empregos, com "Ver" fatura
 prazo, 2073, é o que o DGT registra (ADCT, art. 92-A, EC 83/2014). **Os números do texto são
 fixos** (R$ 27,5 bi, R$ 242 mil, "três vezes a folha", "sétimo maior"): reler quando sair o
 caderno de dezembro da Suframa (fevereiro) e o DGT de 2027 (`leituras.py`, prazo 15/03/2027).
-Do que ficou de fora, está no [PROPOSTAS](PROPOSTAS.md), "Zona Franca de Manaus". Olhado só no
+**Depois** (Caio: *"Já temos alguns desses, não? Pode incluir"*): o custo em % do PIB por
+edição do DGT (0,40 % em 2019, 0,25 % em 2023; `zfm-custo-serie`), a indústria de
+transformação no valor adicionado do Amazonas contra o Brasil (31 % e 14 % em 2024, IBGE;
+`zfm-amazonas`) e o faturamento por subsetor (`zfm-subsetores`, `relatorios.PIM_SUBSETORES`;
+eletrônicos e informática, 43 %). Os três ficam atrás do gráfico e da tabela do polo (listas
+"Gráfico" e "Tabela"). O que ficou de fora está no [PROPOSTAS](PROPOSTAS.md), "Zona Franca de
+Manaus". Olhado só no
 código e nos testes; **falta o Caio olhar a tela**.
 
 **25/11/2026, a pergunta "Vale manter as estatais?"** (Caio: *"Bem provocativo mesmo,
